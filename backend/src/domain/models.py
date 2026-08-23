@@ -22,6 +22,13 @@ class ArtifactKind(str, Enum):
     CONNECTION = "connection"
     VIEW = "view"
     ATTRIBUTE = "attribute"
+    INTERACTION = "interaction"
+    LIFELINE = "lifeline"
+    MESSAGE = "message"
+    STATE = "state"
+    TRANSITION = "transition"
+    ACTION = "action"
+    SUCCESSION = "succession"
 
 
 class RoutingType(str, Enum):
@@ -35,6 +42,90 @@ class PortSide(str, Enum):
     RIGHT = "right"
     TOP = "top"
     BOTTOM = "bottom"
+
+
+@dataclass
+class ElementStyleMode:
+    background_color: str | None = None
+    line_color: str | None = None
+    text_color: str | None = None
+    line_thickness: float | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        if self.background_color is not None:
+            out["backgroundColor"] = self.background_color
+        if self.line_color is not None:
+            out["lineColor"] = self.line_color
+        if self.text_color is not None:
+            out["textColor"] = self.text_color
+        if self.line_thickness is not None:
+            out["lineThickness"] = self.line_thickness
+        return out
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> ElementStyleMode | None:
+        if not data:
+            return None
+        return cls(
+            background_color=data.get("backgroundColor"),
+            line_color=data.get("lineColor"),
+            text_color=data.get("textColor"),
+            line_thickness=(
+                float(data["lineThickness"])
+                if data.get("lineThickness") is not None
+                else None
+            ),
+        )
+
+    def merge(self, patch: dict[str, Any]) -> None:
+        if "backgroundColor" in patch:
+            self.background_color = patch["backgroundColor"]
+        if "lineColor" in patch:
+            self.line_color = patch["lineColor"]
+        if "textColor" in patch:
+            self.text_color = patch["textColor"]
+        if "lineThickness" in patch:
+            val = patch["lineThickness"]
+            self.line_thickness = float(val) if val is not None else None
+
+
+@dataclass
+class ElementStyle:
+    light: ElementStyleMode | None = None
+    dark: ElementStyleMode | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        if self.light is not None:
+            light = self.light.to_dict()
+            if light:
+                out["light"] = light
+        if self.dark is not None:
+            dark = self.dark.to_dict()
+            if dark:
+                out["dark"] = dark
+        return out
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> ElementStyle | None:
+        if not data:
+            return None
+        light = ElementStyleMode.from_dict(data.get("light"))
+        dark = ElementStyleMode.from_dict(data.get("dark"))
+        if light is None and dark is None:
+            return None
+        return cls(light=light, dark=dark)
+
+    def merge(self, patch: dict[str, Any]) -> None:
+        if "light" in patch and patch["light"] is not None:
+            if self.light is None:
+                self.light = ElementStyleMode()
+            self.light.merge(patch["light"])
+        if "dark" in patch and patch["dark"] is not None:
+            if self.dark is None:
+                self.dark = ElementStyleMode()
+            self.dark.merge(patch["dark"])
 
 
 @dataclass
@@ -95,9 +186,10 @@ class VisualizationNode:
     symbol_ref: str = "default-part"
     side: PortSide | None = None
     offset: float | None = None
+    style: ElementStyle | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "artifactId": self.artifact_id,
             "x": self.x,
             "y": self.y,
@@ -107,6 +199,11 @@ class VisualizationNode:
             "side": self.side.value if self.side else None,
             "offset": self.offset,
         }
+        if self.style is not None:
+            style = self.style.to_dict()
+            if style:
+                out["style"] = style
+        return out
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VisualizationNode:
@@ -120,6 +217,7 @@ class VisualizationNode:
             symbol_ref=data.get("symbolRef") or "default-part",
             side=PortSide(side) if side else None,
             offset=data.get("offset"),
+            style=ElementStyle.from_dict(data.get("style")),
         )
 
 
@@ -127,13 +225,21 @@ class VisualizationNode:
 class Waypoint:
     x: float
     y: float
+    locked: bool = False
 
-    def to_dict(self) -> dict[str, float]:
-        return {"x": self.x, "y": self.y}
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {"x": self.x, "y": self.y}
+        if self.locked:
+            out["locked"] = True
+        return out
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Waypoint:
-        return cls(x=float(data["x"]), y=float(data["y"]))
+        return cls(
+            x=float(data["x"]),
+            y=float(data["y"]),
+            locked=bool(data.get("locked", False)),
+        )
 
 
 @dataclass
@@ -143,9 +249,10 @@ class VisualizationEdge:
     waypoints: list[Waypoint] = field(default_factory=list)
     label_offset_x: float = 0.0
     label_offset_y: float = 0.0
+    style: ElementStyle | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "artifactId": self.artifact_id,
             "routing": self.routing.value,
             "waypoints": [w.to_dict() for w in self.waypoints],
@@ -154,6 +261,11 @@ class VisualizationEdge:
                 "y": self.label_offset_y,
             },
         }
+        if self.style is not None:
+            style = self.style.to_dict()
+            if style:
+                out["style"] = style
+        return out
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VisualizationEdge:
@@ -164,6 +276,7 @@ class VisualizationEdge:
             waypoints=[Waypoint.from_dict(w) for w in data.get("waypoints") or []],
             label_offset_x=float(lo.get("x", 0) or 0),
             label_offset_y=float(lo.get("y", 0) or 0),
+            style=ElementStyle.from_dict(data.get("style")),
         )
 
 
@@ -199,6 +312,7 @@ class ViewDef:
     name: str
     root_artifact_id: str
     parent_view_id: str | None = None
+    type_ref: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -206,6 +320,7 @@ class ViewDef:
             "name": self.name,
             "rootArtifactId": self.root_artifact_id,
             "parentViewId": self.parent_view_id,
+            "typeRef": self.type_ref,
         }
 
     @classmethod
@@ -215,6 +330,7 @@ class ViewDef:
             name=data["name"],
             root_artifact_id=data["rootArtifactId"],
             parent_view_id=data.get("parentViewId"),
+            type_ref=data.get("typeRef"),
         )
 
 
@@ -225,6 +341,8 @@ class SysmlFile:
     content: str
     warnings: list[str] = field(default_factory=list)
     source_path: str | None = None
+    # Relative path within the project directory (on-disk location)
+    path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -233,17 +351,27 @@ class SysmlFile:
             "content": self.content,
             "warnings": list(self.warnings),
             "sourcePath": self.source_path,
+            "path": self.path or self.name,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SysmlFile:
+        name = data["name"]
         return cls(
             id=data["id"],
-            name=data["name"],
-            content=data["content"],
+            name=name,
+            content=data.get("content") or "",
             warnings=list(data.get("warnings") or []),
             source_path=data.get("sourcePath"),
+            path=data.get("path") or name,
         )
+
+    def relative_path(self) -> str:
+        return self.path or self.name
+
+
+def default_sheet() -> dict[str, Any]:
+    return {"titleBlock": None, "frame": None}
 
 
 @dataclass
@@ -256,8 +384,20 @@ class Project:
     semantic: dict[str, SemanticElement] = field(default_factory=dict)
     visualization: VisualizationModel = field(default_factory=VisualizationModel)
     views: list[ViewDef] = field(default_factory=list)
+    sheet: dict[str, Any] | None = None
+    view_layouts: Any = None  # ViewLayouts; typed loosely to avoid cycle
+
+    def __post_init__(self) -> None:
+        if self.view_layouts is None:
+            from domain.view_layouts import ViewLayouts
+
+            self.view_layouts = ViewLayouts()
 
     def to_dict(self) -> dict[str, Any]:
+        sheet = self.sheet if self.sheet is not None else default_sheet()
+        from domain.view_layouts import ViewLayouts
+
+        layouts = self.view_layouts if isinstance(self.view_layouts, ViewLayouts) else ViewLayouts()
         return {
             "id": self.id,
             "name": self.name,
@@ -267,10 +407,17 @@ class Project:
             "semantic": {k: v.to_dict() for k, v in self.semantic.items()},
             "visualization": self.visualization.to_dict(),
             "views": [v.to_dict() for v in self.views],
+            "sheet": sheet,
+            "viewLayouts": layouts.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Project:
+        from domain.view_layouts import ViewLayouts
+
+        sheet = data.get("sheet")
+        if sheet is None:
+            sheet = default_sheet()
         return cls(
             id=data["id"],
             name=data["name"],
@@ -283,6 +430,8 @@ class Project:
             },
             visualization=VisualizationModel.from_dict(data.get("visualization")),
             views=[ViewDef.from_dict(v) for v in data.get("views") or []],
+            sheet=sheet,
+            view_layouts=ViewLayouts.from_dict(data.get("viewLayouts")),
         )
 
     @classmethod
@@ -293,4 +442,5 @@ class Project:
             name=name,
             created_at=now,
             updated_at=now,
+            sheet=default_sheet(),
         )
