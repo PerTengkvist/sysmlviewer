@@ -1,0 +1,248 @@
+#!/usr/bin/env bash
+# SysML Viewer process manager: start/stop backend + frontend.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SESSION_FILE="$ROOT/running-session.json"
+LOG_DIR="$ROOT/logs"
+BACKEND_PORT=5174
+FRONTEND_PORT=5173
+
+BACKEND_DIR="$ROOT/backend"
+FRONTEND_DIR="$ROOT/frontend"
+BACKEND_VENV="$BACKEND_DIR/.venv"
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <start|stop|status> [options]
+
+  start   Start backend (:$BACKEND_PORT) and frontend (:$FRONTEND_PORT)
+          Options (forwarded to backend):
+            -f, --folder PATH     Open workspace folder
+            -p, --project PATH    Open project.json (parent = workspace)
+  stop    Stop processes recorded in running-session.json
+  status  Show whether a session is running
+EOF
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+ensure_backend() {
+  if [[ ! -x "$BACKEND_VENV/bin/uvicorn" ]]; then
+    die "backend venv missing. Run: cd backend && python3 -m venv .venv && source .venv/bin/activate && pip install -e \".[dev]\""
+  fi
+}
+
+ensure_frontend() {
+  if [[ ! -d "$FRONTEND_DIR/node_modules" ]]; then
+    die "frontend deps missing. Run: cd frontend && npm install"
+  fi
+}
+
+port_in_use() {
+  local port="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+  else
+    return 1
+  fi
+}
+
+pid_alive() {
+  local pid="$1"
+  [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
+}
+
+kill_tree() {
+  local pid="$1"
+  if ! pid_alive "$pid"; then
+    return 0
+  fi
+  local child
+  while read -r child; do
+    [[ -n "$child" ]] && kill_tree "$child"
+  done < <(pgrep -P "$pid" 2>/dev/null || true)
+  kill "$pid" 2>/dev/null || true
+  # Force if still alive after a short wait
+  sleep 0.3
+  if pid_alive "$pid"; then
+    kill -9 "$pid" 2>/dev/null || true
+  fi
+}
+
+read_session_pids() {
+  python3 - "$SESSION_FILE" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as f:
+    data = json.load(f)
+print(data.get("backendPid") or "")
+print(data.get("frontendPid") or "")
+print(data.get("backendPort") or "")
+print(data.get("frontendPort") or "")
+PY
+}
+
+cmd_start() {
+  local backend_extra=()
+  shift || true
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -f|--folder)
+        [[ $# -ge 2 ]] || die "-f requires a path"
+        # Absolutize against caller's cwd before we cd into backend/
+        backend_extra+=(-f "$(python3 -c 'import sys; from pathlib import Path; print(Path(sys.argv[1]).expanduser().resolve())' "$2")")
+        shift 2
+        ;;
+      -p|--project)
+        [[ $# -ge 2 ]] || die "-p requires a path"
+        backend_extra+=(-p "$(python3 -c 'import sys; from pathlib import Path; print(Path(sys.argv[1]).expanduser().resolve())' "$2")")
+        shift 2
+        ;;
+      *)
+        die "unknown start option: $1"
+        ;;
+    esac
+  done
+
+  if [[ -f "$SESSION_FILE" ]]; then
+    local bpid fpid
+    {
+      read -r bpid
+      read -r fpid
+    } < <(read_session_pids)
+    if pid_alive "$bpid" || pid_alive "$fpid"; then
+      die "session already running (see $SESSION_FILE). Run: $(basename "$0") stop"
+    fi
+    rm -f "$SESSION_FILE"
+  fi
+
+  ensure_backend
+  ensure_frontend
+
+  if port_in_use "$BACKEND_PORT"; then
+    die "port $BACKEND_PORT is already in use"
+  fi
+  if port_in_use "$FRONTEND_PORT"; then
+    die "port $FRONTEND_PORT is already in use"
+  fi
+
+  mkdir -p "$LOG_DIR"
+
+  (
+    cd "$BACKEND_DIR"
+    # shellcheck disable=SC1091
+    source "$BACKEND_VENV/bin/activate"
+    export PYTHONPATH="$BACKEND_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+    if [[ ${#backend_extra[@]} -gt 0 ]]; then
+      exec python -m cli --host 127.0.0.1 --port "$BACKEND_PORT" --reload "${backend_extra[@]}"
+    else
+      exec python -m cli --host 127.0.0.1 --port "$BACKEND_PORT" --reload
+    fi
+  ) >"$LOG_DIR/backend.log" 2>&1 &
+  local backend_pid=$!
+
+  (
+    cd "$FRONTEND_DIR"
+    exec npm run dev -- --host 127.0.0.1 --port "$FRONTEND_PORT"
+  ) >"$LOG_DIR/frontend.log" 2>&1 &
+  local frontend_pid=$!
+
+  # Brief readiness wait
+  sleep 1
+  if ! pid_alive "$backend_pid"; then
+    kill_tree "$frontend_pid" || true
+    die "backend failed to start — see $LOG_DIR/backend.log"
+  fi
+  if ! pid_alive "$frontend_pid"; then
+    kill_tree "$backend_pid" || true
+    die "frontend failed to start — see $LOG_DIR/frontend.log"
+  fi
+
+  python3 - "$SESSION_FILE" "$backend_pid" "$frontend_pid" "$BACKEND_PORT" "$FRONTEND_PORT" "$ROOT" <<'PY'
+import json, sys
+from datetime import datetime, timezone
+
+path, bpid, fpid, bport, fport, root = sys.argv[1:]
+payload = {
+    "startedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "root": root,
+    "backendPid": int(bpid),
+    "frontendPid": int(fpid),
+    "backendPort": int(bport),
+    "frontendPort": int(fport),
+}
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(payload, f, indent=2)
+    f.write("\n")
+PY
+
+  echo "started"
+  echo "  UI:      http://127.0.0.1:$FRONTEND_PORT"
+  echo "  API:     http://127.0.0.1:$BACKEND_PORT/docs"
+  echo "  session: $SESSION_FILE"
+  echo "  logs:    $LOG_DIR/"
+}
+
+cmd_stop() {
+  if [[ ! -f "$SESSION_FILE" ]]; then
+    echo "no running-session.json — nothing to stop"
+    exit 0
+  fi
+
+  local bpid fpid
+  {
+    read -r bpid
+    read -r fpid
+  } < <(read_session_pids)
+
+  echo "stopping session…"
+  kill_tree "$fpid"
+  kill_tree "$bpid"
+
+  rm -f "$SESSION_FILE"
+  echo "stopped"
+}
+
+cmd_status() {
+  if [[ ! -f "$SESSION_FILE" ]]; then
+    echo "status: stopped (no session file)"
+    exit 0
+  fi
+
+  local bpid fpid bport fport
+  {
+    read -r bpid
+    read -r fpid
+    read -r bport
+    read -r fport
+  } < <(read_session_pids)
+
+  local bstate=dead fstate=dead
+  pid_alive "$bpid" && bstate=running
+  pid_alive "$fpid" && fstate=running
+
+  echo "status: session file present"
+  echo "  backend  pid=$bpid port=$bport ($bstate)"
+  echo "  frontend pid=$fpid port=$fport ($fstate)"
+
+  if [[ "$bstate" == dead && "$fstate" == dead ]]; then
+    echo "  hint: stale session — run: $(basename "$0") stop"
+  fi
+}
+
+main() {
+  local cmd="${1:-}"
+  case "$cmd" in
+    start) cmd_start "$@" ;;
+    stop) cmd_stop ;;
+    status) cmd_status ;;
+    -h|--help|help|"") usage; [[ -n "$cmd" ]] || exit 1 ;;
+    *) usage; die "unknown command: $cmd" ;;
+  esac
+}
+
+main "$@"
