@@ -7,6 +7,7 @@ import {
   moveAngularSegment,
   moveWaypointInList,
   portLabelStyle,
+  reattachWaypointsToEnds,
   resolveRoutePoints,
   translateFlowBounds,
   translatePoints,
@@ -201,5 +202,30 @@ describe('translatePoints', () => {
         4,
       ),
     ).toEqual({ minX: 8, minY: 14, maxX: 108, maxY: 204 })
+  })
+})
+
+describe('reattach after port move', () => {
+  it('keeps the middle of the route and only stubs to the new port', () => {
+    const wps = [
+      { x: 100, y: 40 },
+      { x: 100, y: 160 },
+    ]
+    const next = reattachWaypointsToEnds(20, 120, 200, 160, wps)
+    const path = resolveRoutePoints(20, 120, 200, 160, next)
+    expect(path[0]).toEqual({ x: 20, y: 120 })
+    expect(path[path.length - 1]).toEqual({ x: 200, y: 160 })
+    expect(path.some((p) => Math.abs(p.x - 100) < 1)).toBe(true)
+  })
+
+  it('resolveRoutePoints reattaches instead of dropping the route', () => {
+    const wps = [
+      { x: 80, y: 50 },
+      { x: 80, y: 150 },
+      { x: 180, y: 150 },
+    ]
+    const path = resolveRoutePoints(30, 90, 180, 150, wps)
+    expect(path.some((p) => Math.abs(p.x - 80) < 1)).toBe(true)
+    expect(path[0]).toEqual({ x: 30, y: 90 })
   })
 })

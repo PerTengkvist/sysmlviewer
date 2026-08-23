@@ -1,6 +1,27 @@
-export type ArtifactKind = 'package' | 'part' | 'port' | 'connection' | 'view' | 'attribute'
+export type ArtifactKind =
+  | 'package'
+  | 'part'
+  | 'port'
+  | 'connection'
+  | 'view'
+  | 'attribute'
+  | 'interaction'
+  | 'lifeline'
+  | 'message'
+  | 'state'
+  | 'transition'
+  | 'action'
+  | 'succession'
 export type RoutingType = 'angular' | 'direct' | 'spline'
 export type PortSide = 'left' | 'right' | 'top' | 'bottom'
+export type DiagramMode =
+  | 'whitebox'
+  | 'structure'
+  | 'sequence'
+  | 'state'
+  | 'actionFlow'
+  | 'tree'
+  | 'allocation'
 
 export interface SemanticElement {
   id: string
@@ -16,6 +37,25 @@ export interface SemanticElement {
   fileId: string | null
 }
 
+export interface ElementStyleMode {
+  backgroundColor?: string | null
+  lineColor?: string | null
+  textColor?: string | null
+  lineThickness?: number | null
+}
+
+export interface ElementStyle {
+  light?: ElementStyleMode | null
+  dark?: ElementStyleMode | null
+}
+
+export interface Waypoint {
+  x: number
+  y: number
+  /** When true, redraw/autoroute must keep this point. */
+  locked?: boolean
+}
+
 export interface VisualizationNode {
   artifactId: string
   x: number
@@ -25,13 +65,15 @@ export interface VisualizationNode {
   symbolRef: string
   side: PortSide | null
   offset: number | null
+  style?: ElementStyle | null
 }
 
 export interface VisualizationEdge {
   artifactId: string
   routing: RoutingType
-  waypoints: { x: number; y: number }[]
+  waypoints: Waypoint[]
   labelOffset?: { x: number; y: number } | null
+  style?: ElementStyle | null
 }
 
 export interface SysmlFile {
@@ -40,6 +82,7 @@ export interface SysmlFile {
   content: string
   warnings: string[]
   sourcePath?: string | null
+  path?: string | null
 }
 
 export interface ViewDef {
@@ -47,6 +90,7 @@ export interface ViewDef {
   name: string
   rootArtifactId: string
   parentViewId: string | null
+  typeRef?: string | null
 }
 
 export interface Project {
@@ -61,6 +105,38 @@ export interface Project {
     edges: Record<string, VisualizationEdge>
   }
   views: ViewDef[]
+  sheet?: {
+    titleBlock: {
+      title: string
+      createdBy: string
+      editedBy: string
+      version: string
+      lastUpdated: string
+      drawingId: string
+      position: 'top-left' | 'top-right' | 'bottom-right' | 'bottom-left'
+    } | null
+    frame: {
+      paper: 'A4' | 'A3'
+      orientation: 'landscape' | 'portrait'
+      visible: boolean
+    } | null
+  }
+  /** Per-view geometry overlays (nodes and connection routing). */
+  viewLayouts?: Record<
+    string,
+    {
+      nodes: Record<
+        string,
+        Partial<Pick<VisualizationNode, 'x' | 'y' | 'width' | 'height'>>
+      >
+      edges?: Record<
+        string,
+        Partial<
+          Pick<VisualizationEdge, 'routing' | 'waypoints' | 'labelOffset'>
+        >
+      >
+    }
+  >
 }
 
 export interface ProjectSummary {
@@ -69,9 +145,16 @@ export interface ProjectSummary {
   updatedAt: string
 }
 
+export interface SessionPayload {
+  workspaceRoot: string | null
+  project: Project | null
+}
+
 export interface ViewPayload {
   view: ViewDef
-  diagramMode?: 'whitebox' | 'structure'
+  diagramMode?: DiagramMode
+  hierarchicalLevels?: number
+  modeError?: string | null
   semantic: Record<string, SemanticElement>
   visualization: {
     nodes: Record<string, VisualizationNode>
@@ -93,12 +176,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getSession: () => request<SessionPayload>('/session'),
+  createSession: (name: string, folder: string) =>
+    request<SessionPayload>('/session/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, folder }),
+    }),
+  openSession: (body: { folder?: string; projectFile?: string }) =>
+    request<SessionPayload>('/session/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
   listProjects: () => request<ProjectSummary[]>('/projects'),
-  createProject: (name: string) =>
+  createProject: (name: string, folder?: string) =>
     request<Project>('/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, ...(folder ? { folder } : {}) }),
     }),
   getProject: (id: string) => request<Project>(`/projects/${id}`),
   deleteProject: (id: string) =>
@@ -111,39 +207,51 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
-  uploadFile: async (projectId: string, file: File, sourcePath?: string | null) => {
-    const form = new FormData()
-    form.append('file', file)
-    form.append('name', file.name)
-    if (sourcePath) {
-      form.append('sourcePath', sourcePath)
-    }
-    return request<Project>(`/projects/${projectId}/files`, {
+  addFileByPath: (projectId: string, path: string, content?: string) =>
+    request<Project>(`/projects/${projectId}/files`, {
       method: 'POST',
-      body: form,
-    })
-  },
-  refreshFile: async (
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, ...(content != null ? { content } : {}) }),
+    }),
+  refreshFile: (projectId: string, fileId: string) =>
+    request<Project>(
+      `/projects/${projectId}/files/refresh/${fileId.split('/').map(encodeURIComponent).join('/')}`,
+      {
+        method: 'POST',
+      },
+    ),
+  putTitleBlock: (
     projectId: string,
-    fileId: string,
-    file: File,
-    sourcePath?: string | null,
-  ) => {
-    const form = new FormData()
-    form.append('file', file)
-    if (sourcePath) {
-      form.append('sourcePath', sourcePath)
-    }
-    return request<Project>(`/projects/${projectId}/files/${fileId}/refresh`, {
-      method: 'POST',
-      body: form,
-    })
-  },
+    body: NonNullable<NonNullable<Project['sheet']>['titleBlock']>,
+  ) =>
+    request<Project>(`/projects/${projectId}/sheet/title-block`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  deleteTitleBlock: (projectId: string) =>
+    request<Project>(`/projects/${projectId}/sheet/title-block`, {
+      method: 'DELETE',
+    }),
+  putFrame: (
+    projectId: string,
+    body: NonNullable<NonNullable<Project['sheet']>['frame']>,
+  ) =>
+    request<Project>(`/projects/${projectId}/sheet/frame`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  deleteFrame: (projectId: string) =>
+    request<Project>(`/projects/${projectId}/sheet/frame`, {
+      method: 'DELETE',
+    }),
   patchVisualization: (
     projectId: string,
     patch: {
       nodes?: Record<string, Partial<VisualizationNode>>
       edges?: Record<string, Partial<VisualizationEdge>>
+      viewId?: string
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {
@@ -201,10 +309,30 @@ export const api = {
     request<Project>(`/projects/${projectId}/semantic/${encodeURIComponent(artifactId)}`, {
       method: 'DELETE',
     }),
-  patchFileSourcePath: (projectId: string, fileId: string, sourcePath: string | null) =>
-    request<Project>(`/projects/${projectId}/files/${fileId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sourcePath }),
-    }),
+  renameFile: (
+    projectId: string,
+    fileId: string,
+    body: { name?: string; path?: string; sourcePath?: string | null },
+  ) =>
+    request<Project>(
+      `/projects/${projectId}/files/item/${fileId.split('/').map(encodeURIComponent).join('/')}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+    ),
+  deleteFile: (projectId: string, fileId: string) =>
+    request<Project>(
+      `/projects/${projectId}/files/item/${fileId.split('/').map(encodeURIComponent).join('/')}`,
+      {
+        method: 'DELETE',
+      },
+    ),
+  listDocumentation: (projectId: string) =>
+    request<{ paths: string[] }>(`/projects/${projectId}/documentation`),
+  fetchDocumentation: (projectId: string, docPath: string) =>
+    request<{ path: string; content: string }>(
+      `/projects/${projectId}/documentation/${docPath.split('/').map(encodeURIComponent).join('/')}`,
+    ),
 }

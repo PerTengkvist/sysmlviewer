@@ -1,27 +1,27 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   api,
+  type ElementStyle,
   type PortSide,
   type Project,
-  type ProjectSummary,
   type RoutingType,
   type ViewPayload,
   type VisualizationEdge,
   type VisualizationNode,
 } from './api'
 import { DiagramCanvas } from './features/diagram/DiagramCanvas'
-import { DetailsPanel } from './features/details/DetailsPanel'
+import { RightSidebar } from './features/details/RightSidebar'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
-import {
-  deleteFileHandlesForProject,
-  exportSysmlFile,
-  loadFileHandle,
-  pickSysmlFile,
-  pickSysmlFiles,
-  saveFileHandle,
-  writeFileHandle,
-  type PickedSysmlFile,
-} from './features/files/fileHandles'
+import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
+import { WorkspaceLayout } from './features/layout/WorkspaceLayout'
+import { WorkspaceDialog } from './features/files/WorkspaceDialog'
+import { normalizeRelSysmlPath } from './features/files/workspacePaths'
+import { PrintDialog } from './features/print/PrintDialog'
+import { PrintSheet } from './features/print/PrintSheet'
+import { buildPrintPages, type PrintPage } from './features/print/printLayout'
+import { docPathForArtifact } from './features/docs/docPath'
+import { SheetDialog } from './features/sheet/SheetDialog'
+import { normalizeSheet, type ProjectSheet } from './features/sheet/sheet'
 import { SettingsDialog } from './features/settings/SettingsDialog'
 import {
   applyTheme,
@@ -30,10 +30,13 @@ import {
   type AppSettings,
 } from './settings'
 
-type CanvasMode = { type: 'diagram' } | { type: 'text'; fileId: string }
+type CanvasMode =
+  | { type: 'diagram' }
+  | { type: 'text'; fileId: string }
+  | { type: 'markdown'; docPath: string }
 
 export default function App() {
-  const [projects, setProjects] = useState<ProjectSummary[]>([])
+  const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
@@ -45,15 +48,69 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [workspaceDialog, setWorkspaceDialog] = useState<'new' | 'open' | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [printOpen, setPrintOpen] = useState(false)
+  const [printPages, setPrintPages] = useState<PrintPage[] | null>(null)
+  const [printReadyIds, setPrintReadyIds] = useState<Set<string>>(() => new Set())
+  const [printPreparing, setPrintPreparing] = useState(false)
+  const [autorouteRequest, setAutorouteRequest] = useState<{
+    connectionId: string
+    seq: number
+  } | null>(null)
+  const [docPaths, setDocPaths] = useState<string[]>([])
 
-  const refreshList = useCallback(async () => {
-    const list = await api.listProjects()
-    setProjects(list)
-  }, [])
+  const applySession = useCallback(
+    async (session: { workspaceRoot: string | null; project: Project | null }) => {
+      setWorkspaceRoot(session.workspaceRoot)
+      if (session.project) {
+        setProject(session.project)
+        setSelectedId(null)
+        setLeftTab('views')
+        const declared = session.project.views[0]
+        if (declared) {
+          const payload = await api.getView(
+            session.project.id,
+            declared.id,
+            settings.showDiagramDetails.hierarchicalLevels,
+          )
+          setViewPayload(payload)
+          setActiveViewId(declared.id)
+          setDiagramEpoch((n) => n + 1)
+          setCanvasMode({ type: 'diagram' })
+        } else {
+          const pkg = Object.values(session.project.semantic).find(
+            (e) => e.kind === 'package',
+          )
+          if (pkg) {
+            const payload = await api.getView(
+              session.project.id,
+              `artifact::${pkg.id}`,
+              settings.showDiagramDetails.hierarchicalLevels,
+            )
+            setViewPayload(payload)
+            setActiveViewId(`artifact::${pkg.id}`)
+            setDiagramEpoch((n) => n + 1)
+          } else {
+            setViewPayload(null)
+            setActiveViewId(null)
+          }
+        }
+      } else {
+        setProject(null)
+        setViewPayload(null)
+        setActiveViewId(null)
+      }
+    },
+    [settings.showDiagramDetails.hierarchicalLevels],
+  )
 
   useEffect(() => {
-    refreshList().catch((e) => setError(String(e)))
-  }, [refreshList])
+    api
+      .getSession()
+      .then((s) => applySession(s))
+      .catch((e) => setError(String(e)))
+  }, [applySession])
 
   useEffect(() => {
     applyTheme(settings.viewMode)
@@ -62,6 +119,7 @@ export default function App() {
 
   const levels = settings.showDiagramDetails.hierarchicalLevels
   const editorMode = settings.mode === 'editor'
+  const sheet: ProjectSheet = normalizeSheet(project?.sheet)
 
   const loadView = useCallback(
     async (projectId: string, viewId: string) => {
@@ -78,51 +136,77 @@ export default function App() {
     if (project && activeViewId) {
       void loadView(project.id, activeViewId)
     }
-    // reload when hierarchy depth changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [levels])
 
-  const loadProject = useCallback(
-    async (id: string) => {
-      setBusy(true)
-      setError(null)
-      try {
-        const p = await api.getProject(id)
-        setProject(p)
-        setSelectedId(null)
-        setLeftTab('views')
-        const declared = p.views[0]
-        if (declared) {
-          await loadView(p.id, declared.id)
-        } else {
-          const pkg = Object.values(p.semantic).find((e) => e.kind === 'package')
-          if (pkg) {
-            await loadView(p.id, `artifact::${pkg.id}`)
-          } else {
-            setViewPayload(null)
-            setActiveViewId(null)
-          }
-        }
-      } catch (e) {
-        setError(String(e))
-      } finally {
-        setBusy(false)
-      }
-    },
-    [loadView],
-  )
+  useEffect(() => {
+    if (!project) {
+      setDocPaths([])
+      return
+    }
+    let cancelled = false
+    void api.listDocumentation(project.id).then((res) => {
+      if (!cancelled) setDocPaths(res.paths)
+    }).catch(() => {
+      if (!cancelled) setDocPaths([])
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [project?.id, project?.updatedAt])
 
-  const createProject = async () => {
-    const name = window.prompt('Project name', 'New Project')
-    if (!name) return
+  const updateHorizontalLayout = useCallback((sizes: [number, number, number]) => {
+    setSettings((prev) => {
+      const next = { ...prev, horizontalPanelSizes: sizes }
+      saveSettings(next)
+      return next
+    })
+  }, [])
+
+  const updateRightLayout = useCallback((sizes: [number, number]) => {
+    setSettings((prev) => {
+      const next = { ...prev, rightPanelSizes: sizes }
+      saveSettings(next)
+      return next
+    })
+  }, [])
+
+  const createProject = async (name: string, folder: string) => {
     setBusy(true)
+    setError(null)
     try {
-      const p = await api.createProject(name)
-      await refreshList()
-      setProject(p)
-      setViewPayload(null)
-      setActiveViewId(null)
+      const session = await api.createSession(name, folder)
+      setWorkspaceDialog(null)
+      await applySession(session)
       setLeftTab('files')
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const openFolder = async (folder: string) => {
+    setBusy(true)
+    setError(null)
+    try {
+      const session = await api.openSession({ folder })
+      setWorkspaceDialog(null)
+      await applySession(session)
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const openProjectFile = async (projectFile: string) => {
+    setBusy(true)
+    setError(null)
+    try {
+      const session = await api.openSession({ projectFile })
+      setWorkspaceDialog(null)
+      await applySession(session)
     } catch (e) {
       setError(String(e))
     } finally {
@@ -139,7 +223,6 @@ export default function App() {
         visualization: project.visualization,
       })
       setProject(saved)
-      await refreshList()
     } catch (e) {
       setError(String(e))
     } finally {
@@ -150,21 +233,19 @@ export default function App() {
   const deleteProject = async () => {
     if (!project) return
     const ok = window.confirm(
-      `Are you sure you want to delete project “${project.name}”? This removes all project data.`,
+      `Delete project metadata for “${project.name}”? SysML source files on disk are kept.`,
     )
     if (!ok) return
     setBusy(true)
     setError(null)
     try {
-      const id = project.id
-      await api.deleteProject(id)
-      await deleteFileHandlesForProject(id)
+      await api.deleteProject(project.id)
       setProject(null)
+      setWorkspaceRoot(null)
       setViewPayload(null)
       setActiveViewId(null)
       setSelectedId(null)
       setCanvasMode({ type: 'diagram' })
-      await refreshList()
     } catch (e) {
       setError(String(e))
     } finally {
@@ -182,39 +263,22 @@ export default function App() {
     }
   }
 
-  const syncDiskForProject = async (p: Project) => {
-    if (!editorMode) return
-    for (const file of p.files) {
-      const handle = await loadFileHandle(p.id, file.id)
-      if (handle) {
-        try {
-          await writeFileHandle(handle, file.content)
-        } catch (e) {
-          setError(`Could not write ${file.name}: ${String(e)}`)
-        }
-      }
-    }
-  }
-
-  const ingestPickedFiles = async (picked: PickedSysmlFile[]) => {
+  const addFileByPath = async () => {
     if (!project) {
       setError('Create or open a project first.')
       return
     }
-    if (!picked.length) return
+    const raw = window.prompt('Relative path to .sysml under the project folder', 'model.sysml')
+    if (!raw) return
+    const path = normalizeRelSysmlPath(raw)
+    if (!path) {
+      setError('Invalid relative path')
+      return
+    }
     setBusy(true)
     setError(null)
     try {
-      let latest = project
-      const knownIds = new Set(latest.files.map((f) => f.id))
-      for (const item of picked) {
-        latest = await api.uploadFile(project.id, item.file, item.sourcePath)
-        const added = latest.files.find((f) => !knownIds.has(f.id))
-        if (added && item.handle) {
-          await saveFileHandle(project.id, added.id, item.handle)
-        }
-        for (const f of latest.files) knownIds.add(f.id)
-      }
+      const latest = await api.addFileByPath(project.id, path)
       await applyProject(latest)
       setLeftTab('views')
     } catch (e) {
@@ -224,70 +288,43 @@ export default function App() {
     }
   }
 
-  const uploadFiles = async (files: FileList) => {
-    const picked: PickedSysmlFile[] = Array.from(files).map((file) => ({
-      file,
-      handle: null,
-      sourcePath: file.webkitRelativePath || file.name,
-    }))
-    await ingestPickedFiles(picked)
-  }
-
-  const pickAndUploadFiles = async () => {
-    try {
-      const picked = await pickSysmlFiles()
-      await ingestPickedFiles(picked)
-    } catch (e) {
-      if (String(e).includes('cancelled')) return
-      setError(String(e))
-    }
-  }
-
   const refreshFile = async (fileId: string) => {
     if (!project) return
+    setBusy(true)
     setError(null)
     try {
-      const existing = await loadFileHandle(project.id, fileId)
-      const picked = await pickSysmlFile({ existingHandle: existing })
-      setBusy(true)
-      const p = await api.refreshFile(project.id, fileId, picked.file, picked.sourcePath)
-      if (picked.handle) {
-        await saveFileHandle(project.id, fileId, picked.handle)
-      }
+      const p = await api.refreshFile(project.id, fileId)
       await applyProject(p)
     } catch (e) {
-      if (String(e).includes('cancelled')) return
       setError(String(e))
     } finally {
       setBusy(false)
     }
   }
 
-  const exportFile = async (fileId: string) => {
+  const mutateAndSync = async (fn: () => Promise<Project>) => {
     if (!project) return
-    const file = project.files.find((f) => f.id === fileId)
-    if (!file) return
+    setBusy(true)
+    setError(null)
     try {
-      const existing = await loadFileHandle(project.id, fileId)
-      const result = await exportSysmlFile({
-        content: file.content,
-        suggestedName: file.name,
-        existingHandle: existing,
-      })
-      if (result.handle) {
-        await saveFileHandle(project.id, fileId, result.handle)
-      }
-      const patched = await api.patchFileSourcePath(
-        project.id,
-        fileId,
-        result.sourcePath,
-      )
-      setProject(patched)
+      const p = await fn()
+      await applyProject(p)
     } catch (e) {
-      if (String(e).includes('cancelled')) return
       setError(String(e))
+    } finally {
+      setBusy(false)
     }
   }
+
+  const printDiagrams = useMemo(() => {
+    if (!project) return []
+    return project.views.map((v) => ({
+      id: v.id,
+      name: v.name,
+      widthPx: 640,
+      heightPx: 480,
+    }))
+  }, [project])
 
   const onNodesMoved = useCallback(
     async (
@@ -296,9 +333,11 @@ export default function App() {
     ) => {
       if (!project) return
       try {
+        const viewId = viewPayload?.view.id
         const patched = await api.patchVisualization(project.id, {
           nodes,
           ...(edges && Object.keys(edges).length ? { edges } : {}),
+          ...(viewId ? { viewId } : {}),
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -330,6 +369,7 @@ export default function App() {
                 waypoints: patch.waypoints ?? existing?.waypoints ?? [],
                 labelOffset:
                   patch.labelOffset ?? existing?.labelOffset ?? { x: 0, y: 0 },
+                style: patch.style ?? existing?.style,
               }
             }
           }
@@ -346,7 +386,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project],
+    [project, viewPayload?.view.id],
   )
 
   const onPortMoved = useCallback(
@@ -375,6 +415,7 @@ export default function App() {
                   symbolRef: existing?.symbolRef ?? 'default-port',
                   side,
                   offset,
+                  style: existing?.style,
                 },
               },
             },
@@ -387,12 +428,24 @@ export default function App() {
     [project],
   )
 
+  const onAutorouteConnection = useCallback((connectionId: string) => {
+    setAutorouteRequest((prev) => ({
+      connectionId,
+      seq: (prev?.seq ?? 0) + 1,
+    }))
+  }, [])
+
   const onWaypointsMoved = useCallback(
-    async (connectionId: string, waypoints: { x: number; y: number }[]) => {
+    async (
+      connectionId: string,
+      waypoints: { x: number; y: number; locked?: boolean }[],
+    ) => {
       if (!project) return
       try {
+        const viewId = viewPayload?.view.id
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, waypoints } },
+          ...(viewId ? { viewId } : {}),
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -409,6 +462,7 @@ export default function App() {
                   routing: existing?.routing ?? 'angular',
                   waypoints,
                   labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
+                  style: existing?.style,
                 },
               },
             },
@@ -418,15 +472,17 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project],
+    [project, viewPayload?.view.id],
   )
 
   const onLabelOffsetMoved = useCallback(
     async (connectionId: string, labelOffset: { x: number; y: number }) => {
       if (!project) return
       try {
+        const viewId = viewPayload?.view.id
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, labelOffset } },
+          ...(viewId ? { viewId } : {}),
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -452,15 +508,17 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project],
+    [project, viewPayload?.view.id],
   )
 
   const onRoutingChange = useCallback(
     async (connectionId: string, routing: RoutingType) => {
       if (!project) return
       try {
+        const viewId = viewPayload?.view.id
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, routing } },
+          ...(viewId ? { viewId } : {}),
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -477,6 +535,67 @@ export default function App() {
                   routing,
                   waypoints: existing?.waypoints ?? [],
                   labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
+                  style: existing?.style,
+                },
+              },
+            },
+          }
+        })
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, viewPayload?.view.id],
+  )
+
+  const onStyleChange = useCallback(
+    async (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => {
+      if (!project) return
+      try {
+        const patch =
+          kind === 'edge'
+            ? { edges: { [artifactId]: { artifactId, style } } }
+            : { nodes: { [artifactId]: { artifactId, style } } }
+        const patched = await api.patchVisualization(project.id, patch)
+        setProject(patched)
+        setViewPayload((prev) => {
+          if (!prev) return prev
+          if (kind === 'edge') {
+            const existing = prev.visualization.edges[artifactId]
+            return {
+              ...prev,
+              visualization: {
+                ...prev.visualization,
+                edges: {
+                  ...prev.visualization.edges,
+                  [artifactId]: {
+                    artifactId,
+                    routing: existing?.routing ?? 'angular',
+                    waypoints: existing?.waypoints ?? [],
+                    labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
+                    style,
+                  },
+                },
+              },
+            }
+          }
+          const existing = prev.visualization.nodes[artifactId]
+          return {
+            ...prev,
+            visualization: {
+              ...prev.visualization,
+              nodes: {
+                ...prev.visualization.nodes,
+                [artifactId]: {
+                  artifactId,
+                  x: existing?.x ?? 0,
+                  y: existing?.y ?? 0,
+                  width: existing?.width ?? 180,
+                  height: existing?.height ?? 100,
+                  symbolRef: existing?.symbolRef ?? 'default-part',
+                  side: existing?.side ?? null,
+                  offset: existing?.offset ?? null,
+                  style,
                 },
               },
             },
@@ -497,20 +616,6 @@ export default function App() {
     [project, loadView],
   )
 
-  const mutateAndSync = async (fn: () => Promise<Project>) => {
-    if (!project) return
-    setBusy(true)
-    try {
-      const p = await fn()
-      await applyProject(p)
-      await syncDiskForProject(p)
-    } catch (e) {
-      setError(String(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-
   const onConnectPorts = useCallback(
     async (sourcePortId: string, targetPortId: string) => {
       if (!project) return
@@ -529,34 +634,126 @@ export default function App() {
     (f) => canvasMode.type === 'text' && f.id === canvasMode.fileId,
   )
 
+  const runPrint = useCallback(
+    async (options: {
+      selected: Record<string, boolean>
+      mode: import('./features/print/printLayout').PrintMode
+      includeDescriptions: boolean
+    }) => {
+      if (!project) return
+      setPrintOpen(false)
+      const pages = buildPrintPages({
+        diagrams: printDiagrams,
+        selected: options.selected,
+        mode: options.mode,
+        sheet,
+      })
+      if (!pages.length) return
+
+      setPrintPreparing(true)
+      setError(null)
+      try {
+        const enriched = await Promise.all(
+          pages.map(async (page) => ({
+            ...page,
+            diagrams: await Promise.all(
+              page.diagrams.map(async (d) => {
+                const viewPayload = await api.getView(project.id, d.id)
+                let documentation: string | null = null
+                if (options.includeDescriptions) {
+                  const el = project.semantic[d.id]
+                  const path = docPathForArtifact(el)
+                  if (path) {
+                    try {
+                      const doc = await api.fetchDocumentation(project.id, path)
+                      documentation = doc.content
+                    } catch {
+                      documentation = null
+                    }
+                  }
+                }
+                return { ...d, viewPayload, documentation }
+              }),
+            ),
+          })),
+        )
+        setPrintReadyIds(new Set())
+        setPrintPages(enriched)
+      } catch (e) {
+        setError(String(e))
+        setPrintPages(null)
+      } finally {
+        setPrintPreparing(false)
+      }
+    },
+    [project, printDiagrams, sheet],
+  )
+
+  const printDiagramCount = useMemo(
+    () => printPages?.reduce((n, p) => n + p.diagrams.length, 0) ?? 0,
+    [printPages],
+  )
+
+  useEffect(() => {
+    if (!printPages || printDiagramCount === 0) return
+    if (printReadyIds.size < printDiagramCount) return
+    const id = requestAnimationFrame(() => window.print())
+    return () => cancelAnimationFrame(id)
+  }, [printPages, printDiagramCount, printReadyIds])
+
+  useEffect(() => {
+    const clearPrint = () => {
+      setPrintPages(null)
+      setPrintReadyIds(new Set())
+    }
+    window.addEventListener('afterprint', clearPrint)
+    return () => window.removeEventListener('afterprint', clearPrint)
+  }, [])
+
+  const onPrintDiagramReady = useCallback((diagramId: string) => {
+    setPrintReadyIds((prev) => {
+      if (prev.has(diagramId)) return prev
+      const next = new Set(prev)
+      next.add(diagramId)
+      return next
+    })
+  }, [])
+
   return (
-    <div className="app-shell">
-      <header className="app-header">
+    <div className={`app-shell${printPages ? ' printing' : ''}`}>
+      <header className="app-header no-print">
         <div className="brand">SysML Viewer</div>
         <div className="header-actions">
-          <select
-            value={project?.id || ''}
-            onChange={(e) => {
-              if (e.target.value) void loadProject(e.target.value)
-            }}
-          >
-            <option value="" disabled>
-              Select project…
-            </option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <button type="button" onClick={() => void createProject()}>
+          <span className="workspace-label muted" title={workspaceRoot || undefined}>
+            {project ? project.name : 'No project'}
+            {workspaceRoot ? ` — ${workspaceRoot}` : ''}
+          </span>
+          <button type="button" onClick={() => setWorkspaceDialog('new')}>
             New
+          </button>
+          <button type="button" onClick={() => setWorkspaceDialog('open')}>
+            Open
           </button>
           <button type="button" disabled={!project || busy} onClick={() => void saveProject()}>
             Save
           </button>
           <button type="button" disabled={!project || busy} onClick={() => void deleteProject()}>
             Delete
+          </button>
+          <button
+            type="button"
+            disabled={!project}
+            onClick={() => setSheetOpen(true)}
+            title="Drawing sheet"
+          >
+            Sheet
+          </button>
+          <button
+            type="button"
+            disabled={!project || !project.views.length}
+            onClick={() => setPrintOpen(true)}
+          >
+            Print
           </button>
           <button
             type="button"
@@ -568,12 +765,13 @@ export default function App() {
             ⚙
           </button>
           {busy && <span className="muted">Working…</span>}
+          {printPreparing && <span className="muted">Preparing print…</span>}
           {editorMode && <span className="mode-badge">Editor</span>}
         </div>
       </header>
 
       {error && (
-        <div className="error-banner" role="alert">
+        <div className="error-banner no-print" role="alert">
           {error}
           <button type="button" onClick={() => setError(null)}>
             Dismiss
@@ -587,107 +785,186 @@ export default function App() {
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
       />
-
-      <div className="workspace">
-        <LeftSidebar
-          project={project}
-          activeTab={leftTab}
-          onTabChange={setLeftTab}
+      <WorkspaceDialog
+        open={workspaceDialog != null}
+        mode={workspaceDialog || 'new'}
+        initialFolder={workspaceRoot || ''}
+        onClose={() => setWorkspaceDialog(null)}
+        onCreate={(name, folder) => void createProject(name, folder)}
+        onOpenFolder={(folder) => void openFolder(folder)}
+        onOpenProjectFile={(pf) => void openProjectFile(pf)}
+      />
+      {project && (
+        <SheetDialog
+          open={sheetOpen}
+          sheet={sheet}
+          onClose={() => setSheetOpen(false)}
+          onSaveTitleBlock={(block) =>
+            void mutateAndSync(() => api.putTitleBlock(project.id, block))
+          }
+          onClearTitleBlock={() =>
+            void mutateAndSync(() => api.deleteTitleBlock(project.id))
+          }
+          onSaveFrame={(frame) =>
+            void mutateAndSync(() => api.putFrame(project.id, frame))
+          }
+          onClearFrame={() => void mutateAndSync(() => api.deleteFrame(project.id))}
+        />
+      )}
+      {project && (
+        <PrintDialog
+          open={printOpen}
+          diagrams={printDiagrams}
           activeViewId={activeViewId}
-          selectedArtifactId={selectedId}
-          onSelectView={(viewId) => {
-            if (!project) return
-            setSelectedId(viewId)
-            void loadView(project.id, viewId)
-          }}
-          onSelectArtifact={(artifactId) => {
-            if (!project) return
-            setSelectedId(artifactId)
-            const el = project.semantic[artifactId]
-            if (el?.kind === 'package') {
-              const general = Object.values(project.semantic)
-                .filter(
-                  (v) =>
-                    v.kind === 'view' &&
-                    v.parentId === artifactId &&
-                    (v.typeRef === 'GeneralView' || !v.typeRef),
-                )
-                .sort((a, b) => a.id.localeCompare(b.id))[0]
-              if (general) {
-                void loadView(project.id, general.id)
-                return
+          sheet={sheet}
+          onClose={() => setPrintOpen(false)}
+          onPrint={runPrint}
+        />
+      )}
+
+      <WorkspaceLayout
+        layout={settings}
+        onLayoutChange={updateHorizontalLayout}
+        left={
+          <LeftSidebar
+            project={project}
+            docPaths={docPaths}
+            activeTab={leftTab}
+            onTabChange={setLeftTab}
+            activeViewId={activeViewId}
+            selectedArtifactId={selectedId}
+            onSelectView={(viewId) => {
+              if (!project) return
+              setSelectedId(viewId)
+              void loadView(project.id, viewId)
+            }}
+            onSelectArtifact={(artifactId) => {
+              if (!project) return
+              setSelectedId(artifactId)
+              const el = project.semantic[artifactId]
+              if (el?.kind === 'package') {
+                const general = Object.values(project.semantic)
+                  .filter(
+                    (v) =>
+                      v.kind === 'view' &&
+                      v.parentId === artifactId &&
+                      (v.typeRef === 'GeneralView' || !v.typeRef),
+                  )
+                  .sort((a, b) => a.id.localeCompare(b.id))[0]
+                if (general) {
+                  void loadView(project.id, general.id)
+                  return
+                }
               }
+              void loadView(project.id, `artifact::${artifactId}`)
+            }}
+            onAddFilePath={() => void addFileByPath()}
+            onRefreshFile={(id) => void refreshFile(id)}
+            onDeleteFile={(id) =>
+              void mutateAndSync(async () => {
+                const p = await api.deleteFile(project!.id, id)
+                return p
+              })
             }
-            void loadView(project.id, `artifact::${artifactId}`)
-          }}
-          onUploadFiles={(files) => void uploadFiles(files)}
-          onPickUpload={() => void pickAndUploadFiles()}
-          onRefreshFile={(id) => void refreshFile(id)}
-          onExportFile={(id) => void exportFile(id)}
-          onShowText={(fileId) => setCanvasMode({ type: 'text', fileId })}
-        />
-
-        <main className="canvas-area">
-          {canvasMode.type === 'text' && textFile ? (
-            <div className="text-canvas">
-              <div className="text-canvas-toolbar">
-                <strong>{textFile.name}</strong>
-                <button type="button" onClick={() => setCanvasMode({ type: 'diagram' })}>
-                  Back to diagram
-                </button>
-              </div>
-              <pre>{textFile.content}</pre>
-              {textFile.warnings.length > 0 && (
-                <div className="parse-warnings">
-                  <h3>Parse warnings</h3>
-                  <ul>
-                    {textFile.warnings.map((w) => (
-                      <li key={w}>{w}</li>
-                    ))}
-                  </ul>
+            onShowText={(fileId) => setCanvasMode({ type: 'text', fileId })}
+            onShowMarkdown={(path) => setCanvasMode({ type: 'markdown', docPath: path })}
+          />
+        }
+        center={
+          <main className="canvas-area">
+            {canvasMode.type === 'text' && textFile ? (
+              <div className="text-canvas">
+                <div className="text-canvas-toolbar">
+                  <strong>{textFile.name}</strong>
+                  <button type="button" onClick={() => setCanvasMode({ type: 'diagram' })}>
+                    Back to diagram
+                  </button>
                 </div>
-              )}
-            </div>
-          ) : (
-            <DiagramCanvas
-              view={viewPayload}
-              diagramEpoch={diagramEpoch}
-              showAttributes={settings.showDiagramDetails.attributes}
-              onSelectArtifact={setSelectedId}
-              onOpenView={onOpenView}
-              onNodesMoved={(nodes) => void onNodesMoved(nodes)}
-              onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
-              onConnectPorts={(source, target) => void onConnectPorts(source, target)}
-              onWaypointsMoved={(id, wps) => void onWaypointsMoved(id, wps)}
-              onLabelOffsetMoved={(id, off) => void onLabelOffsetMoved(id, off)}
-            />
-          )}
-        </main>
+                <pre>{textFile.content}</pre>
+                {textFile.warnings.length > 0 && (
+                  <div className="parse-warnings">
+                    <h3>Parse warnings</h3>
+                    <ul>
+                      {textFile.warnings.map((w) => (
+                        <li key={w}>{w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : canvasMode.type === 'markdown' ? (
+              <MarkdownCanvas
+                projectId={project?.id}
+                docPath={canvasMode.docPath}
+                onBack={() => setCanvasMode({ type: 'diagram' })}
+              />
+            ) : (
+              <DiagramCanvas
+                view={viewPayload}
+                diagramEpoch={diagramEpoch}
+                viewMode={settings.viewMode}
+                showAttributes={settings.showDiagramDetails.attributes}
+                selectedConnectionColor={settings.selectedConnectionColor}
+                selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
+                connectionSeparation={settings.connectionSeparation}
+                sheet={sheet}
+                onSelectArtifact={setSelectedId}
+                onOpenView={onOpenView}
+                onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
+                onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
+                onConnectPorts={(source, target) => void onConnectPorts(source, target)}
+                onWaypointsMoved={(id, wps) => void onWaypointsMoved(id, wps)}
+                onLabelOffsetMoved={(id, off) => void onLabelOffsetMoved(id, off)}
+                autorouteRequest={autorouteRequest}
+              />
+            )}
+          </main>
+        }
+        right={
+          <RightSidebar
+            layout={settings}
+            onLayoutChange={updateRightLayout}
+            project={project}
+            viewVisualization={viewPayload?.visualization}
+            selectedId={selectedId}
+            editorMode={editorMode}
+            viewMode={settings.viewMode}
+            onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
+            onAutoroute={(id) => void onAutorouteConnection(id)}
+            onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}
+            onStyleChange={(id, style, kind) => void onStyleChange(id, style, kind)}
+            onRename={(id, name) =>
+              void mutateAndSync(() => api.renameArtifact(project!.id, id, name))
+            }
+            onAddPart={(parentId) =>
+              void mutateAndSync(() => api.addPart(project!.id, { parentId }))
+            }
+            onAddPort={(parentId) =>
+              void mutateAndSync(() => api.addPort(project!.id, { parentId }))
+            }
+            onAddAttribute={(parentId) =>
+              void mutateAndSync(() => api.addAttribute(project!.id, { parentId }))
+            }
+            onDelete={(id) => {
+              if (!window.confirm('Delete this element?')) return
+              void mutateAndSync(() => api.deleteArtifact(project!.id, id))
+            }}
+          />
+        }
+      />
 
-        <DetailsPanel
-          project={project}
-          selectedId={selectedId}
-          editorMode={editorMode}
-          onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
-          onAutoroute={(id) => void onWaypointsMoved(id, [])}
-          onRename={(id, name) =>
-            void mutateAndSync(() => api.renameArtifact(project!.id, id, name))
-          }
-          onAddPart={(parentId) =>
-            void mutateAndSync(() => api.addPart(project!.id, { parentId }))
-          }
-          onAddPort={(parentId) =>
-            void mutateAndSync(() => api.addPort(project!.id, { parentId }))
-          }
-          onAddAttribute={(parentId) =>
-            void mutateAndSync(() => api.addAttribute(project!.id, { parentId }))
-          }
-          onDelete={(id) => {
-            if (!window.confirm('Delete this element?')) return
-            void mutateAndSync(() => api.deleteArtifact(project!.id, id))
-          }}
+      {printPages && (
+        <PrintSheet
+          pages={printPages}
+          sheet={sheet}
+          viewMode={settings.viewMode}
+          showAttributes={settings.showDiagramDetails.attributes}
+          selectedConnectionColor={settings.selectedConnectionColor}
+          selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
+          connectionSeparation={settings.connectionSeparation}
+          onDiagramReady={onPrintDiagramReady}
         />
-      </div>
+      )}
     </div>
   )
 }

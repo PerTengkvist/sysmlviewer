@@ -87,6 +87,59 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
               />
             </label>
           </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Selected connection</legend>
+            <label className="settings-row">
+              <span>Selected Connection Color</span>
+              <input
+                type="color"
+                value={settings.selectedConnectionColor}
+                onChange={(e) =>
+                  patch({ selectedConnectionColor: e.target.value })
+                }
+              />
+            </label>
+            <label className="settings-row">
+              <span>Selected Connection Linewidth</span>
+              <input
+                type="number"
+                min={1}
+                max={16}
+                step={0.5}
+                value={settings.selectedConnectionLinewidth}
+                onChange={(e) =>
+                  patch({
+                    selectedConnectionLinewidth: Math.max(
+                      1,
+                      Number(e.target.value) || 4,
+                    ),
+                  })
+                }
+              />
+            </label>
+          </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Connection routing</legend>
+            <label className="settings-row">
+              <span>Connection Separation (px)</span>
+              <input
+                type="number"
+                min={0}
+                max={40}
+                step={1}
+                value={settings.connectionSeparation}
+                onChange={(e) =>
+                  patch({
+                    connectionSeparation: Math.max(
+                      0,
+                      Number(e.target.value) || 0,
+                    ),
+                  })
+                }
+                title="Min gap between unrelated connections. Related nets (shared port) may overlap."
+              />
+            </label>
+          </fieldset>
         </div>
       </div>
     </div>
