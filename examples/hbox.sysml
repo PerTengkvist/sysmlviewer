@@ -1,6 +1,9 @@
 package hbox {
-  port def EventPort;
-
+  port def EventPort {
+    in item rcvEvent : Event;
+    out item sndEvent : Event;
+  }
+  
   part def HBox {
     part BoxA {
       port event : EventPort;
