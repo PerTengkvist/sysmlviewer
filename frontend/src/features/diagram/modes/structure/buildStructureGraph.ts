@@ -122,6 +122,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     artifactId: id,
     kind: el.kind,
     typeRef: el.typeRef,
+    multiplicity: el.multiplicity,
     ports: buildPorts(el, semantic, visualization).map((p) => ({
       ...p,
       style: visualization.nodes[p.id]?.style,

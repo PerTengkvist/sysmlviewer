@@ -100,7 +100,10 @@ function FeatureList({
       <h3>{title}</h3>
       {items.map((c) => (
         <div key={c.id} className="feature-card">
-          <div className="feature-card-name">{c.name}</div>
+          <div className="feature-card-name">
+            {c.name}
+            {c.multiplicity ? ` [${c.multiplicity}]` : ''}
+          </div>
           <dl className="detail-list">
             <dt>Type</dt>
             <dd>{c.typeRef || '—'}</dd>
@@ -120,7 +123,10 @@ function SubPartsList({ items }: { items: SemanticElement[] }) {
       <h3>Sub-parts</h3>
       {items.map((c) => (
         <div key={c.id} className="feature-card">
-          <div className="feature-card-name">{c.name}</div>
+          <div className="feature-card-name">
+            {c.name}
+            {c.multiplicity ? ` [${c.multiplicity}]` : ''}
+          </div>
           <dl className="detail-list">
             <dt>Type</dt>
             <dd>{c.typeRef || '—'}</dd>

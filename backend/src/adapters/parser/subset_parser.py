@@ -313,6 +313,17 @@ class SubsetSysmlParser:
                     skip_until_semicolon_or_brace()
                     continue
                 type_ref = None
+                multiplicity = None
+                # Optional multiplicity, e.g. part compute [0..*] : ComputeEngine;
+                if peek() and peek().value == "[":
+                    take()
+                    mult_parts: list[str] = []
+                    while peek() and peek().value != "]":
+                        mult_parts.append(peek().value)
+                        take()
+                    if peek() and peek().value == "]":
+                        take()
+                    multiplicity = "".join(mult_parts).strip() or None
                 # Usage typing `part x : Type` or specialization `part def X :> Type`
                 if peek() and peek().value in {":", ":>"}:
                     take()
@@ -327,6 +338,7 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
+                    multiplicity=multiplicity,
                     file_id=file_id,
                 )
                 state.add_child(el.parent_id, element_id)
@@ -1167,6 +1179,7 @@ class SubsetSysmlParser:
                 name=child.name,
                 parent_id=usage.id,
                 type_ref=child.type_ref,
+                multiplicity=child.multiplicity,
                 file_id=usage.file_id or state.file_id,
             )
             state.elements[usage_child_id] = nested
