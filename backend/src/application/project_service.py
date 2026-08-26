@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from adapters.persistence.workspace_repo import sanitize_rel_path
+from domain.interface_naming import (
+    lint_interface_naming,
+    suggest_connection_name,
+    suggest_port_name_for_type,
+)
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.models import (
     ArtifactKind,
+    ElementStyle,
     PortSide,
     Project,
     RoutingType,
@@ -37,6 +46,16 @@ class ProjectService:
         if not project:
             return None
         changed = False
+        if project.files:
+            # SysML on disk is source of truth; state.json semantic can lag
+            # after external edits (or edits while the server was stopped).
+            before = {k: v.to_dict() for k, v in project.semantic.items()}
+            before_warn = {f.id: list(f.warnings) for f in project.files}
+            self._reparse_all_files(project)
+            after = {k: v.to_dict() for k, v in project.semantic.items()}
+            after_warn = {f.id: list(f.warnings) for f in project.files}
+            if before != after or before_warn != after_warn:
+                changed = True
         if self._migrate_views_if_needed(project):
             changed = True
         if self._migrate_attributes_if_needed(project):
@@ -46,12 +65,16 @@ class ProjectService:
         return project
 
     def _reparse_all_files(self, project: Project) -> None:
-        project.semantic = {}
+        result = self.parser.parse_project(project.files)
+        project.semantic = dict(result.elements)
         for sysml_file in project.files:
-            result = self.parser.parse(sysml_file.content, sysml_file.id)
-            sysml_file.warnings = list(result.warnings)
-            for eid, element in result.elements.items():
-                project.semantic[eid] = element
+            sysml_file.warnings = list(result.file_warnings.get(sysml_file.id) or [])
+        for file_id, message in lint_interface_naming(project.semantic):
+            if not file_id:
+                continue
+            target = next((f for f in project.files if f.id == file_id), None)
+            if target is not None:
+                target.warnings.append(message)
         project.visualization = merge_visualization(
             project.semantic, project.visualization
         )
@@ -107,6 +130,29 @@ class ProjectService:
         project.updated_at = utc_now()
         return self.repo.save(project)
 
+    def _resolve_file_path(
+        self, name: str, source_path: str | None, existing_paths: set[str]
+    ) -> str:
+        raw = source_path or name
+        rel = sanitize_rel_path(raw, name or "untitled.sysml")
+        if rel not in existing_paths:
+            return rel
+        # Avoid collisions when uploading same name twice
+        stem = Path(rel).stem
+        suffix = Path(rel).suffix or ".sysml"
+        parent = Path(rel).parent
+        n = 2
+        while True:
+            candidate_name = f"{stem}_{n}{suffix}"
+            candidate = (
+                candidate_name
+                if str(parent) in (".", "")
+                else f"{parent.as_posix()}/{candidate_name}"
+            )
+            if candidate not in existing_paths:
+                return candidate
+            n += 1
+
     def add_file(
         self,
         project_id: str,
@@ -119,23 +165,62 @@ class ProjectService:
             return None
 
         file_id = new_id()
-        parse_result = self.parser.parse(content, file_id)
+        existing_paths = {f.relative_path() for f in project.files}
+        rel = self._resolve_file_path(name, source_path, existing_paths)
+        display_name = Path(rel).name
         sysml_file = SysmlFile(
             id=file_id,
-            name=name,
+            name=display_name,
             content=content,
-            warnings=list(parse_result.warnings),
-            source_path=source_path,
+            warnings=[],
+            source_path=None,
+            path=rel,
         )
         project.files.append(sysml_file)
-
-        for eid, element in parse_result.elements.items():
-            project.semantic[eid] = element
-
-        project.visualization = merge_visualization(project.semantic, project.visualization)
-        project.views = rebuild_views(project.semantic)
-        project.updated_at = utc_now()
+        self._reparse_all_files(project)
         return self.repo.save(project)
+
+    def add_file_from_path(
+        self,
+        project_id: str,
+        path: str,
+        content: str | None = None,
+    ) -> Project | None:
+        """Add a SysML file by relative path under the workspace root.
+
+        If ``content`` is None, read from disk. If provided and file missing, create it.
+        """
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+
+        raw = path.strip().replace("\\", "/")
+        parts = [p for p in raw.split("/") if p]
+        if raw.startswith("/") or any(p == ".." for p in parts):
+            raise ValueError(f"Path escapes project directory: {path}")
+
+        rel = sanitize_rel_path(path, "untitled.sysml")
+        existing_paths = {f.relative_path() for f in project.files}
+        if rel in existing_paths:
+            raise ValueError(f"File already in project: {rel}")
+
+        text = content
+        if text is None:
+            read_fn = getattr(self.repo, "read_sysml", None)
+            if read_fn is None:
+                raise FileNotFoundError(rel)
+            try:
+                text = read_fn(rel)
+            except FileNotFoundError:
+                raise
+            except ValueError as exc:
+                raise ValueError(str(exc)) from exc
+        else:
+            write_fn = getattr(self.repo, "write_sysml", None)
+            if write_fn is not None:
+                write_fn(rel, text)
+
+        return self.add_file(project_id, Path(rel).name, text, source_path=rel)
 
     def refresh_file(
         self,
@@ -153,28 +238,140 @@ class ProjectService:
             return None
 
         target.content = content
-        if source_path is not None:
-            target.source_path = source_path
+        target.source_path = None
         if source_path:
-            # Keep display name in sync with picked file when provided via path/name
             name = source_path.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
             if name:
                 target.name = name
+                if "/" not in (target.path or ""):
+                    target.path = sanitize_rel_path(name, name)
 
-        to_remove = [
-            eid for eid, el in project.semantic.items() if el.file_id == file_id
-        ]
-        for eid in to_remove:
-            del project.semantic[eid]
+        self._reparse_all_files(project)
+        return self.repo.save(project)
 
-        parse_result = self.parser.parse(target.content, file_id)
-        target.warnings = list(parse_result.warnings)
+    def refresh_file_from_disk(self, project_id: str, file_id: str) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        target = next((f for f in project.files if f.id == file_id), None)
+        if not target:
+            return None
+        rel = target.relative_path()
+        read_fn = getattr(self.repo, "read_sysml", None)
+        if read_fn is None:
+            raise FileNotFoundError(rel)
+        content = read_fn(rel)
+        return self.refresh_file(project_id, file_id, content)
 
-        for eid, element in parse_result.elements.items():
-            project.semantic[eid] = element
+    def list_documentation(self, project_id: str) -> list[str] | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        list_fn = getattr(self.repo, "list_documentation", None)
+        if list_fn is None:
+            return []
+        return list_fn()
 
-        project.visualization = merge_visualization(project.semantic, project.visualization)
-        project.views = rebuild_views(project.semantic)
+    def read_documentation(self, project_id: str, doc_path: str) -> str | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        read_fn = getattr(self.repo, "read_documentation", None)
+        if read_fn is None:
+            raise FileNotFoundError(doc_path)
+        try:
+            return read_fn(doc_path)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+
+    def set_title_block(self, project_id: str, title_block: dict) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        sheet = dict(project.sheet or {"titleBlock": None, "frame": None})
+        sheet["titleBlock"] = title_block
+        project.sheet = sheet
+        project.updated_at = utc_now()
+        return self.repo.save(project)
+
+    def clear_title_block(self, project_id: str) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        sheet = dict(project.sheet or {"titleBlock": None, "frame": None})
+        sheet["titleBlock"] = None
+        project.sheet = sheet
+        project.updated_at = utc_now()
+        return self.repo.save(project)
+
+    def set_frame(self, project_id: str, frame: dict) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        sheet = dict(project.sheet or {"titleBlock": None, "frame": None})
+        sheet["frame"] = frame
+        project.sheet = sheet
+        project.updated_at = utc_now()
+        return self.repo.save(project)
+
+    def clear_frame(self, project_id: str) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        sheet = dict(project.sheet or {"titleBlock": None, "frame": None})
+        sheet["frame"] = None
+        project.sheet = sheet
+        project.updated_at = utc_now()
+        return self.repo.save(project)
+
+    def delete_file(self, project_id: str, file_id: str) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        target = next((f for f in project.files if f.id == file_id), None)
+        if not target:
+            return None
+        project.files = [f for f in project.files if f.id != file_id]
+        self._reparse_all_files(project)
+        return self.repo.save(project)
+
+    def rename_file(
+        self,
+        project_id: str,
+        file_id: str,
+        *,
+        name: str | None = None,
+        path: str | None = None,
+        source_path: str | None = None,
+    ) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        target = next((f for f in project.files if f.id == file_id), None)
+        if not target:
+            return None
+
+        if source_path is not None:
+            target.source_path = source_path
+
+        new_rel: str | None = None
+        if path is not None:
+            new_rel = sanitize_rel_path(path, name or target.name)
+        elif name is not None:
+            # Rename within same directory
+            parent = Path(target.relative_path()).parent
+            candidate = name if str(parent) in (".", "") else f"{parent.as_posix()}/{name}"
+            new_rel = sanitize_rel_path(candidate, name)
+
+        if new_rel and new_rel != target.relative_path():
+            existing = {
+                f.relative_path() for f in project.files if f.id != file_id
+            }
+            if new_rel in existing:
+                return None
+            target.path = new_rel
+            target.name = Path(new_rel).name
+
         project.updated_at = utc_now()
         return self.repo.save(project)
 
@@ -213,7 +410,12 @@ class ProjectService:
             for e in project.semantic.values()
             if e.kind == ArtifactKind.CONNECTION and e.parent_id == parent_id
         ]
-        base_name = name or f"conn{len(existing) + 1}"
+        suggested = (
+            None
+            if name
+            else suggest_connection_name(source, target, project.semantic)
+        )
+        base_name = name or suggested or f"conn{len(existing) + 1}"
         conn_name = base_name
         element_id = f"{parent_id}::{conn_name}" if parent_id else conn_name
         n = 1
@@ -257,7 +459,9 @@ class ProjectService:
         target = next((f for f in project.files if f.id == fid), None)
         if not target:
             return
-        target.content = serialize_file(project.semantic, fid)
+        target.content = serialize_file(
+            project.semantic, fid, previous_content=target.content
+        )
 
     def _unique_child_name(
         self, project: Project, parent_id: str | None, base: str
@@ -303,7 +507,11 @@ class ProjectService:
         return self.repo.save(project)
 
     def add_port(
-        self, project_id: str, parent_id: str, name: str | None = None
+        self,
+        project_id: str,
+        parent_id: str,
+        name: str | None = None,
+        type_ref: str | None = None,
     ) -> Project | None:
         project = self.repo.get(project_id)
         if not project or parent_id not in project.semantic:
@@ -312,6 +520,10 @@ class ProjectService:
         if parent.kind != ArtifactKind.PART:
             return None
         file_id = parent.file_id or self._primary_file_id(project)
+        if not name and type_ref:
+            name = suggest_port_name_for_type(
+                type_ref, parent.name, parent_type_ref=parent.type_ref
+            )
         base = name or "port"
         port_name, element_id = self._unique_child_name(project, parent_id, base)
         el = SemanticElement(
@@ -319,6 +531,7 @@ class ProjectService:
             kind=ArtifactKind.PORT,
             name=port_name,
             parent_id=parent_id,
+            type_ref=type_ref,
             file_id=file_id,
         )
         project.semantic[element_id] = el
@@ -441,23 +654,61 @@ class ProjectService:
     def update_file_source_path(
         self, project_id: str, file_id: str, source_path: str | None
     ) -> Project | None:
-        project = self.repo.get(project_id)
-        if not project:
-            return None
-        target = next((f for f in project.files if f.id == file_id), None)
-        if not target:
-            return None
-        target.source_path = source_path
-        project.updated_at = utc_now()
-        return self.repo.save(project)
+        return self.rename_file(
+            project_id, file_id, source_path=source_path
+        )
 
     def update_visualization(self, project_id: str, patch: dict) -> Project | None:
         project = self.repo.get(project_id)
         if not project:
             return None
 
-        nodes_patch = patch.get("nodes") or {}
-        edges_patch = patch.get("edges") or {}
+        from domain.view_layouts import apply_view_layout_edge_patch, apply_view_layout_patch
+
+        view_id = patch.get("viewId")
+        nodes_patch = dict(patch.get("nodes") or {})
+        edges_patch = dict(patch.get("edges") or {})
+
+        if view_id:
+            geo_patch: dict[str, dict] = {}
+            other_patch: dict[str, dict] = {}
+            for artifact_id, node_data in nodes_patch.items():
+                geo: dict = {}
+                other: dict = {}
+                for key, value in node_data.items():
+                    if key in ("x", "y", "width", "height"):
+                        geo[key] = value
+                    else:
+                        other[key] = value
+                if geo:
+                    geo_patch[artifact_id] = geo
+                if other:
+                    other_patch[artifact_id] = other
+            if geo_patch:
+                project.view_layouts = apply_view_layout_patch(
+                    project.view_layouts, view_id, geo_patch
+                )
+            nodes_patch = other_patch
+
+            geo_edge_patch: dict[str, dict] = {}
+            other_edge_patch: dict[str, dict] = {}
+            for artifact_id, edge_data in edges_patch.items():
+                geo_e: dict = {}
+                other_e: dict = {}
+                for key, value in edge_data.items():
+                    if key in ("routing", "waypoints", "labelOffset"):
+                        geo_e[key] = value
+                    else:
+                        other_e[key] = value
+                if geo_e:
+                    geo_edge_patch[artifact_id] = geo_e
+                if other_e:
+                    other_edge_patch[artifact_id] = other_e
+            if geo_edge_patch:
+                project.view_layouts = apply_view_layout_edge_patch(
+                    project.view_layouts, view_id, geo_edge_patch
+                )
+            edges_patch = other_edge_patch
 
         for artifact_id, node_data in nodes_patch.items():
             existing = project.visualization.nodes.get(artifact_id)
@@ -476,6 +727,10 @@ class ProjectService:
                     existing.offset = float(node_data["offset"])
                 if "symbolRef" in node_data and node_data["symbolRef"]:
                     existing.symbol_ref = str(node_data["symbolRef"])
+                if "style" in node_data and node_data["style"] is not None:
+                    if existing.style is None:
+                        existing.style = ElementStyle()
+                    existing.style.merge(node_data["style"])
             else:
                 project.visualization.nodes[artifact_id] = VisualizationNode.from_dict(
                     {"artifactId": artifact_id, **node_data}
@@ -494,6 +749,10 @@ class ProjectService:
                     lo = edge_data["labelOffset"] or {}
                     existing.label_offset_x = float(lo.get("x", 0) or 0)
                     existing.label_offset_y = float(lo.get("y", 0) or 0)
+                if "style" in edge_data and edge_data["style"] is not None:
+                    if existing.style is None:
+                        existing.style = ElementStyle()
+                    existing.style.merge(edge_data["style"])
             else:
                 project.visualization.edges[artifact_id] = VisualizationEdge.from_dict(
                     {"artifactId": artifact_id, **edge_data}
@@ -510,6 +769,7 @@ class ProjectService:
             return None
 
         from domain.details import collect_artifacts_to_depth
+        from domain.diagram_mode import expected_root_kinds, resolve_diagram_mode
         from domain.merge import artifact_diagram_view_id
         from domain.models import ViewDef
 
@@ -547,11 +807,86 @@ class ProjectService:
         if not view:
             return None
 
+        # Prefer typeRef from semantic view element when ViewDef lacks it (legacy)
+        if view.type_ref is None and view.id in project.semantic:
+            view.type_ref = project.semantic[view.id].type_ref
+
         root = project.semantic.get(view.root_artifact_id)
         if not root:
             return None
 
-        if root.kind == ArtifactKind.PART:
+        diagram_mode = resolve_diagram_mode(view, root)
+        mode_error: str | None = None
+        expected = expected_root_kinds(diagram_mode)
+        if expected is not None and root.kind not in expected:
+            mode_error = (
+                f"{view.type_ref or diagram_mode} requires expose of kind "
+                f"{', '.join(k.value for k in expected)}; got '{root.kind.value}'"
+            )
+
+        if diagram_mode in {"sequence", "state", "actionFlow"}:
+            # Root + direct children (lifelines/messages, states/transitions, …)
+            artifact_ids = {root.id}
+            for cid in root.children:
+                artifact_ids.add(cid)
+                child = project.semantic.get(cid)
+                if child:
+                    for gc in child.children:
+                        artifact_ids.add(gc)
+        elif diagram_mode == "tree":
+            artifact_ids = collect_artifacts_to_depth(
+                project.semantic, root.id, hierarchical_levels
+            )
+            # Include non-part children for tree browsing
+            extra: set[str] = set()
+            for aid in list(artifact_ids):
+                el = project.semantic.get(aid)
+                if not el:
+                    continue
+                for cid in el.children:
+                    child = project.semantic.get(cid)
+                    if child and child.kind not in {
+                        ArtifactKind.PORT,
+                        ArtifactKind.CONNECTION,
+                        ArtifactKind.ATTRIBUTE,
+                        ArtifactKind.MESSAGE,
+                        ArtifactKind.TRANSITION,
+                        ArtifactKind.SUCCESSION,
+                    }:
+                        extra.add(cid)
+            artifact_ids |= extra
+        elif diagram_mode == "allocation":
+            artifact_ids = {root.id}
+            for cid in root.children:
+                child = project.semantic.get(cid)
+                if not child:
+                    continue
+                if child.kind == ArtifactKind.PORT:
+                    artifact_ids.add(cid)
+                elif child.kind == ArtifactKind.PART:
+                    if child.name == "logical":
+                        artifact_ids |= collect_artifacts_to_depth(
+                            project.semantic, child.id, hierarchical_levels
+                        )
+                    else:
+                        artifact_ids.add(child.id)
+                        for pc in child.children:
+                            port = project.semantic.get(pc)
+                            if port and port.kind == ArtifactKind.PORT:
+                                artifact_ids.add(pc)
+            for el in project.semantic.values():
+                if el.kind != ArtifactKind.CONNECTION:
+                    continue
+                if not el.name.startswith("alloc"):
+                    continue
+                if el.parent_id != root.id:
+                    continue
+                artifact_ids.add(el.id)
+                if el.source_id:
+                    artifact_ids.add(el.source_id)
+                if el.target_id:
+                    artifact_ids.add(el.target_id)
+        elif root.kind == ArtifactKind.PART:
             artifact_ids = collect_artifacts_to_depth(
                 project.semantic, root.id, hierarchical_levels
             )
@@ -572,25 +907,49 @@ class ProjectService:
             for aid in artifact_ids
             if aid in project.semantic
         }
-        nodes = {
-            aid: project.visualization.nodes[aid].to_dict()
-            for aid in artifact_ids
-            if aid in project.visualization.nodes
-        }
-        edges = {
-            aid: project.visualization.edges[aid].to_dict()
-            for aid in artifact_ids
-            if aid in project.visualization.edges
-        }
+        nodes = {}
+        from domain.merge import DEFAULT_TREE_HEIGHT, DEFAULT_TREE_WIDTH
+        from domain.view_layouts import resolve_view_edge, resolve_view_node
 
-        diagram_mode = "whitebox" if root.kind == ArtifactKind.PART else "structure"
+        for aid in artifact_ids:
+            global_node = project.visualization.nodes.get(aid)
+            if not global_node:
+                continue
+            overlay = (
+                project.view_layouts.get_node(view.id, aid)
+                if project.view_layouts is not None
+                else None
+            )
+            resolved = resolve_view_node(global_node, overlay)
+            if diagram_mode == "tree":
+                if overlay is None or overlay.width is None:
+                    resolved["width"] = DEFAULT_TREE_WIDTH
+                if overlay is None or overlay.height is None:
+                    resolved["height"] = DEFAULT_TREE_HEIGHT
+            nodes[aid] = resolved
+        edges = {}
+        for aid in artifact_ids:
+            global_edge = project.visualization.edges.get(aid)
+            if not global_edge:
+                continue
+            edge_overlay = (
+                project.view_layouts.get_edge(view.id, aid)
+                if project.view_layouts is not None
+                else None
+            )
+            resolved_edge = resolve_view_edge(global_edge, edge_overlay)
+            if diagram_mode == "allocation":
+                conn = project.semantic.get(aid)
+                if conn and conn.kind == ArtifactKind.CONNECTION:
+                    resolved_edge = {**resolved_edge, "isAllocation": True}
+            edges[aid] = resolved_edge
 
         subdiagrams = child_view_ids(view.root_artifact_id, project.views, project.semantic)
         menus: dict[str, list[dict[str, str]]] = {}
         for aid in artifact_ids:
             menus[aid] = child_view_ids(aid, project.views, project.semantic)
 
-        return {
+        result: dict = {
             "view": view.to_dict(),
             "diagramMode": diagram_mode,
             "hierarchicalLevels": hierarchical_levels,
@@ -599,3 +958,6 @@ class ProjectService:
             "subdiagrams": subdiagrams,
             "menus": menus,
         }
+        if mode_error:
+            result["modeError"] = mode_error
+        return result

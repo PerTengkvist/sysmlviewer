@@ -16,6 +16,31 @@ DEFAULT_PART_WIDTH = 200.0
 DEFAULT_PART_HEIGHT = 120.0
 DEFAULT_PACKAGE_WIDTH = 320.0
 DEFAULT_PACKAGE_HEIGHT = 220.0
+DEFAULT_STATE_WIDTH = 140.0
+DEFAULT_STATE_HEIGHT = 72.0
+DEFAULT_ACTION_WIDTH = 140.0
+DEFAULT_ACTION_HEIGHT = 56.0
+DEFAULT_LIFELINE_WIDTH = 120.0
+DEFAULT_LIFELINE_HEIGHT = 48.0
+DEFAULT_TREE_WIDTH = 160.0
+DEFAULT_TREE_HEIGHT = 40.0
+
+EDGE_KINDS = {
+    ArtifactKind.CONNECTION,
+    ArtifactKind.MESSAGE,
+    ArtifactKind.TRANSITION,
+    ArtifactKind.SUCCESSION,
+}
+
+NODE_KINDS = {
+    ArtifactKind.PACKAGE,
+    ArtifactKind.PART,
+    ArtifactKind.PORT,
+    ArtifactKind.INTERACTION,
+    ArtifactKind.LIFELINE,
+    ArtifactKind.STATE,
+    ArtifactKind.ACTION,
+}
 
 
 def _default_node(element: SemanticElement, index: int) -> VisualizationNode:
@@ -44,6 +69,43 @@ def _default_node(element: SemanticElement, index: int) -> VisualizationNode:
             height=DEFAULT_PACKAGE_HEIGHT,
             symbol_ref="default-package",
         )
+    if element.kind == ArtifactKind.LIFELINE:
+        # `index` for lifelines is sibling order under the interaction (see merge).
+        return VisualizationNode(
+            artifact_id=element.id,
+            x=60.0 + index * 160.0,
+            y=40.0,
+            width=DEFAULT_LIFELINE_WIDTH,
+            height=DEFAULT_LIFELINE_HEIGHT,
+            symbol_ref="default-lifeline",
+        )
+    if element.kind == ArtifactKind.STATE:
+        return VisualizationNode(
+            artifact_id=element.id,
+            x=x,
+            y=y,
+            width=DEFAULT_STATE_WIDTH,
+            height=DEFAULT_STATE_HEIGHT,
+            symbol_ref="default-state",
+        )
+    if element.kind == ArtifactKind.ACTION:
+        return VisualizationNode(
+            artifact_id=element.id,
+            x=80.0 + index * 200.0,
+            y=120.0,
+            width=DEFAULT_ACTION_WIDTH,
+            height=DEFAULT_ACTION_HEIGHT,
+            symbol_ref="default-action",
+        )
+    if element.kind == ArtifactKind.INTERACTION:
+        return VisualizationNode(
+            artifact_id=element.id,
+            x=40.0,
+            y=20.0,
+            width=480.0,
+            height=320.0,
+            symbol_ref="default-interaction",
+        )
     return VisualizationNode(
         artifact_id=element.id,
         x=x,
@@ -63,39 +125,64 @@ def merge_visualization(
     nodes: dict[str, VisualizationNode] = {}
     edges: dict[str, VisualizationEdge] = {}
 
-    node_kinds = {ArtifactKind.PACKAGE, ArtifactKind.PART, ArtifactKind.PORT}
     part_like = [
-        e for e in semantic.values() if e.kind in {ArtifactKind.PACKAGE, ArtifactKind.PART}
+        e
+        for e in semantic.values()
+        if e.kind
+        in {
+            ArtifactKind.PACKAGE,
+            ArtifactKind.PART,
+            ArtifactKind.LIFELINE,
+            ArtifactKind.STATE,
+            ArtifactKind.ACTION,
+            ArtifactKind.INTERACTION,
+        }
     ]
     part_index = {e.id: i for i, e in enumerate(part_like)}
 
     for element in semantic.values():
-        if element.kind == ArtifactKind.CONNECTION:
+        if element.kind in EDGE_KINDS:
             if element.id in existing.edges:
                 edges[element.id] = existing.edges[element.id]
             else:
+                routing = (
+                    RoutingType.DIRECT
+                    if element.kind in {ArtifactKind.MESSAGE, ArtifactKind.SUCCESSION}
+                    else RoutingType.ANGULAR
+                )
                 edges[element.id] = VisualizationEdge(
                     artifact_id=element.id,
-                    routing=RoutingType.ANGULAR,
+                    routing=routing,
                     waypoints=[],
                 )
             continue
 
-        if element.kind not in node_kinds:
+        if element.kind not in NODE_KINDS:
             continue
 
         if element.id in existing.nodes:
             node = existing.nodes[element.id]
             # Keep geometry; refresh symbol defaults if missing
             if not node.symbol_ref:
-                node.symbol_ref = (
-                    "default-port"
-                    if element.kind == ArtifactKind.PORT
-                    else "default-part"
-                )
+                node.symbol_ref = f"default-{element.kind.value}"
             nodes[element.id] = node
         else:
-            idx = part_index.get(element.id, len(nodes))
+            if element.kind == ArtifactKind.LIFELINE:
+                siblings = sorted(
+                    (
+                        e
+                        for e in semantic.values()
+                        if e.kind == ArtifactKind.LIFELINE
+                        and e.parent_id == element.parent_id
+                    ),
+                    key=lambda e: e.id,
+                )
+                idx = next(
+                    (i for i, e in enumerate(siblings) if e.id == element.id),
+                    0,
+                )
+            else:
+                idx = part_index.get(element.id, len(nodes))
             nodes[element.id] = _default_node(element, idx)
 
     return VisualizationModel(nodes=nodes, edges=edges)
@@ -125,6 +212,7 @@ def rebuild_views(semantic: dict[str, SemanticElement]) -> list[ViewDef]:
                 name=el.name,
                 root_artifact_id=root_id,
                 parent_view_id=parent_view_id,
+                type_ref=el.type_ref,
             )
         )
 

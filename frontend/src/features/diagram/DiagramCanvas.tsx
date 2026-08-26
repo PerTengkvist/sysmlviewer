@@ -6,6 +6,7 @@ import {
   MiniMap,
   ReactFlow,
   applyNodeChanges,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -19,13 +20,16 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
+  DiagramMode,
   PortSide,
   RoutingType,
-  SemanticElement,
   ViewPayload,
   VisualizationEdge,
   VisualizationNode,
 } from '../../api'
+import type { ViewMode } from '../../settings'
+import type { ProjectSheet } from '../sheet/sheet'
+import { paperSizeMm } from '../sheet/sheet'
 import { PartNode, type PartNodeData } from './PartNode'
 import { SysmlEdge, type SysmlEdgeData } from './InternalEdge'
 import {
@@ -34,25 +38,70 @@ import {
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
+import { buildStructureGraph } from './modes/structure/buildStructureGraph'
+import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
+import { LifelineNode } from './modes/sequence/LifelineNode'
+import { MessageEdge } from './modes/sequence/MessageEdge'
+import { buildStateGraph } from './modes/state/buildStateGraph'
+import { StateNode } from './modes/state/StateNode'
+import { buildActionFlowGraph } from './modes/actionFlow/buildActionFlowGraph'
+import { ActionNode } from './modes/actionFlow/ActionNode'
+import { buildTreeGraph } from './modes/tree/buildTreeGraph'
+import { TreeDiagramNode } from './modes/tree/TreeNode'
+import { buildAllocationGraph } from './modes/allocation/buildAllocationGraph'
+import {
+  layoutByDependency,
+  orientEdgeHandles,
+  type RedrawDirection,
+} from './layout/dependencyLayout'
+import { redrawStructureConnections, boundaryFlowBounds, syncInternalEdgeBounds } from './layout/connectionRouting'
+import { autoLayoutStructure } from './layout/structureAutoLayout'
 
-const nodeTypes: NodeTypes = {
+/** All custom types registered together — React Flow caches nodeTypes on mount. */
+const allNodeTypes: NodeTypes = {
   part: PartNode,
+  lifeline: LifelineNode,
+  state: StateNode,
+  action: ActionNode,
+  tree: TreeDiagramNode,
 }
 
-const edgeTypes: EdgeTypes = {
+const allEdgeTypes: EdgeTypes = {
   sysml: SysmlEdge,
+  message: MessageEdge,
 }
 
-function routingToEdgeType(routing: RoutingType): string {
-  switch (routing) {
-    case 'direct':
-      return 'straight'
-    case 'spline':
-      return 'default'
-    case 'angular':
-    default:
-      return 'smoothstep'
-  }
+function FitViewOnViewKey({
+  viewKey,
+  layoutEpoch,
+  onReady,
+}: {
+  viewKey: string | null
+  layoutEpoch: number
+  onReady?: () => void
+}) {
+  const { fitView } = useReactFlow()
+  useEffect(() => {
+    if (!viewKey) return
+    const id = requestAnimationFrame(() => {
+      fitView({ padding: 0.15, duration: 0 })
+      if (onReady) {
+        requestAnimationFrame(() => onReady())
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [viewKey, layoutEpoch, fitView, onReady])
+  return null
+}
+
+export const DIAGRAM_MODE_LABELS: Record<DiagramMode, string> = {
+  whitebox: 'Interconnection',
+  structure: 'Structure',
+  sequence: 'Sequence',
+  state: 'State',
+  actionFlow: 'Action flow',
+  tree: 'Tree',
+  allocation: 'Allocation',
 }
 
 function routingToConnectionLine(routing: RoutingType): ConnectionLineType {
@@ -66,25 +115,16 @@ function routingToConnectionLine(routing: RoutingType): ConnectionLineType {
   }
 }
 
-function findOwnerPart(
-  portId: string,
-  semantic: Record<string, SemanticElement>,
-  displayIds: Set<string>,
-): string | null {
-  let current = semantic[portId]
-  while (current) {
-    if (current.kind === 'part' && displayIds.has(current.id)) {
-      return current.id
-    }
-    if (!current.parentId) break
-    current = semantic[current.parentId]
-  }
-  return null
-}
-
 function portIdFromHandle(handleId: string | null | undefined): string | null {
   if (!handleId) return null
   return handleId.startsWith('target:') ? handleId.slice('target:'.length) : handleId
+}
+
+/** Skip auto-route on view open when saved connection geometry exists. */
+function viewHasSavedConnectionLayout(
+  edges: Record<string, VisualizationEdge>,
+): boolean {
+  return Object.values(edges).some((e) => (e.waypoints?.length ?? 0) > 0)
 }
 
 function readPx(value: unknown): number | undefined {
@@ -104,261 +144,15 @@ function nodeExtentSize(n: Node): { width?: number; height?: number } {
   return { width, height }
 }
 
-function buildPorts(
-  el: SemanticElement,
-  semantic: Record<string, SemanticElement>,
-  visualization: ViewPayload['visualization'],
-) {
-  return (el.children || [])
-    .map((cid) => semantic[cid])
-    .filter((c): c is SemanticElement => !!c && c.kind === 'port')
-    .map((port, idx) => {
-      const pv = visualization.nodes[port.id]
-      return {
-        id: port.id,
-        name: port.name,
-        side: (pv?.side || (idx % 2 === 0 ? 'left' : 'right')) as PortSide,
-        offset: pv?.offset ?? 0.3 + idx * 0.15,
-      }
-    })
-}
-
-function buildGraph(
-  view: ViewPayload,
-  onOpenView: (viewId: string) => void,
-  onPortMoved: (portId: string, side: PortSide, offset: number) => void,
-  portMoveMode: boolean,
-  showAttributes: boolean,
-  onWaypointsChange: (
-    artifactId: string,
-    waypoints: { x: number; y: number }[],
-  ) => void,
-  onLabelOffsetChange: (
-    artifactId: string,
-    offset: { x: number; y: number },
-  ) => void,
-): { nodes: Node[]; edges: Edge[] } {
-  const { semantic, visualization, menus } = view
-  const rootId = view.view.rootArtifactId
-  const root = semantic[rootId]
-  const whitebox = view.diagramMode === 'whitebox' || root?.kind === 'part'
-
-  const childParts = Object.values(semantic)
-    .filter((el) => el.kind === 'part' && el.parentId === rootId)
-    .map((el) => el.id)
-
-  const attrNames = (partId: string) => {
-    const part = semantic[partId]
-    if (!part) return [] as string[]
-    const direct = (part.children || [])
-      .map((cid) => semantic[cid])
-      .filter((c): c is SemanticElement => !!c && c.kind === 'attribute')
-      .map((a) => a.name)
-    if (direct.length || !part.typeRef) return direct
-    const typeDef = Object.values(semantic).find(
-      (e) => e.kind === 'part' && e.name === part.typeRef && !e.typeRef,
-    )
-    if (!typeDef) return direct
-    return (typeDef.children || [])
-      .map((cid) => semantic[cid])
-      .filter((c): c is SemanticElement => !!c && c.kind === 'attribute')
-      .map((a) => a.name)
-  }
-
-  const builtNodes: Node[] = []
-
-  let boundaryW = 420
-  let boundaryH = 260
-
-  if (whitebox && root?.kind === 'part') {
-    const cols = Math.max(1, Math.min(3, childParts.length || 1))
-    const rows = Math.max(1, Math.ceil((childParts.length || 1) / cols))
-    const childW = 180
-    const childH = 110
-    const padX = 36
-    const padY = 56
-    const gapX = 28
-    const gapY = 24
-    boundaryW = Math.max(420, padX * 2 + cols * childW + (cols - 1) * gapX)
-    boundaryH = Math.max(260, padY + 28 + rows * childH + (rows - 1) * gapY)
-
-    const rootViz = visualization.nodes[rootId]
-    const customBoundary =
-      !!rootViz &&
-      (rootViz.width > 200 || rootViz.height > 120) &&
-      rootViz.width >= 120 &&
-      rootViz.height >= 72
-    if (customBoundary) {
-      boundaryW = rootViz.width
-      boundaryH = rootViz.height
-    }
-    builtNodes.push({
-      id: rootId,
-      type: 'part',
-      position: { x: rootViz?.x ?? 60, y: rootViz?.y ?? 40 },
-      style: {
-        width: boundaryW,
-        height: boundaryH,
-        background: 'transparent',
-      },
-      zIndex: 0,
-      data: {
-        label: root.name,
-        artifactId: rootId,
-        kind: root.kind,
-        typeRef: root.typeRef,
-        ports: buildPorts(root, semantic, visualization),
-        menuItems: menus[rootId] || [],
-        portMoveMode,
-        isBoundary: true,
-        showAttributes,
-        attributeNames: attrNames(rootId),
-        onOpenView,
-        onPortDrag: onPortMoved,
-      } satisfies PartNodeData,
-    })
-
-    childParts.forEach((id, index) => {
-      const el = semantic[id]
-      const viz = visualization.nodes[id]
-      const col = index % cols
-      const row = Math.floor(index / cols)
-      const defaultX = padX + col * (childW + gapX)
-      const defaultY = padY + row * (childH + gapY)
-      const useStored =
-        viz &&
-        Number.isFinite(viz.x) &&
-        Number.isFinite(viz.y) &&
-        viz.x >= 0 &&
-        viz.y >= 0 &&
-        viz.x < boundaryW - 40 &&
-        viz.y < boundaryH - 40
-
-      builtNodes.push({
-        id,
-        type: 'part',
-        parentId: rootId,
-        extent: 'parent',
-        position: {
-          x: useStored ? viz.x : defaultX,
-          y: useStored ? viz.y : defaultY,
-        },
-        style: {
-          width: viz?.width ?? childW,
-          height: viz?.height ?? childH,
-        },
-        zIndex: 1,
-        data: {
-          label: el.name,
-          artifactId: id,
-          kind: el.kind,
-          typeRef: el.typeRef,
-          ports: buildPorts(el, semantic, visualization),
-          menuItems: menus[id] || [],
-          portMoveMode,
-          isBoundary: false,
-          showAttributes,
-          attributeNames: attrNames(id),
-          onOpenView,
-          onPortDrag: onPortMoved,
-        } satisfies PartNodeData,
-      })
-    })
-  } else {
-    childParts.forEach((id, index) => {
-      const el = semantic[id]
-      const viz = visualization.nodes[id]
-      builtNodes.push({
-        id,
-        type: 'part',
-        position: {
-          x: viz?.x ?? 80 + (index % 2) * 320,
-          y: viz?.y ?? 80 + Math.floor(index / 2) * 180,
-        },
-        style: {
-          width: viz?.width ?? 200,
-          height: viz?.height ?? 120,
-        },
-        data: {
-          label: el.name,
-          artifactId: id,
-          kind: el.kind,
-          typeRef: el.typeRef,
-          ports: buildPorts(el, semantic, visualization),
-          menuItems: menus[id] || [],
-          portMoveMode,
-          showAttributes,
-          attributeNames: attrNames(id),
-          onOpenView,
-          onPortDrag: onPortMoved,
-        } satisfies PartNodeData,
-      })
-    })
-  }
-
-  const displaySet = new Set(builtNodes.map((n) => n.id))
-
-  const rootViz = visualization.nodes[rootId]
-  const parentBounds =
-    whitebox && root?.kind === 'part'
-      ? {
-          minX: rootViz?.x ?? 60,
-          minY: rootViz?.y ?? 40,
-          maxX: (rootViz?.x ?? 60) + boundaryW,
-          maxY: (rootViz?.y ?? 40) + boundaryH,
-        }
-      : undefined
-
-  const builtEdges: Edge[] = Object.values(semantic)
-    .filter((el) => el.kind === 'connection')
-    .map((conn) => {
-      const edgeViz: VisualizationEdge | undefined = visualization.edges[conn.id]
-      const routing = edgeViz?.routing || 'angular'
-      const sourcePort = conn.sourceId || ''
-      const targetPort = conn.targetId || ''
-      const sourcePart = findOwnerPart(sourcePort, semantic, displaySet)
-      const targetPart = findOwnerPart(targetPort, semantic, displaySet)
-      if (!sourcePart || !targetPart) return null
-
-      const internal =
-        whitebox &&
-        (sourcePart === rootId ||
-          targetPart === rootId ||
-          (sourcePart !== rootId && targetPart !== rootId))
-
-      return {
-        id: conn.id,
-        source: sourcePart,
-        target: targetPart,
-        sourceHandle: sourcePort,
-        targetHandle: `target:${targetPort}`,
-        type: 'sysml',
-        label: conn.name,
-        data: {
-          routing,
-          artifactId: conn.id,
-          waypoints: edgeViz?.waypoints || [],
-          labelOffset: edgeViz?.labelOffset || { x: 0, y: 0 },
-          altHeld: portMoveMode,
-          onWaypointsChange,
-          onLabelOffsetChange,
-          parentBounds: internal ? parentBounds : undefined,
-          internal,
-        },
-        zIndex: 0,
-        style: { strokeWidth: 2, stroke: 'var(--part-stroke)' },
-      } as Edge
-    })
-    .filter((e): e is Edge => e !== null)
-
-  return { nodes: builtNodes, edges: builtEdges }
-}
-
 type Props = {
   view: ViewPayload | null
-  /** Bumps when a view is explicitly loaded/refreshed — not on layout patches */
   diagramEpoch: number
+  viewMode?: ViewMode
   showAttributes?: boolean
+  sheet?: ProjectSheet
+  selectedConnectionColor?: string
+  selectedConnectionLinewidth?: number
+  connectionSeparation?: number
   onSelectArtifact: (id: string | null) => void
   onOpenView: (viewId: string) => void
   onNodesMoved: (
@@ -369,18 +163,28 @@ type Props = {
   onConnectPorts: (sourcePortId: string, targetPortId: string) => void
   onWaypointsMoved: (
     connectionId: string,
-    waypoints: { x: number; y: number }[],
+    waypoints: { x: number; y: number; locked?: boolean }[],
   ) => void
   onLabelOffsetMoved: (
     connectionId: string,
     offset: { x: number; y: number },
   ) => void
+  /** Bump `seq` to trigger obstacle-aware reroute for one connection (Autoroute). */
+  autorouteRequest?: { connectionId: string; seq: number } | null
+  /** Read-only rendering for print output. */
+  printMode?: boolean
+  onPrintReady?: () => void
 }
 
 export function DiagramCanvas({
   view,
   diagramEpoch,
+  viewMode = 'light',
   showAttributes = false,
+  sheet,
+  selectedConnectionColor = '#2563eb',
+  selectedConnectionLinewidth = 4,
+  connectionSeparation = 5,
   onSelectArtifact,
   onOpenView,
   onNodesMoved,
@@ -388,27 +192,53 @@ export function DiagramCanvas({
   onConnectPorts,
   onWaypointsMoved,
   onLabelOffsetMoved,
+  autorouteRequest,
+  printMode = false,
+  onPrintReady,
 }: Props) {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
   const [portMoveMode, setPortMoveMode] = useState(false)
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
+  const [layoutEpoch, setLayoutEpoch] = useState(0)
+  const [flowDir, setFlowDir] = useState<RedrawDirection>('LR')
   const viewKeyRef = useRef<string | null>(null)
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
+  const nodesRef = useRef<Node[]>([])
   viewRef.current = view
   edgesRef.current = edges
+  nodesRef.current = nodes
   const onOpenViewRef = useRef(onOpenView)
   const onPortMovedRef = useRef(onPortMoved)
   const onConnectPortsRef = useRef(onConnectPorts)
   const onWaypointsMovedRef = useRef(onWaypointsMoved)
   const onLabelOffsetMovedRef = useRef(onLabelOffsetMoved)
   const onNodesMovedRef = useRef(onNodesMoved)
+  const onSelectArtifactRef = useRef(onSelectArtifact)
+  const redrawConnectionsRef = useRef<
+    (overrideNodes?: Node[], overrideEdges?: Edge[]) => void
+  >(() => {})
+  const applyRedrawConnectionsRef = useRef<
+    (overrideNodes?: Node[], overrideEdges?: Edge[]) => void
+  >(() => {})
+  const handlePortMovedRef = useRef<
+    (portId: string, side: PortSide, offset: number) => void
+  >(() => {})
+  const lastAutorouteSeqRef = useRef(0)
+  /** Structure graph awaiting one-shot obstacle routing after view open. */
+  const pendingAutoRouteRef = useRef<{
+    nodes: Node[]
+    edges: Edge[]
+    viewKey: string
+  } | null>(null)
   onOpenViewRef.current = onOpenView
   onPortMovedRef.current = onPortMoved
   onConnectPortsRef.current = onConnectPorts
   onWaypointsMovedRef.current = onWaypointsMoved
   onLabelOffsetMovedRef.current = onLabelOffsetMoved
   onNodesMovedRef.current = onNodesMoved
+  onSelectArtifactRef.current = onSelectArtifact
 
   type BoundaryDragSnapshot = {
     nodeId: string
@@ -417,6 +247,19 @@ export function DiagramCanvas({
     edges: Record<string, { waypoints: Pt[]; parentBounds?: FlowBounds }>
   }
   const boundaryDragRef = useRef<BoundaryDragSnapshot | null>(null)
+
+  const mode: DiagramMode = view?.diagramMode || 'structure'
+  const isStructure = mode === 'whitebox' || mode === 'structure'
+
+  useEffect(() => {
+    if (!printMode || !onPrintReady || !view?.modeError) return
+    const id = requestAnimationFrame(() => onPrintReady())
+    return () => cancelAnimationFrame(id)
+  }, [printMode, onPrintReady, view?.modeError])
+
+  useEffect(() => {
+    setCollapsedIds(new Set())
+  }, [view?.view.id])
 
   useEffect(() => {
     const isOption = (e: KeyboardEvent) =>
@@ -440,21 +283,53 @@ export function DiagramCanvas({
     }
   }, [])
 
-  // Rebuild graph only when the logical view identity / content revision changes —
-  // not when callback identities change (that was wiping the canvas after drag).
   const edgeSig = view
     ? Object.entries(view.visualization.edges)
         .map(([id, e]) => {
-          const lo = e.labelOffset || { x: 0, y: 0 }
-          return `${id}:${e.routing}:${(e.waypoints || []).map((w) => `${w.x},${w.y}`).join(';')}:lo${lo.x},${lo.y}`
+          const st = e.style ? JSON.stringify(e.style) : ''
+          // Omit routing, waypoints and labelOffset — synced without rebuilding graph.
+          return `${id}:st${st}`
         })
         .sort()
         .join('|')
     : ''
 
+  const routingSig = view
+    ? Object.entries(view.visualization.edges)
+        .map(([id, e]) => `${id}:${e.routing || 'angular'}`)
+        .sort()
+        .join('|')
+    : ''
+
+  const waypointSig = view
+    ? Object.entries(view.visualization.edges)
+        .map(([id, e]) => {
+          const lo = e.labelOffset || { x: 0, y: 0 }
+          return `${id}:${(e.waypoints || [])
+            .map((w) => `${w.x},${w.y},${w.locked ? 1 : 0}`)
+            .join(';')}:lo${lo.x},${lo.y}`
+        })
+        .sort()
+        .join('|')
+    : ''
+
+  const nodeStyleSig = view
+    ? Object.entries(view.visualization.nodes)
+        .map(([id, n]) => `${id}:${n.style ? JSON.stringify(n.style) : ''}`)
+        .sort()
+        .join('|')
+    : ''
+
+  const collapseSig = [...collapsedIds].sort().join(',')
+
+  // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
+  // Redraw does not rebuild from stale visualization and wipe layout positions.
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${edgeSig}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${viewMode}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
     : null
+
+  const flowDirRef = useRef(flowDir)
+  flowDirRef.current = flowDir
 
   useEffect(() => {
     if (!view) {
@@ -466,29 +341,138 @@ export function DiagramCanvas({
 
     const stableOpen = (id: string) => onOpenViewRef.current(id)
     const stablePort = (portId: string, side: PortSide, offset: number) =>
-      onPortMovedRef.current(portId, side, offset)
+      handlePortMovedRef.current(portId, side, offset)
     const stableWp = (id: string, wps: { x: number; y: number }[]) =>
       onWaypointsMovedRef.current(id, wps)
     const stableLabel = (id: string, offset: { x: number; y: number }) =>
       onLabelOffsetMovedRef.current(id, offset)
+    const toggleCollapse = (id: string) => {
+      setCollapsedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        return next
+      })
+    }
 
-    const { nodes: builtNodes, edges: builtEdges } = buildGraph(
-      view,
-      stableOpen,
-      stablePort,
-      portMoveMode,
-      showAttributes,
-      stableWp,
-      stableLabel,
-    )
-    setNodes(builtNodes)
-    setEdges(builtEdges)
+    let built: { nodes: Node[]; edges: Edge[] }
+    switch (view.diagramMode) {
+      case 'sequence':
+        built = buildSequenceGraph(view, viewMode)
+        break
+      case 'state':
+        built = buildStateGraph(view, viewMode)
+        break
+      case 'actionFlow':
+        built = buildActionFlowGraph(view, viewMode, flowDirRef.current)
+        break
+      case 'tree':
+        built = buildTreeGraph(view, viewMode, collapsedIds, toggleCollapse)
+        break
+      case 'allocation':
+        built = buildAllocationGraph({
+          view,
+          viewMode,
+          showAttributes,
+          portMoveMode,
+          selectedConnectionColor: selectedConnectionColor || '#7c3aed',
+          selectedConnectionLinewidth,
+          onOpenView: stableOpen,
+          onPortMoved: stablePort,
+          onWaypointsChange: stableWp,
+          onLabelOffsetChange: stableLabel,
+          onSelectConnection: (id: string) => onSelectArtifactRef.current(id),
+        })
+        break
+      default:
+        built = buildStructureGraph({
+          view,
+          onOpenView: stableOpen,
+          onPortMoved: stablePort,
+          portMoveMode,
+          showAttributes,
+          viewMode,
+          selectedConnectionColor,
+          selectedConnectionLinewidth,
+          onWaypointsChange: stableWp,
+          onLabelOffsetChange: stableLabel,
+          onSelectConnection: (id: string) => onSelectArtifactRef.current(id),
+        })
+    }
+    setNodes(built.nodes)
+    setEdges(built.edges)
+    const isStructureMode =
+      view.diagramMode === 'whitebox' ||
+      view.diagramMode === 'structure' ||
+      !view.diagramMode
+    // One-shot route only when switching to a different view id, not on
+    // style/routing/label/attribute toggles that also change viewKey.
+    const prevKey = viewKeyRef.current
+    const prevViewId = prevKey?.split('|')[1]
+    const nextViewId = view.view.id
+    if (
+      isStructureMode &&
+      viewKey &&
+      prevViewId !== nextViewId &&
+      !printMode &&
+      !viewHasSavedConnectionLayout(view.visualization.edges)
+    ) {
+      pendingAutoRouteRef.current = {
+        nodes: built.nodes,
+        edges: built.edges,
+        viewKey,
+      }
+    }
     viewKeyRef.current = viewKey
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewKey, showAttributes])
+  }, [viewKey, showAttributes, viewMode])
 
-  // Toggle move-mode flags without rebuilding geometry from server
+  // Sync routing into edges without resetting part/port layout.
   useEffect(() => {
+    const v = viewRef.current
+    if (!v || !isStructure) return
+    setEdges((current) =>
+      current.map((edge) => {
+        const viz = v.visualization.edges[edge.id]
+        if (!viz) return edge
+        const data = (edge.data || {}) as SysmlEdgeData
+        const routing = viz.routing || 'angular'
+        if ((data.routing || 'angular') === routing) return edge
+        return {
+          ...edge,
+          data: {
+            ...data,
+            routing,
+          } satisfies SysmlEdgeData,
+        }
+      }),
+    )
+  }, [routingSig, isStructure])
+
+  // Sync waypoints into edges without resetting part/port layout.
+  useEffect(() => {
+    const v = viewRef.current
+    if (!v || !isStructure) return
+    setEdges((current) =>
+      current.map((edge) => {
+        const viz = v.visualization.edges[edge.id]
+        if (!viz) return edge
+        const data = (edge.data || {}) as SysmlEdgeData
+        return {
+          ...edge,
+          data: {
+            ...data,
+            routing: viz.routing || data.routing,
+            waypoints: viz.waypoints || [],
+            labelOffset: viz.labelOffset ?? data.labelOffset,
+          } satisfies SysmlEdgeData,
+        }
+      }),
+    )
+  }, [waypointSig, isStructure])
+
+  useEffect(() => {
+    if (!isStructure) return
     setNodes((current) => {
       if (!current.length) return current
       return current.map((node) => ({
@@ -499,7 +483,7 @@ export function DiagramCanvas({
           portMoveMode,
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
-            onPortMovedRef.current(portId, side, offset),
+            handlePortMovedRef.current(portId, side, offset),
         },
       }))
     })
@@ -509,11 +493,22 @@ export function DiagramCanvas({
         data: { ...(edge.data as object), altHeld: portMoveMode },
       })),
     )
-  }, [portMoveMode])
+  }, [portMoveMode, isStructure])
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setNodes((nds) => applyNodeChanges(changes, nds))
+      setNodes((nds) => {
+        const next = applyNodeChanges(changes, nds)
+        const boundaryResized = changes.some((c) => {
+          if (c.type !== 'dimensions' || !c.dimensions) return false
+          const node = next.find((n) => n.id === c.id)
+          return !!(node?.data as PartNodeData | undefined)?.isBoundary
+        })
+        if (boundaryResized) {
+          setEdges((current) => syncInternalEdgeBounds(next, current))
+        }
+        return next
+      })
 
       const resized = changes.filter(
         (c): c is Extract<NodeChange, { type: 'dimensions' }> =>
@@ -564,7 +559,7 @@ export function DiagramCanvas({
 
   const onNodeDragStart: OnNodeDrag = useCallback((_event, node) => {
     const data = node.data as PartNodeData
-    if (!data.isBoundary) {
+    if (!data?.isBoundary) {
       boundaryDragRef.current = null
       return
     }
@@ -618,6 +613,7 @@ export function DiagramCanvas({
 
       let edgePatch: Record<string, Partial<VisualizationEdge>> | undefined
       const snap = boundaryDragRef.current
+      const data = node.data as PartNodeData | undefined
       if (snap && snap.nodeId === node.id) {
         const dx = node.position.x - snap.originX
         const dy = node.position.y - snap.originY
@@ -634,6 +630,16 @@ export function DiagramCanvas({
           if (!Object.keys(edgePatch).length) edgePatch = undefined
         }
         boundaryDragRef.current = null
+      } else if (data && !data.isBoundary) {
+        // Child part moved — redraw only connections on this part's ports.
+        const connected = edgesRef.current.filter(
+          (e) => e.source === node.id || e.target === node.id,
+        )
+        if (connected.length) {
+          queueMicrotask(() =>
+            redrawConnectionsRef.current(allNodes, connected),
+          )
+        }
       }
 
       onNodesMovedRef.current(patch, edgePatch)
@@ -641,15 +647,306 @@ export function DiagramCanvas({
     [applyBoundaryEdgeDelta],
   )
 
-  const onConnect: OnConnect = useCallback((connection: Connection) => {
-    if (portMoveMode) return
-    const sourcePort = portIdFromHandle(connection.sourceHandle)
-    const targetPort = portIdFromHandle(connection.targetHandle)
-    if (!sourcePort || !targetPort || sourcePort === targetPort) return
-    onConnectPortsRef.current(sourcePort, targetPort)
-  }, [portMoveMode])
+  const onConnect: OnConnect = useCallback(
+    (connection: Connection) => {
+      if (portMoveMode || !isStructure) return
+      const sourcePort = portIdFromHandle(connection.sourceHandle)
+      const targetPort = portIdFromHandle(connection.targetHandle)
+      if (!sourcePort || !targetPort || sourcePort === targetPort) return
+      onConnectPortsRef.current(sourcePort, targetPort)
+    },
+    [portMoveMode, isStructure],
+  )
 
   const connectionLineType = useMemo(() => routingToConnectionLine('angular'), [])
+
+  const applyRedraw = useCallback(
+    (direction: RedrawDirection) => {
+      setFlowDir(direction)
+      const { positions } = layoutByDependency(nodes, edges, direction)
+      const nextNodes = nodes.map((n) => {
+        const p = positions[n.id]
+        const data = { ...(n.data as object), flowDir: direction }
+        if (!p) return { ...n, data }
+        return { ...n, position: { x: p.x, y: p.y }, data }
+      })
+      const nextEdges =
+        mode === 'whitebox' || mode === 'structure' || mode === 'sequence'
+          ? edges
+          : orientEdgeHandles(edges, direction, nextNodes)
+
+      setNodes(nextNodes)
+      setEdges(nextEdges)
+
+      const patch: Record<string, Partial<VisualizationNode>> = {}
+      for (const n of nextNodes) {
+        const { width, height } = nodeExtentSize(n)
+        patch[n.id] = {
+          artifactId: n.id,
+          x: n.position.x,
+          y: n.position.y,
+          width,
+          height,
+        }
+      }
+      onNodesMovedRef.current(patch)
+      setLayoutEpoch((n) => n + 1)
+    },
+    [nodes, edges, mode],
+  )
+
+  const applyRedrawConnections = useCallback(
+    (overrideNodes?: Node[], overrideEdges?: Edge[]) => {
+      // Only re-route edges — never patch part/port positions or sizes.
+      // Unlocked waypoints are discarded; only locked vias are kept.
+      // Heavy A* lives here (button / view load / port-move) — never in edge render.
+      const routeNodes = Array.isArray(overrideNodes) ? overrideNodes : nodes
+      const contextEdges = edges
+      const routeEdges = Array.isArray(overrideEdges) ? overrideEdges : contextEdges
+      if (!routeNodes.length || !routeEdges.length) return
+      const angularContext = contextEdges.filter(
+        (edge) =>
+          ((edge.data || {}) as SysmlEdgeData).routing === 'angular' ||
+          !((edge.data || {}) as SysmlEdgeData).routing,
+      )
+      const existing = angularContext.map((edge) => {
+        const data = (edge.data || {}) as SysmlEdgeData
+        return { id: edge.id, waypoints: data.waypoints || [] }
+      })
+      const routed = redrawStructureConnections(
+        routeNodes,
+        routeEdges,
+        viewRef.current?.visualization.nodes,
+        existing,
+        {
+          separation: connectionSeparation,
+          contextEdges: angularContext,
+        },
+      )
+      if (!routed.length) return
+      const byId = new Map(routed.map((r) => [r.id, r]))
+      const liveBounds = boundaryFlowBounds(routeNodes)
+      setEdges((current) =>
+        syncInternalEdgeBounds(
+          routeNodes,
+          current.map((edge) => {
+            const r = byId.get(edge.id)
+            if (!r) return edge
+            const data = (edge.data || {}) as SysmlEdgeData
+            return {
+              ...edge,
+              data: {
+                ...data,
+                routing: 'angular',
+                waypoints: r.waypoints,
+                jumps: r.jumps || [],
+                ...(liveBounds && (data.internal || data.parentBounds)
+                  ? { parentBounds: liveBounds }
+                  : {}),
+              } satisfies SysmlEdgeData,
+            }
+          }),
+        ),
+      )
+      const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
+      for (const r of routed) {
+        edgePatch[r.id] = {
+          artifactId: r.id,
+          routing: 'angular',
+          waypoints: r.waypoints,
+        }
+      }
+      onNodesMovedRef.current({}, edgePatch)
+    },
+    [nodes, edges, connectionSeparation],
+  )
+
+  const handlePortMoved = useCallback(
+    (portId: string, side: PortSide, offset: number) => {
+      let nextNodes: Node[] = []
+      setNodes((current) => {
+        nextNodes = current.map((node) => {
+          const data = node.data as PartNodeData | undefined
+          if (!data?.ports?.some((p) => p.id === portId)) return node
+          return {
+            ...node,
+            data: {
+              ...data,
+              ports: data.ports.map((p) =>
+                p.id === portId ? { ...p, side, offset } : p,
+              ),
+            },
+          }
+        })
+        return nextNodes
+      })
+      const connected = edgesRef.current.filter((edge) => {
+        const src = edge.sourceHandle || ''
+        const tgt = (edge.targetHandle || '').replace(/^target:/, '')
+        return src === portId || tgt === portId
+      })
+      const angular = connected.filter((edge) => {
+        const data = (edge.data || {}) as SysmlEdgeData
+        return (data.routing || 'angular') === 'angular'
+      })
+      if (angular.length) {
+        // Wait for React Flow to re-measure moved handles before rerouting.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const nodesForRoute =
+              nodesRef.current.length > 0 ? nodesRef.current : nextNodes
+            applyRedrawConnectionsRef.current(nodesForRoute, angular)
+          })
+        })
+      }
+      onPortMovedRef.current(portId, side, offset)
+    },
+    [],
+  )
+
+  applyRedrawConnectionsRef.current = applyRedrawConnections
+  handlePortMovedRef.current = handlePortMoved
+  redrawConnectionsRef.current = (n, e) => applyRedrawConnectionsRef.current(n, e)
+
+  useEffect(() => {
+    const req = autorouteRequest
+    if (!req?.connectionId || req.seq == null) return
+    if (req.seq === lastAutorouteSeqRef.current) return
+    lastAutorouteSeqRef.current = req.seq
+    if (!isStructure) return
+    const edge = edgesRef.current.find((e) => e.id === req.connectionId)
+    if (!edge) return
+    const data = (edge.data || {}) as SysmlEdgeData
+    if ((data.routing || 'angular') !== 'angular') return
+    applyRedrawConnectionsRef.current(nodesRef.current, [edge])
+  }, [autorouteRequest?.connectionId, autorouteRequest?.seq, isStructure])
+
+  // One-shot obstacle routing after opening a structure view (not during edge render).
+  useEffect(() => {
+    const pending = pendingAutoRouteRef.current
+    if (!pending || pending.viewKey !== viewKey) return
+    if (!isStructure || !nodes.length) return
+    pendingAutoRouteRef.current = null
+    // After waypoint sync in this commit, so we don't get clobbered by stale viz.
+    queueMicrotask(() =>
+      applyRedrawConnectionsRef.current(pending.nodes, pending.edges),
+    )
+  }, [viewKey, isStructure, nodes.length])
+
+  const applyAutoLayout = useCallback(() => {
+    const layout = autoLayoutStructure(nodes, edges)
+    if (!Object.keys(layout.nodes).length) return
+
+    const nextNodes = nodes.map((node) => {
+      const patch = layout.nodes[node.id]
+      if (!patch) {
+        const data = node.data as PartNodeData
+        if (!data?.ports?.length) return node
+        return {
+          ...node,
+          data: {
+            ...data,
+            ports: data.ports.map((p) => {
+              const pp = layout.nodes[p.id]
+              if (!pp) return p
+              return {
+                ...p,
+                side: (pp.side as PortSide) || p.side,
+                offset: pp.offset ?? p.offset,
+              }
+            }),
+          },
+        }
+      }
+      const data = node.data as PartNodeData
+      return {
+        ...node,
+        position:
+          patch.x != null && patch.y != null
+            ? { x: patch.x, y: patch.y }
+            : node.position,
+        width: patch.width ?? node.width,
+        height: patch.height ?? node.height,
+        style: {
+          ...node.style,
+          width: patch.width ?? readPx(node.style?.width) ?? node.width,
+          height: patch.height ?? readPx(node.style?.height) ?? node.height,
+        },
+        data: data?.ports
+          ? {
+              ...data,
+              ports: data.ports.map((p) => {
+                const pp = layout.nodes[p.id]
+                if (!pp) return p
+                return {
+                  ...p,
+                  side: (pp.side as PortSide) || p.side,
+                  offset: pp.offset ?? p.offset,
+                }
+              }),
+            }
+          : node.data,
+      }
+    })
+
+    const vizNodes = {
+      ...(viewRef.current?.visualization.nodes || {}),
+    }
+    for (const [id, patch] of Object.entries(layout.nodes)) {
+      const prev = vizNodes[id]
+      vizNodes[id] = {
+        artifactId: id,
+        x: patch.x ?? prev?.x ?? 0,
+        y: patch.y ?? prev?.y ?? 0,
+        width: patch.width ?? prev?.width ?? 12,
+        height: patch.height ?? prev?.height ?? 12,
+        symbolRef: prev?.symbolRef || 'default-part',
+        side: patch.side ?? prev?.side ?? null,
+        offset: patch.offset ?? prev?.offset ?? null,
+        style: prev?.style,
+      }
+    }
+
+    const existing = edges.map((edge) => {
+      const data = (edge.data || {}) as SysmlEdgeData
+      return { id: edge.id, waypoints: data.waypoints || [] }
+    })
+    const routed = redrawStructureConnections(
+      nextNodes,
+      edges,
+      vizNodes,
+      existing,
+      { separation: connectionSeparation },
+    )
+    const byId = new Map(routed.map((r) => [r.id, r]))
+    const nextEdges = edges.map((edge) => {
+      const r = byId.get(edge.id)
+      if (!r) return edge
+      const data = (edge.data || {}) as SysmlEdgeData
+      return {
+        ...edge,
+        data: {
+          ...data,
+          routing: 'angular' as const,
+          waypoints: r.waypoints,
+          jumps: r.jumps || [],
+        } satisfies SysmlEdgeData,
+      }
+    })
+    const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
+    for (const r of routed) {
+      edgePatch[r.id] = {
+        artifactId: r.id,
+        routing: 'angular',
+        waypoints: r.waypoints,
+      }
+    }
+
+    setNodes(nextNodes)
+    setEdges(nextEdges)
+    onNodesMovedRef.current(layout.nodes, edgePatch)
+    setLayoutEpoch((n) => n + 1)
+  }, [nodes, edges, connectionSeparation])
 
   if (!view) {
     return (
@@ -659,43 +956,127 @@ export function DiagramCanvas({
     )
   }
 
+  if (view.modeError) {
+    return (
+      <div className="canvas-empty mode-error">
+        {!printMode && (
+          <div className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</div>
+        )}
+        <p>{view.modeError}</p>
+      </div>
+    )
+  }
+
   return (
-    <div className={`diagram-canvas${portMoveMode ? ' tool-move-ports' : ' tool-connect'}`}>
-      {portMoveMode && (
+    <div
+      className={`diagram-canvas${portMoveMode ? ' tool-move-ports' : ' tool-connect'}${
+        printMode ? ' diagram-canvas-print' : ''
+      }`}
+    >
+      {!printMode && (
+        <div className="diagram-canvas-header">
+          <strong className="diagram-view-name">{view.view.name}</strong>
+          <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
+          <div className="redraw-actions">
+            {isStructure ? (
+              <>
+                <button
+                  type="button"
+                  onClick={applyAutoLayout}
+                  title="Size parts, place ports, space parts, then redraw connections"
+                >
+                  AutoLayout
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyRedrawConnections()}
+                  title="Reroute connections around parts using current port placement (does not move parts or ports)"
+                >
+                  Redraw: Connections
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => applyRedraw('TD')} title="Redraw top-down">
+                  Redraw: TD
+                </button>
+                <button type="button" onClick={() => applyRedraw('LR')} title="Redraw left-right">
+                  Redraw: LR
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {!printMode && portMoveMode && isStructure && (
         <div className="tool-banner" role="status">
           Move ports — dra längs partens kant
         </div>
       )}
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onNodeDragStart={onNodeDragStart}
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
-        onConnect={onConnect}
-        onNodeClick={(_e, node) => onSelectArtifact(node.id)}
-        onEdgeClick={(_e, edge) => onSelectArtifact(edge.id)}
-        onPaneClick={() => onSelectArtifact(null)}
-        fitView
-        fitViewOptions={{ padding: 0.15 }}
-        nodesDraggable={!portMoveMode}
-        nodesConnectable={!portMoveMode}
-        elementsSelectable
-        connectionMode={ConnectionMode.Loose}
-        elevateEdgesOnSelect={false}
-        elevateNodesOnSelect={false}
-        zIndexMode="auto"
-        connectionLineType={connectionLineType}
-        defaultEdgeOptions={{ zIndex: 0 }}
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background gap={16} />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
+      <div className="diagram-sheet-host">
+        {!printMode && sheet?.frame?.visible && (
+          <div
+            className="diagram-paper-frame"
+            style={{
+              aspectRatio: (() => {
+                const s = paperSizeMm(sheet.frame!)
+                return `${s.widthMm} / ${s.heightMm}`
+              })(),
+            }}
+          />
+        )}
+        {!printMode && sheet?.titleBlock && (
+          <div
+            className={`diagram-title-block pos-${sheet.titleBlock.position}`}
+          >
+            <div>
+              <strong>{sheet.titleBlock.title || 'Untitled'}</strong>
+            </div>
+            <div className="muted">
+              {sheet.titleBlock.drawingId} · v{sheet.titleBlock.version}
+            </div>
+          </div>
+        )}
+        <ReactFlow
+          key={`${view.view.id}|${mode}`}
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={allNodeTypes}
+          edgeTypes={allEdgeTypes}
+          onNodesChange={printMode ? undefined : onNodesChange}
+          onNodeDragStart={printMode ? undefined : onNodeDragStart}
+          onNodeDrag={printMode ? undefined : onNodeDrag}
+          onNodeDragStop={printMode ? undefined : onNodeDragStop}
+          onConnect={printMode ? undefined : onConnect}
+          onNodeClick={printMode ? undefined : (_e, node) => onSelectArtifact(node.id)}
+          onEdgeClick={printMode ? undefined : (_e, edge) => onSelectArtifact(edge.id)}
+          onPaneClick={printMode ? undefined : () => onSelectArtifact(null)}
+          fitView
+          fitViewOptions={{ padding: 0.15 }}
+          nodesDraggable={!printMode && !portMoveMode}
+          nodesConnectable={!printMode && isStructure && !portMoveMode}
+          elementsSelectable={!printMode}
+          nodesFocusable={!printMode}
+          edgesFocusable={!printMode}
+          panOnDrag={!printMode}
+          zoomOnScroll={!printMode}
+          zoomOnPinch={!printMode}
+          zoomOnDoubleClick={!printMode}
+          preventScrolling={!printMode}
+          connectionMode={ConnectionMode.Loose}
+          connectionLineType={connectionLineType}
+          proOptions={{ hideAttribution: true }}
+        >
+          <FitViewOnViewKey
+            viewKey={viewKey}
+            layoutEpoch={layoutEpoch}
+            onReady={printMode ? onPrintReady : undefined}
+          />
+          {!printMode && <Background gap={18} size={1} />}
+          {!printMode && <Controls />}
+          {!printMode && <MiniMap pannable zoomable />}
+        </ReactFlow>
+      </div>
     </div>
   )
 }

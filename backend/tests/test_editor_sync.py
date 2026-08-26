@@ -7,6 +7,7 @@ from domain.models import ArtifactKind
 from fastapi.testclient import TestClient
 
 from adapters.api.app import create_app
+from helpers import add_content_file, add_example_file
 
 
 def test_parse_attributes():
@@ -120,12 +121,15 @@ def test_editor_crud_updates_file_content(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
     project_id = client.post("/projects", json={"name": "E"}).json()["id"]
-    sample = b"package P { part def Box { port p; } }\n"
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("t.sysml", sample, "text/plain")},
-    ).json()
+    uploaded = add_content_file(
+        client,
+        project_id,
+        tmp_path,
+        "t.sysml",
+        "package P { part def Box { port p; } }\n",
+    )
     assert "P::Box" in uploaded["semantic"]
+    assert (tmp_path / "t.sysml").exists()
 
     added = client.post(
         f"/projects/{project_id}/parts",
@@ -162,7 +166,7 @@ def test_add_connection_updates_file_content(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
     project_id = client.post("/projects", json={"name": "C"}).json()["id"]
-    sample = b"""
+    sample = """
 package P {
   part def Box {
     part a { port out; }
@@ -170,10 +174,7 @@ package P {
   }
 }
 """
-    client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("t.sysml", sample, "text/plain")},
-    )
+    add_content_file(client, project_id, tmp_path, "t.sysml", sample)
     created = client.post(
         f"/projects/{project_id}/connections",
         json={
@@ -186,15 +187,85 @@ package P {
     assert "link1" in created["files"][0]["content"]
 
 
+def test_add_connection_defaults_to_policy_name(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post("/projects", json={"name": "N"}).json()["id"]
+    sample = """
+package P {
+  port def Cluster_sci;
+  part def Cluster {
+    port Cluster_scp : Cluster_sci;
+  }
+  part def Orch {
+    port Cluster_rcp : Cluster_sci;
+  }
+  part def Box {
+    part c : Cluster;
+    part o : Orch;
+  }
+}
+"""
+    add_content_file(client, project_id, tmp_path, "n.sysml", sample)
+    created = client.post(
+        f"/projects/{project_id}/connections",
+        json={
+            "sourceId": "P::Box::o::Cluster_rcp",
+            "targetId": "P::Box::c::Cluster_scp",
+        },
+    ).json()
+    assert "connection Cluster_sci connect" in created["files"][0]["content"]
+    assert "P::Box::Cluster_sci" in created["semantic"]
+
+
+def test_add_port_defaults_name_from_type_ref(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post("/projects", json={"name": "P"}).json()["id"]
+    sample = """
+package P {
+  port def Cluster_sci;
+  part def Cluster {
+  }
+  part def Orch {
+  }
+}
+"""
+    add_content_file(client, project_id, tmp_path, "p.sysml", sample)
+    on_cluster = client.post(
+        f"/projects/{project_id}/ports",
+        json={"parentId": "P::Cluster", "typeRef": "Cluster_sci"},
+    ).json()
+    assert "P::Cluster::Cluster_scp" in on_cluster["semantic"]
+    on_orch = client.post(
+        f"/projects/{project_id}/ports",
+        json={"parentId": "P::Orch", "typeRef": "Cluster_sci"},
+    ).json()
+    assert "P::Orch::Cluster_rcp" in on_orch["semantic"]
+
+
+def test_reparse_adds_interface_naming_warnings(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post("/projects", json={"name": "L"}).json()["id"]
+    sample = """
+package P {
+  port def Cluster_sci;
+  part def Cluster {
+    port weird : Cluster_sci;
+  }
+}
+"""
+    uploaded = add_content_file(client, project_id, tmp_path, "l.sysml", sample)
+    warns = uploaded["files"][0]["warnings"]
+    assert any("weird" in w for w in warns)
+
+
 def test_waypoints_patch_roundtrip(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
     project_id = client.post("/projects", json={"name": "W"}).json()["id"]
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("vehicle.sysml", sample.read_bytes(), "text/plain")},
-    ).json()
+    uploaded = add_example_file(client, project_id, tmp_path, "vehicle.sysml")
     conn_id = next(
         k for k, v in uploaded["semantic"].items() if v["kind"] == "connection"
     )
@@ -203,7 +274,10 @@ def test_waypoints_patch_roundtrip(tmp_path: Path):
         json={
             "edges": {
                 conn_id: {
-                    "waypoints": [{"x": 10, "y": 20}, {"x": 30, "y": 40}],
+                    "waypoints": [
+                        {"x": 10, "y": 20, "locked": True},
+                        {"x": 30, "y": 40},
+                    ],
                 }
             }
         },
@@ -211,3 +285,5 @@ def test_waypoints_patch_roundtrip(tmp_path: Path):
     wps = patched["visualization"]["edges"][conn_id]["waypoints"]
     assert len(wps) == 2
     assert wps[0]["x"] == 10
+    assert wps[0].get("locked") is True
+    assert "locked" not in wps[1] or wps[1].get("locked") is False

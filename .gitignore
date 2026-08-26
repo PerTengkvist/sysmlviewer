@@ -6,11 +6,13 @@ venv/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
-data/projects/*.json
+data/projects/**
 !data/projects/.gitkeep
 frontend/node_modules/
 frontend/dist/
 backend/data-test/
 *.log
+logs/
+running-session.json
 .idea/
 .vscode/

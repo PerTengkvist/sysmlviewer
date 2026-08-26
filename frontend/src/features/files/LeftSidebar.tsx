@@ -1,21 +1,37 @@
-import { useState } from 'react'
-import type { Project, SemanticElement } from '../../api'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { Project, SemanticElement, SysmlFile } from '../../api'
+import { buildFileTree, type FileTreeNode } from './buildFileTree'
 
 export type LeftTab = 'views' | 'files'
 
 type Props = {
   project: Project | null
+  docPaths: string[]
   activeTab: LeftTab
   onTabChange: (tab: LeftTab) => void
   activeViewId: string | null
   selectedArtifactId: string | null
   onSelectView: (viewId: string) => void
   onSelectArtifact: (artifactId: string) => void
-  onUploadFiles: (files: FileList) => void
-  onPickUpload: () => void
+  onAddFilePath: () => void
   onRefreshFile: (fileId: string) => void
-  onExportFile: (fileId: string) => void
+  onDeleteFile?: (fileId: string) => void
   onShowText: (fileId: string) => void
+  onShowMarkdown: (docPath: string) => void
+}
+
+function sortChildIds(
+  childIds: string[],
+  byId: Record<string, SemanticElement>,
+): string[] {
+  return [...childIds]
+    .filter((cid) => byId[cid])
+    .sort((a, b) => {
+      const ka = byId[a].kind === 'view' ? 0 : 1
+      const kb = byId[b].kind === 'view' ? 0 : 1
+      if (ka !== kb) return ka - kb
+      return a.localeCompare(b)
+    })
 }
 
 function ViewTree({
@@ -31,40 +47,94 @@ function ViewTree({
   onSelectArtifact: (artifactId: string) => void
   onSelectView: (viewId: string) => void
 }) {
-  const elements = Object.values(semantic)
-  const byId = Object.fromEntries(elements.map((e) => [e.id, e]))
-  const roots = elements
-    .filter((e) => !e.parentId || !byId[e.parentId])
-    .sort((a, b) => a.id.localeCompare(b.id))
+  const semanticKey = Object.keys(semantic).sort().join('|')
 
-  const render = (el: SemanticElement, depth: number) => {
-    // Keep tree order stable: views first among siblings, then others by id
-    const childIds = (el.children || [])
-      .filter((cid) => byId[cid])
-      .sort((a, b) => {
-        const ka = byId[a].kind === 'view' ? 0 : 1
-        const kb = byId[b].kind === 'view' ? 0 : 1
-        if (ka !== kb) return ka - kb
-        return a.localeCompare(b)
-      })
+  const { byId, roots } = useMemo(() => {
+    const elements = Object.values(semantic)
+    const map = Object.fromEntries(elements.map((e) => [e.id, e]))
+    const rootList = elements
+      .filter((e) => !e.parentId || !map[e.parentId])
+      .sort((a, b) => a.id.localeCompare(b.id))
+    return { byId: map, roots: rootList }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semanticKey])
+
+  const defaultCollapsed = useMemo(() => {
+    const collapsed = new Set<string>()
+    const walk = (id: string, depth: number) => {
+      const el = byId[id]
+      if (!el) return
+      const kids = sortChildIds(el.children || [], byId)
+      if (depth >= 1 && kids.length) collapsed.add(id)
+      for (const cid of kids) walk(cid, depth + 1)
+    }
+    for (const r of roots) walk(r.id, 0)
+    return collapsed
+  }, [byId, roots])
+
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(defaultCollapsed)
+
+  useEffect(() => {
+    setCollapsedIds(new Set(defaultCollapsed))
+  }, [defaultCollapsed])
+
+  const toggle = (id: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const render = (el: SemanticElement, depth: number): ReactNode => {
+    const childIds = sortChildIds(el.children || [], byId)
+    const hasChildren = childIds.length > 0
+    const collapsed = collapsedIds.has(el.id)
     const active =
       selectedId === el.id ||
       activeViewId === el.id ||
       activeViewId === `artifact::${el.id}`
+    const isView = el.kind === 'view'
     return (
       <div key={el.id} className="tree-item" style={{ paddingLeft: depth * 12 }}>
-        <button
-          type="button"
-          className={active ? 'active' : ''}
-          onClick={() => {
-            if (el.kind === 'view') onSelectView(el.id)
-            else onSelectArtifact(el.id)
-          }}
-          title={el.id}
+        <div
+          className={`tree-row${isView ? ' is-view' : ' is-other'}${active ? ' active' : ''}`}
         >
-          <span className="artifact-kind">{el.kind}</span> {el.name}
-        </button>
-        {childIds.map((cid) => render(byId[cid], depth + 1))}
+          {hasChildren ? (
+            <button
+              type="button"
+              className="tree-expand-btn"
+              aria-label={collapsed ? 'Expand' : 'Collapse'}
+              aria-expanded={!collapsed}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggle(el.id)
+              }}
+            >
+              {collapsed ? '▸' : '▾'}
+            </button>
+          ) : (
+            <span className="tree-expand-btn spacer" aria-hidden />
+          )}
+          <button
+            type="button"
+            className="tree-label"
+            onClick={() => {
+              if (el.kind === 'view') onSelectView(el.id)
+              else onSelectArtifact(el.id)
+            }}
+            title={el.id}
+          >
+            <span className="artifact-kind">{el.kind}</span> {el.name}
+            {isView && el.typeRef ? (
+              <span className="view-type-ref">«{el.typeRef}»</span>
+            ) : null}
+          </button>
+        </div>
+        {hasChildren && !collapsed
+          ? childIds.map((cid) => render(byId[cid], depth + 1))
+          : null}
       </div>
     )
   }
@@ -76,25 +146,148 @@ function ViewTree({
   return <div className="view-tree">{roots.map((el) => render(el, 0))}</div>
 }
 
+function FileTree({
+  nodes,
+  depth,
+  onShowText,
+  onShowMarkdown,
+  onRefreshFile,
+  onContextMenu,
+}: {
+  nodes: FileTreeNode[]
+  depth: number
+  onShowText: (fileId: string) => void
+  onShowMarkdown: (path: string) => void
+  onRefreshFile: (fileId: string) => void
+  onContextMenu: (file: SysmlFile, x: number, y: number) => void
+}) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set())
+
+  const toggle = (path: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
+
+  return (
+    <>
+      {nodes.map((node) => {
+        if (node.kind === 'folder') {
+          const isCollapsed = collapsed.has(node.path)
+          return (
+            <div key={node.path} className="tree-item" style={{ paddingLeft: depth * 12 }}>
+              <div className="tree-row is-folder">
+                <button
+                  type="button"
+                  className="tree-expand-btn"
+                  aria-expanded={!isCollapsed}
+                  onClick={() => toggle(node.path)}
+                >
+                  {isCollapsed ? '▸' : '▾'}
+                </button>
+                <span className="tree-label folder-label">{node.name}/</span>
+              </div>
+              {!isCollapsed ? (
+                <FileTree
+                  nodes={node.children}
+                  depth={depth + 1}
+                  onShowText={onShowText}
+                  onShowMarkdown={onShowMarkdown}
+                  onRefreshFile={onRefreshFile}
+                  onContextMenu={onContextMenu}
+                />
+              ) : null}
+            </div>
+          )
+        }
+        if (node.kind === 'markdown') {
+          return (
+            <div key={node.path} className="tree-item" style={{ paddingLeft: depth * 12 }}>
+              <div className="tree-row is-doc">
+                <span className="tree-expand-btn spacer" aria-hidden />
+                <button
+                  type="button"
+                  className="tree-label"
+                  onClick={() => onShowMarkdown(node.path)}
+                  title={node.path}
+                >
+                  <span className="artifact-kind">md</span> {node.name}
+                </button>
+              </div>
+            </div>
+          )
+        }
+        const file = node.file
+        return (
+          <div
+            key={node.path}
+            className="tree-item file-tree-item"
+            style={{ paddingLeft: depth * 12 }}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onContextMenu(file, e.clientX, e.clientY)
+            }}
+          >
+            <div className="tree-row is-file">
+              <span className="tree-expand-btn spacer" aria-hidden />
+              <button
+                type="button"
+                className="tree-label"
+                onClick={() => onShowText(file.id)}
+                title={file.path || file.name}
+              >
+                <span className="artifact-kind">sysml</span> {node.name}
+              </button>
+              {file.warnings.length > 0 ? (
+                <span className="file-warnings-inline" title={file.warnings.join('\n')}>
+                  {file.warnings.length}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="file-refresh-inline"
+                onClick={() => onRefreshFile(file.id)}
+                title="Refresh from disk"
+              >
+                ↻
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 export function LeftSidebar({
   project,
+  docPaths,
   activeTab,
   onTabChange,
   activeViewId,
   selectedArtifactId,
   onSelectView,
   onSelectArtifact,
-  onUploadFiles,
-  onPickUpload,
+  onAddFilePath,
   onRefreshFile,
-  onExportFile,
+  onDeleteFile,
   onShowText,
+  onShowMarkdown,
 }: Props) {
   const [menu, setMenu] = useState<{
     fileId: string
     x: number
     y: number
   } | null>(null)
+
+  const fileTree = useMemo(
+    () => buildFileTree(project?.files || [], docPaths),
+    [project?.files, docPaths],
+  )
 
   return (
     <aside className="sidebar left-sidebar" onClick={() => setMenu(null)}>
@@ -128,54 +321,25 @@ export function LeftSidebar({
       )}
 
       {activeTab === 'files' && (
-        <div
-          className="sidebar-body files-panel"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault()
-            if (e.dataTransfer.files?.length) {
-              onUploadFiles(e.dataTransfer.files)
-            }
-          }}
-        >
-          <button type="button" className="upload-zone" onClick={() => onPickUpload()}>
-            <span>Drop .sysml files here or click to upload</span>
+        <div className="sidebar-body files-panel">
+          <button type="button" className="upload-zone" onClick={() => onAddFilePath()}>
+            <span>Add SysML file by relative path…</span>
           </button>
-          <ul className="file-list">
-            {(project?.files || []).map((file) => (
-              <li
-                key={file.id}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setMenu({ fileId: file.id, x: e.clientX, y: e.clientY })
-                }}
-              >
-                <button type="button" className="file-name" onClick={() => onShowText(file.id)}>
-                  {file.name}
-                </button>
-                {file.sourcePath && (
-                  <div className="file-path muted" title={file.sourcePath}>
-                    {file.sourcePath}
-                  </div>
-                )}
-                <div className="file-actions">
-                  <button type="button" onClick={() => onRefreshFile(file.id)} title="Refresh from file…">
-                    ↻
-                  </button>
-                  <button type="button" onClick={() => onExportFile(file.id)} title="Export SysML…">
-                    ⬇
-                  </button>
-                </div>
-                {file.warnings.length > 0 && (
-                  <div className="file-warnings" title={file.warnings.join('\n')}>
-                    {file.warnings.length} warning(s)
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-          <p className="muted hint">Right-click a file for Refresh / View as text</p>
+          <div className="file-tree view-tree">
+            {fileTree.length ? (
+              <FileTree
+                nodes={fileTree}
+                depth={0}
+                onShowText={onShowText}
+                onShowMarkdown={onShowMarkdown}
+                onRefreshFile={onRefreshFile}
+                onContextMenu={(file, x, y) => setMenu({ fileId: file.id, x, y })}
+              />
+            ) : (
+              <p className="muted">No files yet.</p>
+            )}
+          </div>
+          <p className="muted hint">Right-click a SysML file for Refresh / View as text</p>
         </div>
       )}
 
@@ -203,6 +367,20 @@ export function LeftSidebar({
           >
             View as text
           </button>
+          {onDeleteFile && (
+            <button
+              type="button"
+              className="danger"
+              onClick={() => {
+                if (window.confirm('Remove this SysML file from the project?')) {
+                  onDeleteFile(menu.fileId)
+                }
+                setMenu(null)
+              }}
+            >
+              Delete file
+            </button>
+          )}
         </div>
       )}
     </aside>

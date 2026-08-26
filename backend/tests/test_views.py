@@ -6,6 +6,7 @@ from adapters.api.app import create_app
 from adapters.parser.subset_parser import SubsetSysmlParser
 from domain.merge import rebuild_views
 from domain.models import ArtifactKind
+from helpers import add_example_file
 
 
 def test_parse_vehicle2_declared_views_only():
@@ -19,7 +20,6 @@ def test_parse_vehicle2_declared_views_only():
     assert len(views) == 1
     assert views[0].name == "ExampleView"
     assert views[0].root_artifact_id == "Example::Vehicle"
-    # Parts must not appear as Views
     assert not any(v.name == "Vehicle" and v.id.startswith("view::") for v in views)
 
 
@@ -27,12 +27,7 @@ def test_package_resolves_to_general_view(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
     project_id = client.post("/projects", json={"name": "V2"}).json()["id"]
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle2.sysml"
-    with sample.open("rb") as fh:
-        client.post(
-            f"/projects/{project_id}/files",
-            files={"file": ("vehicle2.sysml", fh, "text/plain")},
-        )
+    add_example_file(client, project_id, tmp_path, "vehicle2.sysml")
 
     pkg_view = client.get(f"/projects/{project_id}/views/artifact::Example").json()
     assert pkg_view["view"]["name"] == "ExampleView"
@@ -51,12 +46,7 @@ def test_add_connection_and_views_in_project(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
     project_id = client.post("/projects", json={"name": "Conn"}).json()["id"]
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle2.sysml"
-    with sample.open("rb") as fh:
-        client.post(
-            f"/projects/{project_id}/files",
-            files={"file": ("vehicle2.sysml", fh, "text/plain")},
-        )
+    add_example_file(client, project_id, tmp_path, "vehicle2.sysml")
 
     view = client.get(
         f"/projects/{project_id}/views/artifact::Example::Vehicle"
