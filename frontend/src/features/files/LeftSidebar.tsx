@@ -34,6 +34,33 @@ function sortChildIds(
     })
 }
 
+function folderFromFileId(fileId: string | null | undefined): string | null {
+  if (!fileId?.includes('/')) return null
+  return fileId.split('/')[0] || null
+}
+
+function groupRootsByFolder(roots: SemanticElement[]): {
+  folders: { name: string; roots: SemanticElement[] }[]
+  ungrouped: SemanticElement[]
+} {
+  const byFolder = new Map<string, SemanticElement[]>()
+  const ungrouped: SemanticElement[] = []
+  for (const el of roots) {
+    const folder = folderFromFileId(el.fileId)
+    if (folder) {
+      const list = byFolder.get(folder) || []
+      list.push(el)
+      byFolder.set(folder, list)
+    } else {
+      ungrouped.push(el)
+    }
+  }
+  const folders = [...byFolder.keys()]
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => ({ name, roots: byFolder.get(name) || [] }))
+  return { folders, ungrouped }
+}
+
 function ViewTree({
   semantic,
   selectedId,
@@ -49,15 +76,24 @@ function ViewTree({
 }) {
   const semanticKey = Object.keys(semantic).sort().join('|')
 
-  const { byId, roots } = useMemo(() => {
+  const { byId, roots, folderGroups } = useMemo(() => {
     const elements = Object.values(semantic)
     const map = Object.fromEntries(elements.map((e) => [e.id, e]))
     const rootList = elements
       .filter((e) => !e.parentId || !map[e.parentId])
       .sort((a, b) => a.id.localeCompare(b.id))
-    return { byId: map, roots: rootList }
+    const grouped = groupRootsByFolder(rootList)
+    return { byId: map, roots: rootList, folderGroups: grouped }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [semanticKey])
+
+  const defaultFolderCollapsed = useMemo(() => new Set<string>(), [])
+
+  const [folderCollapsed, setFolderCollapsed] = useState<Set<string>>(defaultFolderCollapsed)
+
+  useEffect(() => {
+    setFolderCollapsed(new Set(defaultFolderCollapsed))
+  }, [defaultFolderCollapsed])
 
   const defaultCollapsed = useMemo(() => {
     const collapsed = new Set<string>()
@@ -77,6 +113,15 @@ function ViewTree({
   useEffect(() => {
     setCollapsedIds(new Set(defaultCollapsed))
   }, [defaultCollapsed])
+
+  const toggleFolder = (folderKey: string) => {
+    setFolderCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(folderKey)) next.delete(folderKey)
+      else next.add(folderKey)
+      return next
+    })
+  }
 
   const toggle = (id: string) => {
     setCollapsedIds((prev) => {
@@ -143,7 +188,37 @@ function ViewTree({
     return <p className="muted">No definitions yet.</p>
   }
 
-  return <div className="view-tree">{roots.map((el) => render(el, 0))}</div>
+  const renderFolder = (name: string, folderRoots: SemanticElement[]) => {
+    const folderKey = `folder::${name}`
+    const collapsed = folderCollapsed.has(folderKey)
+    return (
+      <div key={folderKey} className="tree-item">
+        <div className="tree-row is-folder">
+          <button
+            type="button"
+            className="tree-expand-btn"
+            aria-expanded={!collapsed}
+            onClick={() => toggleFolder(folderKey)}
+          >
+            {collapsed ? '▸' : '▾'}
+          </button>
+          <span className="tree-label folder-label">{name}/</span>
+        </div>
+        {!collapsed
+          ? folderRoots.map((el) => render(el, 1))
+          : null}
+      </div>
+    )
+  }
+
+  return (
+    <div className="view-tree">
+      {folderGroups.folders.map(({ name, roots: folderRoots }) =>
+        renderFolder(name, folderRoots),
+      )}
+      {folderGroups.ungrouped.map((el) => render(el, 0))}
+    </div>
+  )
 }
 
 function FileTree({

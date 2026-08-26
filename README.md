@@ -43,11 +43,11 @@ npm install
 npm run dev
 ```
 
-### Sample file
+### Sample projects
 
-[`examples/vehicle.sysml`](examples/vehicle.sysml) — drop into the Files tab after creating a project.
+[`examples/diagrams/`](examples/diagrams) - shows different types of sysml diagrams
 
-Data-center example workspace: [`data/projects/data_center/`](data/projects/data_center/) (logical + physical). Interface naming: [`docs/interface_naming.md`](docs/interface_naming.md).
+Data-center example workspace: [`examples/data_center/`](examples/data_center/) (logical + physical). Interface naming: [`docs/interface_naming.md`](docs/interface_naming.md).
 
 ## Alpha features
 

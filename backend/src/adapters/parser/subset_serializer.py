@@ -73,13 +73,14 @@ def _emit_element(
     if el.kind == ArtifactKind.PART:
         parent = semantic.get(el.parent_id) if el.parent_id else None
         nested = _structural_children(semantic, el)
+        mult = f" [{el.multiplicity}]" if el.multiplicity else ""
         if el.type_ref:
             if nested:
-                lines.append(f"{pad}part {el.name} : {el.type_ref} {{")
+                lines.append(f"{pad}part {el.name}{mult} : {el.type_ref} {{")
                 _emit_children(semantic, el, lines, indent + 1)
                 lines.append(f"{pad}}}")
             else:
-                lines.append(f"{pad}part {el.name} : {el.type_ref};")
+                lines.append(f"{pad}part {el.name}{mult} : {el.type_ref};")
             return
         # Nested under a part without type → usage/composite part (not a def)
         if parent and parent.kind == ArtifactKind.PART:

@@ -25,3 +25,19 @@ package Physical {
     assert nested_engine in result.elements
     assert nested_port in result.elements
     assert result.elements[nested_port].parent_id == nested_engine
+
+
+def test_part_multiplicity_before_type_is_parsed():
+    content = """
+package P {
+  part def Child { port p; }
+  part def Parent {
+    part child [0..*] : Child;
+  }
+}
+"""
+    result = SubsetSysmlParser().parse(content, "p.sysml")
+    usage = result.elements["P::Parent::child"]
+    assert usage.type_ref == "Child"
+    assert usage.multiplicity == "0..*"
+    assert "P::Parent::child::p" in result.elements

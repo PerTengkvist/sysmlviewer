@@ -33,6 +33,7 @@ export interface SemanticElement {
   targetId: string | null
   exposeRef?: string | null
   defaultValue?: string | null
+  multiplicity?: string | null
   children: string[]
   fileId: string | null
 }

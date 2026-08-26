@@ -1,0 +1,3 @@
+# CoolingView
+
+**GeneralView** exposing `Cooling`.

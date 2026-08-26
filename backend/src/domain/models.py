@@ -141,6 +141,8 @@ class SemanticElement:
     expose_ref: str | None = None
     # Optional default value for attributes/ports (SysML `= …`)
     default_value: str | None = None
+    # Optional multiplicity for part usages, e.g. `0..*` from `part x [0..*] : Type`
+    multiplicity: str | None = None
     children: list[str] = field(default_factory=list)
     file_id: str | None = None
 
@@ -155,6 +157,7 @@ class SemanticElement:
             "targetId": self.target_id,
             "exposeRef": self.expose_ref,
             "defaultValue": self.default_value,
+            "multiplicity": self.multiplicity,
             "children": list(self.children),
             "fileId": self.file_id,
         }
@@ -171,6 +174,7 @@ class SemanticElement:
             target_id=data.get("targetId"),
             expose_ref=data.get("exposeRef"),
             default_value=data.get("defaultValue"),
+            multiplicity=data.get("multiplicity"),
             children=list(data.get("children") or []),
             file_id=data.get("fileId"),
         )

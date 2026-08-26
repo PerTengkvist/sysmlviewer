@@ -34,6 +34,8 @@ export type PartNodeData = {
   kind: string
   /** SysML type usage, e.g. FunctionalModule from `part x : FunctionalModule` */
   typeRef: string | null
+  /** Part multiplicity, e.g. `0..*` from `part x [0..*] : Type` */
+  multiplicity?: string | null
   ports: PartPort[]
   menuItems: { viewId: string; name: string }[]
   /** Option/Alt held — port drag (move) mode */
@@ -235,7 +237,10 @@ export function PartNode({ data, selected }: NodeProps) {
             )}
             {d.isBoundary && <span className="stereotype">«whitebox»</span>}
           </div>
-          <span className="part-node-title">{d.label}</span>
+          <span className="part-node-title">
+            {d.label}
+            {d.multiplicity ? ` [${d.multiplicity}]` : ''}
+          </span>
         </div>
         {d.menuItems?.length ? (
           <div className="part-menu">

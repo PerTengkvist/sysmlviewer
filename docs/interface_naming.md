@@ -29,3 +29,11 @@ Logical service interfaces follow a fixed suffix scheme so **service** (S) and *
 ## Example (data center)
 
 See `data/projects/data_center/logical/` — e.g. `orchestrator_sap : orchestrator_sai`, `cluster_rap : cluster_sai`, connection `cluster_sai` (`iaac_smp` on the IaaC part, not `InfrastructurePlatform_smp`).
+
+### Intra-cluster peer ports
+
+Inside `KubernetesCluster`, compute / storage / network use **peer port names** (`smp`, `scp`, `sdp`) instead of S/U suffixes. See [kubernetes_cluster_interfaces.md](kubernetes_cluster_interfaces.md).
+
+### Four logical layers
+
+Control, workload, substrate, and physical allocation are described in [logical_layers.md](logical_layers.md). Substrate capacity (`LogicalCpu`, pools, …) lives in layer 3; vendor hardware in layer 4 (`physical/`).

@@ -393,25 +393,24 @@ export function SysmlEdge({
           </>
         </EdgeLabelRenderer>
       )}
-      {(routing === 'direct' || routing === 'spline') && (
+      {(routing === 'direct' || routing === 'spline') && altHeld && (
         <EdgeLabelRenderer>
-          <button
-            type="button"
-            className={`nodrag nopan edge-select-handle${selected ? ' selected' : ''}`}
+          <div
+            className={`nodrag nopan edge-waypoint editable${selected ? ' selected' : ''}`}
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'all',
+              cursor: 'move',
               zIndex: 1001,
             }}
-            title="Select connection"
-            aria-label="Select connection"
-            onClick={(e) => {
+            title="Drag to move connection name; click to select"
+            onPointerDown={(e) => {
               e.preventDefault()
               e.stopPropagation()
               d.onSelect?.(d.artifactId || id)
+              onLabelPointerDown(e)
             }}
-            onPointerDown={(e) => e.stopPropagation()}
           />
         </EdgeLabelRenderer>
       )}

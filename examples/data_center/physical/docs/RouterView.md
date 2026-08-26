@@ -1,0 +1,3 @@
+# RouterView
+
+**GeneralView** exposing `Router`.
