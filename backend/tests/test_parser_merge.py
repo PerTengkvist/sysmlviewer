@@ -5,9 +5,10 @@ from domain.merge import merge_visualization
 from domain.models import ArtifactKind, VisualizationModel, VisualizationNode
 
 
-EXAMPLES = Path(__file__).resolve().parents[2] / "examples"
-SAMPLE = EXAMPLES / "vehicle.sysml"
-HBOX = EXAMPLES / "hbox.sysml"
+from helpers import resolve_example_path
+
+SAMPLE = resolve_example_path("vehicle.sysml")
+HBOX = resolve_example_path("hbox.sysml")
 
 
 def test_parse_vehicle_sample():

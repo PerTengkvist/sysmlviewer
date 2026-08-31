@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "viewId": "CarLogical::CarLogicalView",
+  "name": "CarLogicalView",
+  "nodes": {
+    "CarLogical::Car": {
+      "x": 224.515585430707,
+      "y": 2795.0760774964797,
+      "width": 1231.0,
+      "height": 677.0
+    },
+    "CarLogical::Car::rearAxle": {
+      "x": 432.95662100456616,
+      "y": 480.0083713850836,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "CarLogical::Car::steeringWheel": {
+      "x": 614.9595762732519,
+      "y": 312.4165163867615,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "CarLogical::Car::engine": {
+      "x": 803.7785388127854,
+      "y": 44.75799086757979,
+      "width": 172.4,
+      "height": 98.0
+    },
+    "CarLogical::Car::brakes": {
+      "x": 55.00719840117367,
+      "y": 56.12828311734302,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "CarLogical::Car::chassis": {
+      "x": 1015.3109589041097,
+      "y": 311.759512937595,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "CarLogical::Car::transmission": {
+      "x": 520.0,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "CarLogical::Car::frontAxle": {
+      "x": 310.2313546423135,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    }
+  },
+  "edges": {}
+}

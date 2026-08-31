@@ -1,0 +1,22 @@
+{
+  "id": "05a075ab-00e3-48e1-9ac7-230cccf8c37c",
+  "projektnamn": "Data Center",
+  "created": "2026-08-16T10:00:00+00:00",
+  "updated": "2026-08-27T21:59:08.239308+00:00",
+  "sysmlfiles": [
+    "logical/logical_ports.sysml",
+    "logical/substrate_resources.sysml",
+    "logical/kubernetes_cluster.sysml",
+    "logical/orchestrator.sysml",
+    "logical/monitoring.sysml",
+    "logical/infrastructure_platform.sysml",
+    "logical/data_center_logical.sysml",
+    "physical/physical_ports.sysml",
+    "physical/server_blade.sysml",
+    "physical/network_storage.sysml",
+    "physical/switch.sysml",
+    "physical/router.sysml",
+    "physical/cooling.sysml",
+    "physical/data_center_physical.sysml"
+  ]
+}

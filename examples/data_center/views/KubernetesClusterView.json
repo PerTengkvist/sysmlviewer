@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "viewId": "KubernetesClusterPkg::KubernetesClusterView",
+  "name": "KubernetesClusterView",
+  "nodes": {
+    "KubernetesClusterPkg::KubernetesCluster": {
+      "x": 315.49190051725395,
+      "y": 81.21942320984175,
+      "width": 713.0,
+      "height": 529.0
+    },
+    "KubernetesClusterPkg::KubernetesCluster::compute": {
+      "x": 103.55113263914456,
+      "y": 123.31276571710413,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "KubernetesClusterPkg::KubernetesCluster::storage": {
+      "x": 430.719238747575,
+      "y": 119.41282911259822,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "KubernetesClusterPkg::KubernetesCluster::network": {
+      "x": 249.43561567950542,
+      "y": 357.184704544069,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {
+    "KubernetesClusterPkg::KubernetesCluster::compute_smi": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 413.5469394063985,
+          "y": 277.1612180216024
+        }
+      ],
+      "labelOffset": {
+        "x": -3.771755061168875,
+        "y": -11.544263973537028
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::network_smi": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 929.0236496379559,
+          "y": 339.21942320984175
+        },
+        {
+          "x": 926.2732994697235,
+          "y": 336.3211498410998
+        },
+        {
+          "x": 765.6181364874882,
+          "y": 339.21942320984175
+        }
+      ],
+      "labelOffset": {
+        "x": -62.52373707685604,
+        "y": 31.01042066706043
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::cluster_sai": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1016.491900517254,
+          "y": 330.7122891329926
+        },
+        {
+          "x": 1016.491900517254,
+          "y": 348.5052106518362
+        }
+      ],
+      "labelOffset": {
+        "x": -57.507287308838954,
+        "y": 0.5156801804573661
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::compute_sci": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 407.0430331563985,
+          "y": 301.6676966262432
+        },
+        {
+          "x": 407.0430331563985,
+          "y": 299.4334376202156
+        },
+        {
+          "x": 413.5469394063985,
+          "y": 299.4334376202156
+        }
+      ],
+      "labelOffset": {
+        "x": 4.183351721342262,
+        "y": 18.240925892791097
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::compute_sai": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 648.6970575579047,
+          "y": 348.5052106518362
+        },
+        {
+          "x": 648.6970575579047,
+          "y": 257.38419131048005
+        }
+      ],
+      "labelOffset": {
+        "x": 52.710047214321776,
+        "y": 77.7078444265494
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::network_sci": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 325.49190051725395,
+          "y": 490.0851892867817
+        },
+        {
+          "x": 551.535669818643,
+          "y": 490.0851892867817
+        },
+        {
+          "x": 551.535669818643,
+          "y": 484.49643651630936
+        }
+      ],
+      "labelOffset": {
+        "x": -41.443515235779216,
+        "y": -12.345459294145599
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::storage_smi": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 1018.491900517254,
+          "y": 237.58330225062326
+        },
+        {
+          "x": 958.211139264829,
+          "y": 237.58330225062326
+        },
+        {
+          "x": 958.211139264829,
+          "y": 236.63225232243997
+        }
+      ],
+      "labelOffset": {
+        "x": 0.5520327326651113,
+        "y": -70.71949908298257
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::storage_sci": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 958.211139264829,
+          "y": 269.60511849960085
+        },
+        {
+          "x": 958.211139264829,
+          "y": 270.64236726799777
+        }
+      ],
+      "labelOffset": {
+        "x": 174.82118198825242,
+        "y": -17.06227701229318
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::k8n_storage_network": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 552.9275161967594,
+          "y": 345.71942320984175
+        },
+        {
+          "x": 552.9275161967594,
+          "y": 490.48895614642527
+        }
+      ],
+      "labelOffset": {
+        "x": 89.6412450200254,
+        "y": -69.5595473733448
+      }
+    },
+    "KubernetesClusterPkg::KubernetesCluster::k8n_compute_network": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 552.9275161967594,
+          "y": 451.5194232098417
+        },
+        {
+          "x": 552.9275161967594,
+          "y": 490.48895614642527
+        }
+      ],
+      "labelOffset": {
+        "x": -84.89719216518785,
+        "y": -9.203312330299184
+      }
+    }
+  }
+}

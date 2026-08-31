@@ -6,7 +6,9 @@ from domain.details import classify_children, collect_artifacts_to_depth
 from domain.models import ArtifactKind
 from fastapi.testclient import TestClient
 
+from helpers import api_url
 from adapters.api.app import create_app
+from helpers import add_content_file, add_example_file, api_url, resolve_example_path
 
 
 def test_parse_attributes():
@@ -51,7 +53,7 @@ package P {
 
 
 def test_serialize_roundtrip_minimal():
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
+    sample = resolve_example_path("vehicle.sysml")
     content = sample.read_text(encoding="utf-8")
     parsed = SubsetSysmlParser().parse(content, "f1")
     text = serialize_file(parsed.elements, "f1")
@@ -116,53 +118,57 @@ package P {
     assert "P::Root::mid::leaf" not in d2
 
 
-def test_editor_crud_updates_file_content(tmp_path: Path):
+def test_editor_crud_updates_semantic_not_sysml_file(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "E"}).json()["id"]
-    sample = b"package P { part def Box { port p; } }\n"
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("t.sysml", sample, "text/plain")},
-    ).json()
+    project_id = client.post(api_url("/projects"), json={"name": "E"}).json()["id"]
+    original = "package P { part def Box { port p; } }\n"
+    uploaded = add_content_file(
+        client,
+        project_id,
+        tmp_path,
+        "t.sysml",
+        original,
+    )
     assert "P::Box" in uploaded["semantic"]
+    assert (tmp_path / "t.sysml").exists()
 
-    added = client.post(
-        f"/projects/{project_id}/parts",
+    added = client.post(api_url(f"/projects/{project_id}/parts"),
         json={"parentId": "P::Box", "name": "wheel"},
     ).json()
     assert "P::Box::wheel" in added["semantic"]
-    assert "part wheel" in added["files"][0]["content"]
+    assert added["files"][0]["content"] == original
+    assert (tmp_path / "t.sysml").read_text(encoding="utf-8") == original
 
-    ported = client.post(
-        f"/projects/{project_id}/ports",
+    ported = client.post(api_url(f"/projects/{project_id}/ports"),
         json={"parentId": "P::Box", "name": "in2"},
     ).json()
-    assert "port in2" in ported["files"][0]["content"]
+    assert "P::Box::in2" in ported["semantic"]
+    assert ported["files"][0]["content"] == original
 
-    attributed = client.post(
-        f"/projects/{project_id}/attributes",
+    attributed = client.post(api_url(f"/projects/{project_id}/attributes"),
         json={"parentId": "P::Box", "name": "mass"},
     ).json()
-    assert "attribute def mass" in attributed["files"][0]["content"] or "attribute mass" in attributed["files"][0]["content"]
+    assert "P::Box::mass" in attributed["semantic"]
+    assert attributed["files"][0]["content"] == original
 
-    renamed = client.patch(
-        f"/projects/{project_id}/semantic/P::Box::in2",
+    renamed = client.patch(api_url(f"/projects/{project_id}/semantic/P::Box::in2"),
         json={"name": "powerIn"},
     ).json()
     assert renamed["semantic"]["P::Box::in2"]["name"] == "powerIn"
-    assert "port powerIn" in renamed["files"][0]["content"]
+    assert renamed["files"][0]["content"] == original
 
-    deleted = client.delete(f"/projects/{project_id}/semantic/P::Box::wheel").json()
+    deleted = client.delete(api_url(f"/projects/{project_id}/semantic/P::Box::wheel")).json()
     assert "P::Box::wheel" not in deleted["semantic"]
-    assert "wheel" not in deleted["files"][0]["content"]
+    assert deleted["files"][0]["content"] == original
+    assert (tmp_path / "t.sysml").read_text(encoding="utf-8") == original
 
 
-def test_add_connection_updates_file_content(tmp_path: Path):
+def test_add_connection_updates_semantic_not_sysml_file(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "C"}).json()["id"]
-    sample = b"""
+    project_id = client.post(api_url("/projects"), json={"name": "C"}).json()["id"]
+    sample = """
 package P {
   part def Box {
     part a { port out; }
@@ -170,40 +176,110 @@ package P {
   }
 }
 """
-    client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("t.sysml", sample, "text/plain")},
-    )
-    created = client.post(
-        f"/projects/{project_id}/connections",
+    add_content_file(client, project_id, tmp_path, "t.sysml", sample)
+    created = client.post(api_url(f"/projects/{project_id}/connections"),
         json={
             "sourceId": "P::Box::a::out",
             "targetId": "P::Box::b::in",
             "name": "link1",
         },
     ).json()
-    assert "connect" in created["files"][0]["content"]
-    assert "link1" in created["files"][0]["content"]
+    assert any(
+        v["kind"] == "connection" and v["name"] == "link1"
+        for v in created["semantic"].values()
+    )
+    assert "link1" not in created["files"][0]["content"]
+    assert (tmp_path / "t.sysml").read_text(encoding="utf-8") == sample
+
+
+def test_add_connection_defaults_to_policy_name(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post(api_url("/projects"), json={"name": "N"}).json()["id"]
+    sample = """
+package P {
+  port def Cluster_sci;
+  part def Cluster {
+    port Cluster_scp : Cluster_sci;
+  }
+  part def Orch {
+    port Cluster_rcp : Cluster_sci;
+  }
+  part def Box {
+    part c : Cluster;
+    part o : Orch;
+  }
+}
+"""
+    add_content_file(client, project_id, tmp_path, "n.sysml", sample)
+    created = client.post(api_url(f"/projects/{project_id}/connections"),
+        json={
+            "sourceId": "P::Box::o::Cluster_rcp",
+            "targetId": "P::Box::c::Cluster_scp",
+        },
+    ).json()
+    assert "P::Box::Cluster_sci" in created["semantic"]
+    assert created["semantic"]["P::Box::Cluster_sci"]["kind"] == "connection"
+    assert "connection Cluster_sci connect" not in created["files"][0]["content"]
+
+
+def test_add_port_defaults_name_from_type_ref(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post(api_url("/projects"), json={"name": "P"}).json()["id"]
+    sample = """
+package P {
+  port def Cluster_sci;
+  part def Cluster {
+  }
+  part def Orch {
+  }
+}
+"""
+    add_content_file(client, project_id, tmp_path, "p.sysml", sample)
+    on_cluster = client.post(api_url(f"/projects/{project_id}/ports"),
+        json={"parentId": "P::Cluster", "typeRef": "Cluster_sci"},
+    ).json()
+    assert "P::Cluster::Cluster_scp" in on_cluster["semantic"]
+    on_orch = client.post(api_url(f"/projects/{project_id}/ports"),
+        json={"parentId": "P::Orch", "typeRef": "Cluster_sci"},
+    ).json()
+    assert "P::Orch::Cluster_rcp" in on_orch["semantic"]
+
+
+def test_reparse_adds_interface_naming_warnings(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post(api_url("/projects"), json={"name": "L"}).json()["id"]
+    sample = """
+package P {
+  port def Cluster_sci;
+  part def Cluster {
+    port weird : Cluster_sci;
+  }
+}
+"""
+    uploaded = add_content_file(client, project_id, tmp_path, "l.sysml", sample)
+    warns = uploaded["files"][0]["warnings"]
+    assert any("weird" in w for w in warns)
 
 
 def test_waypoints_patch_roundtrip(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "W"}).json()["id"]
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("vehicle.sysml", sample.read_bytes(), "text/plain")},
-    ).json()
+    project_id = client.post(api_url("/projects"), json={"name": "W"}).json()["id"]
+    uploaded = add_example_file(client, project_id, tmp_path, "vehicle.sysml")
     conn_id = next(
         k for k, v in uploaded["semantic"].items() if v["kind"] == "connection"
     )
-    patched = client.patch(
-        f"/projects/{project_id}/visualization",
+    patched = client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={
             "edges": {
                 conn_id: {
-                    "waypoints": [{"x": 10, "y": 20}, {"x": 30, "y": 40}],
+                    "waypoints": [
+                        {"x": 10, "y": 20, "locked": True},
+                        {"x": 30, "y": 40},
+                    ],
                 }
             }
         },
@@ -211,3 +287,5 @@ def test_waypoints_patch_roundtrip(tmp_path: Path):
     wps = patched["visualization"]["edges"][conn_id]["waypoints"]
     assert len(wps) == 2
     assert wps[0]["x"] == 10
+    assert wps[0].get("locked") is True
+    assert "locked" not in wps[1] or wps[1].get("locked") is False

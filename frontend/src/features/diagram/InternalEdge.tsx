@@ -4,35 +4,48 @@ import {
   getBezierPath,
   type EdgeProps,
   useReactFlow,
+  useStore,
 } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  angularPathD,
   angularSegmentHandles,
   clampWaypointsToFlow,
   defaultFlowWaypoints,
   moveAngularSegment,
   moveWaypointInFlow,
+  reattachWaypointsToEnds,
   resolveRoutePoints,
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
+import {
+  angularPathDWithJumps,
+  type PathJump,
+} from './layout/connectionSeparation'
+import { boundaryFlowBounds } from './layout/connectionRouting'
 
 export type SysmlEdgeData = {
   artifactId: string
   routing: 'angular' | 'direct' | 'spline' | string
   waypoints?: Pt[]
+  jumps?: PathJump[]
   labelOffset?: { x: number; y: number } | null
   altHeld?: boolean
   /** Absolute flow rect of parent whitebox; clamps routing when set. */
   parentBounds?: FlowBounds
   /** Edge lives inside a whitebox parent (waypoints track parent moves). */
   internal?: boolean
+  labelColor?: string
+  selectedColor?: string
+  selectedLinewidth?: number
   onWaypointsChange?: (artifactId: string, waypoints: Pt[]) => void
   onLabelOffsetChange?: (
     artifactId: string,
     offset: { x: number; y: number },
   ) => void
+  /** Select this connection (used by mid-path handles on direct/spline). */
+  onSelect?: (artifactId: string) => void
+  relationKind?: string
 }
 
 const LOOSE_BOUNDS: FlowBounds = {
@@ -54,19 +67,32 @@ export function SysmlEdge({
   markerEnd,
   label,
   data,
+  selected,
 }: EdgeProps) {
   const d = (data || {}) as SysmlEdgeData
   const routing = d.routing || 'angular'
   const altHeld = !!d.altHeld
+  const strokeStyle = useMemo(() => {
+    if (!selected) return style
+    return {
+      ...style,
+      stroke: d.selectedColor || '#2563eb',
+      strokeWidth: d.selectedLinewidth ?? Math.max(4, Number(style?.strokeWidth) * 2 || 4),
+    }
+  }, [selected, style, d.selectedColor, d.selectedLinewidth])
+  const liveBoundary = useStore((state) => boundaryFlowBounds(state.nodes))
   const bounds = useMemo<FlowBounds>(() => {
-    const b = d.parentBounds
-    if (!b) return LOOSE_BOUNDS
-    return b
+    if (!d.internal && !d.parentBounds) return LOOSE_BOUNDS
+    if (liveBoundary) return liveBoundary
+    if (d.parentBounds) return d.parentBounds
+    return LOOSE_BOUNDS
   }, [
-    d.parentBounds?.minX,
-    d.parentBounds?.minY,
-    d.parentBounds?.maxX,
-    d.parentBounds?.maxY,
+    d.internal,
+    d.parentBounds,
+    liveBoundary?.minX,
+    liveBoundary?.minY,
+    liveBoundary?.maxX,
+    liveBoundary?.maxY,
   ])
   const { screenToFlowPosition } = useReactFlow()
 
@@ -80,6 +106,28 @@ export function SysmlEdge({
     setLocalWps(d.waypoints || [])
   }, [d.waypoints])
 
+  // When port endpoints move, re-attach to nearest point on the existing route
+  // (do not discard unlocked corners — that made wires jump to a default L).
+  useEffect(() => {
+    setLocalWps((prev) => {
+      if (!prev.length) return prev
+      const first = prev[0]
+      const last = prev[prev.length - 1]
+      const startOk =
+        Math.abs(first.x - sourceX) < 0.75 || Math.abs(first.y - sourceY) < 0.75
+      const endOk =
+        Math.abs(last.x - targetX) < 0.75 || Math.abs(last.y - targetY) < 0.75
+      if (startOk && endOk) return prev
+      return reattachWaypointsToEnds(
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
+        prev,
+      )
+    })
+  }, [sourceX, sourceY, targetX, targetY])
+
   useEffect(() => {
     setLabelOff({
       x: d.labelOffset?.x ?? 0,
@@ -87,11 +135,11 @@ export function SysmlEdge({
     })
   }, [d.labelOffset?.x, d.labelOffset?.y])
 
+  // Cheap display path only — never A*/obstacle search here (that belongs in Redraw).
   const displayWps = useMemo(() => {
     if (routing !== 'angular') return []
     const raw = localWps.length > 0 ? localWps : d.waypoints || []
     if (raw.length > 0) return clampWaypointsToFlow(raw, bounds)
-    // Unsaved default route corners (so segment drag has something to persist)
     return defaultFlowWaypoints(sourceX, sourceY, targetX, targetY, bounds)
   }, [
     routing,
@@ -139,7 +187,7 @@ export function SysmlEdge({
       })
       return { path: p, labelX: lx, labelY: ly }
     }
-    const p = angularPathD(points)
+    const p = angularPathDWithJumps(points, d.jumps || [], 5)
     const mid = points[Math.floor(points.length / 2)] || {
       x: (sourceX + targetX) / 2,
       y: (sourceY + targetY) / 2,
@@ -154,6 +202,7 @@ export function SysmlEdge({
     sourcePosition,
     targetPosition,
     points,
+    d.jumps,
   ])
 
   const commit = useCallback(
@@ -291,22 +340,79 @@ export function SysmlEdge({
 
   return (
     <>
-      <BaseEdge id={id} path={path} style={style} markerEnd={markerEnd} />
+      <BaseEdge
+        id={id}
+        path={path}
+        style={strokeStyle}
+        markerEnd={markerEnd}
+        interactionWidth={24}
+      />
       {label != null && label !== '' && (
         <EdgeLabelRenderer>
+          <>
+            {Math.hypot(labelOff.x, labelOff.y) > 0.5 && (
+              <svg
+                className="edge-label-leader"
+                style={{
+                  position: 'absolute',
+                  overflow: 'visible',
+                  pointerEvents: 'none',
+                  zIndex: 1000,
+                  left: 0,
+                  top: 0,
+                }}
+              >
+                <line
+                  x1={labelX}
+                  y1={labelY}
+                  x2={labelX + labelOff.x}
+                  y2={labelY + labelOff.y}
+                  className="edge-label-leader-line"
+                />
+                <circle
+                  cx={labelX}
+                  cy={labelY}
+                  r={2.5}
+                  className="edge-label-leader-anchor"
+                />
+              </svg>
+            )}
+            <div
+              className={`nodrag nopan edge-label${altHeld ? ' editable' : ''}`}
+              style={{
+                position: 'absolute',
+                transform: `translate(-50%, -50%) translate(${labelX + labelOff.x}px,${labelY + labelOff.y}px)`,
+                pointerEvents: altHeld ? 'all' : 'none',
+                zIndex: 1002,
+                ...(d.labelColor ? { color: d.labelColor } : {}),
+              }}
+              onPointerDown={onLabelPointerDown}
+              title={altHeld ? 'Drag to move connection name' : undefined}
+            >
+              {String(label)}
+            </div>
+          </>
+        </EdgeLabelRenderer>
+      )}
+      {(routing === 'direct' || routing === 'spline') && altHeld && (
+        <EdgeLabelRenderer>
           <div
-            className={`nodrag nopan edge-label${altHeld ? ' editable' : ''}`}
+            className={`nodrag nopan edge-waypoint editable${selected ? ' selected' : ''}`}
             style={{
               position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelX + labelOff.x}px,${labelY + labelOff.y}px)`,
-              pointerEvents: altHeld ? 'all' : 'none',
-              zIndex: 1002,
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'all',
+              cursor: 'move',
+              zIndex: 1001,
             }}
-            onPointerDown={onLabelPointerDown}
-            title={altHeld ? 'Drag to move connection name' : undefined}
-          >
-            {String(label)}
-          </div>
+            title="Drag to move connection name; click to select"
+            onPointerDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              d.onSelect?.(d.artifactId || id)
+              onLabelPointerDown(e)
+            }}
+          />
         </EdgeLabelRenderer>
       )}
       {routing === 'angular' &&

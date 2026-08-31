@@ -1,39 +1,39 @@
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from helpers import api_url, resolve_example_path
 
 from adapters.api.app import create_app
 
 
-def test_project_crud_and_upload(tmp_path: Path):
+def _client(tmp_path: Path) -> tuple[TestClient, str]:
+    """Bind workspace to tmp_path and create a named project."""
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
+    created = client.post(api_url("/projects"), json={"name": "Demo"}).json()
+    return client, created["id"]
 
-    created = client.post("/projects", json={"name": "Demo"}).json()
-    assert created["name"] == "Demo"
-    project_id = created["id"]
 
-    listed = client.get("/projects").json()
+def test_project_crud_and_add_file_from_path(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+
+    listed = client.get(api_url("/projects")).json()
     assert any(p["id"] == project_id for p in listed)
 
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
-    content = sample.read_bytes()
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("vehicle.sysml", content, "text/plain")},
-        data={"sourcePath": str(sample.resolve())},
+    sample = resolve_example_path("vehicle.sysml")
+    (tmp_path / "vehicle.sysml").write_bytes(sample.read_bytes())
+
+    uploaded = client.post(api_url(f"/projects/{project_id}/files"),
+        json={"path": "vehicle.sysml"},
     ).json()
 
     assert len(uploaded["files"]) == 1
-    assert uploaded["files"][0]["sourcePath"] == str(sample.resolve())
+    assert uploaded["files"][0]["path"] == "vehicle.sysml"
     assert "Example::Vehicle" in uploaded["semantic"]
     assert "Example::Vehicle" in uploaded["visualization"]["nodes"]
-    # vehicle.sysml has no declared `view` — Views list stays empty
     assert uploaded["views"] == []
 
-    # Move node then refresh with same content — layout should stay
-    client.patch(
-        f"/projects/{project_id}/visualization",
+    client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={
             "nodes": {
                 "Example::Vehicle": {"x": 777, "y": 10},
@@ -41,102 +41,147 @@ def test_project_crud_and_upload(tmp_path: Path):
         },
     )
     file_id = uploaded["files"][0]["id"]
-    refreshed = client.post(
-        f"/projects/{project_id}/files/{file_id}/refresh",
-        files={"file": ("vehicle.sysml", content, "text/plain")},
-        data={"sourcePath": str(sample.resolve())},
+    refreshed = client.post(api_url(f"/projects/{project_id}/files/refresh/{file_id}"),
     ).json()
     assert refreshed["visualization"]["nodes"]["Example::Vehicle"]["x"] == 777
 
 
-def test_delete_project_removes_persisted_data(tmp_path: Path):
-    app = create_app(data_dir=tmp_path)
-    client = TestClient(app)
-
-    created = client.post("/projects", json={"name": "ToDelete"}).json()
-    project_id = created["id"]
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
-    client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("vehicle.sysml", sample.read_bytes(), "text/plain")},
+def test_delete_project_removes_manifest(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    sample = resolve_example_path("vehicle.sysml")
+    (tmp_path / "vehicle.sysml").write_bytes(sample.read_bytes())
+    client.post(api_url(f"/projects/{project_id}/files"),
+        json={"path": "vehicle.sysml"},
     )
 
-    assert (tmp_path / f"{project_id}.json").exists()
+    assert (tmp_path / "project.json").exists()
+    assert (tmp_path / "state.json").exists()
+    assert (tmp_path / "vehicle.sysml").exists()
 
-    deleted = client.delete(f"/projects/{project_id}")
+    deleted = client.delete(api_url(f"/projects/{project_id}"))
     assert deleted.status_code in (200, 204)
 
-    assert client.get(f"/projects/{project_id}").status_code == 404
-    listed = client.get("/projects").json()
-    assert not any(p["id"] == project_id for p in listed)
-    assert not (tmp_path / f"{project_id}.json").exists()
+    assert client.get(api_url(f"/projects/{project_id}")).status_code == 400
+    assert not (tmp_path / "project.json").exists()
+    assert not (tmp_path / "state.json").exists()
 
 
 def test_delete_project_not_found(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    assert client.delete("/projects/does-not-exist").status_code == 404
+    # workspace open but no project — delete unknown id
+    client.post(api_url("/projects"), json={"name": "X"})
+    assert client.delete(api_url("/projects/does-not-exist")).status_code == 404
 
 
-def test_upload_stores_source_path(tmp_path: Path):
-    app = create_app(data_dir=tmp_path)
-    client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "Paths"}).json()["id"]
-
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
-    source_path = str(sample.resolve())
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("vehicle.sysml", sample.read_bytes(), "text/plain")},
-        data={"sourcePath": source_path},
-    ).json()
-
-    assert uploaded["files"][0]["sourcePath"] == source_path
+def test_add_file_missing_returns_404(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    res = client.post(api_url(f"/projects/{project_id}/files"),
+        json={"path": "missing.sysml"},
+    )
+    assert res.status_code == 404
 
 
-def test_refresh_replaces_content_and_reparses(tmp_path: Path):
-    app = create_app(data_dir=tmp_path)
-    client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "Refresh"}).json()["id"]
+def test_add_file_path_escape_returns_400(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    res = client.post(api_url(f"/projects/{project_id}/files"),
+        json={"path": "../outside.sysml"},
+    )
+    assert res.status_code == 400
 
-    content_a = b"package Example { part Vehicle; }\n"
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("a.sysml", content_a, "text/plain")},
-        data={"sourcePath": "/tmp/a.sysml"},
+
+def test_refresh_from_disk_reparses(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+
+    path = tmp_path / "a.sysml"
+    path.write_text("package Example { part Vehicle; }\n", encoding="utf-8")
+    uploaded = client.post(api_url(f"/projects/{project_id}/files"),
+        json={"path": "a.sysml"},
     ).json()
     file_id = uploaded["files"][0]["id"]
     assert "Example::Vehicle" in uploaded["semantic"]
 
-    client.patch(
-        f"/projects/{project_id}/visualization",
+    client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={"nodes": {"Example::Vehicle": {"x": 777, "y": 10}}},
     )
 
-    content_b = b"package Example { part Vehicle; part Engine; }\n"
-    refreshed = client.post(
-        f"/projects/{project_id}/files/{file_id}/refresh",
-        files={"file": ("b.sysml", content_b, "text/plain")},
-        data={"sourcePath": "/tmp/b.sysml"},
+    path.write_text(
+        "package Example { part Vehicle; part Engine; }\n",
+        encoding="utf-8",
+    )
+    refreshed = client.post(api_url(f"/projects/{project_id}/files/refresh/{file_id}"),
     ).json()
 
-    assert refreshed["files"][0]["content"] == content_b.decode("utf-8")
-    assert refreshed["files"][0]["sourcePath"] == "/tmp/b.sysml"
     assert "Example::Vehicle" in refreshed["semantic"]
     assert "Example::Engine" in refreshed["semantic"]
     assert refreshed["visualization"]["nodes"]["Example::Vehicle"]["x"] == 777
 
 
-def test_refresh_without_file_body_fails(tmp_path: Path):
-    app = create_app(data_dir=tmp_path)
-    client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "NoBody"}).json()["id"]
-    sample = Path(__file__).resolve().parents[2] / "examples" / "vehicle.sysml"
-    uploaded = client.post(
-        f"/projects/{project_id}/files",
-        files={"file": ("vehicle.sysml", sample.read_bytes(), "text/plain")},
-    ).json()
-    file_id = uploaded["files"][0]["id"]
+def test_refresh_nested_relative_path(tmp_path: Path):
+    """File ids with '/' must refresh (path converter), not 404."""
+    from adapters.persistence.workspace_repo import WorkspaceProjectRepository
+    from domain.models import Project, SysmlFile, new_id
 
-    res = client.post(f"/projects/{project_id}/files/{file_id}/refresh")
-    assert res.status_code == 400
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "main.sysml").write_text(
+        "package Lib { part A; }\n", encoding="utf-8"
+    )
+    repo = WorkspaceProjectRepository(tmp_path)
+    project = Project.create("NestedIds")
+    project.files.append(
+        SysmlFile(
+            id="lib/main.sysml",
+            name="main.sysml",
+            content="package Lib { part A; }\n",
+            path="lib/main.sysml",
+        )
+    )
+    repo.save(project)
+
+    app = create_app(workspace=tmp_path)
+    client = TestClient(app)
+    project_id = client.get(api_url("/session")).json()["project"]["id"]
+    file_id = "lib/main.sysml"
+    assert "/" in file_id
+
+    (tmp_path / "lib" / "main.sysml").write_text(
+        "package Lib { part A; part B; }\n", encoding="utf-8"
+    )
+    refreshed = client.post(api_url(f"/projects/{project_id}/files/refresh/{file_id}"),
+    )
+    assert refreshed.status_code == 200, refreshed.text
+    body = refreshed.json()
+    assert "Lib::B" in body["semantic"]
+
+
+def test_create_file_with_content(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    created = client.post(api_url(f"/projects/{project_id}/files"),
+        json={
+            "path": "new.sysml",
+            "content": "package New { part P; }\n",
+        },
+    ).json()
+    assert (tmp_path / "new.sysml").exists()
+    assert "New::P" in created["semantic"]
+
+
+def test_documentation_list_and_read(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    docs_dir = tmp_path / "logical" / "docs"
+    docs_dir.mkdir(parents=True)
+    (docs_dir / "ComputeEngine.md").write_text("# Compute Engine\n\nDocs here.\n", encoding="utf-8")
+    (tmp_path / "other.md").write_text("not in docs/", encoding="utf-8")
+
+    listed = client.get(api_url(f"/projects/{project_id}/documentation")).json()
+    assert listed["paths"] == ["logical/docs/ComputeEngine.md"]
+
+    doc = client.get(api_url(f"/projects/{project_id}/documentation/logical/docs/ComputeEngine.md")).json()
+    assert doc["content"].startswith("# Compute Engine")
+
+    assert client.get(api_url(f"/projects/{project_id}/documentation/missing.md")).status_code == 400
+    assert (
+        client.get(api_url(f"/projects/{project_id}/documentation/logical/docs/missing.md")).status_code
+        == 404
+    )
+

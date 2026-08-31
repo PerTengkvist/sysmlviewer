@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "viewId": "NetworkStoragePkg::NetworkStorageView",
+  "name": "NetworkStorageView",
+  "nodes": {
+    "NetworkStoragePkg::NetworkStorage": {
+      "x": 611.2320326705554,
+      "y": 1425.3265073503637,
+      "width": 668.0,
+      "height": 462.0
+    },
+    "NetworkStoragePkg::NetworkStorage::ssd3": {
+      "x": 600.4432586247322,
+      "y": 480.8449509363272,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "NetworkStoragePkg::NetworkStorage::ssd0": {
+      "x": 113.1700552287258,
+      "y": 47.40575419350421,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "NetworkStoragePkg::NetworkStorage::ssd1": {
+      "x": 104.79618639060755,
+      "y": 473.31603303453585,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "NetworkStoragePkg::NetworkStorage::ssd2": {
+      "x": 600.9929538109641,
+      "y": 50.977654285939025,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "NetworkStoragePkg::NetworkStorage::cpu": {
+      "x": 597.3651134116034,
+      "y": 339.629068717411,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "NetworkStoragePkg::NetworkStorage::ram": {
+      "x": 597.8787093169935,
+      "y": 193.702719181078,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "NetworkStoragePkg::NetworkStorage::nic": {
+      "x": 125.35683954869353,
+      "y": 266.3854287684553,
+      "width": 201.0,
+      "height": 138.0
+    }
+  },
+  "edges": {
+    "NetworkStoragePkg::NetworkStorage::mem": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1165.3170916680906,
+          "y": 1806.8763663243976
+        },
+        {
+          "x": 1165.3170916680906,
+          "y": 1703.0292265314417
+        }
+      ],
+      "labelOffset": {
+        "x": -35.72041018336722,
+        "y": -18.29205806453956
+      }
+    },
+    "NetworkStoragePkg::NetworkStorage::d2": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1165.553144995903,
+          "y": 1552.6743047034504
+        },
+        {
+          "x": 1165.553144995903,
+          "y": 1825.3440982163725
+        }
+      ]
+    },
+    "NetworkStoragePkg::NetworkStorage::pwrRam": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1275.2320326705553,
+          "y": 1715.4550060651977
+        },
+        {
+          "x": 1275.2320326705553,
+          "y": 1655.0292265314417
+        }
+      ]
+    },
+    "NetworkStoragePkg::NetworkStorage::d1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 928.028219061163,
+          "y": 1954.9403282366268
+        },
+        {
+          "x": 928.028219061163,
+          "y": 1877.3265073503637
+        },
+        {
+          "x": 1163.6895660921218,
+          "y": 1877.3265073503637
+        },
+        {
+          "x": 1163.6895660921218,
+          "y": 1806.8763663243976
+        }
+      ]
+    },
+    "NetworkStoragePkg::NetworkStorage::nicHost": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 948.588872219249,
+          "y": 1806.8399326958613
+        },
+        {
+          "x": 948.588872219249,
+          "y": 1792.3579647494018
+        }
+      ],
+      "labelOffset": {
+        "x": 40.804095419895816,
+        "y": 1.3045052326467612
+      }
+    },
+    "NetworkStoragePkg::NetworkStorage::pwrCpu": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1269.2320326705553,
+          "y": 1820.5691192326667
+        },
+        {
+          "x": 1269.2320326705553,
+          "y": 1877.3265073503637
+        },
+        {
+          "x": 1269.2320326705553,
+          "y": 1877.3265073503637
+        }
+      ]
+    },
+    "NetworkStoragePkg::NetworkStorage::d3": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1164.223792044539,
+          "y": 1966.171458286691
+        },
+        {
+          "x": 1164.223792044539,
+          "y": 1877.3265073503637
+        },
+        {
+          "x": 1163.4493714778569,
+          "y": 1877.3265073503637
+        },
+        {
+          "x": 1163.4493714778569,
+          "y": 1806.8763663243976
+        }
+      ]
+    },
+    "NetworkStoragePkg::NetworkStorage::d0": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1165.114168631901,
+          "y": 1564.845594410617
+        },
+        {
+          "x": 1165.114168631901,
+          "y": 1824.6471714427535
+        }
+      ],
+      "labelOffset": {
+        "x": -28.935168446038006,
+        "y": -17.24431678965243
+      }
+    },
+    "NetworkStoragePkg::NetworkStorage::pwrNic": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1269.2320326705553,
+          "y": 1820.5691192326667
+        },
+        {
+          "x": 1269.2320326705553,
+          "y": 1739.2225075836213
+        },
+        {
+          "x": 942.0925048823867,
+          "y": 1739.2225075836213
+        }
+      ]
+    },
+    "NetworkStoragePkg::NetworkStorage::nicMgmt": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 730.0927876905025,
+          "y": 1750.7378479429203
+        },
+        {
+          "x": 621.2320326705554,
+          "y": 1750.7378479429203
+        },
+        {
+          "x": 621.2320326705554,
+          "y": 1740.4160310612422
+        }
+      ],
+      "labelOffset": {
+        "x": 39.7158370719701,
+        "y": -7.142564951135682
+      }
+    },
+    "NetworkStoragePkg::NetworkStorage::net": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 623.2320326705554,
+          "y": 1789.4678191717046
+        },
+        {
+          "x": 623.2320326705554,
+          "y": 1776.6193210283282
+        },
+        {
+          "x": 648.1363297997441,
+          "y": 1776.6193210283282
+        },
+        {
+          "x": 648.1363297997441,
+          "y": 1789.7947229325414
+        }
+      ],
+      "labelOffset": {
+        "x": 28.361838502123987,
+        "y": 0.7476700689933296
+      }
+    }
+  }
+}

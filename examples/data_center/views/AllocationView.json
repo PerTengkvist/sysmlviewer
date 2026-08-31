@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "viewId": "DataCenterPhysical::AllocationView",
+  "name": "AllocationView",
+  "nodes": {
+    "DataCenterPhysical::DataCenterSite": {
+      "x": 551.0,
+      "y": 1970.0,
+      "width": 984.0,
+      "height": 1259.0
+    },
+    "DataCenterPhysical::DataCenterSite::cooling": {
+      "x": 48.0,
+      "y": 362.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical": {
+      "x": 72.72400140496234,
+      "y": 72.05528523973817,
+      "width": 266.0,
+      "height": 76.0
+    },
+    "DataCenterPhysical::DataCenterSite::torSwitch": {
+      "x": 614.0,
+      "y": 396.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl": {
+      "x": 614.0,
+      "y": 48.0,
+      "width": 140.0,
+      "height": 98.0
+    },
+    "DataCenterPhysical::DataCenterSite::edgeRouter": {
+      "x": 614.0,
+      "y": 244.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas": {
+      "x": 48.0,
+      "y": 1581.0,
+      "width": 281.0,
+      "height": 183.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeCompute": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 283.0,
+      "height": 157.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::orchestrator": {
+      "x": 48.0,
+      "y": 1278.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::cluster": {
+      "x": 48.0,
+      "y": 558.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::monitoring": {
+      "x": 48.0,
+      "y": 1038.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::iaac": {
+      "x": 48.0,
+      "y": 798.0,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {}
+}

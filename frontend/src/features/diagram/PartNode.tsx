@@ -1,4 +1,11 @@
-import { Handle, NodeResizer, Position, type NodeProps } from '@xyflow/react'
+import {
+  Handle,
+  NodeResizer,
+  Position,
+  useNodeId,
+  useUpdateNodeInternals,
+  type NodeProps,
+} from '@xyflow/react'
 import {
   useCallback,
   useEffect,
@@ -8,7 +15,9 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import type { PortSide } from '../../api'
+import type { PortSide, ElementStyle } from '../../api'
+import type { ViewMode } from '../../settings'
+import { nodeInlineStyle, resolveModeStyle } from './elementStyle'
 import { portLabelStyle as computePortLabelStyle } from './edgeRouting'
 
 export type PartPort = {
@@ -16,6 +25,7 @@ export type PartPort = {
   name: string
   side: PortSide
   offset: number
+  style?: ElementStyle | null
 }
 
 export type PartNodeData = {
@@ -24,6 +34,8 @@ export type PartNodeData = {
   kind: string
   /** SysML type usage, e.g. FunctionalModule from `part x : FunctionalModule` */
   typeRef: string | null
+  /** Part multiplicity, e.g. `0..*` from `part x [0..*] : Type` */
+  multiplicity?: string | null
   ports: PartPort[]
   menuItems: { viewId: string; name: string }[]
   /** Option/Alt held — port drag (move) mode */
@@ -33,6 +45,8 @@ export type PartNodeData = {
   /** Show attribute names inside the part */
   showAttributes?: boolean
   attributeNames?: string[]
+  formatStyle?: ElementStyle | null
+  viewMode?: ViewMode
   onOpenView?: (viewId: string) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
 }
@@ -117,6 +131,8 @@ export function PartNode({ data, selected }: NodeProps) {
   const [localPorts, setLocalPorts] = useState<PartPort[]>(d.ports)
   const rootRef = useRef<HTMLDivElement>(null)
   const draggingPortId = useRef<string | null>(null)
+  const nodeId = useNodeId()
+  const updateNodeInternals = useUpdateNodeInternals()
   const keyword = d.kind === 'package' ? 'package' : 'part'
   const typeTag = d.typeRef ? typeShortTag(d.typeRef) : null
   const moveMode = !!d.portMoveMode
@@ -151,10 +167,11 @@ export function PartNode({ data, selected }: NodeProps) {
       draggingPortId.current = null
       if (anchor) {
         d.onPortDrag?.(portId, anchor.side, anchor.offset)
+        if (nodeId) updateNodeInternals(nodeId)
       }
       document.body.classList.remove('port-dragging')
     },
-    [d, updatePortFromPointer],
+    [d, nodeId, updateNodeInternals, updatePortFromPointer],
   )
 
   const onPortMouseDown = (
@@ -198,6 +215,9 @@ export function PartNode({ data, selected }: NodeProps) {
     <div
       ref={rootRef}
       className={`part-node kind-${d.kind}${selected ? ' selected' : ''}${moveMode ? ' port-move-mode' : ''}${d.isBoundary ? ' boundary' : ''}`}
+      style={nodeInlineStyle(d.formatStyle, d.viewMode || 'light', {
+        isBoundary: d.isBoundary,
+      })}
     >
       <NodeResizer
         minWidth={d.isBoundary ? 280 : 120}
@@ -217,9 +237,12 @@ export function PartNode({ data, selected }: NodeProps) {
             )}
             {d.isBoundary && <span className="stereotype">«whitebox»</span>}
           </div>
-          <span className="part-node-title">{d.label}</span>
+          <span className="part-node-title">
+            {d.label}
+            {d.multiplicity ? ` [${d.multiplicity}]` : ''}
+          </span>
         </div>
-        {d.menuItems.length > 0 && (
+        {d.menuItems?.length ? (
           <div className="part-menu">
             <button
               type="button"
@@ -251,7 +274,7 @@ export function PartNode({ data, selected }: NodeProps) {
               </ul>
             )}
           </div>
-        )}
+        ) : null}
       </div>
       <div className="part-node-body">
         {d.showAttributes && d.attributeNames && d.attributeNames.length > 0 && (
@@ -266,17 +289,28 @@ export function PartNode({ data, selected }: NodeProps) {
         // Parent/boundary: L/R labels outside. Child parts: always inside, centered on port.
         const outside =
           !!d.isBoundary && (port.side === 'left' || port.side === 'right')
+        const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
+        const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')
+        const labelColor = portMode.textColor || parentMode.textColor
         return (
           <span
             key={`label-${port.id}`}
             className={`port-label port-label-${port.side}${outside ? ' outside' : ' inside'}`}
-            style={portLabelStyle(port.side, port.offset, outside)}
+            style={{
+              ...portLabelStyle(port.side, port.offset, outside),
+              ...(labelColor ? { color: labelColor } : {}),
+            }}
           >
             {port.name}
           </span>
         )
       })}
-      {localPorts.map((port) => (
+      {localPorts.map((port) => {
+        const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
+        const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')
+        const bg = portMode.backgroundColor || parentMode.backgroundColor
+        const border = portMode.lineColor || parentMode.lineColor
+        return (
         <Handle
           key={port.id}
           id={port.id}
@@ -286,6 +320,8 @@ export function PartNode({ data, selected }: NodeProps) {
             ...offsetStyle(port.side, port.offset),
             zIndex: 5,
             cursor: moveMode ? 'move' : 'crosshair',
+            ...(bg ? { background: bg } : {}),
+            ...(border ? { borderColor: border } : {}),
           }}
           isConnectable={!moveMode}
           title={
@@ -301,7 +337,8 @@ export function PartNode({ data, selected }: NodeProps) {
           onPointerDown={(e) => onPortMouseDown(port, e)}
           onMouseDown={(e) => onPortMouseDown(port, e)}
         />
-      ))}
+        )
+      })}
       {localPorts.map((port) => (
         <Handle
           key={`t-${port.id}`}
@@ -314,6 +351,32 @@ export function PartNode({ data, selected }: NodeProps) {
             opacity: 0,
             pointerEvents: 'none',
             zIndex: 1,
+          }}
+          isConnectable={false}
+        />
+      ))}
+      {(
+        [
+          ['rel-out-left', 'source', 'left' as PortSide],
+          ['rel-out-right', 'source', 'right' as PortSide],
+          ['rel-out-top', 'source', 'top' as PortSide],
+          ['rel-out-bottom', 'source', 'bottom' as PortSide],
+          ['rel-in-left', 'target', 'left' as PortSide],
+          ['rel-in-right', 'target', 'right' as PortSide],
+          ['rel-in-top', 'target', 'top' as PortSide],
+          ['rel-in-bottom', 'target', 'bottom' as PortSide],
+        ] as const
+      ).map(([id, type, side]) => (
+        <Handle
+          key={id}
+          id={id}
+          type={type}
+          position={sideToPosition(side)}
+          style={{
+            ...offsetStyle(side, 0.5),
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: 0,
           }}
           isConnectable={false}
         />

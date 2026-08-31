@@ -73,7 +73,7 @@ export type FlowBounds = {
   maxY: number
 }
 
-export type Pt = { x: number; y: number }
+export type Pt = { x: number; y: number; locked?: boolean }
 
 export function clampWaypointToParent(
   wp: { x: number; y: number },
@@ -134,9 +134,11 @@ export function moveWaypointInFlow(
   next: Pt,
   bounds: FlowBounds,
 ): Pt[] {
-  return waypoints.map((wp, i) =>
-    i === index ? clampToFlowBounds(next, bounds) : wp,
-  )
+  return waypoints.map((wp, i) => {
+    if (i !== index) return wp
+    const clamped = clampToFlowBounds(next, bounds)
+    return wp.locked ? { ...clamped, locked: true } : clamped
+  })
 }
 
 /**
@@ -216,9 +218,147 @@ function defaultCorners(sx: number, sy: number, tx: number, ty: number): Pt[] {
   ]).slice(1, -1)
 }
 
+/** Intermediate ortho corners between two points (exclusive of ends). */
+function orthoCornersBetween(a: Pt, b: Pt): Pt[] {
+  if (nearlyEq(a.x, b.x) || nearlyEq(a.y, b.y)) return []
+  return [{ x: b.x, y: a.y }]
+}
+
+function closestOnSegment(
+  p: Pt,
+  a: Pt,
+  b: Pt,
+): { point: Pt; dist: number } {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const len2 = dx * dx + dy * dy
+  if (len2 < 1e-8) {
+    return { point: { x: a.x, y: a.y }, dist: Math.hypot(p.x - a.x, p.y - a.y) }
+  }
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2
+  t = Math.max(0, Math.min(1, t))
+  const point = { x: a.x + t * dx, y: a.y + t * dy }
+  return { point, dist: Math.hypot(p.x - point.x, p.y - point.y) }
+}
+
+/** Nearest point on an orthogonal polyline (for port re-attach). */
+export function closestPointOnPolyline(
+  p: Pt,
+  path: Pt[],
+): { point: Pt; segIndex: number; dist: number } {
+  if (!path.length) {
+    return { point: { x: p.x, y: p.y }, segIndex: 0, dist: 0 }
+  }
+  if (path.length === 1) {
+    return {
+      point: { x: path[0].x, y: path[0].y },
+      segIndex: 0,
+      dist: Math.hypot(p.x - path[0].x, p.y - path[0].y),
+    }
+  }
+  let best = {
+    point: { x: path[0].x, y: path[0].y },
+    segIndex: 0,
+    dist: Infinity,
+  }
+  for (let i = 1; i < path.length; i++) {
+    const hit = closestOnSegment(p, path[i - 1], path[i])
+    if (hit.dist < best.dist) {
+      best = { point: hit.point, segIndex: i - 1, dist: hit.dist }
+    }
+  }
+  return best
+}
+
+/**
+ * After a port move: keep as much of the existing route as possible and only
+ * rebuild the stub to the nearest point on that route (orthogonal).
+ */
+export function reattachWaypointsToEnds(
+  sx: number,
+  sy: number,
+  tx: number,
+  ty: number,
+  waypoints: Pt[],
+): Pt[] {
+  if (!waypoints.length) return defaultCorners(sx, sy, tx, ty)
+
+  const first = waypoints[0]
+  const last = waypoints[waypoints.length - 1]
+  const srcOk = nearlyEq(first.x, sx) || nearlyEq(first.y, sy)
+  const endOk = nearlyEq(last.x, tx) || nearlyEq(last.y, ty)
+  if (srcOk && endOk) {
+    const chain = [{ x: sx, y: sy }, ...waypoints, { x: tx, y: ty }]
+    if (isOrthoChain(chain)) return waypoints.map((w) => ({ ...w }))
+  }
+
+  const spine = waypoints.map((w) => ({ x: w.x, y: w.y, locked: w.locked }))
+  const src = { x: sx, y: sy }
+  const tgt = { x: tx, y: ty }
+
+  let kept: Pt[]
+  if (!srcOk && endOk) {
+    const near = closestPointOnPolyline(src, spine)
+    kept = [
+      { x: near.point.x, y: near.point.y },
+      ...spine.slice(near.segIndex + 1),
+    ]
+  } else if (srcOk && !endOk) {
+    const near = closestPointOnPolyline(tgt, spine)
+    kept = [
+      ...spine.slice(0, near.segIndex + 1),
+      { x: near.point.x, y: near.point.y },
+    ]
+  } else {
+    // Both ends detached — reconnect each to its nearest spine point.
+    const nearS = closestPointOnPolyline(src, spine)
+    const nearT = closestPointOnPolyline(tgt, spine)
+    const a = Math.min(nearS.segIndex, nearT.segIndex)
+    const b = Math.max(nearS.segIndex, nearT.segIndex)
+    const startPt =
+      nearS.segIndex <= nearT.segIndex ? nearS.point : nearT.point
+    const endPt =
+      nearS.segIndex <= nearT.segIndex ? nearT.point : nearS.point
+    kept = [
+      { x: startPt.x, y: startPt.y },
+      ...spine.slice(a + 1, b + 1),
+      { x: endPt.x, y: endPt.y },
+    ]
+    // If source mapped to the "end" side of the span, swap reconnect order
+    // by falling back to a simple L when the span collapses.
+    if (nearS.segIndex > nearT.segIndex) {
+      return defaultCorners(sx, sy, tx, ty)
+    }
+  }
+
+  if (!kept.length) return defaultCorners(sx, sy, tx, ty)
+
+  const joinS = kept[0]
+  const joinT = kept[kept.length - 1]
+  const full = simplifyOrtho([
+    src,
+    ...orthoCornersBetween(src, joinS),
+    ...kept,
+    ...orthoCornersBetween(joinT, tgt),
+    tgt,
+  ])
+
+  const locked = waypoints.filter((w) => w.locked)
+  const corners = full.slice(1, -1).map((p) => ({ x: p.x, y: p.y }))
+  if (!locked.length) return corners
+  return corners.map((c) => {
+    const hit = locked.find((l) => Math.hypot(l.x - c.x, l.y - c.y) < 2.5)
+    return hit ? { x: hit.x, y: hit.y, locked: true as const } : c
+  })
+}
+
 /**
  * Resolve stored waypoints to a full orthogonal polyline.
  * Supports legacy knee waypoints and corner lists (preferred after edits).
+ *
+ * When unlocked corners no longer attach to the current port endpoints
+ * (e.g. after a port slide), re-attach to the nearest point on the route
+ * instead of discarding the whole path.
  */
 export function resolveRoutePoints(
   sx: number,
@@ -234,12 +374,56 @@ export function resolveRoutePoints(
       { x: tx, y: ty },
     ])
   }
+
   const asCorners = [{ x: sx, y: sy }, ...waypoints, { x: tx, y: ty }]
-  if (isOrthoChain(asCorners)) {
+  const first = waypoints[0]
+  const last = waypoints[waypoints.length - 1]
+  const srcOk = nearlyEqPt(first.x, sx) || nearlyEqPt(first.y, sy)
+  const endOk = nearlyEqPt(last.x, tx) || nearlyEqPt(last.y, ty)
+  if (srcOk && endOk && isOrthoChain(asCorners)) {
     return simplifyOrtho(asCorners)
   }
-  // legacy knee
-  return simplifyOrtho(angularPoints(sx, sy, tx, ty, waypoints))
+
+  // Port moved (or stale knees): keep the route, only rebuild end stubs.
+  const repaired = reattachWaypointsToEnds(sx, sy, tx, ty, waypoints)
+  return simplifyOrtho([
+    { x: sx, y: sy },
+    ...repaired,
+    { x: tx, y: ty },
+  ])
+}
+
+function nearlyEqPt(a: number, b: number, eps = 0.75): boolean {
+  return Math.abs(a - b) < eps
+}
+
+/** Drop unlocked waypoints that do not attach to current port ends. */
+export function filterAttachedOrLocked(
+  sx: number,
+  sy: number,
+  tx: number,
+  ty: number,
+  waypoints: Pt[],
+): Pt[] {
+  if (!waypoints.length) return []
+  const locked = waypoints.filter((w) => w.locked)
+  const first = waypoints[0]
+  const last = waypoints[waypoints.length - 1]
+  const startOk = nearlyEqPt(first.x, sx) || nearlyEqPt(first.y, sy)
+  const endOk = nearlyEqPt(last.x, tx) || nearlyEqPt(last.y, ty)
+  const chain = [{ x: sx, y: sy }, ...waypoints, { x: tx, y: ty }]
+  let ortho = true
+  for (let i = 1; i < chain.length; i++) {
+    const p = chain[i - 1]
+    const q = chain[i]
+    if (!nearlyEqPt(p.x, q.x) && !nearlyEqPt(p.y, q.y)) {
+      ortho = false
+      break
+    }
+  }
+  if (startOk && endOk && ortho) return waypoints
+  // Stale unlocked corners — keep only locked vias
+  return locked
 }
 
 export function cornersFromPoints(points: Pt[]): Pt[] {

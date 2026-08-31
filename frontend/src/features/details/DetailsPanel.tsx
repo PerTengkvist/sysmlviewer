@@ -1,11 +1,28 @@
-import type { Project, RoutingType, SemanticElement } from '../../api'
+import type {
+  ElementStyle,
+  ElementStyleMode,
+  Project,
+  RoutingType,
+  SemanticElement,
+  ViewPayload,
+} from '../../api'
+import { STYLE_DEFAULTS } from '../diagram/elementStyle'
+import type { ViewMode } from '../../settings'
 
 type Props = {
   project: Project | null
+  /** Merged per-view visualization from the active diagram (nodes/edges overlays). */
+  viewVisualization?: ViewPayload['visualization']
   selectedId: string | null
   editorMode?: boolean
+  viewMode?: ViewMode
   onRoutingChange: (connectionId: string, routing: RoutingType) => void
   onAutoroute?: (connectionId: string) => void
+  onWaypointsChange?: (
+    connectionId: string,
+    waypoints: { x: number; y: number; locked?: boolean }[],
+  ) => void
+  onStyleChange?: (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => void
   onRename?: (artifactId: string, name: string) => void
   onAddPart?: (parentId: string) => void
   onAddPort?: (parentId: string) => void
@@ -83,7 +100,10 @@ function FeatureList({
       <h3>{title}</h3>
       {items.map((c) => (
         <div key={c.id} className="feature-card">
-          <div className="feature-card-name">{c.name}</div>
+          <div className="feature-card-name">
+            {c.name}
+            {c.multiplicity ? ` [${c.multiplicity}]` : ''}
+          </div>
           <dl className="detail-list">
             <dt>Type</dt>
             <dd>{c.typeRef || '—'}</dd>
@@ -103,7 +123,10 @@ function SubPartsList({ items }: { items: SemanticElement[] }) {
       <h3>Sub-parts</h3>
       {items.map((c) => (
         <div key={c.id} className="feature-card">
-          <div className="feature-card-name">{c.name}</div>
+          <div className="feature-card-name">
+            {c.name}
+            {c.multiplicity ? ` [${c.multiplicity}]` : ''}
+          </div>
           <dl className="detail-list">
             <dt>Type</dt>
             <dd>{c.typeRef || '—'}</dd>
@@ -130,12 +153,91 @@ function RelationsList({ items }: { items: SemanticElement[] }) {
   )
 }
 
+function FormatControls({
+  style,
+  isEdge,
+  onChange,
+}: {
+  style: ElementStyle | null | undefined
+  isEdge: boolean
+  onChange: (next: ElementStyle) => void
+}) {
+  const modes: ViewMode[] = ['light', 'dark']
+
+  const update = (mode: ViewMode, patch: Partial<ElementStyleMode>) => {
+    const prev = style || {}
+    const current = (mode === 'dark' ? prev.dark : prev.light) || {}
+    const merged: ElementStyleMode = { ...current, ...patch }
+    onChange({
+      ...prev,
+      [mode]: merged,
+    })
+  }
+
+  return (
+    <div className="format-controls">
+      <h3>Format</h3>
+      {modes.map((mode) => {
+        const defaults = STYLE_DEFAULTS[mode]
+        const current = (mode === 'dark' ? style?.dark : style?.light) || {}
+        const thicknessDefault = isEdge ? defaults.edgeThickness : defaults.nodeThickness
+        return (
+          <div key={mode} className="format-mode">
+            <h4>{mode === 'light' ? 'Light' : 'Dark'}</h4>
+            <label>
+              Background
+              <input
+                type="color"
+                value={current.backgroundColor || defaults.backgroundColor}
+                onChange={(e) => update(mode, { backgroundColor: e.target.value })}
+              />
+            </label>
+            <label>
+              Line
+              <input
+                type="color"
+                value={current.lineColor || defaults.lineColor}
+                onChange={(e) => update(mode, { lineColor: e.target.value })}
+              />
+            </label>
+            <label>
+              Text
+              <input
+                type="color"
+                value={current.textColor || defaults.textColor}
+                onChange={(e) => update(mode, { textColor: e.target.value })}
+              />
+            </label>
+            <label>
+              Line thickness
+              <input
+                type="number"
+                min={0.5}
+                max={12}
+                step={0.5}
+                value={current.lineThickness ?? thicknessDefault}
+                onChange={(e) =>
+                  update(mode, { lineThickness: Number(e.target.value) || thicknessDefault })
+                }
+              />
+            </label>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function DetailsPanel({
   project,
+  viewVisualization,
   selectedId,
   editorMode,
+  viewMode: _viewMode,
   onRoutingChange,
   onAutoroute,
+  onWaypointsChange,
+  onStyleChange,
   onRename,
   onAddPart,
   onAddPort,
@@ -144,29 +246,49 @@ export function DetailsPanel({
 }: Props) {
   if (!project || !selectedId) {
     return (
-      <aside className="sidebar right-sidebar">
+      <div className="details-panel">
         <h2>Details</h2>
         <p className="muted">Select an artifact in the diagram.</p>
-      </aside>
+      </div>
     )
   }
 
   const el: SemanticElement | undefined = project.semantic[selectedId]
   if (!el) {
     return (
-      <aside className="sidebar right-sidebar">
+      <div className="details-panel">
         <h2>Details</h2>
         <p className="muted">Unknown artifact.</p>
-      </aside>
+      </div>
     )
   }
 
-  const edge = project.visualization.edges[selectedId]
-  const node = project.visualization.nodes[selectedId]
+  const edge =
+    viewVisualization?.edges[selectedId] ?? project.visualization.edges[selectedId]
+  const node =
+    viewVisualization?.nodes[selectedId] ?? project.visualization.nodes[selectedId]
   const buckets = bucketsFor(project, el)
+  const isEdgeKind =
+    el.kind === 'connection' ||
+    el.kind === 'message' ||
+    el.kind === 'transition' ||
+    el.kind === 'succession'
+  const formatKind: 'node' | 'edge' = isEdgeKind ? 'edge' : 'node'
+  const formatStyle = isEdgeKind ? edge?.style : node?.style
+  const canFormat =
+    el.kind === 'part' ||
+    el.kind === 'package' ||
+    el.kind === 'port' ||
+    el.kind === 'connection' ||
+    el.kind === 'lifeline' ||
+    el.kind === 'state' ||
+    el.kind === 'action' ||
+    el.kind === 'message' ||
+    el.kind === 'transition' ||
+    el.kind === 'succession'
 
   return (
-    <aside className="sidebar right-sidebar">
+    <div className="details-panel">
       <h2>Details</h2>
       <dl className="detail-list">
         <dt>Name</dt>
@@ -193,6 +315,12 @@ export function DetailsPanel({
           <>
             <dt>Type</dt>
             <dd>{el.typeRef}</dd>
+          </>
+        )}
+        {el.exposeRef && (
+          <>
+            <dt>Expose</dt>
+            <dd className="mono">{el.exposeRef}</dd>
           </>
         )}
         {(el.kind === 'attribute' || el.kind === 'port') && (
@@ -260,13 +388,50 @@ export function DetailsPanel({
             </button>
           )}
           {edge?.waypoints?.length ? (
-            <p className="muted">
-              {edge.waypoints.length} waypoint(s) — Option+drag segments / name
-            </p>
+            <div className="waypoint-locks">
+              <p className="muted">Connection points</p>
+              <ul className="waypoint-lock-list">
+                {edge.waypoints.map((wp, idx) => (
+                  <li key={`${idx}-${wp.x}-${wp.y}`}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={!!wp.locked}
+                        disabled={!onWaypointsChange}
+                        onChange={(e) => {
+                          if (!onWaypointsChange || !selectedId) return
+                          const next = edge.waypoints.map((w, i) =>
+                            i === idx
+                              ? { ...w, locked: e.target.checked }
+                              : { ...w },
+                          )
+                          onWaypointsChange(selectedId, next)
+                        }}
+                      />
+                      <span>
+                        #{idx + 1} ({Math.round(wp.x)}, {Math.round(wp.y)})
+                        {wp.locked ? ' locked' : ''}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <p className="muted">
+                Locked points stay put on Redraw: Connections
+              </p>
+            </div>
           ) : (
             <p className="muted">Option+drag segments or connection name</p>
           )}
         </div>
+      )}
+
+      {canFormat && onStyleChange && (
+        <FormatControls
+          style={formatStyle}
+          isEdge={isEdgeKind}
+          onChange={(next) => onStyleChange(selectedId, next, formatKind)}
+        />
       )}
 
       <FeatureList title="Ports" items={buckets.ports} />
@@ -297,6 +462,6 @@ export function DetailsPanel({
           </button>
         </div>
       )}
-    </aside>
+    </div>
   )
 }

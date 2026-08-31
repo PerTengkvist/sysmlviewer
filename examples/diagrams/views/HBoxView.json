@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "viewId": "hbox::HBoxView",
+  "name": "HBoxView",
+  "nodes": {},
+  "edges": {
+    "hbox::HBox::conn4": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 800.0,
+          "y": 748.0
+        },
+        {
+          "x": 800.0,
+          "y": 480.0
+        },
+        {
+          "x": 592.0,
+          "y": 480.0
+        },
+        {
+          "x": 592.0,
+          "y": 760.0
+        }
+      ]
+    },
+    "hbox::HBox::conn1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1024.0,
+          "y": 760.0
+        },
+        {
+          "x": 1024.0,
+          "y": 718.4
+        }
+      ]
+    },
+    "hbox::HBox::conn3": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 870.0
+        },
+        {
+          "x": 364.0,
+          "y": 760.0
+        }
+      ]
+    },
+    "hbox::HBox::conn2": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 712.0
+        },
+        {
+          "x": 364.0,
+          "y": 760.0
+        }
+      ]
+    }
+  }
+}

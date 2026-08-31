@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Example::ExampleView",
+  "name": "ExampleView",
+  "nodes": {},
+  "edges": {
+    "Example::Vehicle::poower": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1304.0,
+          "y": 2176.0
+        },
+        {
+          "x": 1304.0,
+          "y": 2104.0
+        },
+        {
+          "x": 664.0,
+          "y": 2104.0
+        },
+        {
+          "x": 664.0,
+          "y": 2176.0
+        }
+      ]
+    },
+    "Example::Vehicle::torque": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 888.0,
+          "y": 2188.0
+        },
+        {
+          "x": 888.0,
+          "y": 1920.0
+        },
+        {
+          "x": 1096.0,
+          "y": 1920.0
+        },
+        {
+          "x": 1096.0,
+          "y": 2152.0
+        }
+      ]
+    },
+    "Example::Vehicle::gaugebus": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1304.0,
+          "y": 2242.0
+        },
+        {
+          "x": 1304.0,
+          "y": 2164.0
+        }
+      ]
+    }
+  }
+}

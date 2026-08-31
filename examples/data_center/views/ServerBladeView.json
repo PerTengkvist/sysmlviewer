@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "viewId": "ServerBladePkg::ServerBladeView",
+  "name": "ServerBladeView",
+  "nodes": {},
+  "edges": {
+    "ServerBladePkg::ServerBlade::nicHost": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 1096.0
+        },
+        {
+          "x": 364.0,
+          "y": 1108.0
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::pwrNic": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 1144.0
+        },
+        {
+          "x": 364.0,
+          "y": 1084.0
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::ssdBus": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 384.0,
+          "y": 1218.0
+        },
+        {
+          "x": 384.0,
+          "y": 1096.0
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::pwrRam": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 384.0,
+          "y": 1144.0
+        },
+        {
+          "x": 384.0,
+          "y": 1024.0
+        },
+        {
+          "x": 1024.0,
+          "y": 1024.0
+        },
+        {
+          "x": 1024.0,
+          "y": 1082.0
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::pwrSsd": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 384.0,
+          "y": 1144.0
+        },
+        {
+          "x": 384.0,
+          "y": 1302.0
+        },
+        {
+          "x": 608.0,
+          "y": 1302.0
+        },
+        {
+          "x": 608.0,
+          "y": 1230.0
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::nicOut": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 1120.0
+        },
+        {
+          "x": 364.0,
+          "y": 1078.4
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::cpuFabric": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 1096.0
+        },
+        {
+          "x": 364.0,
+          "y": 1120.0
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::nicMgmt": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1024.0,
+          "y": 1072.0
+        },
+        {
+          "x": 1024.0,
+          "y": 1111.2
+        }
+      ]
+    },
+    "ServerBladePkg::ServerBlade::pwrCpu": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 364.0,
+          "y": 1144.0
+        },
+        {
+          "x": 364.0,
+          "y": 1108.0
+        }
+      ]
+    }
+  }
+}

@@ -5,14 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
+    "build:check": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
     "@xyflow/react": "^12.6.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^4.12.3",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

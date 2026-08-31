@@ -38,18 +38,11 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
           </button>
         </header>
         <div className="modal-body">
-          <label className="settings-row">
-            <span>Mode</span>
-            <select
-              value={settings.mode}
-              onChange={(e) =>
-                patch({ mode: e.target.value as AppSettings['mode'] })
-              }
-            >
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-            </select>
-          </label>
+          <p className="muted settings-note">
+            SysML sources are read-only. Diagram layout is saved under{" "}
+            <code>views/*.json</code>; semantic cache and sheet data stay in{" "}
+            <code>state.json</code>.
+          </p>
           <label className="settings-row">
             <span>View mode</span>
             <select
@@ -84,6 +77,59 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
                     hierarchicalLevels: Math.max(1, Number(e.target.value) || 1),
                   })
                 }
+              />
+            </label>
+          </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Selected connection</legend>
+            <label className="settings-row">
+              <span>Selected Connection Color</span>
+              <input
+                type="color"
+                value={settings.selectedConnectionColor}
+                onChange={(e) =>
+                  patch({ selectedConnectionColor: e.target.value })
+                }
+              />
+            </label>
+            <label className="settings-row">
+              <span>Selected Connection Linewidth</span>
+              <input
+                type="number"
+                min={1}
+                max={16}
+                step={0.5}
+                value={settings.selectedConnectionLinewidth}
+                onChange={(e) =>
+                  patch({
+                    selectedConnectionLinewidth: Math.max(
+                      1,
+                      Number(e.target.value) || 4,
+                    ),
+                  })
+                }
+              />
+            </label>
+          </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Connection routing</legend>
+            <label className="settings-row">
+              <span>Connection Separation (px)</span>
+              <input
+                type="number"
+                min={0}
+                max={40}
+                step={1}
+                value={settings.connectionSeparation}
+                onChange={(e) =>
+                  patch({
+                    connectionSeparation: Math.max(
+                      0,
+                      Number(e.target.value) || 0,
+                    ),
+                  })
+                }
+                title="Min gap between unrelated connections. Related nets (shared port) may overlap."
               />
             </label>
           </fieldset>

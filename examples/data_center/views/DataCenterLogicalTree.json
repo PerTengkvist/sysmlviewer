@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "viewId": "DataCenterLogical::DataCenterLogicalTree",
+  "name": "DataCenterLogicalTree",
+  "nodes": {
+    "DataCenterLogical::DataCenter": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::cluster": {
+      "x": 365.15976331360946,
+      "y": 197.58579881656806,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::orchestrator": {
+      "x": 368.94674556213016,
+      "y": 127.05325443786982,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::monitoring": {
+      "x": 369.8934911242604,
+      "y": 61.25443786982247,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::cluster::compute": {
+      "x": 688.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::cluster::network": {
+      "x": 688.0,
+      "y": 128.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::cluster::storage": {
+      "x": 688.0,
+      "y": 208.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::iaac": {
+      "x": 370.84023668639054,
+      "y": 277.58579881656806,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::iaac::engine": {
+      "x": 688.0,
+      "y": 288.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterLogical::DataCenter::iaac::pool": {
+      "x": 688.0,
+      "y": 368.0,
+      "width": 160.0,
+      "height": 40.0
+    }
+  },
+  "edges": {}
+}
