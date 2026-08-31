@@ -9,7 +9,6 @@ venv/
 data/projects/*.json
 !data/projects/.gitkeep
 frontend/node_modules/
-frontend/dist/
 backend/data-test/
 *.log
 .idea/
