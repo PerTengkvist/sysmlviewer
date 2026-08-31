@@ -38,18 +38,11 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
           </button>
         </header>
         <div className="modal-body">
-          <label className="settings-row">
-            <span>Mode</span>
-            <select
-              value={settings.mode}
-              onChange={(e) =>
-                patch({ mode: e.target.value as AppSettings['mode'] })
-              }
-            >
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-            </select>
-          </label>
+          <p className="muted settings-note">
+            SysML sources are read-only. Diagram layout is saved under{" "}
+            <code>views/*.json</code>; semantic cache and sheet data stay in{" "}
+            <code>state.json</code>.
+          </p>
           <label className="settings-row">
             <span>View mode</span>
             <select

@@ -48,7 +48,7 @@ export function loadSettings(): AppSettings {
       }
     const parsed = JSON.parse(raw) as Partial<AppSettings>
     return {
-      mode: parsed.mode === 'editor' ? 'editor' : 'viewer',
+      mode: 'viewer',
       viewMode: parsed.viewMode === 'dark' ? 'dark' : 'light',
       showDiagramDetails: {
         attributes: !!parsed.showDiagramDetails?.attributes,

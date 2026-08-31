@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "viewId": "InfrastructurePlatformPkg::ResourcePoolView",
+  "name": "ResourcePoolView",
+  "nodes": {
+    "InfrastructurePlatformPkg::InfrastructurePlatform": {
+      "x": 48.0,
+      "y": 56.0,
+      "width": 264.0,
+      "height": 173.0
+    },
+    "InfrastructurePlatformPkg::ProvisioningEngine": {
+      "x": 11.5,
+      "y": 272.0,
+      "width": 265.0,
+      "height": 107.0
+    }
+  },
+  "edges": {}
+}

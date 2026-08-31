@@ -6,8 +6,10 @@ from typing import Annotated, Any
 
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
+from adapters.api.static_paths import resolve_static_dir
 from adapters.parser.subset_parser import SubsetSysmlParser
 from adapters.persistence.workspace_repo import WorkspaceProjectRepository
 from application.project_service import ProjectService
@@ -33,6 +35,10 @@ class SessionOpenBody(BaseModel):
         if bool(self.folder) == bool(self.projectFile):
             raise ValueError("Provide exactly one of folder or projectFile")
         return self
+
+
+class SessionBrowseBody(BaseModel):
+    kind: str = Field(pattern="^(folder|file)$")
 
 
 class SaveProjectBody(BaseModel):
@@ -74,6 +80,10 @@ class AddFileBody(BaseModel):
     content: str | None = None
 
 
+class ExportViewBody(BaseModel):
+    path: str | None = None
+
+
 class TitleBlockBody(BaseModel):
     title: str = ""
     createdBy: str = ""
@@ -92,17 +102,13 @@ class FrameBody(BaseModel):
     visible: bool = True
 
 
-def create_app(
+def create_api_app(
     data_dir: Path | None = None,
     *,
     workspace: Path | None = None,
     project_file: Path | None = None,
 ) -> FastAPI:
-    """Create API app.
-
-    Without workspace/project_file the session is empty.
-    ``data_dir`` is treated as an initial workspace folder (test convenience).
-    """
+    """Create FastAPI app with JSON API routes at the app root (mount at /api)."""
     initial_workspace = workspace or data_dir
     if project_file is not None:
         pf = Path(project_file).resolve()
@@ -170,6 +176,12 @@ def create_app(
     def get_session() -> dict:
         return _session_payload()
 
+    @app.get("/session/example-projects")
+    def session_example_projects() -> list[dict]:
+        from adapters.api.example_projects import list_example_projects
+
+        return list_example_projects()
+
     @app.post("/session/create")
     def session_create(payload: Annotated[SessionCreateBody, Body()]) -> dict:
         folder = Path(payload.folder).expanduser().resolve()
@@ -200,6 +212,26 @@ def create_app(
         if project is None:
             raise HTTPException(status_code=404, detail="Project not found")
         return _session_payload()
+
+    @app.post("/session/browse")
+    def session_browse(payload: Annotated[SessionBrowseBody, Body()]) -> dict:
+        from adapters.api.native_dialog import pick_path
+
+        title = (
+            "Choose project folder"
+            if payload.kind == "folder"
+            else "Choose project.json"
+        )
+        try:
+            path = pick_path(kind=payload.kind, title=title)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=501,
+                detail=f"Native file dialog failed: {exc}",
+            ) from exc
+        return {"path": path}
 
     @app.post("/projects")
     def create_project(payload: Annotated[CreateProjectBody, Body()]) -> dict:
@@ -437,6 +469,27 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found")
         return {"path": doc_path, "content": content}
 
+    @app.post("/projects/{project_id}/views/{view_id:path}/export")
+    def export_view(
+        project_id: str,
+        view_id: str,
+        payload: Annotated[ExportViewBody | None, Body()] = None,
+    ) -> dict:
+        body = payload or ExportViewBody()
+        try:
+            path = _service().export_view(
+                project_id, view_id, path=body.path
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except KeyError:
+            raise HTTPException(status_code=404, detail="View not found") from None
+        except RuntimeError as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
+        except OSError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"path": path}
+
     @app.get("/projects/{project_id}/views/{view_id:path}")
     def get_view(
         project_id: str, view_id: str, levels: int = 2
@@ -483,12 +536,49 @@ def create_app(
     return app
 
 
+def create_app(
+    data_dir: Path | None = None,
+    *,
+    workspace: Path | None = None,
+    project_file: Path | None = None,
+    static_dir: Path | None = None,
+) -> FastAPI:
+    """Create composite app: API under /api and optional static frontend at /."""
+    api = create_api_app(
+        data_dir,
+        workspace=workspace,
+        project_file=project_file,
+    )
+    root = FastAPI(title="SysML Viewer", version="0.1.0")
+    root.mount("/api", api)
+
+    resolved_static = static_dir
+    if resolved_static is not None:
+        resolved_static = (
+            Path(resolved_static).resolve()
+            if Path(resolved_static).is_dir()
+            else None
+        )
+    if resolved_static is not None:
+        root.mount(
+            "/",
+            StaticFiles(directory=resolved_static, html=True),
+            name="static",
+        )
+    return root
+
+
 def _app_from_env() -> FastAPI:
     folder = os.environ.get("SYSMLVIEWER_FOLDER") or None
     project = os.environ.get("SYSMLVIEWER_PROJECT") or None
     workspace = Path(folder).resolve() if folder else None
     project_file = Path(project).resolve() if project else None
-    return create_app(workspace=workspace, project_file=project_file)
+    static = resolve_static_dir()
+    return create_app(
+        workspace=workspace,
+        project_file=project_file,
+        static_dir=static,
+    )
 
 
 app = _app_from_env()

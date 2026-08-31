@@ -3,6 +3,13 @@ export type ArtifactKind =
   | 'part'
   | 'port'
   | 'connection'
+  | 'dependency'
+  | 'allocation'
+  | 'binding'
+  | 'flow'
+  | 'specialization'
+  | 'subsetting'
+  | 'redefinition'
   | 'view'
   | 'attribute'
   | 'interaction'
@@ -38,11 +45,17 @@ export interface SemanticElement {
   fileId: string | null
 }
 
+export type LineStyle = 'solid' | 'dashed' | 'dotted'
+export type EdgeMarker = 'arrow' | 'openArrow' | 'triangle' | 'hollowTriangle' | 'none'
+
 export interface ElementStyleMode {
   backgroundColor?: string | null
   lineColor?: string | null
   textColor?: string | null
   lineThickness?: number | null
+  lineStyle?: LineStyle | null
+  markerEnd?: EdgeMarker | null
+  markerStart?: EdgeMarker | null
 }
 
 export interface ElementStyle {
@@ -146,6 +159,13 @@ export interface ProjectSummary {
   updatedAt: string
 }
 
+export interface ExampleProject {
+  id: string
+  name: string
+  folder: string
+  projectFile: string
+}
+
 export interface SessionPayload {
   workspaceRoot: string | null
   project: Project | null
@@ -190,6 +210,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
+  browsePath: (kind: 'folder' | 'file') =>
+    request<{ path: string | null }>('/session/browse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind }),
+    }),
+  listExampleProjects: () => request<ExampleProject[]>('/session/example-projects'),
   listProjects: () => request<ProjectSummary[]>('/projects'),
   createProject: (name: string, folder?: string) =>
     request<Project>('/projects', {
@@ -263,6 +290,15 @@ export const api = {
   getView: (projectId: string, viewId: string, levels = 2) =>
     request<ViewPayload>(
       `/projects/${projectId}/views/${encodeURIComponent(viewId)}?levels=${levels}`,
+    ),
+  exportView: (projectId: string, viewId: string, path?: string) =>
+    request<{ path: string | null }>(
+      `/projects/${projectId}/views/${encodeURIComponent(viewId)}/export`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(path ? { path } : {}),
+      },
     ),
   addConnection: (
     projectId: string,

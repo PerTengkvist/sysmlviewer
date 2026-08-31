@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from adapters.api.app import create_app
+from helpers import api_url
 from adapters.parser.subset_parser import SubsetSysmlParser
 from domain.diagram_mode import resolve_diagram_mode
 from domain.models import ArtifactKind, SemanticElement, ViewDef
@@ -92,17 +93,15 @@ def test_unknown_type_ref_falls_back_safely():
 def test_hbox_sequence_view_get_view(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "HBox"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "HBox"}).json()["id"]
     add_example_file(client, project_id, tmp_path, "hbox.sysml")
 
-    project = client.get(f"/projects/{project_id}").json()
+    project = client.get(api_url(f"/projects/{project_id}")).json()
     views = {v["name"]: v for v in project["views"]}
     assert "HBoxEventView" in views
     assert views["HBoxEventView"].get("typeRef") == "SequenceView"
 
-    payload = client.get(
-        f"/projects/{project_id}/views/{views['HBoxEventView']['id']}"
-    ).json()
+    payload = client.get(api_url(f"/projects/{project_id}/views/{views['HBoxEventView']['id']}")).json()
     assert payload["diagramMode"] == "sequence"
     assert payload["view"]["rootArtifactId"].endswith("EventInteraction")
     kinds = {e["kind"] for e in payload["semantic"].values()}

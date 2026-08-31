@@ -1,10 +1,11 @@
 """CLI argument parsing for sysmlviewer backend."""
 
+import os
 from pathlib import Path
 
 import pytest
 
-from cli import parse_args, resolve_startup
+from cli import main, parse_args, resolve_startup
 
 
 def test_parse_f_and_p_mutually_exclusive():
@@ -49,3 +50,18 @@ def test_resolve_startup_project_file(tmp_path: Path):
 def test_resolve_startup_project_file_missing(tmp_path: Path):
     with pytest.raises(FileNotFoundError):
         resolve_startup(folder=None, project_file=str(tmp_path / "missing.json"))
+
+
+def test_main_sets_static_dir_env(tmp_path: Path, monkeypatch):
+    dist = tmp_path / "frontend" / "dist"
+    dist.mkdir(parents=True)
+    monkeypatch.setattr("cli.resolve_repo_root", lambda: tmp_path)
+    captured: dict[str, str] = {}
+
+    def fake_run(*_args, **_kwargs):
+        captured["static"] = os.environ.get("SYSMLVIEWER_STATIC_DIR", "")
+
+    monkeypatch.setattr("uvicorn.run", fake_run)
+
+    main([])
+    assert captured["static"] == str(dist.resolve())

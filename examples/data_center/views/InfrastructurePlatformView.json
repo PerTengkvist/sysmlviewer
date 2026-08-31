@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "viewId": "InfrastructurePlatformPkg::InfrastructurePlatformView",
+  "name": "InfrastructurePlatformView",
+  "nodes": {},
+  "edges": {
+    "InfrastructurePlatformPkg::InfrastructurePlatform::pool_control": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1096.0,
+          "y": 956.0
+        },
+        {
+          "x": 1096.0,
+          "y": 940.0
+        }
+      ]
+    },
+    "InfrastructurePlatformPkg::InfrastructurePlatform::pool_metrics": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 664.0,
+          "y": 982.0
+        },
+        {
+          "x": 664.0,
+          "y": 988.0
+        },
+        {
+          "x": 1096.0,
+          "y": 988.0
+        },
+        {
+          "x": 1096.0,
+          "y": 928.0
+        }
+      ]
+    }
+  }
+}

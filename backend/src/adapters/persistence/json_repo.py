@@ -6,7 +6,8 @@ from datetime import datetime
 from pathlib import Path
 
 from domain.models import Project, SysmlFile, VisualizationModel, ViewDef, SemanticElement
-from domain.view_layouts import ViewLayouts
+from domain.view_layouts import ViewLayout, ViewLayouts
+from adapters.persistence import view_file_store
 
 
 def sanitize_rel_path(raw: str | None, fallback_name: str) -> str:
@@ -126,6 +127,23 @@ class JsonFileProjectRepository:
         if not created or not updated:
             return None
 
+        project_dir = self._project_dir(project_id)
+        view_layouts = view_file_store.read_all(project_dir)
+        legacy = state.get("viewLayouts")
+        if isinstance(legacy, dict) and legacy:
+            view_names = {
+                str(v.get("id")): str(v.get("name") or "")
+                for v in (state.get("views") or [])
+                if isinstance(v, dict) and v.get("id")
+            }
+            for vid, layout in ViewLayouts.from_dict(legacy).by_view.items():
+                if vid not in view_layouts.by_view:
+                    view_file_store.write_one(
+                        project_dir, vid, view_names.get(vid) or None, layout
+                    )
+            view_layouts = view_file_store.read_all(project_dir)
+
+        self._current_project_id = project_id
         return Project(
             id=manifest["id"],
             name=name,
@@ -138,14 +156,50 @@ class JsonFileProjectRepository:
             },
             visualization=VisualizationModel.from_dict(state.get("visualization")),
             views=[ViewDef.from_dict(v) for v in state.get("views") or []],
-            view_layouts=ViewLayouts.from_dict(state.get("viewLayouts")),
+            view_layouts=view_layouts,
         )
 
+    def save_view_layout(
+        self,
+        view_id: str,
+        name: str | None,
+        layout: ViewLayout,
+    ) -> Path:
+        project_id = getattr(self, "_current_project_id", None)
+        if not project_id:
+            raise RuntimeError("No project context for save_view_layout")
+        return view_file_store.write_one(
+            self._project_dir(project_id), view_id, name, layout
+        )
+
+    def write_sysml(self, rel: str, content: str, *, project_id: str | None = None) -> None:
+        """Write a new SysML file. Requires project_id for multi-project roots."""
+        if not project_id:
+            raise ValueError("project_id is required to write SysML in JsonFileProjectRepository")
+        disk = self._resolve_under_project(project_id, rel)
+        disk.parent.mkdir(parents=True, exist_ok=True)
+        disk.write_text(content, encoding="utf-8")
+
+    def move_sysml(self, old_rel: str, new_rel: str, *, project_id: str | None = None) -> None:
+        if not project_id:
+            raise ValueError("project_id is required to move SysML in JsonFileProjectRepository")
+        src = self._resolve_under_project(project_id, old_rel)
+        dst = self._resolve_under_project(project_id, new_rel)
+        if not src.is_file():
+            raise FileNotFoundError(old_rel)
+        if src.resolve() == dst.resolve():
+            return
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if dst.exists():
+            raise FileExistsError(new_rel)
+        src.rename(dst)
+
     def save(self, project: Project) -> Project:
+        self._current_project_id = project.id
         project_dir = self._project_dir(project.id)
         project_dir.mkdir(parents=True, exist_ok=True)
 
-        # Ensure each file has a safe relative path; write content to disk
+        # Persist manifest + state only; SysML on disk is read-only after create.
         sysmlfiles: list[str] = []
         file_metas: list[dict] = []
         for sysml_file in project.files:
@@ -153,9 +207,6 @@ class JsonFileProjectRepository:
                 sysml_file.path or sysml_file.name, sysml_file.name or "untitled.sysml"
             )
             sysml_file.path = rel
-            disk = self._resolve_under_project(project.id, rel)
-            disk.parent.mkdir(parents=True, exist_ok=True)
-            disk.write_text(sysml_file.content, encoding="utf-8")
             sysmlfiles.append(rel)
             file_metas.append(
                 {
@@ -167,9 +218,6 @@ class JsonFileProjectRepository:
                 }
             )
 
-        # Remove .sysml files on disk that are no longer in the project
-        self._prune_orphaned_sysml(project.id, set(sysmlfiles))
-
         manifest = {
             "id": project.id,
             "projektnamn": project.name,
@@ -177,14 +225,21 @@ class JsonFileProjectRepository:
             "updated": project.updated_at.isoformat(),
             "sysmlfiles": sysmlfiles,
         }
+        project_dir = self._project_dir(project.id)
+        if project.view_layouts and project.view_layouts.by_view:
+            on_disk = view_file_store.read_all(project_dir)
+            for view_id, layout in project.view_layouts.by_view.items():
+                if view_id not in on_disk.by_view:
+                    view_name = next(
+                        (v.name for v in project.views if v.id == view_id),
+                        None,
+                    )
+                    view_file_store.write_one(project_dir, view_id, view_name, layout)
         state = {
             "files": file_metas,
             "semantic": {k: v.to_dict() for k, v in project.semantic.items()},
             "visualization": project.visualization.to_dict(),
             "views": [v.to_dict() for v in project.views],
-            "viewLayouts": project.view_layouts.to_dict()
-            if project.view_layouts is not None
-            else {},
         }
         self._manifest_path(project.id).write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False),

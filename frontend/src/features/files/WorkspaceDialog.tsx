@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import type { ExampleProject } from '../../api'
+import { api } from '../../api'
 import { normalizeFolderPath } from '../files/workspacePaths'
 
 type Props = {
   open: boolean
   mode: 'new' | 'open'
   initialFolder?: string
+  exampleProjects?: ExampleProject[]
   onClose: () => void
   onCreate: (name: string, folder: string) => void
   onOpenFolder: (folder: string) => void
@@ -15,6 +18,7 @@ export function WorkspaceDialog({
   open,
   mode,
   initialFolder = '',
+  exampleProjects = [],
   onClose,
   onCreate,
   onOpenFolder,
@@ -24,6 +28,8 @@ export function WorkspaceDialog({
   const [folder, setFolder] = useState(initialFolder)
   const [projectFile, setProjectFile] = useState('')
   const [openMode, setOpenMode] = useState<'folder' | 'file'>('folder')
+  const [browseBusy, setBrowseBusy] = useState(false)
+  const [browseError, setBrowseError] = useState<string | null>(null)
 
   if (!open) return null
 
@@ -45,6 +51,34 @@ export function WorkspaceDialog({
     }
   }
 
+  const browse = async (kind: 'folder' | 'file') => {
+    setBrowseError(null)
+    setBrowseBusy(true)
+    try {
+      const { path } = await api.browsePath(kind)
+      if (!path) return
+      if (kind === 'folder') {
+        setFolder(path)
+      } else {
+        setProjectFile(path)
+      }
+    } catch (err) {
+      setBrowseError(err instanceof Error ? err.message : 'Could not open file dialog')
+    } finally {
+      setBrowseBusy(false)
+    }
+  }
+
+  const pathKind: 'folder' | 'file' =
+    mode === 'new' || openMode === 'folder' ? 'folder' : 'file'
+  const pathValue = pathKind === 'folder' ? folder : projectFile
+  const setPathValue = pathKind === 'folder' ? setFolder : setProjectFile
+  const pathLabel = pathKind === 'folder' ? 'Folder path' : 'Project file'
+  const pathPlaceholder =
+    pathKind === 'folder'
+      ? '/absolute/path/to/project'
+      : '/absolute/path/to/project.json'
+
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
       <div
@@ -60,6 +94,20 @@ export function WorkspaceDialog({
           </button>
         </header>
         <div className="modal-body">
+          {mode === 'open' && exampleProjects.length > 0 && (
+            <div className="example-projects">
+              <p className="example-projects-label">Example projects</p>
+              <ul className="example-projects-list">
+                {exampleProjects.map((p) => (
+                  <li key={p.id}>
+                    <button type="button" onClick={() => onOpenFolder(p.folder)}>
+                      {p.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {mode === 'new' && (
             <label className="settings-row">
               <span>Name</span>
@@ -78,26 +126,27 @@ export function WorkspaceDialog({
               </select>
             </label>
           )}
-          {(mode === 'new' || openMode === 'folder') && (
-            <label className="settings-row">
-              <span>Folder path</span>
+          <div className="settings-row path-input-row">
+            <span>{pathLabel}</span>
+            <div className="path-input-group">
               <input
-                value={folder}
-                onChange={(e) => setFolder(e.target.value)}
-                placeholder="/absolute/path/to/project"
+                value={pathValue}
+                onChange={(e) => setPathValue(e.target.value)}
+                placeholder={pathPlaceholder}
+                aria-label={pathLabel}
               />
-            </label>
-          )}
-          {mode === 'open' && openMode === 'file' && (
-            <label className="settings-row">
-              <span>Project file</span>
-              <input
-                value={projectFile}
-                onChange={(e) => setProjectFile(e.target.value)}
-                placeholder="/absolute/path/to/project.json"
-              />
-            </label>
-          )}
+              <button
+                type="button"
+                className="path-browse-btn"
+                disabled={browseBusy}
+                onClick={() => void browse(pathKind)}
+                title={pathKind === 'folder' ? 'Choose folder' : 'Choose project.json'}
+              >
+                {browseBusy ? '…' : 'Browse…'}
+              </button>
+            </div>
+          </div>
+          {browseError && <p className="modal-error">{browseError}</p>}
           <div className="modal-actions">
             <button type="button" onClick={onClose}>
               Cancel

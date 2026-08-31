@@ -17,6 +17,7 @@ def test_save_and_load_at_folder_root(tmp_path: Path):
             path="main.sysml",
         )
     )
+    repo.write_sysml("main.sysml", "package Main { part A; }\n")
     saved = repo.save(project)
 
     assert (tmp_path / "project.json").exists()
@@ -32,6 +33,29 @@ def test_save_and_load_at_folder_root(tmp_path: Path):
     assert loaded.files[0].source_path is None
 
 
+def test_save_does_not_overwrite_sysml_with_empty_content(tmp_path: Path):
+    repo = WorkspaceProjectRepository(tmp_path)
+    project = Project.create("Safe")
+    project.files.append(
+        SysmlFile(
+            id=new_id(),
+            name="keep.sysml",
+            content="package Keep { part A; }\n",
+            path="keep.sysml",
+        )
+    )
+    repo.write_sysml("keep.sysml", "package Keep { part A; }\n")
+    repo.save(project)
+
+    # Simulate in-memory wipe (the historical bug path), then save again.
+    project.files[0].content = ""
+    repo.save(project)
+
+    assert (tmp_path / "keep.sysml").read_text(encoding="utf-8") == (
+        "package Keep { part A; }\n"
+    )
+
+
 def test_nested_sysml_path(tmp_path: Path):
     repo = WorkspaceProjectRepository(tmp_path)
     project = Project.create("Nested")
@@ -43,6 +67,7 @@ def test_nested_sysml_path(tmp_path: Path):
             path="lib/main.sysml",
         )
     )
+    repo.write_sysml("lib/main.sysml", "package Lib { part X; }\n")
     saved = repo.save(project)
     assert (tmp_path / "lib" / "main.sysml").exists()
     loaded = repo.get(saved.id)

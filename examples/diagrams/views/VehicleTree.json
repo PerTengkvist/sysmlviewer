@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "viewId": "TreeExample::VehicleTree",
+  "name": "VehicleTree",
+  "nodes": {
+    "TreeExample::Vehicle::battery": {
+      "x": 368.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "TreeExample::Vehicle::cabin::seat": {
+      "x": 675.8234398782344,
+      "y": 127.7564687975647,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "TreeExample::Vehicle::cabin": {
+      "x": 368.0,
+      "y": 128.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "TreeExample::Vehicle::engine::piston": {
+      "x": 675.8234398782344,
+      "y": 207.75646879756468,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "TreeExample::Vehicle::engine": {
+      "x": 368.0,
+      "y": 208.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "TreeExample::Vehicle": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    }
+  },
+  "edges": {}
+}

@@ -32,7 +32,7 @@ See `data/projects/data_center/logical/` — e.g. `orchestrator_sap : orchestrat
 
 ### Intra-cluster peer ports
 
-Inside `KubernetesCluster`, compute / storage / network use **peer port names** (`smp`, `scp`, `sdp`) instead of S/U suffixes. See [kubernetes_cluster_interfaces.md](kubernetes_cluster_interfaces.md).
+Inside `KubernetesCluster`, compute / storage / network use **peer port names** (`smp`, `scp`, `sdp`, `nwdp`, `e_nwdp`, `i_nwdp`) instead of S/U suffixes. See [kubernetes_cluster_interfaces.md](kubernetes_cluster_interfaces.md).
 
 ### Four logical layers
 

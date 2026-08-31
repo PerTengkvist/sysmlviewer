@@ -12,25 +12,53 @@ Inside `KubernetesCluster`, compute / storage / network are **peer planes at the
 | Scope | Parts | Port naming | When |
 |-------|-------|-------------|------|
 | **Cross-layer** | orchestrator, cluster, monitoring, iaac | S/U policy (`<S>_sap`, `<S>_rap`, …) | Different roles: provider vs consumer |
-| **Intra-cluster** | compute, storage, network | **Peer ports** (`smp`, `scp`, `sdp`) | Same layer; symmetric composition |
+| **Intra-cluster** | compute, storage, network | **Peer ports** (`smp`, `scp`, `sdp`, `nwdp`, …) | Same layer; symmetric composition |
 
-## Intra-cluster peer ports (per plane part def)
+## Intra-cluster peer ports
 
-| Plane role | Port name | Interface type (`port def`) | Purpose |
-|------------|-----------|----------------------------|---------|
+### Shared management / control (all planes)
+
+| Plane role | Port name | Interface type | Purpose |
+|------------|-----------|----------------|---------|
 | Management / observability | `smp` | `<plane>_smi` | Metrics, health, supervision hooks |
 | Control / configuration | `scp` | `<plane>_sci` | Operate and configure the plane |
-| Dataplane | `sdp` | `k8n_vlan` | IP/VLAN payload fabric (CNI overlay) |
 
-Examples on `ComputeEngine`:
+### ComputeEngine
 
 ```sysml
 port smp : compute_smi;
 port scp : compute_sci;
-port sdp : k8n_vlan;
+port sdp : compute_svi;   // containers / runtime execution
+port nwdp : k8n_vlan;     // attach to NetworkPlane.i_nwdp
 ```
 
-`k8n_vlan` is **one shared interface type** for all dataplane attachments inside the cluster (pod network, storage I/O path, east-west traffic).
+### StoragePlane
+
+```sysml
+port smp : storage_smi;
+port scp : storage_sci;
+port sdp : storage_ssi;   // logical write / PV attach face
+port nwdp : k8n_vlan;     // real I/O path on the fabric
+```
+
+### NetworkPlane
+
+```sysml
+port smp : network_smi;
+port scp : network_sci;
+port e_nwdp : k8n_vlan;   // external (north/south) dataplane
+port i_nwdp : k8n_vlan;   // internal fabric for plane nwdp ports
+```
+
+`k8n_vlan` remains the shared **network dataplane** type for `nwdp` / `e_nwdp` / `i_nwdp`. Compute/storage **`sdp`** ports use domain types (`compute_svi`, `storage_ssi`) because they are not fabric attachments.
+
+## Data path for storage I/O
+
+`storage_sdp` / `storage.sdp` is the **logical** port a workload writes to. Payload traffic is modeled on the fabric:
+
+```text
+compute.nwdp ──► network.i_nwdp ──► storage.nwdp
+```
 
 ## KubernetesCluster composite shell
 
@@ -43,23 +71,29 @@ port cluster_smp : cluster_smi;
 port iaac_rpp : iaac_spi;
 ```
 
-**Internal delegation** — ports typed to match the child plane (not `*_r*p`):
+**Internal delegation** — ports typed to match the child plane:
 
 ```sysml
 port compute_scp : compute_sci;
 port compute_smp : compute_smi;
-port compute_sdp : k8n_vlan;
-// … storage_*, network_* similarly
+port compute_sdp : compute_svi;
+port storage_scp : storage_sci;
+port storage_smp : storage_smi;
+port storage_sdp : storage_ssi;
+port network_scp : network_sci;
+port network_smp : network_smi;
+port network_sdp : k8n_vlan;   // → network.e_nwdp
 ```
 
-Connections use **identical types on both ends**:
+Connections (identical types on both ends):
 
 ```sysml
-connection compute_sci connect compute_scp to compute.scp;
-connection k8n_mesh connect compute_sdp to network.sdp;
+connection compute_svi connect compute_sdp to compute.sdp;
+connection storage_ssi connect storage_sdp to storage.sdp;
+connection compute_nwdp connect compute.nwdp to network.i_nwdp;
+connection storage_nwdp connect storage.nwdp to network.i_nwdp;
+connection network_e_nwdp connect network_sdp to network.e_nwdp;
 ```
-
-Do **not** connect `cluster_sci` to `compute_sci` in the same connection — orchestrator → cluster is modeled in `DataCenterLogical`; cluster → compute control is a separate typed delegation.
 
 ## API (`*_sai`) scope
 

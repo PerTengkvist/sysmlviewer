@@ -7,7 +7,8 @@ One open workspace folder. The project file lives at the **folder root**:
 ```
 {workspace}/
   project.json     # id, projektnamn, created, updated, sysmlfiles
-  state.json       # files metadata, semantic, visualization, viewLayouts, views, sheet
+  state.json       # files metadata, semantic, visualization, views, sheet
+  views/*.json     # per-view node/edge geometry overlays
   **/*.sysml       # source files (paths listed in project.json sysmlfiles)
 ```
 
@@ -18,21 +19,25 @@ Open / create via:
 
 Without `-f`/`-p` the session starts empty (no catalog under `data/projects`).
 
-SysML content is read and written by the backend under the workspace root. Layout and sheet live in `state.json`.
+SysML on disk is read-only for the viewer. Sheet and semantic cache live in `state.json`. Per-view layout lives under `views/`.
 
 `state.json` → `visualization`: global style, port anchors, and edge routing keyed by artifact id.
 
-`state.json` → `viewLayouts` (optional): per-view node geometry overlays:
+`views/<name>.json` (schemaVersion 1): per-view node/edge geometry overlays:
 
 ```json
 {
-  "Package::TreeView": {
-    "nodes": {
-      "Package::Part": { "x": 40, "y": 40, "width": 160, "height": 40 }
-    }
-  }
+  "schemaVersion": 1,
+  "viewId": "Package::TreeView",
+  "name": "TreeView",
+  "nodes": {
+    "Package::Part": { "x": 40, "y": 40, "width": 160, "height": 40 }
+  },
+  "edges": {}
 }
 ```
+
+Legacy `state.json` → `viewLayouts` is migrated into `views/*.json` on load (or via `scripts/migrate_view_layouts.py`).
 
 `get_view` merges overlay geometry into the view payload. Tree views without an overlay use compact defaults (`DEFAULT_TREE_WIDTH`/`HEIGHT`). GeneralView/whitebox uses global (or that view’s overlay) sizes.
 

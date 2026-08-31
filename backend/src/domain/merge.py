@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from domain.models import (
     ArtifactKind,
+    ElementStyle,
+    ElementStyleMode,
     PortSide,
     RoutingType,
     SemanticElement,
@@ -27,10 +29,85 @@ DEFAULT_TREE_HEIGHT = 40.0
 
 EDGE_KINDS = {
     ArtifactKind.CONNECTION,
+    ArtifactKind.DEPENDENCY,
+    ArtifactKind.ALLOCATION,
+    ArtifactKind.BINDING,
+    ArtifactKind.FLOW,
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
     ArtifactKind.MESSAGE,
     ArtifactKind.TRANSITION,
     ArtifactKind.SUCCESSION,
 }
+
+DEFAULT_EDGE_STYLE: dict[ArtifactKind, dict[str, str | None]] = {
+    ArtifactKind.CONNECTION: {
+        "line_style": "solid",
+        "marker_end": None,
+        "marker_start": None,
+    },
+    ArtifactKind.DEPENDENCY: {
+        "line_style": "dashed",
+        "marker_end": "openArrow",
+        "marker_start": None,
+    },
+    ArtifactKind.ALLOCATION: {
+        "line_style": "dashed",
+        "marker_end": "arrow",
+        "marker_start": None,
+    },
+    ArtifactKind.BINDING: {
+        "line_style": "dotted",
+        "marker_end": None,
+        "marker_start": None,
+    },
+    ArtifactKind.FLOW: {
+        "line_style": "solid",
+        "marker_end": "arrow",
+        "marker_start": None,
+    },
+    ArtifactKind.SPECIALIZATION: {
+        "line_style": "solid",
+        "marker_end": "hollowTriangle",
+        "marker_start": None,
+    },
+    ArtifactKind.SUBSETTING: {
+        "line_style": "dashed",
+        "marker_end": "hollowTriangle",
+        "marker_start": None,
+    },
+    ArtifactKind.REDEFINITION: {
+        "line_style": "solid",
+        "marker_end": "triangle",
+        "marker_start": None,
+    },
+}
+
+STRUCTURE_EDGE_KINDS = {
+    ArtifactKind.CONNECTION,
+    ArtifactKind.DEPENDENCY,
+    ArtifactKind.ALLOCATION,
+    ArtifactKind.BINDING,
+    ArtifactKind.FLOW,
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
+}
+
+
+def get_default_edge_style(kind: ArtifactKind) -> ElementStyle:
+    defaults = DEFAULT_EDGE_STYLE.get(kind, DEFAULT_EDGE_STYLE[ArtifactKind.CONNECTION])
+    mode = ElementStyleMode(
+        line_style=defaults.get("line_style"),
+        marker_end=defaults.get("marker_end"),
+        marker_start=defaults.get("marker_start"),
+    )
+    return ElementStyle(light=mode, dark=ElementStyleMode(
+        line_style=defaults.get("line_style"),
+        marker_end=defaults.get("marker_end"),
+        marker_start=defaults.get("marker_start"),
+    ))
 
 NODE_KINDS = {
     ArtifactKind.PACKAGE,
@@ -147,13 +224,30 @@ def merge_visualization(
             else:
                 routing = (
                     RoutingType.DIRECT
-                    if element.kind in {ArtifactKind.MESSAGE, ArtifactKind.SUCCESSION}
+                    if element.kind
+                    in {
+                        ArtifactKind.MESSAGE,
+                        ArtifactKind.SUCCESSION,
+                        ArtifactKind.DEPENDENCY,
+                        ArtifactKind.ALLOCATION,
+                        ArtifactKind.BINDING,
+                        ArtifactKind.FLOW,
+                        ArtifactKind.SPECIALIZATION,
+                        ArtifactKind.SUBSETTING,
+                        ArtifactKind.REDEFINITION,
+                    }
                     else RoutingType.ANGULAR
+                )
+                style = (
+                    get_default_edge_style(element.kind)
+                    if element.kind in STRUCTURE_EDGE_KINDS
+                    else None
                 )
                 edges[element.id] = VisualizationEdge(
                     artifact_id=element.id,
                     routing=routing,
                     waypoints=[],
+                    style=style,
                 )
             continue
 

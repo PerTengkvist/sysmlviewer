@@ -124,6 +124,43 @@ def _emit_element(
             lines.append(f"{pad}connection {el.name} connect {src} to {tgt};")
         return
 
+    if el.kind == ArtifactKind.DEPENDENCY:
+        src = _endpoint_ref(semantic, el, el.source_id)
+        tgt = _endpoint_ref(semantic, el, el.target_id)
+        if src and tgt:
+            lines.append(f"{pad}dependency {el.name} from {src} to {tgt};")
+        return
+
+    if el.kind == ArtifactKind.ALLOCATION:
+        src = _endpoint_ref(semantic, el, el.source_id)
+        tgt = _endpoint_ref(semantic, el, el.target_id)
+        if src and tgt:
+            lines.append(f"{pad}allocate {src} to {tgt};")
+        return
+
+    if el.kind == ArtifactKind.BINDING:
+        src = _endpoint_ref(semantic, el, el.source_id)
+        tgt = _endpoint_ref(semantic, el, el.target_id)
+        if src and tgt:
+            lines.append(f"{pad}bind {src} = {tgt};")
+        return
+
+    if el.kind == ArtifactKind.FLOW:
+        src = _endpoint_ref(semantic, el, el.source_id)
+        tgt = _endpoint_ref(semantic, el, el.target_id)
+        if src and tgt:
+            lines.append(f"{pad}flow {el.name} from {src} to {tgt};")
+        return
+
+    if el.kind == ArtifactKind.SPECIALIZATION:
+        return
+
+    if el.kind == ArtifactKind.SUBSETTING:
+        return
+
+    if el.kind == ArtifactKind.REDEFINITION:
+        return
+
     if el.kind == ArtifactKind.VIEW:
         type_bit = f" : {el.type_ref}" if el.type_ref else ""
         lines.append(f"{pad}view def {el.name}{type_bit} {{")
@@ -240,15 +277,19 @@ def _emit_children(
         ArtifactKind.PORT: 1,
         ArtifactKind.ATTRIBUTE: 2,
         ArtifactKind.CONNECTION: 3,
-        ArtifactKind.INTERACTION: 4,
-        ArtifactKind.LIFELINE: 5,
-        ArtifactKind.MESSAGE: 6,
-        ArtifactKind.STATE: 7,
-        ArtifactKind.TRANSITION: 8,
-        ArtifactKind.ACTION: 9,
-        ArtifactKind.SUCCESSION: 10,
-        ArtifactKind.VIEW: 11,
-        ArtifactKind.PACKAGE: 12,
+        ArtifactKind.DEPENDENCY: 4,
+        ArtifactKind.ALLOCATION: 5,
+        ArtifactKind.BINDING: 6,
+        ArtifactKind.FLOW: 7,
+        ArtifactKind.INTERACTION: 8,
+        ArtifactKind.LIFELINE: 9,
+        ArtifactKind.MESSAGE: 10,
+        ArtifactKind.STATE: 11,
+        ArtifactKind.TRANSITION: 12,
+        ArtifactKind.ACTION: 13,
+        ArtifactKind.SUCCESSION: 14,
+        ArtifactKind.VIEW: 15,
+        ArtifactKind.PACKAGE: 16,
     }
     children.sort(key=lambda c: (order.get(c.kind, 9), c.id))
     for child in children:
@@ -258,17 +299,19 @@ def _emit_children(
 def _endpoint_ref(
     semantic: dict[str, SemanticElement],
     conn: SemanticElement,
-    port_id: str | None,
+    endpoint_id: str | None,
 ) -> str | None:
-    if not port_id:
+    if not endpoint_id:
         return None
-    port = semantic.get(port_id)
-    if not port:
-        return port_id.split("::")[-1]
+    endpoint = semantic.get(endpoint_id)
+    if not endpoint:
+        return endpoint_id.split("::")[-1]
     # Relative to connection parent: childPart.port or port
     parent_id = conn.parent_id
-    if port.parent_id and port.parent_id != parent_id:
-        owner = semantic.get(port.parent_id)
+    if endpoint.parent_id and endpoint.parent_id != parent_id:
+        owner = semantic.get(endpoint.parent_id)
+        if owner and owner.parent_id == parent_id:
+            return f"{owner.name}.{endpoint.name}"
         if owner:
-            return f"{owner.name}.{port.name}"
-    return port.name
+            return f"{owner.name}.{endpoint.name}"
+    return endpoint.name

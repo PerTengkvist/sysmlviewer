@@ -2,7 +2,7 @@
 
 ## Vision
 
-A web service that visualizes SysMLv2 files and projects, with a separate *semantic* model (from code) and *visualization* model (style, port anchors, routing) keyed by artifact identity so that re-parsing updates content without destroying layout. **Node geometry** (`x`/`y`/`width`/`height`) may additionally be stored per view (`viewLayouts`) so TreeView and GeneralView can size the same part differently.
+A web service that visualizes SysMLv2 files and projects, with a separate *semantic* model (from code) and *visualization* model (style, port anchors, routing) keyed by artifact identity so that re-parsing updates content without destroying layout. **Node geometry** (`x`/`y`/`width`/`height`) may additionally be stored per view (`views/*.json`, formerly `viewLayouts` in `state.json`) so TreeView and GeneralView can size the same part differently.
 
 ## Functional requirements
 
@@ -16,7 +16,7 @@ A web service that visualizes SysMLv2 files and projects, with a separate *seman
 | FR-06 | Added files are parsed automatically; visualization objects are created for new artifacts |
 | FR-07 | File refresh: re-parse; existing artifacts keep position/size/port offsets/routing; removed artifacts are dropped; new ones get default layout |
 | FR-08 | Canvas shows a hierarchical diagram view; click selects an artifact |
-| FR-09 | Artifacts are movable; position is stored in the visualization model (per-view geometry via `viewLayouts` when editing a view) |
+| FR-09 | Artifacts are movable; position is stored in the visualization model (per-view geometry via `views/*.json` when editing a view) |
 | FR-09a | TreeView uses compact part sizes by default; GeneralView/whitebox keeps large boundaries for internal structure |
 | FR-10 | Ports can be moved along part edges; anchor points are stored |
 | FR-11 | Connections have routing type `angular` \| `direct` \| `spline` and stored reference points |
@@ -33,7 +33,7 @@ A web service that visualizes SysMLv2 files and projects, with a separate *seman
 |----|-------------|
 | NFR-01 | Hexagonal backend: domain independent of FastAPI/JSON/Mongo |
 | NFR-02 | Visualization key = stable artifact id (qualified name, e.g. `Package::Part::port`) for style, ports, edges |
-| NFR-02a | Optional `viewLayouts[viewId].nodes[artifactId]` overlays x/y/width/height for that view only |
+| NFR-02a | Optional per-view overlays in `views/<name>.json` for x/y/width/height (and edge routing) for that view only |
 | NFR-03 | Merge on refresh: content from parse, layout from existing viz when keys match |
 | NFR-04 | Alpha runs locally (API + Vite) |
 | NFR-05 | API contract via OpenAPI (FastAPI) |

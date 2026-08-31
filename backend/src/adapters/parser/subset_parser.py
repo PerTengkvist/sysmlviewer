@@ -15,7 +15,7 @@ _TOKEN_RE = re.compile(
     (?P<string>'[^']*'|"[^"]*")|
     (?P<number>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|
     (?P<ident>[A-Za-z_][\w]*)|
-    (?P<punct>:>|::|[{}:;=]|\.|~)|
+    (?P<punct>:>>|:>|::|[{}:;=,]|\.|~)|
     (?P<ws>\s+)|
     (?P<other>.)
     """,
@@ -55,6 +55,10 @@ class _ParserState:
     anon_message: int = 0
     anon_transition: int = 0
     anon_succession: int = 0
+    anon_dependency: int = 0
+    anon_allocation: int = 0
+    anon_binding: int = 0
+    anon_flow: int = 0
     imports: list[_ImportDecl] = field(default_factory=list)
     # When True, skip inheritance/type-warn (deferred to project link pass)
     defer_link: bool = False
@@ -254,6 +258,54 @@ class SubsetSysmlParser:
             # Also try as sibling under same parent for first segment
             return built
 
+        def read_endpoint() -> str | None:
+            parts: list[str] = []
+            name = expect_ident()
+            if not name:
+                return None
+            parts.append(name)
+            while peek() and peek().value == ".":
+                take()
+                nxt_name = expect_ident()
+                if not nxt_name:
+                    break
+                parts.append(nxt_name)
+            return ".".join(parts)
+
+        def add_relationship(
+            kind: ArtifactKind,
+            source_ref: str,
+            target_ref: str,
+            line: int,
+            name: str | None = None,
+            *,
+            counter_attr: str,
+            default_prefix: str,
+        ) -> None:
+            source_id = resolve_ref(source_ref)
+            target_id = resolve_ref(target_ref)
+            if not name:
+                current = getattr(state, counter_attr) + 1
+                setattr(state, counter_attr, current)
+                name = f"{default_prefix}{current}"
+            element_id = state.qualify(name)
+            if element_id in state.elements:
+                suffix = getattr(state, counter_attr) + 1
+                setattr(state, counter_attr, suffix)
+                name = f"{name}_{suffix}"
+                element_id = state.qualify(name)
+            el = SemanticElement(
+                id=element_id,
+                kind=kind,
+                name=name,
+                parent_id=state.current_parent(),
+                source_id=source_id,
+                target_id=target_id,
+                file_id=file_id,
+            )
+            state.add_child(el.parent_id, element_id)
+            state.elements[element_id] = el
+
         while i < n:
             tok = peek()
             if not tok:
@@ -313,6 +365,7 @@ class SubsetSysmlParser:
                     skip_until_semicolon_or_brace()
                     continue
                 type_ref = None
+                is_specialization = False
                 multiplicity = None
                 # Optional multiplicity, e.g. part compute [0..*] : ComputeEngine;
                 if peek() and peek().value == "[":
@@ -326,11 +379,25 @@ class SubsetSysmlParser:
                     multiplicity = "".join(mult_parts).strip() or None
                 # Usage typing `part x : Type` or specialization `part def X :> Type`
                 if peek() and peek().value in {":", ":>"}:
+                    op = peek().value
                     take()
+                    if op == ":>":
+                        is_specialization = True
                     # optional ~
                     if peek() and peek().value == "~":
                         take()
                     type_ref = expect_ident()
+                subset_target: str | None = None
+                redefine_target: str | None = None
+                if peek() and peek().value == "subsets":
+                    take()
+                    subset_target = expect_ident()
+                elif peek() and peek().value == "redefines":
+                    take()
+                    redefine_target = expect_ident()
+                elif peek() and peek().value == ":>>":
+                    take()
+                    redefine_target = expect_ident()
                 element_id = state.qualify(name)
                 el = SemanticElement(
                     id=element_id,
@@ -343,6 +410,36 @@ class SubsetSysmlParser:
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
+                if is_def and is_specialization and type_ref:
+                    add_relationship(
+                        ArtifactKind.SPECIALIZATION,
+                        name,
+                        type_ref,
+                        tok.line,
+                        name=f"{name}_specializes_{type_ref}",
+                        counter_attr="anon_dependency",
+                        default_prefix="spec",
+                    )
+                if subset_target:
+                    add_relationship(
+                        ArtifactKind.SUBSETTING,
+                        name,
+                        subset_target,
+                        tok.line,
+                        name=f"{name}_subsets_{subset_target}",
+                        counter_attr="anon_dependency",
+                        default_prefix="subset",
+                    )
+                if redefine_target:
+                    add_relationship(
+                        ArtifactKind.REDEFINITION,
+                        name,
+                        redefine_target,
+                        tok.line,
+                        name=f"{name}_redefines_{redefine_target}",
+                        counter_attr="anon_dependency",
+                        default_prefix="redef",
+                    )
                 nxt = peek()
                 if nxt and nxt.value == "{":
                     take()
@@ -354,7 +451,6 @@ class SubsetSysmlParser:
                 else:
                     # tolerate missing semicolon
                     pass
-                _ = is_def
                 continue
 
             if tok.kind == "ident" and tok.value == "port":
@@ -415,21 +511,6 @@ class SubsetSysmlParser:
                         conn_name = expect_ident()
                     if peek() and peek().value == "connect":
                         take()
-                # parse endpoint A [.] B to C [.] D
-                def read_endpoint() -> str | None:
-                    parts: list[str] = []
-                    name = expect_ident()
-                    if not name:
-                        return None
-                    parts.append(name)
-                    while peek() and peek().value == ".":
-                        take()
-                        nxt_name = expect_ident()
-                        if not nxt_name:
-                            break
-                        parts.append(nxt_name)
-                    return ".".join(parts)
-
                 source_ref = read_endpoint()
                 if not (peek() and peek().value == "to"):
                     # maybe "connect (a, b)" form — skip
@@ -464,6 +545,155 @@ class SubsetSysmlParser:
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
+                continue
+
+            if tok.kind == "ident" and tok.value == "dependency":
+                line = tok.line
+                take()
+                dep_name: str | None = None
+                if peek() and peek().value != "from":
+                    dep_name = expect_ident()
+                if not (peek() and peek().value == "from"):
+                    state.warnings.append(f"line {line}: dependency missing 'from'")
+                    skip_until_semicolon_or_brace()
+                    continue
+                take()  # from
+                source_ref = read_endpoint()
+                if not source_ref:
+                    state.warnings.append(f"line {line}: dependency missing source")
+                    skip_until_semicolon_or_brace()
+                    continue
+                if not (peek() and peek().value == "to"):
+                    state.warnings.append(f"line {line}: dependency missing 'to'")
+                    skip_until_semicolon_or_brace()
+                    continue
+                take()  # to
+                targets: list[str] = []
+                while True:
+                    target_ref = read_endpoint()
+                    if target_ref:
+                        targets.append(target_ref)
+                    if peek() and peek().value == ",":
+                        take()
+                        continue
+                    break
+                if peek() and peek().value == ";":
+                    take()
+                for idx, target_ref in enumerate(targets):
+                    name = dep_name if len(targets) == 1 else f"{dep_name}_{idx + 1}" if dep_name else None
+                    add_relationship(
+                        ArtifactKind.DEPENDENCY,
+                        source_ref,
+                        target_ref,
+                        line,
+                        name=name,
+                        counter_attr="anon_dependency",
+                        default_prefix="dep",
+                    )
+                continue
+
+            if tok.kind == "ident" and tok.value in {"allocate", "allocation"}:
+                line = tok.line
+                keyword = tok.value
+                take()
+                alloc_name: str | None = None
+                if keyword == "allocation" and peek() and peek().value not in {"from"}:
+                    nxt = peek()
+                    if nxt and nxt.kind in {"ident", "string"}:
+                        alloc_name = expect_ident()
+                source_ref = read_endpoint()
+                if peek() and peek().value == "from":
+                    take()
+                    source_ref = read_endpoint()
+                if not (peek() and peek().value == "to"):
+                    state.warnings.append(f"line {line}: allocation missing 'to'")
+                    skip_until_semicolon_or_brace()
+                    continue
+                take()  # to
+                target_ref = read_endpoint()
+                if not source_ref or not target_ref:
+                    state.warnings.append(f"line {line}: allocation missing endpoints")
+                    skip_until_semicolon_or_brace()
+                    continue
+                if peek() and peek().value == ";":
+                    take()
+                add_relationship(
+                    ArtifactKind.ALLOCATION,
+                    source_ref,
+                    target_ref,
+                    line,
+                    name=alloc_name,
+                    counter_attr="anon_allocation",
+                    default_prefix="alloc",
+                )
+                continue
+
+            if tok.kind == "ident" and tok.value in {"bind", "binding"}:
+                line = tok.line
+                keyword = tok.value
+                take()
+                bind_name: str | None = None
+                if keyword == "binding" and peek() and peek().value != "=":
+                    nxt = peek()
+                    if nxt and nxt.kind in {"ident", "string"}:
+                        bind_name = expect_ident()
+                source_ref = read_endpoint()
+                if not (peek() and peek().value == "="):
+                    state.warnings.append(f"line {line}: binding missing '='")
+                    skip_until_semicolon_or_brace()
+                    continue
+                take()  # =
+                target_ref = read_endpoint()
+                if not source_ref or not target_ref:
+                    state.warnings.append(f"line {line}: binding missing endpoints")
+                    skip_until_semicolon_or_brace()
+                    continue
+                if peek() and peek().value == ";":
+                    take()
+                add_relationship(
+                    ArtifactKind.BINDING,
+                    source_ref,
+                    target_ref,
+                    line,
+                    name=bind_name,
+                    counter_attr="anon_binding",
+                    default_prefix="bind",
+                )
+                continue
+
+            if tok.kind == "ident" and tok.value == "flow":
+                line = tok.line
+                take()
+                flow_name: str | None = None
+                if peek() and peek().value != "from":
+                    flow_name = expect_ident()
+                if not (peek() and peek().value == "from"):
+                    state.warnings.append(f"line {line}: flow missing 'from'")
+                    skip_until_semicolon_or_brace()
+                    continue
+                take()  # from
+                source_ref = read_endpoint()
+                if not (peek() and peek().value == "to"):
+                    state.warnings.append(f"line {line}: flow missing 'to'")
+                    skip_until_semicolon_or_brace()
+                    continue
+                take()  # to
+                target_ref = read_endpoint()
+                if not source_ref or not target_ref:
+                    state.warnings.append(f"line {line}: flow missing endpoints")
+                    skip_until_semicolon_or_brace()
+                    continue
+                if peek() and peek().value == ";":
+                    take()
+                add_relationship(
+                    ArtifactKind.FLOW,
+                    source_ref,
+                    target_ref,
+                    line,
+                    name=flow_name,
+                    counter_attr="anon_flow",
+                    default_prefix="flow",
+                )
                 continue
 
             if tok.kind == "ident" and tok.value == "view":
@@ -1186,7 +1416,16 @@ class SubsetSysmlParser:
             state.add_child(usage.id, usage_child_id)
             return nested
 
-        def inherit_from_def(usage: SemanticElement, type_def: SemanticElement) -> None:
+        def inherit_from_def(
+            usage: SemanticElement,
+            type_def: SemanticElement,
+            seen: set[str] | None = None,
+        ) -> None:
+            if seen is None:
+                seen = set()
+            if type_def.id in seen:
+                return
+            seen.add(type_def.id)
             for child_id in type_def.children:
                 child = state.elements.get(child_id)
                 if not child:
@@ -1199,7 +1438,7 @@ class SubsetSysmlParser:
                     nested = copy_nested_part(usage, child)
                     nested_def = resolve_type_def(child.type_ref)
                     if nested_def:
-                        inherit_from_def(nested, nested_def)
+                        inherit_from_def(nested, nested_def, seen)
 
         usages = [
             el

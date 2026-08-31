@@ -4,6 +4,17 @@ from __future__ import annotations
 
 from domain.models import ArtifactKind, SemanticElement
 
+RELATION_KINDS = {
+    ArtifactKind.CONNECTION,
+    ArtifactKind.DEPENDENCY,
+    ArtifactKind.ALLOCATION,
+    ArtifactKind.BINDING,
+    ArtifactKind.FLOW,
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
+}
+
 
 def classify_children(
     semantic: dict[str, SemanticElement], element_id: str
@@ -34,18 +45,20 @@ def classify_children(
             attributes.append(child)
         elif child.kind == ArtifactKind.PART:
             sub_parts.append(child)
-        elif child.kind == ArtifactKind.CONNECTION:
+        elif child.kind in RELATION_KINDS:
             relations.append(child)
 
-    # Connections that touch this element's ports but live elsewhere
+    # Relationships that touch this element's ports/features but live elsewhere
     for other in semantic.values():
-        if other.kind != ArtifactKind.CONNECTION:
+        if other.kind not in RELATION_KINDS:
             continue
         if other.id in {r.id for r in relations}:
             continue
         if other.source_id in port_ids or other.target_id in port_ids:
             relations.append(other)
         elif other.parent_id == element_id:
+            relations.append(other)
+        elif other.source_id == element_id or other.target_id == element_id:
             relations.append(other)
 
     return {
@@ -98,11 +111,14 @@ def collect_artifacts_to_depth(
                 continue
             if child.kind in {
                 ArtifactKind.PORT,
-                ArtifactKind.CONNECTION,
+                *RELATION_KINDS,
                 ArtifactKind.ATTRIBUTE,
                 ArtifactKind.VIEW,
             }:
                 extra.add(cid)
             # nested parts beyond depth already excluded
     included |= extra
+    from domain.relationships import collect_related_edges
+
+    included |= collect_related_edges(semantic, included)
     return included

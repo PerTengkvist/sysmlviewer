@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "viewId": "DataCenterPhysical::DataCenterPhysicalTree",
+  "name": "DataCenterPhysicalTree",
+  "nodes": {
+    "DataCenterPhysical::DataCenterSite::bladeCompute::cpu": {
+      "x": 688.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeCompute::nic": {
+      "x": 688.0,
+      "y": 128.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeCompute::ram": {
+      "x": 688.0,
+      "y": 208.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeCompute::ssd": {
+      "x": 688.0,
+      "y": 288.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeCompute": {
+      "x": 368.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl::cpu": {
+      "x": 688.0,
+      "y": 368.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl::nic": {
+      "x": 688.0,
+      "y": 448.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl::ram": {
+      "x": 688.0,
+      "y": 528.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl::ssd": {
+      "x": 688.0,
+      "y": 608.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl": {
+      "x": 368.0,
+      "y": 128.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::cooling": {
+      "x": 368.0,
+      "y": 208.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::edgeRouter": {
+      "x": 368.0,
+      "y": 288.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::cluster": {
+      "x": 688.0,
+      "y": 688.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::iaac": {
+      "x": 688.0,
+      "y": 768.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::monitoring": {
+      "x": 688.0,
+      "y": 848.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical::orchestrator": {
+      "x": 688.0,
+      "y": 928.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical": {
+      "x": 368.0,
+      "y": 368.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::cpu": {
+      "x": 688.0,
+      "y": 1008.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::nic": {
+      "x": 688.0,
+      "y": 1088.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::ram": {
+      "x": 688.0,
+      "y": 1168.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::ssd0": {
+      "x": 688.0,
+      "y": 1248.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::ssd1": {
+      "x": 688.0,
+      "y": 1328.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::ssd2": {
+      "x": 688.0,
+      "y": 1408.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas::ssd3": {
+      "x": 688.0,
+      "y": 1488.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas": {
+      "x": 368.0,
+      "y": 448.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite::torSwitch": {
+      "x": 368.0,
+      "y": 528.0,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "DataCenterPhysical::DataCenterSite": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 160.0,
+      "height": 40.0
+    }
+  },
+  "edges": {}
+}

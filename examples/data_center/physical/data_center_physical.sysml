@@ -62,8 +62,10 @@ package DataCenterPhysical {
       connect logical.cluster.compute.scp to bladeCompute.mgmt;
     connection allocComputeMetrics
       connect logical.cluster.compute.smp to bladeCompute.mgmt;
-    connection allocComputeDataplane
-      connect logical.cluster.compute.sdp to bladeCompute.eth;
+    connection allocComputeExec
+      connect logical.cluster.compute.sdp to bladeCompute.cpu.fabric;
+    connection allocComputeNetwork
+      connect logical.cluster.compute.nwdp to bladeCompute.eth;
 
     // --- Layer 2 storage slice → NAS ---
     connection allocStorageSliceVol
@@ -72,8 +74,8 @@ package DataCenterPhysical {
       connect logical.cluster.storage.scp to nas.mgmt;
     connection allocStorageMetrics
       connect logical.cluster.storage.smp to nas.mgmt;
-    connection allocStorageDataplane
-      connect logical.cluster.storage.sdp to nas.eth;
+    connection allocStorageNetwork
+      connect logical.cluster.storage.nwdp to nas.eth;
 
     // --- Layer 2 network slice → ToR ---
     connection allocNetworkSliceSeg
@@ -82,6 +84,8 @@ package DataCenterPhysical {
       connect logical.cluster.network.scp to torSwitch.mgmt;
     connection allocNetworkMetrics
       connect logical.cluster.network.smp to torSwitch.mgmt;
+    connection allocNetworkExternal
+      connect logical.cluster.network.e_nwdp to torSwitch.downlink;
 
     // --- Layer 2 cluster aggregate → control blade / fabric ---
     connection allocClusterApi

@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
+import { MarkerType } from '@xyflow/react'
 import type { ElementStyle, ElementStyleMode } from '../../api'
 import type { ViewMode } from '../../settings'
+import { strokeDasharray } from './relationshipStyle'
 
 export const STYLE_DEFAULTS: Record<
   ViewMode,
@@ -56,14 +58,30 @@ export function nodeInlineStyle(
 export function edgeStrokeStyle(
   style: ElementStyle | null | undefined,
   viewMode: ViewMode,
-): { stroke: string; strokeWidth: number; color?: string } {
+): {
+  stroke: string
+  strokeWidth: number
+  color?: string
+  strokeDasharray?: string
+} {
   const mode = resolveModeStyle(style, viewMode)
   const defaults = STYLE_DEFAULTS[viewMode]
   return {
     stroke: mode.lineColor || 'var(--part-stroke)',
     strokeWidth: mode.lineThickness ?? defaults.edgeThickness,
     color: mode.textColor || undefined,
+    strokeDasharray: strokeDasharray(mode.lineStyle as 'solid' | 'dashed' | 'dotted' | null | undefined),
   }
+}
+
+export function reactFlowMarker(
+  marker: string | null | undefined,
+): { type: MarkerType; width: number; height: number; color?: string } | undefined {
+  if (!marker || marker === 'none') return undefined
+  if (marker === 'openArrow' || marker === 'hollowTriangle') {
+    return { type: MarkerType.Arrow, width: 16, height: 16 }
+  }
+  return { type: MarkerType.ArrowClosed, width: 14, height: 14 }
 }
 
 /** Soft kind-tinted fills when no custom style is set (light/dark aware). */

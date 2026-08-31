@@ -11,17 +11,31 @@ Web service that visualizes SysML v2 textual files and projects. Alpha vertical 
 ## Quick start
 
 ```bash
-./sysmlviewer start                         # empty session
-./sysmlviewer start -f /path/to/folder      # open workspace folder
-./sysmlviewer start -p /path/to/project.json
-./sysmlviewer stop
-./sysmlviewer status
+./sysmlviewer.sh start                         # prod: UI + API on :5174 (uses frontend/dist/)
+./sysmlviewer.sh start --build                 # rebuild frontend, then start
+./sysmlviewer.sh start -f /path/to/folder      # open workspace folder
+./sysmlviewer.sh start -p /path/to/project.json
+./sysmlviewer.sh start --dev                   # Vite :5173 + API :5174 (HMR)
+./sysmlviewer.sh stop
+./sysmlviewer.sh status
 ```
 
-UI: http://127.0.0.1:5173 (proxies `/api` → backend :5174)  
-API docs: http://127.0.0.1:5174/docs  
+Windows (cmd.exe): `sysmlviewer.bat` with the same subcommands.
 
-Use **New** / **Open** in the UI to bind a project folder (absolute path). Add `.sysml` files by relative path; the backend reads/writes disk. Layout and sheet metadata live in `state.json` next to `project.json`.
+Legacy wrapper: `./sysmlviewer` → `sysmlviewer.sh`
+
+UI (prod): http://127.0.0.1:5174/  
+API docs: http://127.0.0.1:5174/api/docs  
+
+Use **New** / **Open** in the UI to bind a project folder (absolute path). Add `.sysml` files by relative path; the backend reads them from disk (SysML is read-only in the viewer). Persistence roles:
+
+- **`*.sysml`** — source of truth for the model
+- **`state.json`** — semantic cache, view metadata list, sheet, global visualization defaults (no per-diagram geometry)
+- **`views/*.json`** — one file per view for node/edge layout overlays (auto-saved on drag; **Export JSON** saves a copy via Save As)
+
+Legacy projects with `viewLayouts` inside `state.json` are migrated on open (or run `python scripts/migrate_view_layouts.py <project-folder>`).
+
+Requires Python venv in `backend/.venv` (see Manual below). Production start uses the pre-built `frontend/dist/` checked into the repo — no Node/npm needed unless you use `--build` or `--dev`.
 
 ### Manual (optional)
 
@@ -32,15 +46,21 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-uvicorn main:app --app-dir src --reload --port 5174
+python -m cli --host 127.0.0.1 --port 5174 --reload
 ```
 
-### Frontend
+### Frontend (development)
 
 ```bash
 cd frontend
 npm install
 npm run dev
+```
+
+Rebuild static assets (updates `frontend/dist/`):
+
+```bash
+cd frontend && npm run build
 ```
 
 ### Sample projects
