@@ -20,6 +20,13 @@ class ArtifactKind(str, Enum):
     PART = "part"
     PORT = "port"
     CONNECTION = "connection"
+    DEPENDENCY = "dependency"
+    ALLOCATION = "allocation"
+    BINDING = "binding"
+    FLOW = "flow"
+    SPECIALIZATION = "specialization"
+    SUBSETTING = "subsetting"
+    REDEFINITION = "redefinition"
     VIEW = "view"
     ATTRIBUTE = "attribute"
     INTERACTION = "interaction"
@@ -50,6 +57,9 @@ class ElementStyleMode:
     line_color: str | None = None
     text_color: str | None = None
     line_thickness: float | None = None
+    line_style: str | None = None
+    marker_end: str | None = None
+    marker_start: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -61,6 +71,12 @@ class ElementStyleMode:
             out["textColor"] = self.text_color
         if self.line_thickness is not None:
             out["lineThickness"] = self.line_thickness
+        if self.line_style is not None:
+            out["lineStyle"] = self.line_style
+        if self.marker_end is not None:
+            out["markerEnd"] = self.marker_end
+        if self.marker_start is not None:
+            out["markerStart"] = self.marker_start
         return out
 
     @classmethod
@@ -76,6 +92,9 @@ class ElementStyleMode:
                 if data.get("lineThickness") is not None
                 else None
             ),
+            line_style=data.get("lineStyle"),
+            marker_end=data.get("markerEnd"),
+            marker_start=data.get("markerStart"),
         )
 
     def merge(self, patch: dict[str, Any]) -> None:
@@ -88,6 +107,12 @@ class ElementStyleMode:
         if "lineThickness" in patch:
             val = patch["lineThickness"]
             self.line_thickness = float(val) if val is not None else None
+        if "lineStyle" in patch:
+            self.line_style = patch["lineStyle"]
+        if "markerEnd" in patch:
+            self.marker_end = patch["markerEnd"]
+        if "markerStart" in patch:
+            self.marker_start = patch["markerStart"]
 
 
 @dataclass

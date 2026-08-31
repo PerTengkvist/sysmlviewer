@@ -5,7 +5,7 @@ The data center model uses **four layers**. Layers 1–3 live under `logical/`; 
 | Layer | Name | Package / parts | Role |
 |-------|------|-----------------|------|
 | **1** | Control plane | `Orchestrator`, `MonitoringAndSupervision` | Policy, desired state, observability |
-| **2** | Workload plane | `KubernetesCluster` | Virtual K8s: compute×N, storage, network @ `k8n_vlan` |
+| **2** | Workload plane | `KubernetesCluster` | Virtual K8s: compute×N, storage, network (`nwdp` / `e_nwdp` / `i_nwdp`) |
 | **3** | Substrate plane | `InfrastructurePlatform`, `ResourcePool` | Logical CPU/RAM/storage/network capacity; IaaC provisioning |
 | **4** | Physical | `DataCenterSite`, `ServerBlade`, … | Vendor-specific hardware (cores, GB, NIC model) |
 
@@ -34,7 +34,7 @@ Each virtual plane has a **slice** bound via `iaac_spi`:
 
 `KubernetesCluster.iaac_rpp` receives provision from `iaac.iaac_spp` and fans out to `compute.slice.rpp`, `storage.slice.rpp`, `network.slice.rpp`.
 
-Intra-cluster interfaces: peer ports `smp` / `scp` / `sdp` (see [kubernetes_cluster_interfaces.md](kubernetes_cluster_interfaces.md)).
+Intra-cluster interfaces: peer ports `smp` / `scp`, plus `sdp` (execution or logical I/O) and `nwdp` / `e_nwdp` / `i_nwdp` for the fabric (see [kubernetes_cluster_interfaces.md](kubernetes_cluster_interfaces.md)).
 
 ## Layer 1 — control
 
@@ -61,3 +61,19 @@ Intra-cluster interfaces: peer ports `smp` / `scp` / `sdp` (see [kubernetes_clus
 | `logical/substrate_resources.sysml` | 3 |
 | `logical/infrastructure_platform.sysml` | 3 |
 | `physical/data_center_physical.sysml` | 4 |
+
+## Part relationship types (SysML v2 subset)
+
+Use the right relation for the semantics you need in `GeneralView`:
+
+| Relation | SysML syntax | Use when |
+|----------|--------------|----------|
+| **connection** | `connection … connect portA to portB` | Structural/interface coupling between ports (control, data, power). Used throughout layers 1–4, e.g. orchestrator → cluster in `data_center_logical.sysml`. |
+| **dependency** | `dependency from A to B` | Soft “depends on” between parts without port wiring — e.g. a workload part that requires a platform service but does not expose a dedicated port pair. |
+| **allocation** | `allocate logicalPart to physicalPart` | Maps logical capacity or workload to physical realization. Layer 4 uses port-level `connection` with `alloc*` names today; prefer explicit `allocate` for new logical→physical links. |
+| **binding** | `bind attrA = attrB` | Same value/reference on two features (e.g. aggregate temperature equals sensor reading). |
+| **flow** | `flow … from portA to portB` | Directed item/energy flow distinct from a generic connection. |
+| **specialization** | `part def X :> Y` | Type hierarchy between part definitions (shown as a diagram edge plus `typeRef`). |
+| **subsetting / redefinition** | `part x subsets y` / `part x redefines y` | Restrict or replace inherited features between part usages. |
+
+Reference fixture: `examples/diagrams/part_relationships.sysml` (`RelationshipsView`).

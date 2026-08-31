@@ -45,6 +45,7 @@ export type SysmlEdgeData = {
   ) => void
   /** Select this connection (used by mid-path handles on direct/spline). */
   onSelect?: (artifactId: string) => void
+  relationKind?: string
 }
 
 const LOOSE_BOUNDS: FlowBounds = {

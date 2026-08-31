@@ -204,6 +204,8 @@ export function orientEdgeHandles(
     if (
       e.sourceHandle?.startsWith('msg-') ||
       e.targetHandle?.startsWith('msg-') ||
+      e.sourceHandle?.startsWith('rel-') ||
+      e.targetHandle?.startsWith('rel-') ||
       e.sourceHandle?.includes(':') ||
       e.targetHandle?.startsWith('target:')
     ) {

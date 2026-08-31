@@ -3,7 +3,8 @@
 ## Stack
 
 - **Backend:** FastAPI, hexagonal (domain / ports / adapters)
-- **Frontend:** React + Vite + TypeScript + React Flow
+- **Frontend:** React + Vite + TypeScript + React Flow (built to `frontend/dist/`)
+- **Runtime (prod):** single uvicorn process serves `/` (static UI) and `/api/*` (JSON API)
 - **Persistence:** single workspace folder (`project.json` + `state.json` + `.sysml` at folder root); MongoDB adapter stubbed
 
 ## Hexagonal layout
@@ -14,11 +15,19 @@ backend/src/
   application/      # Use-case services
   ports/            # ProjectRepository, SysmlParser protocols
   adapters/
-    api/            # FastAPI routes + session
+    api/            # FastAPI routes + session; composite app mounts API at /api
     persistence/    # workspace_repo (default), json_repo (legacy), mongo stub
     parser/         # subset SysML textual parser
-  cli.py            # -f / -p startup
+  cli.py            # -f / -p startup; sets SYSMLVIEWER_STATIC_DIR
 ```
+
+## HTTP layout (production)
+
+- `GET /` — static SPA from `frontend/dist/` (when present)
+- `GET/POST /api/...` — JSON API (session, projects, files, views, …)
+- OpenAPI: `/api/docs`
+
+Launchers: [`sysmlviewer.sh`](../sysmlviewer.sh) / [`sysmlviewer.bat`](../sysmlviewer.bat) — default prod on `:5174`; `--dev` runs Vite `:5173` with `/api` proxied to backend.
 
 ## Domain model
 
@@ -28,7 +37,7 @@ backend/src/
 - `files`: list of SysML file records (`id`, `name`, `content`, `warnings`)
 - `semantic`: map of artifact id → SemanticElement
 - `visualization`: map of artifact id → VisualizationObject (+ edges) — style, port side/offset, edge routing/waypoints
-- `viewLayouts`: map of view id → `{ nodes: { artifactId → { x, y, width, height } } }` — per-view geometry overlay
+- `viewLayouts` (in-memory / API): map of view id → node/edge geometry overlay; **on disk** as `views/<name>.json` (not inside `state.json`)
 - `views`: list of diagram views (auto-generated per package/part)
 
 ### SemanticElement
@@ -109,10 +118,11 @@ Unknown constructs emit warnings and are skipped when possible.
 | POST | `/projects/{id}/files` | Add SysML by relative `{ path }` (read/create on disk) |
 | POST | `/projects/{id}/files/refresh/{fileId}` | Re-read from disk and re-parse (`fileId` may contain `/`) |
 | PATCH/DELETE | `/projects/{id}/files/item/{fileId}` | Rename/delete file (`fileId` may contain `/`) |
-| PATCH | `/projects/{id}/visualization` | Update layout; optional `viewId` writes node x/y/width/height to `viewLayouts` |
+| PATCH | `/projects/{id}/visualization` | Update layout; optional `viewId` writes geometry to `views/*.json` |
 | PUT/DELETE | `/projects/{id}/sheet/title-block` | Drawing title block |
 | PUT/DELETE | `/projects/{id}/sheet/frame` | Drawing frame (A4/A3) |
 | GET | `/projects/{id}/views/{viewId}` | Get view payload |
+| POST | `/projects/{id}/views/{viewId}/export` | Export open view layout JSON (Save As or `{ path }`) |
 
 ## Frontend layout
 

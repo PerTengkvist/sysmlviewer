@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "viewId": "DataCenterLogical::DataCenterLogicalView",
+  "name": "DataCenterLogicalView",
+  "nodes": {
+    "DataCenterLogical::DataCenter": {
+      "x": -189.05850382246442,
+      "y": 31.5052844983756,
+      "width": 953.0,
+      "height": 863.0
+    },
+    "DataCenterLogical::DataCenter::cluster": {
+      "x": 445.65914052272836,
+      "y": 354.1957078735038,
+      "width": 266.0,
+      "height": 210.0
+    },
+    "DataCenterLogical::DataCenter::orchestrator": {
+      "x": 437.6903580144895,
+      "y": 66.13887943010378,
+      "width": 280.4,
+      "height": 186.0
+    },
+    "DataCenterLogical::DataCenter::monitoring": {
+      "x": 48.0,
+      "y": 56.0,
+      "width": 289.0,
+      "height": 152.0
+    },
+    "DataCenterLogical::DataCenter::iaac": {
+      "x": 449.582768257906,
+      "y": 655.2529870721206,
+      "width": 259.0,
+      "height": 155.0
+    }
+  },
+  "edges": {
+    "DataCenterLogical::DataCenter::iaac_sai": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 687.0952984246225,
+          "y": 206.8449730214552
+        },
+        {
+          "x": 687.0952984246225,
+          "y": 816.0063031867071
+        },
+        {
+          "x": 519.5242644354416,
+          "y": 816.0063031867071
+        }
+      ]
+    },
+    "DataCenterLogical::DataCenter::orchestrator_sci": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 595.6660579519943,
+          "y": 775.5140697648019
+        },
+        {
+          "x": 595.6660579519943,
+          "y": 267.0511821372124
+        }
+      ],
+      "labelOffset": {
+        "x": -23.894332406086974,
+        "y": 28.635985270004937
+      }
+    },
+    "DataCenterLogical::DataCenter::iaac_sci": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 632.5729522778136,
+          "y": 237.87823370178424
+        },
+        {
+          "x": 632.5729522778136,
+          "y": 794.7459199046177
+        }
+      ]
+    },
+    "DataCenterLogical::DataCenter::cluster_sai": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 217.5371126986972,
+          "y": 230.46642192408484
+        },
+        {
+          "x": 217.8317020694626,
+          "y": 449.3005941174849
+        }
+      ],
+      "labelOffset": {
+        "x": -53.07382939257093,
+        "y": 0.4545315437156887
+      }
+    },
+    "DataCenterLogical::DataCenter::cluster_sci": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 233.6520702425315,
+          "y": 255.0448810052797
+        },
+        {
+          "x": 233.6520702425315,
+          "y": 324.56982680159047
+        },
+        {
+          "x": 568.867756651221,
+          "y": 324.56982680159047
+        },
+        {
+          "x": 568.867756651221,
+          "y": 543.8240239880904
+        },
+        {
+          "x": 522.600636700264,
+          "y": 543.8240239880904
+        }
+      ],
+      "labelOffset": {
+        "x": -69.71550213800302,
+        "y": 0.2867146490061714
+      }
+    },
+    "DataCenterLogical::DataCenter::cluster_smi": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 189.87010418483408,
+          "y": 125.5052844983756
+        },
+        {
+          "x": 189.87010418483408,
+          "y": 541.5856077564947
+        }
+      ],
+      "labelOffset": {
+        "x": 8.95031568417454,
+        "y": -105.60236628044504
+      }
+    },
+    "DataCenterLogical::DataCenter::iaac_spi": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 566.1908939639939,
+          "y": 759.3503752246834
+        },
+        {
+          "x": 566.1908939639939,
+          "y": 512.1365914645215
+        }
+      ],
+      "labelOffset": {
+        "x": -1.1728435053737059,
+        "y": 56.49331004330804
+      }
+    },
+    "DataCenterLogical::DataCenter::iaac_smi": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 159.94149617753558,
+          "y": 186.3052844983756
+        },
+        {
+          "x": 159.94149617753558,
+          "y": 746.1749382371629
+        }
+      ]
+    },
+    "DataCenterLogical::DataCenter::orchestrator_sai": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 548.3312945209419,
+          "y": 171.3636034000437
+        },
+        {
+          "x": 548.3312945209419,
+          "y": 173.31454468501533
+        }
+      ]
+    },
+    "DataCenterLogical::DataCenter::monitoring_sci": {
+      "waypoints": [
+        {
+          "x": -195.05850382246442,
+          "y": 232.5285767373503
+        },
+        {
+          "x": -153.05850382246442,
+          "y": 232.5285767373503
+        },
+        {
+          "x": -153.05850382246442,
+          "y": 229.88208272613238
+        }
+      ]
+    },
+    "DataCenterLogical::DataCenter::orchestrator_smi": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 243.93129452094192,
+          "y": 155.90528449837558
+        },
+        {
+          "x": 243.93129452094192,
+          "y": 158.3276078979771
+        }
+      ]
+    }
+  }
+}

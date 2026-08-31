@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from adapters.api.app import create_app
 from adapters.parser.subset_parser import SubsetSysmlParser
 from adapters.parser.subset_serializer import extract_import_block, serialize_file
+from helpers import api_url
 from domain.models import SysmlFile
 from helpers import add_content_file
 
@@ -12,7 +13,7 @@ from helpers import add_content_file
 def test_project_folder_layout_on_disk(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "Folder"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "Folder"}).json()["id"]
 
     add_content_file(
         client,
@@ -34,7 +35,7 @@ def test_project_folder_layout_on_disk(tmp_path: Path):
 def test_delete_and_rename_file(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "Files"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "Files"}).json()["id"]
 
     uploaded = add_content_file(
         client, project_id, tmp_path, "a.sysml", "package A { part X; }\n"
@@ -42,19 +43,22 @@ def test_delete_and_rename_file(tmp_path: Path):
     file_id = uploaded["files"][0]["id"]
     assert (tmp_path / "a.sysml").exists()
 
-    renamed = client.patch(
-        f"/projects/{project_id}/files/item/{file_id}",
+    renamed = client.patch(api_url(f"/projects/{project_id}/files/item/{file_id}"),
         json={"name": "renamed.sysml"},
     ).json()
     assert renamed["files"][0]["name"] == "renamed.sysml"
     assert renamed["files"][0]["path"] == "renamed.sysml"
     assert (tmp_path / "renamed.sysml").exists()
     assert not (tmp_path / "a.sysml").exists()
+    assert (tmp_path / "renamed.sysml").read_text(encoding="utf-8") == (
+        "package A { part X; }\n"
+    )
 
-    deleted = client.delete(f"/projects/{project_id}/files/item/{file_id}").json()
+    deleted = client.delete(api_url(f"/projects/{project_id}/files/item/{file_id}")).json()
     assert deleted["files"] == []
     assert deleted["semantic"] == {}
-    assert not (tmp_path / "renamed.sysml").exists()
+    # SysML sources are not deleted from disk when removed from the project.
+    assert (tmp_path / "renamed.sysml").exists()
 
 
 def test_parse_project_cross_file_import_and_inheritance():
@@ -106,7 +110,7 @@ def test_extract_import_block():
 def test_visualization_style_patch(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "Style"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "Style"}).json()["id"]
     add_content_file(
         client,
         project_id,
@@ -115,8 +119,7 @@ def test_visualization_style_patch(tmp_path: Path):
         "package S { part def Box { port p; } part b : Box; }\n",
     )
 
-    patched = client.patch(
-        f"/projects/{project_id}/visualization",
+    patched = client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={
             "nodes": {
                 "S::b": {

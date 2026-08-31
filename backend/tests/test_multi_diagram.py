@@ -4,14 +4,15 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from helpers import api_url
 from adapters.api.app import create_app
 from adapters.parser.subset_parser import SubsetSysmlParser
 from domain.models import ArtifactKind
-from helpers import add_example_file
+from helpers import add_example_file, api_url, resolve_example_path
 
 
 def test_parse_state_machine():
-    sample = Path(__file__).resolve().parents[2] / "examples" / "state_machine.sysml"
+    sample = resolve_example_path("state_machine.sysml")
     result = SubsetSysmlParser().parse(sample.read_text(encoding="utf-8"), "f1")
     assert "StateExample::DoorMachine" in result.elements
     assert result.elements["StateExample::DoorMachine"].kind == ArtifactKind.STATE
@@ -29,13 +30,11 @@ def test_parse_state_machine():
 def test_state_view_api(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "SM"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "SM"}).json()["id"]
     add_example_file(client, project_id, tmp_path, "state_machine.sysml")
-    project = client.get(f"/projects/{project_id}").json()
+    project = client.get(api_url(f"/projects/{project_id}")).json()
     views = {v["name"]: v for v in project["views"]}
-    payload = client.get(
-        f"/projects/{project_id}/views/{views['DoorStateView']['id']}"
-    ).json()
+    payload = client.get(api_url(f"/projects/{project_id}/views/{views['DoorStateView']['id']}")).json()
     assert payload["diagramMode"] == "state"
     kinds = {e["kind"] for e in payload["semantic"].values()}
     assert "state" in kinds
@@ -43,7 +42,7 @@ def test_state_view_api(tmp_path: Path):
 
 
 def test_parse_action_flow():
-    sample = Path(__file__).resolve().parents[2] / "examples" / "action_flow.sysml"
+    sample = resolve_example_path("action_flow.sysml")
     result = SubsetSysmlParser().parse(sample.read_text(encoding="utf-8"), "f1")
     assert result.elements["ActionExample::BootFlow"].kind == ArtifactKind.ACTION
     start = result.elements["ActionExample::BootFlow::start"]
@@ -64,13 +63,11 @@ def test_parse_action_flow():
 def test_action_flow_view_api(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "AF"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "AF"}).json()["id"]
     add_example_file(client, project_id, tmp_path, "action_flow.sysml")
-    project = client.get(f"/projects/{project_id}").json()
+    project = client.get(api_url(f"/projects/{project_id}")).json()
     views = {v["name"]: v for v in project["views"]}
-    payload = client.get(
-        f"/projects/{project_id}/views/{views['BootFlowView']['id']}"
-    ).json()
+    payload = client.get(api_url(f"/projects/{project_id}/views/{views['BootFlowView']['id']}")).json()
     assert payload["diagramMode"] == "actionFlow"
     kinds = {e["kind"] for e in payload["semantic"].values()}
     assert "action" in kinds
@@ -87,13 +84,11 @@ def test_action_flow_view_api(tmp_path: Path):
 def test_tree_view_api(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    project_id = client.post("/projects", json={"name": "Tree"}).json()["id"]
+    project_id = client.post(api_url("/projects"), json={"name": "Tree"}).json()["id"]
     add_example_file(client, project_id, tmp_path, "tree_view.sysml")
-    project = client.get(f"/projects/{project_id}").json()
+    project = client.get(api_url(f"/projects/{project_id}")).json()
     views = {v["name"]: v for v in project["views"]}
-    payload = client.get(
-        f"/projects/{project_id}/views/{views['VehicleTree']['id']}?levels=3"
-    ).json()
+    payload = client.get(api_url(f"/projects/{project_id}/views/{views['VehicleTree']['id']}?levels=3")).json()
     assert payload["diagramMode"] == "tree"
     assert "TreeExample::Vehicle::engine" in payload["semantic"]
     assert "TreeExample::Vehicle::engine::piston" in payload["semantic"]

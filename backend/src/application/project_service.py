@@ -118,7 +118,8 @@ class ProjectService:
         return True
 
     def save_project(self, project_id: str, payload: dict) -> Project | None:
-        project = self.repo.get(project_id)
+        # Reparse from SysML first so a stale/empty state.json cannot wipe views.
+        project = self.get_project(project_id)
         if not project:
             return None
         if "name" in payload and payload["name"]:
@@ -178,6 +179,9 @@ class ProjectService:
         )
         project.files.append(sysml_file)
         self._reparse_all_files(project)
+        write_fn = getattr(self.repo, "write_sysml", None)
+        if write_fn is not None:
+            write_fn(rel, content)
         return self.repo.save(project)
 
     def add_file_from_path(
@@ -369,6 +373,16 @@ class ProjectService:
             }
             if new_rel in existing:
                 return None
+            old_rel = target.relative_path()
+            move_fn = getattr(self.repo, "move_sysml", None)
+            if move_fn is not None:
+                try:
+                    move_fn(old_rel, new_rel)
+                except FileNotFoundError:
+                    # Manifest-only rename when the source file is missing.
+                    pass
+                except FileExistsError:
+                    return None
             target.path = new_rel
             target.name = Path(new_rel).name
 
@@ -451,17 +465,13 @@ class ProjectService:
         return project.files[0].id if project.files else None
 
     def _sync_sysml_file(self, project: Project, file_id: str | None) -> None:
-        from adapters.parser.subset_serializer import serialize_file
+        """SysML sources are read-only; structural edits update state.json only.
 
-        fid = file_id or self._primary_file_id(project)
-        if not fid:
-            return
-        target = next((f for f in project.files if f.id == fid), None)
-        if not target:
-            return
-        target.content = serialize_file(
-            project.semantic, fid, previous_content=target.content
-        )
+        Previously this re-serialized semantic → ``.sysml`` text and ``save()``
+        wrote it back, which could wipe files when serialization failed or
+        in-memory content was empty.
+        """
+        return
 
     def _unique_child_name(
         self, project: Project, parent_id: str | None, base: str
@@ -631,12 +641,19 @@ class ProjectService:
             if el:
                 stack.extend(el.children)
 
-        # Also remove connections referencing removed ports
-        for eid, el in list(project.semantic.items()):
-            if el.kind == ArtifactKind.CONNECTION and (
-                el.source_id in to_remove or el.target_id in to_remove
-            ):
-                to_remove.add(eid)
+        # Also remove relationships referencing removed artifacts
+        from domain.relationships import is_relation_edge
+
+        changed = True
+        while changed:
+            changed = False
+            for eid, el in list(project.semantic.items()):
+                if not is_relation_edge(el.kind):
+                    continue
+                if el.source_id in to_remove or el.target_id in to_remove:
+                    if eid not in to_remove:
+                        to_remove.add(eid)
+                        changed = True
 
         for eid in to_remove:
             el = project.semantic.pop(eid, None)
@@ -659,7 +676,10 @@ class ProjectService:
         )
 
     def update_visualization(self, project_id: str, patch: dict) -> Project | None:
-        project = self.repo.get(project_id)
+        # Always refresh semantic/views from SysML before persisting layout.
+        # Otherwise a corrupted empty state.json is re-saved on every drag and
+        # the Views tab clears in the UI (project.views becomes []).
+        project = self.get_project(project_id)
         if not project:
             return None
 
@@ -709,6 +729,17 @@ class ProjectService:
                     project.view_layouts, view_id, geo_edge_patch
                 )
             edges_patch = other_edge_patch
+
+            if geo_patch or geo_edge_patch:
+                layout = project.view_layouts.by_view.get(view_id)
+                if layout is not None:
+                    view_name = next(
+                        (v.name for v in project.views if v.id == view_id),
+                        None,
+                    )
+                    save_fn = getattr(self.repo, "save_view_layout", None)
+                    if save_fn is not None:
+                        save_fn(view_id, view_name, layout)
 
         for artifact_id, node_data in nodes_patch.items():
             existing = project.visualization.nodes.get(artifact_id)
@@ -760,6 +791,68 @@ class ProjectService:
 
         project.updated_at = utc_now()
         return self.repo.save(project)
+
+    def export_view(
+        self,
+        project_id: str,
+        view_id: str,
+        *,
+        path: str | None = None,
+    ) -> str | None:
+        """Write the view layout JSON to ``path`` or a native Save As dialog.
+
+        Returns the absolute path written, or ``None`` if the user cancelled.
+        """
+        import json
+
+        project = self.get_project(project_id)
+        if not project:
+            raise FileNotFoundError("Project not found")
+        view = next((v for v in project.views if v.id == view_id), None)
+        if not view:
+            raise KeyError(view_id)
+
+        from adapters.persistence.view_file_store import (
+            layout_document,
+            safe_view_filename,
+            views_dir,
+        )
+        from domain.view_layouts import ViewLayout
+
+        layout = (
+            project.view_layouts.by_view.get(view_id)
+            if project.view_layouts
+            else None
+        ) or ViewLayout()
+        doc = layout_document(view_id, view.name, layout)
+        default_name = safe_view_filename(view_id, view.name, existing_names=set())
+
+        if path:
+            target = Path(path).expanduser().resolve()
+        else:
+            from adapters.api.native_dialog import pick_save_path
+
+            root = getattr(self.repo, "root", None)
+            default_dir = str(views_dir(root)) if root is not None else None
+            if default_dir:
+                Path(default_dir).mkdir(parents=True, exist_ok=True)
+            chosen = pick_save_path(
+                title="Export view JSON",
+                default_dir=default_dir,
+                default_name=default_name,
+            )
+            if not chosen:
+                return None
+            target = Path(chosen).expanduser().resolve()
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.suffix.lower() != ".json":
+            target = target.with_suffix(".json")
+        target.write_text(
+            json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return str(target)
 
     def get_view(
         self, project_id: str, view_id: str, hierarchical_levels: int = 2
@@ -875,6 +968,15 @@ class ProjectService:
                             if port and port.kind == ArtifactKind.PORT:
                                 artifact_ids.add(pc)
             for el in project.semantic.values():
+                if el.kind == ArtifactKind.ALLOCATION:
+                    if el.parent_id != root.id:
+                        continue
+                    artifact_ids.add(el.id)
+                    if el.source_id:
+                        artifact_ids.add(el.source_id)
+                    if el.target_id:
+                        artifact_ids.add(el.target_id)
+                    continue
                 if el.kind != ArtifactKind.CONNECTION:
                     continue
                 if not el.name.startswith("alloc"):
@@ -940,7 +1042,10 @@ class ProjectService:
             resolved_edge = resolve_view_edge(global_edge, edge_overlay)
             if diagram_mode == "allocation":
                 conn = project.semantic.get(aid)
-                if conn and conn.kind == ArtifactKind.CONNECTION:
+                if conn and conn.kind in {
+                    ArtifactKind.CONNECTION,
+                    ArtifactKind.ALLOCATION,
+                }:
                     resolved_edge = {**resolved_edge, "isAllocation": True}
             edges[aid] = resolved_edge
 

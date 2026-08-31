@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from helpers import api_url
 
 from adapters.api.app import create_app
 from domain.merge import DEFAULT_TREE_HEIGHT, DEFAULT_TREE_WIDTH
@@ -28,20 +29,19 @@ package Dual {
 def _client(tmp_path: Path) -> tuple[TestClient, str]:
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)
-    created = client.post("/projects", json={"name": "Dual"}).json()
+    created = client.post(api_url("/projects"), json={"name": "Dual"}).json()
     return client, created["id"]
 
 
 def _setup_dual(tmp_path: Path) -> tuple[TestClient, str, str, str, str]:
     client, project_id = _client(tmp_path)
     add_content_file(client, project_id, tmp_path, "dual.sysml", DUAL_VIEW_SYSML)
-    project = client.get(f"/projects/{project_id}").json()
+    project = client.get(api_url(f"/projects/{project_id}")).json()
     views = {v["name"]: v["id"] for v in project["views"]}
     assert "BoxTree" in views and "BoxView" in views
     part_id = "Dual::Box"
     # Make global geometry large (whitebox-scale)
-    client.patch(
-        f"/projects/{project_id}/visualization",
+    client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={"nodes": {part_id: {"x": 10, "y": 20, "width": 800, "height": 600}}},
     )
     return client, project_id, views["BoxTree"], views["BoxView"], part_id
@@ -50,13 +50,13 @@ def _setup_dual(tmp_path: Path) -> tuple[TestClient, str, str, str, str]:
 def test_get_view_tree_without_overlay_uses_compact_defaults(tmp_path: Path):
     client, project_id, tree_id, general_id, part_id = _setup_dual(tmp_path)
 
-    tree = client.get(f"/projects/{project_id}/views/{tree_id}").json()
+    tree = client.get(api_url(f"/projects/{project_id}/views/{tree_id}")).json()
     assert tree["diagramMode"] == "tree"
     node = tree["visualization"]["nodes"][part_id]
     assert node["width"] == DEFAULT_TREE_WIDTH
     assert node["height"] == DEFAULT_TREE_HEIGHT
 
-    general = client.get(f"/projects/{project_id}/views/{general_id}").json()
+    general = client.get(api_url(f"/projects/{project_id}/views/{general_id}")).json()
     gnode = general["visualization"]["nodes"][part_id]
     assert gnode["width"] == 800.0
     assert gnode["height"] == 600.0
@@ -65,8 +65,7 @@ def test_get_view_tree_without_overlay_uses_compact_defaults(tmp_path: Path):
 def test_patch_with_view_id_writes_overlay_not_global(tmp_path: Path):
     client, project_id, tree_id, general_id, part_id = _setup_dual(tmp_path)
 
-    patched = client.patch(
-        f"/projects/{project_id}/visualization",
+    patched = client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={
             "viewId": tree_id,
             "nodes": {part_id: {"width": 160, "height": 40, "x": 5, "y": 6}},
@@ -76,18 +75,17 @@ def test_patch_with_view_id_writes_overlay_not_global(tmp_path: Path):
     assert patched["viewLayouts"][tree_id]["nodes"][part_id]["width"] == 160.0
     assert patched["viewLayouts"][tree_id]["nodes"][part_id]["height"] == 40.0
 
-    tree = client.get(f"/projects/{project_id}/views/{tree_id}").json()
+    tree = client.get(api_url(f"/projects/{project_id}/views/{tree_id}")).json()
     assert tree["visualization"]["nodes"][part_id]["width"] == 160.0
     assert tree["visualization"]["nodes"][part_id]["x"] == 5.0
 
-    general = client.get(f"/projects/{project_id}/views/{general_id}").json()
+    general = client.get(api_url(f"/projects/{project_id}/views/{general_id}")).json()
     assert general["visualization"]["nodes"][part_id]["width"] == 800.0
 
 
 def test_patch_without_view_id_updates_global(tmp_path: Path):
     client, project_id, _tree_id, _general_id, part_id = _setup_dual(tmp_path)
-    patched = client.patch(
-        f"/projects/{project_id}/visualization",
+    patched = client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={"nodes": {part_id: {"width": 500}}},
     ).json()
     assert patched["visualization"]["nodes"][part_id]["width"] == 500.0
@@ -95,8 +93,7 @@ def test_patch_without_view_id_updates_global(tmp_path: Path):
 
 def test_patch_with_view_id_style_goes_global(tmp_path: Path):
     client, project_id, tree_id, _general_id, part_id = _setup_dual(tmp_path)
-    patched = client.patch(
-        f"/projects/{project_id}/visualization",
+    patched = client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={
             "viewId": tree_id,
             "nodes": {
@@ -134,7 +131,7 @@ package Conn {
 def test_patch_with_view_id_writes_edge_overlay_not_global(tmp_path: Path):
     client, project_id = _client(tmp_path)
     add_content_file(client, project_id, tmp_path, "conn.sysml", DUAL_CONN_SYSML)
-    project = client.get(f"/projects/{project_id}").json()
+    project = client.get(api_url(f"/projects/{project_id}")).json()
     view_id = next(v["id"] for v in project["views"] if v["name"] == "BoxView")
     conn_id = next(
         eid
@@ -143,8 +140,7 @@ def test_patch_with_view_id_writes_edge_overlay_not_global(tmp_path: Path):
     )
     waypoints = [{"x": 100, "y": 200, "locked": True}]
 
-    patched = client.patch(
-        f"/projects/{project_id}/visualization",
+    patched = client.patch(api_url(f"/projects/{project_id}/visualization"),
         json={
             "viewId": view_id,
             "edges": {conn_id: {"waypoints": waypoints}},
@@ -154,5 +150,5 @@ def test_patch_with_view_id_writes_edge_overlay_not_global(tmp_path: Path):
     assert not global_wps
     assert patched["viewLayouts"][view_id]["edges"][conn_id]["waypoints"] == waypoints
 
-    loaded = client.get(f"/projects/{project_id}/views/{view_id}").json()
+    loaded = client.get(api_url(f"/projects/{project_id}/views/{view_id}")).json()
     assert loaded["visualization"]["edges"][conn_id]["waypoints"] == waypoints

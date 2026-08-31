@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   api,
   type ElementStyle,
+  type ExampleProject,
   type PortSide,
   type Project,
   type RoutingType,
@@ -37,6 +38,7 @@ type CanvasMode =
 
 export default function App() {
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null)
+  const [exampleProjects, setExampleProjects] = useState<ExampleProject[]>([])
   const [project, setProject] = useState<Project | null>(null)
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
@@ -111,6 +113,13 @@ export default function App() {
       .then((s) => applySession(s))
       .catch((e) => setError(String(e)))
   }, [applySession])
+
+  useEffect(() => {
+    api
+      .listExampleProjects()
+      .then(setExampleProjects)
+      .catch(() => setExampleProjects([]))
+  }, [])
 
   useEffect(() => {
     applyTheme(settings.viewMode)
@@ -214,6 +223,20 @@ export default function App() {
     }
   }
 
+  const onProjectsMenuChange = (value: string) => {
+    if (!value) return
+    if (value === '__open__') {
+      setWorkspaceDialog('open')
+      return
+    }
+    void openFolder(value)
+  }
+
+  const projectsMenuValue =
+    workspaceRoot && exampleProjects.some((p) => p.folder === workspaceRoot)
+      ? workspaceRoot
+      : ''
+
   const saveProject = async () => {
     if (!project) return
     setBusy(true)
@@ -246,6 +269,20 @@ export default function App() {
       setActiveViewId(null)
       setSelectedId(null)
       setCanvasMode({ type: 'diagram' })
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const exportViewJson = async () => {
+    if (!project || !activeViewId) return
+    setBusy(true)
+    setError(null)
+    try {
+      const { path } = await api.exportView(project.id, activeViewId)
+      if (path == null) return
     } catch (e) {
       setError(String(e))
     } finally {
@@ -617,17 +654,10 @@ export default function App() {
   )
 
   const onConnectPorts = useCallback(
-    async (sourcePortId: string, targetPortId: string) => {
-      if (!project) return
-      await mutateAndSync(() =>
-        api.addConnection(project.id, {
-          sourceId: sourcePortId,
-          targetId: targetPortId,
-        }),
-      )
+    async (_sourcePortId: string, _targetPortId: string) => {
+      // SysML sources are read-only; do not create connections via the viewer.
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [project, activeViewId, editorMode],
+    [],
   )
 
   const textFile = project?.files.find(
@@ -728,6 +758,23 @@ export default function App() {
             {project ? project.name : 'No project'}
             {workspaceRoot ? ` — ${workspaceRoot}` : ''}
           </span>
+          {exampleProjects.length > 0 && (
+            <select
+              className="projects-menu"
+              aria-label="Example projects"
+              value={projectsMenuValue}
+              disabled={busy}
+              onChange={(e) => onProjectsMenuChange(e.target.value)}
+            >
+              <option value="">Examples…</option>
+              {exampleProjects.map((p) => (
+                <option key={p.id} value={p.folder}>
+                  {p.name}
+                </option>
+              ))}
+              <option value="__open__">Open other…</option>
+            </select>
+          )}
           <button type="button" onClick={() => setWorkspaceDialog('new')}>
             New
           </button>
@@ -736,6 +783,14 @@ export default function App() {
           </button>
           <button type="button" disabled={!project || busy} onClick={() => void saveProject()}>
             Save
+          </button>
+          <button
+            type="button"
+            disabled={!project || !activeViewId || busy}
+            onClick={() => void exportViewJson()}
+            title="Export the open view layout as JSON"
+          >
+            Export JSON
           </button>
           <button type="button" disabled={!project || busy} onClick={() => void deleteProject()}>
             Delete
@@ -789,6 +844,7 @@ export default function App() {
         open={workspaceDialog != null}
         mode={workspaceDialog || 'new'}
         initialFolder={workspaceRoot || ''}
+        exampleProjects={exampleProjects}
         onClose={() => setWorkspaceDialog(null)}
         onCreate={(name, folder) => void createProject(name, folder)}
         onOpenFolder={(folder) => void openFolder(folder)}

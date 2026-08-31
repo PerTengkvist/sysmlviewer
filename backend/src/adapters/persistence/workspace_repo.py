@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from domain.models import Project, SemanticElement, SysmlFile, VisualizationModel, ViewDef
-from domain.view_layouts import ViewLayouts
+from domain.view_layouts import ViewLayout, ViewLayouts
+from adapters.persistence import view_file_store
 
 
 def sanitize_rel_path(raw: str | None, fallback_name: str) -> str:
@@ -92,7 +93,25 @@ class WorkspaceProjectRepository:
     def write_sysml(self, rel: str, content: str) -> None:
         disk = self._resolve_under_root(rel)
         disk.parent.mkdir(parents=True, exist_ok=True)
+        # Never blank out an existing SysML source (viewer must not wipe models).
+        if disk.is_file() and disk.stat().st_size > 0 and not (content or "").strip():
+            raise ValueError(
+                f"Refusing to overwrite non-empty SysML with empty content: {rel}"
+            )
         disk.write_text(content, encoding="utf-8")
+
+    def move_sysml(self, old_rel: str, new_rel: str) -> None:
+        """Rename/move a SysML file on disk without rewriting its contents."""
+        src = self._resolve_under_root(old_rel)
+        dst = self._resolve_under_root(new_rel)
+        if not src.is_file():
+            raise FileNotFoundError(old_rel)
+        if src.resolve() == dst.resolve():
+            return
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if dst.exists():
+            raise FileExistsError(new_rel)
+        src.rename(dst)
 
     def list_summaries(self) -> list[dict[str, str]]:
         project = self._load_any()
@@ -169,6 +188,21 @@ class WorkspaceProjectRepository:
         if sheet is None:
             sheet = {"titleBlock": None, "frame": None}
 
+        view_layouts = view_file_store.read_all(self.root)
+        legacy = state.get("viewLayouts")
+        if isinstance(legacy, dict) and legacy:
+            view_names = {
+                str(v.get("id")): str(v.get("name") or "")
+                for v in (state.get("views") or [])
+                if isinstance(v, dict) and v.get("id")
+            }
+            for vid, layout in ViewLayouts.from_dict(legacy).by_view.items():
+                if vid not in view_layouts.by_view:
+                    view_file_store.write_one(
+                        self.root, vid, view_names.get(vid) or None, layout
+                    )
+            view_layouts = view_file_store.read_all(self.root)
+
         return Project(
             id=manifest["id"],
             name=name,
@@ -182,11 +216,37 @@ class WorkspaceProjectRepository:
             visualization=VisualizationModel.from_dict(state.get("visualization")),
             views=[ViewDef.from_dict(v) for v in state.get("views") or []],
             sheet=sheet,
-            view_layouts=ViewLayouts.from_dict(state.get("viewLayouts")),
+            view_layouts=view_layouts,
         )
 
+    def save_view_layout(
+        self,
+        view_id: str,
+        name: str | None,
+        layout: ViewLayout,
+    ) -> Path:
+        """Persist a single view overlay file without rewriting state.json."""
+        return view_file_store.write_one(self.root, view_id, name, layout)
+
     def save(self, project: Project) -> Project:
+        """Persist project.json + state.json only (no viewLayouts blob).
+
+        SysML sources on disk are read-only for the viewer: never rewrite or
+        prune ``*.sysml`` here. New files are created via ``write_sysml`` /
+        ``add_file`` only. Per-view geometry lives under ``views/*.json``.
+        """
         self.root.mkdir(parents=True, exist_ok=True)
+
+        # One-shot migrate: if in-memory layouts exist but files missing, write them
+        if project.view_layouts and project.view_layouts.by_view:
+            on_disk = view_file_store.read_all(self.root)
+            for view_id, layout in project.view_layouts.by_view.items():
+                if view_id not in on_disk.by_view:
+                    view_name = next(
+                        (v.name for v in project.views if v.id == view_id),
+                        None,
+                    )
+                    view_file_store.write_one(self.root, view_id, view_name, layout)
 
         sysmlfiles: list[str] = []
         file_metas: list[dict] = []
@@ -196,7 +256,6 @@ class WorkspaceProjectRepository:
             )
             sysml_file.path = rel
             sysml_file.source_path = None
-            self.write_sysml(rel, sysml_file.content)
             sysmlfiles.append(rel)
             file_metas.append(
                 {
@@ -206,8 +265,6 @@ class WorkspaceProjectRepository:
                     "warnings": list(sysml_file.warnings),
                 }
             )
-
-        self._prune_orphaned_sysml(set(sysmlfiles))
 
         manifest = {
             "id": project.id,
@@ -227,9 +284,6 @@ class WorkspaceProjectRepository:
             "visualization": project.visualization.to_dict(),
             "views": [v.to_dict() for v in project.views],
             "sheet": sheet,
-            "viewLayouts": project.view_layouts.to_dict()
-            if project.view_layouts is not None
-            else {},
         }
         self._manifest_path().write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False),
@@ -249,17 +303,3 @@ class WorkspaceProjectRepository:
             if path.exists():
                 path.unlink()
         return True
-
-    def _prune_orphaned_sysml(self, keep: set[str]) -> None:
-        if not self.root.is_dir():
-            return
-        for path in self.root.rglob("*.sysml"):
-            try:
-                rel = path.relative_to(self.root).as_posix()
-            except ValueError:
-                continue
-            if rel not in keep:
-                try:
-                    path.unlink()
-                except OSError:
-                    pass

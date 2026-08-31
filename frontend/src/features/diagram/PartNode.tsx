@@ -355,6 +355,32 @@ export function PartNode({ data, selected }: NodeProps) {
           isConnectable={false}
         />
       ))}
+      {(
+        [
+          ['rel-out-left', 'source', 'left' as PortSide],
+          ['rel-out-right', 'source', 'right' as PortSide],
+          ['rel-out-top', 'source', 'top' as PortSide],
+          ['rel-out-bottom', 'source', 'bottom' as PortSide],
+          ['rel-in-left', 'target', 'left' as PortSide],
+          ['rel-in-right', 'target', 'right' as PortSide],
+          ['rel-in-top', 'target', 'top' as PortSide],
+          ['rel-in-bottom', 'target', 'bottom' as PortSide],
+        ] as const
+      ).map(([id, type, side]) => (
+        <Handle
+          key={id}
+          id={id}
+          type={type}
+          position={sideToPosition(side)}
+          style={{
+            ...offsetStyle(side, 0.5),
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+          isConnectable={false}
+        />
+      ))}
     </div>
   )
 }

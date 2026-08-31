@@ -1,0 +1,5373 @@
+{
+  "files": [
+    {
+      "id": "169e1978-e6ae-46d4-94d1-af4df49e950c",
+      "name": "action_flow.sysml",
+      "path": "action_flow.sysml",
+      "warnings": []
+    },
+    {
+      "id": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e",
+      "name": "hbox.sysml",
+      "path": "hbox.sysml",
+      "warnings": [
+        "line 47: 'filter' ignored in alpha subset"
+      ]
+    },
+    {
+      "id": "537ddb8a-bbf3-4521-9440-c090a24e7f06",
+      "name": "state_machine.sysml",
+      "path": "state_machine.sysml",
+      "warnings": []
+    },
+    {
+      "id": "d93bdc91-ea77-4c46-8230-4de7dce17411",
+      "name": "tree_view.sysml",
+      "path": "tree_view.sysml",
+      "warnings": []
+    },
+    {
+      "id": "0f3024d6-101d-4269-acc8-c1f4c280a29e",
+      "name": "vehicle.sysml",
+      "path": "vehicle.sysml",
+      "warnings": []
+    },
+    {
+      "id": "143ff90b-1008-4c5b-ba16-069e30d249df",
+      "name": "vehicle2.sysml",
+      "path": "vehicle2.sysml",
+      "warnings": [
+        "line 8: 'item' ignored in alpha subset",
+        "line 59: unsupported connect syntax; expected 'to'"
+      ]
+    },
+    {
+      "id": "c77c2173-de1b-44ef-b03a-a5ab1ac05634",
+      "name": "car_logical.sysml",
+      "path": "car_logical.sysml",
+      "warnings": []
+    },
+    {
+      "id": "46c66134-7d63-49d1-bdfc-2f0a7561920e",
+      "name": "part_relationships.sysml",
+      "path": "part_relationships.sysml",
+      "warnings": []
+    }
+  ],
+  "semantic": {
+    "ActionExample": {
+      "id": "ActionExample",
+      "kind": "package",
+      "name": "ActionExample",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "ActionExample::BootFlow",
+        "ActionExample::BootFlowView"
+      ],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow": {
+      "id": "ActionExample::BootFlow",
+      "kind": "action",
+      "name": "BootFlow",
+      "parentId": "ActionExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "ActionExample::BootFlow::start",
+        "ActionExample::BootFlow::loadApplication",
+        "ActionExample::BootFlow::startupTests",
+        "ActionExample::BootFlow::testSuccessful",
+        "ActionExample::BootFlow::ready",
+        "ActionExample::BootFlow::reportFailure",
+        "ActionExample::BootFlow::stop",
+        "ActionExample::BootFlow::s1",
+        "ActionExample::BootFlow::s2",
+        "ActionExample::BootFlow::s3",
+        "ActionExample::BootFlow::yes",
+        "ActionExample::BootFlow::no",
+        "ActionExample::BootFlow::s4",
+        "ActionExample::BootFlow::s5"
+      ],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::start": {
+      "id": "ActionExample::BootFlow::start",
+      "kind": "action",
+      "name": "start",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": "start",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::loadApplication": {
+      "id": "ActionExample::BootFlow::loadApplication",
+      "kind": "action",
+      "name": "loadApplication",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::startupTests": {
+      "id": "ActionExample::BootFlow::startupTests",
+      "kind": "action",
+      "name": "startupTests",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::testSuccessful": {
+      "id": "ActionExample::BootFlow::testSuccessful",
+      "kind": "action",
+      "name": "testSuccessful",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": "decision",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::ready": {
+      "id": "ActionExample::BootFlow::ready",
+      "kind": "action",
+      "name": "ready",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::reportFailure": {
+      "id": "ActionExample::BootFlow::reportFailure",
+      "kind": "action",
+      "name": "reportFailure",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::stop": {
+      "id": "ActionExample::BootFlow::stop",
+      "kind": "action",
+      "name": "stop",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": "done",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::s1": {
+      "id": "ActionExample::BootFlow::s1",
+      "kind": "succession",
+      "name": "s1",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::start",
+      "targetId": "ActionExample::BootFlow::loadApplication",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::s2": {
+      "id": "ActionExample::BootFlow::s2",
+      "kind": "succession",
+      "name": "s2",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::loadApplication",
+      "targetId": "ActionExample::BootFlow::startupTests",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::s3": {
+      "id": "ActionExample::BootFlow::s3",
+      "kind": "succession",
+      "name": "s3",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::startupTests",
+      "targetId": "ActionExample::BootFlow::testSuccessful",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::yes": {
+      "id": "ActionExample::BootFlow::yes",
+      "kind": "succession",
+      "name": "yes",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::testSuccessful",
+      "targetId": "ActionExample::BootFlow::ready",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::no": {
+      "id": "ActionExample::BootFlow::no",
+      "kind": "succession",
+      "name": "no",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::testSuccessful",
+      "targetId": "ActionExample::BootFlow::reportFailure",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::s4": {
+      "id": "ActionExample::BootFlow::s4",
+      "kind": "succession",
+      "name": "s4",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::ready",
+      "targetId": "ActionExample::BootFlow::stop",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlow::s5": {
+      "id": "ActionExample::BootFlow::s5",
+      "kind": "succession",
+      "name": "s5",
+      "parentId": "ActionExample::BootFlow",
+      "typeRef": null,
+      "sourceId": "ActionExample::BootFlow::reportFailure",
+      "targetId": "ActionExample::BootFlow::stop",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "ActionExample::BootFlowView": {
+      "id": "ActionExample::BootFlowView",
+      "kind": "view",
+      "name": "BootFlowView",
+      "parentId": "ActionExample",
+      "typeRef": "ActionFlowView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "ActionExample::BootFlow",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
+    },
+    "hbox": {
+      "id": "hbox",
+      "kind": "package",
+      "name": "hbox",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::EventPort",
+        "hbox::HBox",
+        "hbox::EventInteraction",
+        "hbox::HBoxView",
+        "hbox::HBoxEventView",
+        "hbox::Bytes",
+        "hbox::Integer",
+        "hbox::List",
+        "hbox::Real",
+        "hbox::String"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventPort": {
+      "id": "hbox::EventPort",
+      "kind": "port",
+      "name": "EventPort",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox": {
+      "id": "hbox::HBox",
+      "kind": "part",
+      "name": "HBox",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::HBox::BoxA",
+        "hbox::HBox::BoxB",
+        "hbox::HBox::BoxC",
+        "hbox::HBox::EventBroker",
+        "hbox::HBox::event",
+        "hbox::HBox::eventlog",
+        "hbox::HBox::status",
+        "hbox::HBox::conn1",
+        "hbox::HBox::conn2",
+        "hbox::HBox::conn3",
+        "hbox::HBox::conn4"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxA": {
+      "id": "hbox::HBox::BoxA",
+      "kind": "part",
+      "name": "BoxA",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::HBox::BoxA::event",
+        "hbox::HBox::BoxA::eventlog",
+        "hbox::HBox::BoxA::status"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxA::event": {
+      "id": "hbox::HBox::BoxA::event",
+      "kind": "port",
+      "name": "event",
+      "parentId": "hbox::HBox::BoxA",
+      "typeRef": "EventPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxA::eventlog": {
+      "id": "hbox::HBox::BoxA::eventlog",
+      "kind": "attribute",
+      "name": "eventlog",
+      "parentId": "hbox::HBox::BoxA",
+      "typeRef": "List",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxA::status": {
+      "id": "hbox::HBox::BoxA::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "hbox::HBox::BoxA",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxB": {
+      "id": "hbox::HBox::BoxB",
+      "kind": "part",
+      "name": "BoxB",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::HBox::BoxB::event",
+        "hbox::HBox::BoxB::eventlog",
+        "hbox::HBox::BoxB::status"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxB::event": {
+      "id": "hbox::HBox::BoxB::event",
+      "kind": "port",
+      "name": "event",
+      "parentId": "hbox::HBox::BoxB",
+      "typeRef": "EventPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxB::eventlog": {
+      "id": "hbox::HBox::BoxB::eventlog",
+      "kind": "attribute",
+      "name": "eventlog",
+      "parentId": "hbox::HBox::BoxB",
+      "typeRef": "List",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxB::status": {
+      "id": "hbox::HBox::BoxB::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "hbox::HBox::BoxB",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxC": {
+      "id": "hbox::HBox::BoxC",
+      "kind": "part",
+      "name": "BoxC",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::HBox::BoxC::event",
+        "hbox::HBox::BoxC::eventlog",
+        "hbox::HBox::BoxC::status"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxC::event": {
+      "id": "hbox::HBox::BoxC::event",
+      "kind": "port",
+      "name": "event",
+      "parentId": "hbox::HBox::BoxC",
+      "typeRef": "EventPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxC::eventlog": {
+      "id": "hbox::HBox::BoxC::eventlog",
+      "kind": "attribute",
+      "name": "eventlog",
+      "parentId": "hbox::HBox::BoxC",
+      "typeRef": "List",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::BoxC::status": {
+      "id": "hbox::HBox::BoxC::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "hbox::HBox::BoxC",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::EventBroker": {
+      "id": "hbox::HBox::EventBroker",
+      "kind": "part",
+      "name": "EventBroker",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::HBox::EventBroker::event",
+        "hbox::HBox::EventBroker::eventlog"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::EventBroker::event": {
+      "id": "hbox::HBox::EventBroker::event",
+      "kind": "port",
+      "name": "event",
+      "parentId": "hbox::HBox::EventBroker",
+      "typeRef": "EventPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::EventBroker::eventlog": {
+      "id": "hbox::HBox::EventBroker::eventlog",
+      "kind": "attribute",
+      "name": "eventlog",
+      "parentId": "hbox::HBox::EventBroker",
+      "typeRef": "List",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::event": {
+      "id": "hbox::HBox::event",
+      "kind": "port",
+      "name": "event",
+      "parentId": "hbox::HBox",
+      "typeRef": "EventPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::eventlog": {
+      "id": "hbox::HBox::eventlog",
+      "kind": "attribute",
+      "name": "eventlog",
+      "parentId": "hbox::HBox",
+      "typeRef": "List",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::status": {
+      "id": "hbox::HBox::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "hbox::HBox",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::conn1": {
+      "id": "hbox::HBox::conn1",
+      "kind": "connection",
+      "name": "conn1",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": "hbox::HBox::EventBroker::event",
+      "targetId": "hbox::HBox::event",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::conn2": {
+      "id": "hbox::HBox::conn2",
+      "kind": "connection",
+      "name": "conn2",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": "hbox::HBox::BoxB::event",
+      "targetId": "hbox::HBox::EventBroker::event",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::conn3": {
+      "id": "hbox::HBox::conn3",
+      "kind": "connection",
+      "name": "conn3",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": "hbox::HBox::BoxC::event",
+      "targetId": "hbox::HBox::EventBroker::event",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBox::conn4": {
+      "id": "hbox::HBox::conn4",
+      "kind": "connection",
+      "name": "conn4",
+      "parentId": "hbox::HBox",
+      "typeRef": null,
+      "sourceId": "hbox::HBox::BoxA::event",
+      "targetId": "hbox::HBox::EventBroker::event",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction": {
+      "id": "hbox::EventInteraction",
+      "kind": "interaction",
+      "name": "EventInteraction",
+      "parentId": "hbox",
+      "typeRef": "Interaction",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "hbox::EventInteraction::BoxA",
+        "hbox::EventInteraction::BoxB",
+        "hbox::EventInteraction::BoxC",
+        "hbox::EventInteraction::EventBroker",
+        "hbox::EventInteraction::msg1",
+        "hbox::EventInteraction::msg2"
+      ],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction::BoxA": {
+      "id": "hbox::EventInteraction::BoxA",
+      "kind": "lifeline",
+      "name": "BoxA",
+      "parentId": "hbox::EventInteraction",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction::BoxB": {
+      "id": "hbox::EventInteraction::BoxB",
+      "kind": "lifeline",
+      "name": "BoxB",
+      "parentId": "hbox::EventInteraction",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction::BoxC": {
+      "id": "hbox::EventInteraction::BoxC",
+      "kind": "lifeline",
+      "name": "BoxC",
+      "parentId": "hbox::EventInteraction",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction::EventBroker": {
+      "id": "hbox::EventInteraction::EventBroker",
+      "kind": "lifeline",
+      "name": "EventBroker",
+      "parentId": "hbox::EventInteraction",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction::msg1": {
+      "id": "hbox::EventInteraction::msg1",
+      "kind": "message",
+      "name": "BoxA.event",
+      "parentId": "hbox::EventInteraction",
+      "typeRef": "BoxA.event",
+      "sourceId": "hbox::EventInteraction::BoxA",
+      "targetId": "hbox::EventInteraction::EventBroker",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::EventInteraction::msg2": {
+      "id": "hbox::EventInteraction::msg2",
+      "kind": "message",
+      "name": "BoxA.event",
+      "parentId": "hbox::EventInteraction",
+      "typeRef": "BoxA.event",
+      "sourceId": "hbox::EventInteraction::EventBroker",
+      "targetId": "hbox::EventInteraction::BoxB",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBoxView": {
+      "id": "hbox::HBoxView",
+      "kind": "view",
+      "name": "HBoxView",
+      "parentId": "hbox",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "hbox::HBox",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::HBoxEventView": {
+      "id": "hbox::HBoxEventView",
+      "kind": "view",
+      "name": "HBoxEventView",
+      "parentId": "hbox",
+      "typeRef": "SequenceView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "hbox::EventInteraction",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::Bytes": {
+      "id": "hbox::Bytes",
+      "kind": "attribute",
+      "name": "Bytes",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::Integer": {
+      "id": "hbox::Integer",
+      "kind": "attribute",
+      "name": "Integer",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::List": {
+      "id": "hbox::List",
+      "kind": "attribute",
+      "name": "List",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::Real": {
+      "id": "hbox::Real",
+      "kind": "attribute",
+      "name": "Real",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "hbox::String": {
+      "id": "hbox::String",
+      "kind": "attribute",
+      "name": "String",
+      "parentId": "hbox",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
+    },
+    "StateExample": {
+      "id": "StateExample",
+      "kind": "package",
+      "name": "StateExample",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "StateExample::DoorMachine",
+        "StateExample::DoorStateView"
+      ],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine": {
+      "id": "StateExample::DoorMachine",
+      "kind": "state",
+      "name": "DoorMachine",
+      "parentId": "StateExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "StateExample::DoorMachine::Closed",
+        "StateExample::DoorMachine::Open",
+        "StateExample::DoorMachine::Locked",
+        "StateExample::DoorMachine::unlock",
+        "StateExample::DoorMachine::open",
+        "StateExample::DoorMachine::close",
+        "StateExample::DoorMachine::lock"
+      ],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::Closed": {
+      "id": "StateExample::DoorMachine::Closed",
+      "kind": "state",
+      "name": "Closed",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::Open": {
+      "id": "StateExample::DoorMachine::Open",
+      "kind": "state",
+      "name": "Open",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::Locked": {
+      "id": "StateExample::DoorMachine::Locked",
+      "kind": "state",
+      "name": "Locked",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::unlock": {
+      "id": "StateExample::DoorMachine::unlock",
+      "kind": "transition",
+      "name": "unlock",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": "StateExample::DoorMachine::Locked",
+      "targetId": "StateExample::DoorMachine::Closed",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::open": {
+      "id": "StateExample::DoorMachine::open",
+      "kind": "transition",
+      "name": "open",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": "StateExample::DoorMachine::Closed",
+      "targetId": "StateExample::DoorMachine::Open",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::close": {
+      "id": "StateExample::DoorMachine::close",
+      "kind": "transition",
+      "name": "close",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": "StateExample::DoorMachine::Open",
+      "targetId": "StateExample::DoorMachine::Closed",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorMachine::lock": {
+      "id": "StateExample::DoorMachine::lock",
+      "kind": "transition",
+      "name": "lock",
+      "parentId": "StateExample::DoorMachine",
+      "typeRef": null,
+      "sourceId": "StateExample::DoorMachine::Closed",
+      "targetId": "StateExample::DoorMachine::Locked",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "StateExample::DoorStateView": {
+      "id": "StateExample::DoorStateView",
+      "kind": "view",
+      "name": "DoorStateView",
+      "parentId": "StateExample",
+      "typeRef": "StateTransitionView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "StateExample::DoorMachine",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
+    },
+    "TreeExample": {
+      "id": "TreeExample",
+      "kind": "package",
+      "name": "TreeExample",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "TreeExample::Vehicle",
+        "TreeExample::VehicleTree",
+        "TreeExample::PackageTree"
+      ],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::Vehicle": {
+      "id": "TreeExample::Vehicle",
+      "kind": "part",
+      "name": "Vehicle",
+      "parentId": "TreeExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "TreeExample::Vehicle::engine",
+        "TreeExample::Vehicle::battery",
+        "TreeExample::Vehicle::cabin"
+      ],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::Vehicle::engine": {
+      "id": "TreeExample::Vehicle::engine",
+      "kind": "part",
+      "name": "engine",
+      "parentId": "TreeExample::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "TreeExample::Vehicle::engine::piston"
+      ],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::Vehicle::engine::piston": {
+      "id": "TreeExample::Vehicle::engine::piston",
+      "kind": "part",
+      "name": "piston",
+      "parentId": "TreeExample::Vehicle::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::Vehicle::battery": {
+      "id": "TreeExample::Vehicle::battery",
+      "kind": "part",
+      "name": "battery",
+      "parentId": "TreeExample::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::Vehicle::cabin": {
+      "id": "TreeExample::Vehicle::cabin",
+      "kind": "part",
+      "name": "cabin",
+      "parentId": "TreeExample::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "TreeExample::Vehicle::cabin::seat"
+      ],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::Vehicle::cabin::seat": {
+      "id": "TreeExample::Vehicle::cabin::seat",
+      "kind": "part",
+      "name": "seat",
+      "parentId": "TreeExample::Vehicle::cabin",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::VehicleTree": {
+      "id": "TreeExample::VehicleTree",
+      "kind": "view",
+      "name": "VehicleTree",
+      "parentId": "TreeExample",
+      "typeRef": "TreeView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "TreeExample::Vehicle",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "TreeExample::PackageTree": {
+      "id": "TreeExample::PackageTree",
+      "kind": "view",
+      "name": "PackageTree",
+      "parentId": "TreeExample",
+      "typeRef": "TreeView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "TreeExample",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
+    },
+    "Example": {
+      "id": "Example",
+      "kind": "package",
+      "name": "Example",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Real",
+        "Example::Integer",
+        "Example::String",
+        "Example::EventClientPort",
+        "Example::EventBrokerPort",
+        "Example::PowerPort",
+        "Example::Axle",
+        "Example::Battery",
+        "Example::Engine",
+        "Example::Vehicle",
+        "Example::ExampleView"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::FunctionalModule": {
+      "id": "Example::FunctionalModule",
+      "kind": "part",
+      "name": "FunctionalModule",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::FunctionalModule::powerIn"
+      ],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::FunctionalModule::powerIn": {
+      "id": "Example::FunctionalModule::powerIn",
+      "kind": "port",
+      "name": "powerIn",
+      "parentId": "Example::FunctionalModule",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Engine": {
+      "id": "Example::Engine",
+      "kind": "part",
+      "name": "Engine",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Engine::EventOut",
+        "Example::Engine::GaugeIn",
+        "Example::Engine::PowerIn",
+        "Example::Engine::TorqueOut",
+        "Example::Engine::rpm",
+        "Example::Engine::status",
+        "Example::Engine::torque"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::powerIn": {
+      "id": "Example::Engine::powerIn",
+      "kind": "port",
+      "name": "powerIn",
+      "parentId": "Example::Engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Engine::statusOut": {
+      "id": "Example::Engine::statusOut",
+      "kind": "port",
+      "name": "statusOut",
+      "parentId": "Example::Engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Vehicle": {
+      "id": "Example::Vehicle",
+      "kind": "part",
+      "name": "Vehicle",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Vehicle::axle",
+        "Example::Vehicle::battery",
+        "Example::Vehicle::engine",
+        "Example::Vehicle::EventOut",
+        "Example::Vehicle::GaugeIn",
+        "Example::Vehicle::status",
+        "Example::Vehicle::poower",
+        "Example::Vehicle::torque",
+        "Example::Vehicle::gaugebus"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine": {
+      "id": "Example::Vehicle::engine",
+      "kind": "part",
+      "name": "engine",
+      "parentId": "Example::Vehicle",
+      "typeRef": "Engine",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Vehicle::engine::EventOut",
+        "Example::Vehicle::engine::GaugeIn",
+        "Example::Vehicle::engine::PowerIn",
+        "Example::Vehicle::engine::TorqueOut",
+        "Example::Vehicle::engine::rpm",
+        "Example::Vehicle::engine::status",
+        "Example::Vehicle::engine::torque"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::fm1": {
+      "id": "Example::Vehicle::fm1",
+      "kind": "part",
+      "name": "fm1",
+      "parentId": "Example::Vehicle",
+      "typeRef": "FunctionalModule",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Vehicle::fm1::powerIn"
+      ],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Vehicle::powerOut": {
+      "id": "Example::Vehicle::powerOut",
+      "kind": "port",
+      "name": "powerOut",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Vehicle::fuelIn": {
+      "id": "Example::Vehicle::fuelIn",
+      "kind": "port",
+      "name": "fuelIn",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Vehicle::conn1": {
+      "id": "Example::Vehicle::conn1",
+      "kind": "connection",
+      "name": "conn1",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": "Example::Vehicle::powerOut",
+      "targetId": "Example::Vehicle::engine::powerIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Real": {
+      "id": "Example::Real",
+      "kind": "attribute",
+      "name": "Real",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Integer": {
+      "id": "Example::Integer",
+      "kind": "attribute",
+      "name": "Integer",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::String": {
+      "id": "Example::String",
+      "kind": "attribute",
+      "name": "String",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::EventClientPort": {
+      "id": "Example::EventClientPort",
+      "kind": "port",
+      "name": "EventClientPort",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::EventBrokerPort": {
+      "id": "Example::EventBrokerPort",
+      "kind": "port",
+      "name": "EventBrokerPort",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::PowerPort": {
+      "id": "Example::PowerPort",
+      "kind": "port",
+      "name": "PowerPort",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Axle": {
+      "id": "Example::Axle",
+      "kind": "part",
+      "name": "Axle",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Axle::TorqueIn",
+        "Example::Axle::rotationSpeed"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Axle::TorqueIn": {
+      "id": "Example::Axle::TorqueIn",
+      "kind": "port",
+      "name": "TorqueIn",
+      "parentId": "Example::Axle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Axle::rotationSpeed": {
+      "id": "Example::Axle::rotationSpeed",
+      "kind": "attribute",
+      "name": "rotationSpeed",
+      "parentId": "Example::Axle",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Battery": {
+      "id": "Example::Battery",
+      "kind": "part",
+      "name": "Battery",
+      "parentId": "Example",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Battery::EventOut",
+        "Example::Battery::powerOut",
+        "Example::Battery::SoC",
+        "Example::Battery::power"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Battery::EventOut": {
+      "id": "Example::Battery::EventOut",
+      "kind": "port",
+      "name": "EventOut",
+      "parentId": "Example::Battery",
+      "typeRef": "EventClientPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Battery::powerOut": {
+      "id": "Example::Battery::powerOut",
+      "kind": "port",
+      "name": "powerOut",
+      "parentId": "Example::Battery",
+      "typeRef": "PowerPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Battery::SoC": {
+      "id": "Example::Battery::SoC",
+      "kind": "attribute",
+      "name": "SoC",
+      "parentId": "Example::Battery",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Battery::power": {
+      "id": "Example::Battery::power",
+      "kind": "attribute",
+      "name": "power",
+      "parentId": "Example::Battery",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::EventOut": {
+      "id": "Example::Engine::EventOut",
+      "kind": "port",
+      "name": "EventOut",
+      "parentId": "Example::Engine",
+      "typeRef": "EventClientPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::GaugeIn": {
+      "id": "Example::Engine::GaugeIn",
+      "kind": "port",
+      "name": "GaugeIn",
+      "parentId": "Example::Engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::PowerIn": {
+      "id": "Example::Engine::PowerIn",
+      "kind": "port",
+      "name": "PowerIn",
+      "parentId": "Example::Engine",
+      "typeRef": "PowerPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::TorqueOut": {
+      "id": "Example::Engine::TorqueOut",
+      "kind": "port",
+      "name": "TorqueOut",
+      "parentId": "Example::Engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::rpm": {
+      "id": "Example::Engine::rpm",
+      "kind": "attribute",
+      "name": "rpm",
+      "parentId": "Example::Engine",
+      "typeRef": "Integer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::status": {
+      "id": "Example::Engine::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "Example::Engine",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"idle\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Engine::torque": {
+      "id": "Example::Engine::torque",
+      "kind": "attribute",
+      "name": "torque",
+      "parentId": "Example::Engine",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::axle": {
+      "id": "Example::Vehicle::axle",
+      "kind": "part",
+      "name": "axle",
+      "parentId": "Example::Vehicle",
+      "typeRef": "Axle",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Vehicle::axle::TorqueIn",
+        "Example::Vehicle::axle::rotationSpeed"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::battery": {
+      "id": "Example::Vehicle::battery",
+      "kind": "part",
+      "name": "battery",
+      "parentId": "Example::Vehicle",
+      "typeRef": "Battery",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "Example::Vehicle::battery::EventOut",
+        "Example::Vehicle::battery::powerOut",
+        "Example::Vehicle::battery::SoC",
+        "Example::Vehicle::battery::power"
+      ],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::EventOut": {
+      "id": "Example::Vehicle::EventOut",
+      "kind": "port",
+      "name": "EventOut",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::GaugeIn": {
+      "id": "Example::Vehicle::GaugeIn",
+      "kind": "port",
+      "name": "GaugeIn",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::status": {
+      "id": "Example::Vehicle::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "Example::Vehicle",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"ok\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::poower": {
+      "id": "Example::Vehicle::poower",
+      "kind": "connection",
+      "name": "poower",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": "Example::Vehicle::battery::powerOut",
+      "targetId": "Example::Vehicle::engine::PowerIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::torque": {
+      "id": "Example::Vehicle::torque",
+      "kind": "connection",
+      "name": "torque",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": "Example::Vehicle::engine::TorqueOut",
+      "targetId": "Example::Vehicle::axle::TorqueIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::gaugebus": {
+      "id": "Example::Vehicle::gaugebus",
+      "kind": "connection",
+      "name": "gaugebus",
+      "parentId": "Example::Vehicle",
+      "typeRef": null,
+      "sourceId": "Example::Vehicle::GaugeIn",
+      "targetId": "Example::Vehicle::engine::GaugeIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::ExampleView": {
+      "id": "Example::ExampleView",
+      "kind": "view",
+      "name": "ExampleView",
+      "parentId": "Example",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "Example::Vehicle",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "CarLogical": {
+      "id": "CarLogical",
+      "kind": "package",
+      "name": "CarLogical",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Real",
+        "CarLogical::Integer",
+        "CarLogical::String",
+        "CarLogical::Boolean",
+        "CarLogical::Chassis",
+        "CarLogical::Engine",
+        "CarLogical::Transmission",
+        "CarLogical::SteeringWheel",
+        "CarLogical::Axle",
+        "CarLogical::BrakeSystem",
+        "CarLogical::Car",
+        "CarLogical::CarLogicalView"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Real": {
+      "id": "CarLogical::Real",
+      "kind": "attribute",
+      "name": "Real",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Integer": {
+      "id": "CarLogical::Integer",
+      "kind": "attribute",
+      "name": "Integer",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::String": {
+      "id": "CarLogical::String",
+      "kind": "attribute",
+      "name": "String",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Boolean": {
+      "id": "CarLogical::Boolean",
+      "kind": "attribute",
+      "name": "Boolean",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Chassis": {
+      "id": "CarLogical::Chassis",
+      "kind": "part",
+      "name": "Chassis",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Chassis::role"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Chassis::role": {
+      "id": "CarLogical::Chassis::role",
+      "kind": "attribute",
+      "name": "role",
+      "parentId": "CarLogical::Chassis",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"structure\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Engine": {
+      "id": "CarLogical::Engine",
+      "kind": "part",
+      "name": "Engine",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Engine::powerKW"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Engine::powerKW": {
+      "id": "CarLogical::Engine::powerKW",
+      "kind": "attribute",
+      "name": "powerKW",
+      "parentId": "CarLogical::Engine",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "110.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Transmission": {
+      "id": "CarLogical::Transmission",
+      "kind": "part",
+      "name": "Transmission",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Transmission::gears"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Transmission::gears": {
+      "id": "CarLogical::Transmission::gears",
+      "kind": "attribute",
+      "name": "gears",
+      "parentId": "CarLogical::Transmission",
+      "typeRef": "Integer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "6",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::SteeringWheel": {
+      "id": "CarLogical::SteeringWheel",
+      "kind": "part",
+      "name": "SteeringWheel",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::SteeringWheel::diameterMM"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::SteeringWheel::diameterMM": {
+      "id": "CarLogical::SteeringWheel::diameterMM",
+      "kind": "attribute",
+      "name": "diameterMM",
+      "parentId": "CarLogical::SteeringWheel",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "370.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Axle": {
+      "id": "CarLogical::Axle",
+      "kind": "part",
+      "name": "Axle",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Axle::driven"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Axle::driven": {
+      "id": "CarLogical::Axle::driven",
+      "kind": "attribute",
+      "name": "driven",
+      "parentId": "CarLogical::Axle",
+      "typeRef": "Boolean",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "true",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::BrakeSystem": {
+      "id": "CarLogical::BrakeSystem",
+      "kind": "part",
+      "name": "BrakeSystem",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::BrakeSystem::type"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::BrakeSystem::type": {
+      "id": "CarLogical::BrakeSystem::type",
+      "kind": "attribute",
+      "name": "type",
+      "parentId": "CarLogical::BrakeSystem",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"disc\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car": {
+      "id": "CarLogical::Car",
+      "kind": "part",
+      "name": "Car",
+      "parentId": "CarLogical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::chassis",
+        "CarLogical::Car::engine",
+        "CarLogical::Car::transmission",
+        "CarLogical::Car::steeringWheel",
+        "CarLogical::Car::frontAxle",
+        "CarLogical::Car::rearAxle",
+        "CarLogical::Car::brakes",
+        "CarLogical::Car::engineMount",
+        "CarLogical::Car::gearboxMount",
+        "CarLogical::Car::driveline",
+        "CarLogical::Car::steerMount",
+        "CarLogical::Car::frontDrive",
+        "CarLogical::Car::frontSupport",
+        "CarLogical::Car::rearSupport",
+        "CarLogical::Car::brakeMount",
+        "CarLogical::Car::brakeActuation_1",
+        "CarLogical::Car::brakeActuation_2"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::chassis": {
+      "id": "CarLogical::Car::chassis",
+      "kind": "part",
+      "name": "chassis",
+      "parentId": "CarLogical::Car",
+      "typeRef": "Chassis",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::chassis::role"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine": {
+      "id": "CarLogical::Car::engine",
+      "kind": "part",
+      "name": "engine",
+      "parentId": "CarLogical::Car",
+      "typeRef": "Engine",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::engine::EventOut",
+        "CarLogical::Car::engine::GaugeIn",
+        "CarLogical::Car::engine::PowerIn",
+        "CarLogical::Car::engine::TorqueOut",
+        "CarLogical::Car::engine::rpm",
+        "CarLogical::Car::engine::status",
+        "CarLogical::Car::engine::torque"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::transmission": {
+      "id": "CarLogical::Car::transmission",
+      "kind": "part",
+      "name": "transmission",
+      "parentId": "CarLogical::Car",
+      "typeRef": "Transmission",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::transmission::gears"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::steeringWheel": {
+      "id": "CarLogical::Car::steeringWheel",
+      "kind": "part",
+      "name": "steeringWheel",
+      "parentId": "CarLogical::Car",
+      "typeRef": "SteeringWheel",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::steeringWheel::diameterMM"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::frontAxle": {
+      "id": "CarLogical::Car::frontAxle",
+      "kind": "part",
+      "name": "frontAxle",
+      "parentId": "CarLogical::Car",
+      "typeRef": "Axle",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::frontAxle::TorqueIn",
+        "CarLogical::Car::frontAxle::rotationSpeed"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::rearAxle": {
+      "id": "CarLogical::Car::rearAxle",
+      "kind": "part",
+      "name": "rearAxle",
+      "parentId": "CarLogical::Car",
+      "typeRef": "Axle",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::rearAxle::TorqueIn",
+        "CarLogical::Car::rearAxle::rotationSpeed"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::brakes": {
+      "id": "CarLogical::Car::brakes",
+      "kind": "part",
+      "name": "brakes",
+      "parentId": "CarLogical::Car",
+      "typeRef": "BrakeSystem",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "CarLogical::Car::brakes::type"
+      ],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engineMount": {
+      "id": "CarLogical::Car::engineMount",
+      "kind": "dependency",
+      "name": "engineMount",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::engine",
+      "targetId": "CarLogical::Car::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::gearboxMount": {
+      "id": "CarLogical::Car::gearboxMount",
+      "kind": "dependency",
+      "name": "gearboxMount",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::transmission",
+      "targetId": "CarLogical::Car::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::driveline": {
+      "id": "CarLogical::Car::driveline",
+      "kind": "dependency",
+      "name": "driveline",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::transmission",
+      "targetId": "CarLogical::Car::engine",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::steerMount": {
+      "id": "CarLogical::Car::steerMount",
+      "kind": "dependency",
+      "name": "steerMount",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::steeringWheel",
+      "targetId": "CarLogical::Car::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::frontDrive": {
+      "id": "CarLogical::Car::frontDrive",
+      "kind": "dependency",
+      "name": "frontDrive",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::frontAxle",
+      "targetId": "CarLogical::Car::transmission",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::frontSupport": {
+      "id": "CarLogical::Car::frontSupport",
+      "kind": "dependency",
+      "name": "frontSupport",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::frontAxle",
+      "targetId": "CarLogical::Car::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::rearSupport": {
+      "id": "CarLogical::Car::rearSupport",
+      "kind": "dependency",
+      "name": "rearSupport",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::rearAxle",
+      "targetId": "CarLogical::Car::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::brakeMount": {
+      "id": "CarLogical::Car::brakeMount",
+      "kind": "dependency",
+      "name": "brakeMount",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::brakes",
+      "targetId": "CarLogical::Car::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::brakeActuation_1": {
+      "id": "CarLogical::Car::brakeActuation_1",
+      "kind": "dependency",
+      "name": "brakeActuation_1",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::brakes",
+      "targetId": "CarLogical::Car::frontAxle",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::brakeActuation_2": {
+      "id": "CarLogical::Car::brakeActuation_2",
+      "kind": "dependency",
+      "name": "brakeActuation_2",
+      "parentId": "CarLogical::Car",
+      "typeRef": null,
+      "sourceId": "CarLogical::Car::brakes",
+      "targetId": "CarLogical::Car::rearAxle",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::CarLogicalView": {
+      "id": "CarLogical::CarLogicalView",
+      "kind": "view",
+      "name": "CarLogicalView",
+      "parentId": "CarLogical",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "CarLogical::Car",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "PartRelationships": {
+      "id": "PartRelationships",
+      "kind": "package",
+      "name": "PartRelationships",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::Real",
+        "PartRelationships::String",
+        "PartRelationships::Base",
+        "PartRelationships::Small",
+        "PartRelationships::Small_specializes_Base",
+        "PartRelationships::System",
+        "PartRelationships::RelationshipsView"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Real": {
+      "id": "PartRelationships::Real",
+      "kind": "attribute",
+      "name": "Real",
+      "parentId": "PartRelationships",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::String": {
+      "id": "PartRelationships::String",
+      "kind": "attribute",
+      "name": "String",
+      "parentId": "PartRelationships",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Base": {
+      "id": "PartRelationships::Base",
+      "kind": "part",
+      "name": "Base",
+      "parentId": "PartRelationships",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::Base::capacity",
+        "PartRelationships::Base::pout",
+        "PartRelationships::Base::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Base::capacity": {
+      "id": "PartRelationships::Base::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::Base",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Base::pout": {
+      "id": "PartRelationships::Base::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::Base",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Base::pin": {
+      "id": "PartRelationships::Base::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::Base",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Small": {
+      "id": "PartRelationships::Small",
+      "kind": "part",
+      "name": "Small",
+      "parentId": "PartRelationships",
+      "typeRef": "Base",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::Small::capacity",
+        "PartRelationships::Small::pout",
+        "PartRelationships::Small::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Small_specializes_Base": {
+      "id": "PartRelationships::Small_specializes_Base",
+      "kind": "specialization",
+      "name": "Small_specializes_Base",
+      "parentId": "PartRelationships",
+      "typeRef": null,
+      "sourceId": "PartRelationships::Small",
+      "targetId": "PartRelationships::Base",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Small::capacity": {
+      "id": "PartRelationships::Small::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::Small",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0.5",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System": {
+      "id": "PartRelationships::System",
+      "kind": "part",
+      "name": "System",
+      "parentId": "PartRelationships",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::System::baseEng",
+        "PartRelationships::System::eng",
+        "PartRelationships::System::eng_redefines_baseEng",
+        "PartRelationships::System::child",
+        "PartRelationships::System::child_subsets_baseEng",
+        "PartRelationships::System::logical",
+        "PartRelationships::System::physical",
+        "PartRelationships::System::temp",
+        "PartRelationships::System::reading",
+        "PartRelationships::System::wire",
+        "PartRelationships::System::uses",
+        "PartRelationships::System::multiDep_1",
+        "PartRelationships::System::multiDep_2",
+        "PartRelationships::System::alloc1",
+        "PartRelationships::System::bind1",
+        "PartRelationships::System::power"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::baseEng": {
+      "id": "PartRelationships::System::baseEng",
+      "kind": "part",
+      "name": "baseEng",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Base",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::System::baseEng::capacity",
+        "PartRelationships::System::baseEng::pout",
+        "PartRelationships::System::baseEng::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::eng": {
+      "id": "PartRelationships::System::eng",
+      "kind": "part",
+      "name": "eng",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Base",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::System::eng::capacity",
+        "PartRelationships::System::eng::pout",
+        "PartRelationships::System::eng::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::eng_redefines_baseEng": {
+      "id": "PartRelationships::System::eng_redefines_baseEng",
+      "kind": "redefinition",
+      "name": "eng_redefines_baseEng",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::eng",
+      "targetId": "PartRelationships::System::baseEng",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::child": {
+      "id": "PartRelationships::System::child",
+      "kind": "part",
+      "name": "child",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Base",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::System::child::capacity",
+        "PartRelationships::System::child::pout",
+        "PartRelationships::System::child::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::child_subsets_baseEng": {
+      "id": "PartRelationships::System::child_subsets_baseEng",
+      "kind": "subsetting",
+      "name": "child_subsets_baseEng",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::child",
+      "targetId": "PartRelationships::System::baseEng",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::logical": {
+      "id": "PartRelationships::System::logical",
+      "kind": "part",
+      "name": "logical",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Base",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::System::logical::capacity",
+        "PartRelationships::System::logical::pout",
+        "PartRelationships::System::logical::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::physical": {
+      "id": "PartRelationships::System::physical",
+      "kind": "part",
+      "name": "physical",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Base",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [
+        "PartRelationships::System::physical::capacity",
+        "PartRelationships::System::physical::pout",
+        "PartRelationships::System::physical::pin"
+      ],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::temp": {
+      "id": "PartRelationships::System::temp",
+      "kind": "attribute",
+      "name": "temp",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "20.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::reading": {
+      "id": "PartRelationships::System::reading",
+      "kind": "attribute",
+      "name": "reading",
+      "parentId": "PartRelationships::System",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "20.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::wire": {
+      "id": "PartRelationships::System::wire",
+      "kind": "connection",
+      "name": "wire",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::logical::pout",
+      "targetId": "PartRelationships::System::physical::pin",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::uses": {
+      "id": "PartRelationships::System::uses",
+      "kind": "dependency",
+      "name": "uses",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::logical",
+      "targetId": "PartRelationships::System::physical",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::multiDep_1": {
+      "id": "PartRelationships::System::multiDep_1",
+      "kind": "dependency",
+      "name": "multiDep_1",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::logical",
+      "targetId": "PartRelationships::System::physical",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::multiDep_2": {
+      "id": "PartRelationships::System::multiDep_2",
+      "kind": "dependency",
+      "name": "multiDep_2",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::logical",
+      "targetId": "PartRelationships::System::baseEng",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::alloc1": {
+      "id": "PartRelationships::System::alloc1",
+      "kind": "allocation",
+      "name": "alloc1",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::logical",
+      "targetId": "PartRelationships::System::physical",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::bind1": {
+      "id": "PartRelationships::System::bind1",
+      "kind": "binding",
+      "name": "bind1",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::temp",
+      "targetId": "PartRelationships::System::reading",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::power": {
+      "id": "PartRelationships::System::power",
+      "kind": "flow",
+      "name": "power",
+      "parentId": "PartRelationships::System",
+      "typeRef": null,
+      "sourceId": "PartRelationships::System::logical::pout",
+      "targetId": "PartRelationships::System::physical::pin",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::RelationshipsView": {
+      "id": "PartRelationships::RelationshipsView",
+      "kind": "view",
+      "name": "RelationshipsView",
+      "parentId": "PartRelationships",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "PartRelationships::System",
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "Example::Vehicle::engine::EventOut": {
+      "id": "Example::Vehicle::engine::EventOut",
+      "kind": "port",
+      "name": "EventOut",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "EventClientPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine::GaugeIn": {
+      "id": "Example::Vehicle::engine::GaugeIn",
+      "kind": "port",
+      "name": "GaugeIn",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine::PowerIn": {
+      "id": "Example::Vehicle::engine::PowerIn",
+      "kind": "port",
+      "name": "PowerIn",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "PowerPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine::TorqueOut": {
+      "id": "Example::Vehicle::engine::TorqueOut",
+      "kind": "port",
+      "name": "TorqueOut",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine::rpm": {
+      "id": "Example::Vehicle::engine::rpm",
+      "kind": "attribute",
+      "name": "rpm",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "Integer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine::status": {
+      "id": "Example::Vehicle::engine::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"idle\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::engine::torque": {
+      "id": "Example::Vehicle::engine::torque",
+      "kind": "attribute",
+      "name": "torque",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::fm1::powerIn": {
+      "id": "Example::Vehicle::fm1::powerIn",
+      "kind": "port",
+      "name": "powerIn",
+      "parentId": "Example::Vehicle::fm1",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
+    },
+    "Example::Vehicle::axle::TorqueIn": {
+      "id": "Example::Vehicle::axle::TorqueIn",
+      "kind": "port",
+      "name": "TorqueIn",
+      "parentId": "Example::Vehicle::axle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::axle::rotationSpeed": {
+      "id": "Example::Vehicle::axle::rotationSpeed",
+      "kind": "attribute",
+      "name": "rotationSpeed",
+      "parentId": "Example::Vehicle::axle",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::battery::EventOut": {
+      "id": "Example::Vehicle::battery::EventOut",
+      "kind": "port",
+      "name": "EventOut",
+      "parentId": "Example::Vehicle::battery",
+      "typeRef": "EventClientPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::battery::powerOut": {
+      "id": "Example::Vehicle::battery::powerOut",
+      "kind": "port",
+      "name": "powerOut",
+      "parentId": "Example::Vehicle::battery",
+      "typeRef": "PowerPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::battery::SoC": {
+      "id": "Example::Vehicle::battery::SoC",
+      "kind": "attribute",
+      "name": "SoC",
+      "parentId": "Example::Vehicle::battery",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "Example::Vehicle::battery::power": {
+      "id": "Example::Vehicle::battery::power",
+      "kind": "attribute",
+      "name": "power",
+      "parentId": "Example::Vehicle::battery",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
+    },
+    "CarLogical::Car::chassis::role": {
+      "id": "CarLogical::Car::chassis::role",
+      "kind": "attribute",
+      "name": "role",
+      "parentId": "CarLogical::Car::chassis",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"structure\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::EventOut": {
+      "id": "CarLogical::Car::engine::EventOut",
+      "kind": "port",
+      "name": "EventOut",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": "EventClientPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::GaugeIn": {
+      "id": "CarLogical::Car::engine::GaugeIn",
+      "kind": "port",
+      "name": "GaugeIn",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::PowerIn": {
+      "id": "CarLogical::Car::engine::PowerIn",
+      "kind": "port",
+      "name": "PowerIn",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": "PowerPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::TorqueOut": {
+      "id": "CarLogical::Car::engine::TorqueOut",
+      "kind": "port",
+      "name": "TorqueOut",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::rpm": {
+      "id": "CarLogical::Car::engine::rpm",
+      "kind": "attribute",
+      "name": "rpm",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": "Integer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::status": {
+      "id": "CarLogical::Car::engine::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"idle\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::engine::torque": {
+      "id": "CarLogical::Car::engine::torque",
+      "kind": "attribute",
+      "name": "torque",
+      "parentId": "CarLogical::Car::engine",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::transmission::gears": {
+      "id": "CarLogical::Car::transmission::gears",
+      "kind": "attribute",
+      "name": "gears",
+      "parentId": "CarLogical::Car::transmission",
+      "typeRef": "Integer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "6",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::steeringWheel::diameterMM": {
+      "id": "CarLogical::Car::steeringWheel::diameterMM",
+      "kind": "attribute",
+      "name": "diameterMM",
+      "parentId": "CarLogical::Car::steeringWheel",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "370.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::frontAxle::TorqueIn": {
+      "id": "CarLogical::Car::frontAxle::TorqueIn",
+      "kind": "port",
+      "name": "TorqueIn",
+      "parentId": "CarLogical::Car::frontAxle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::frontAxle::rotationSpeed": {
+      "id": "CarLogical::Car::frontAxle::rotationSpeed",
+      "kind": "attribute",
+      "name": "rotationSpeed",
+      "parentId": "CarLogical::Car::frontAxle",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::rearAxle::TorqueIn": {
+      "id": "CarLogical::Car::rearAxle::TorqueIn",
+      "kind": "port",
+      "name": "TorqueIn",
+      "parentId": "CarLogical::Car::rearAxle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::rearAxle::rotationSpeed": {
+      "id": "CarLogical::Car::rearAxle::rotationSpeed",
+      "kind": "attribute",
+      "name": "rotationSpeed",
+      "parentId": "CarLogical::Car::rearAxle",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "0.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "CarLogical::Car::brakes::type": {
+      "id": "CarLogical::Car::brakes::type",
+      "kind": "attribute",
+      "name": "type",
+      "parentId": "CarLogical::Car::brakes",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"disc\"",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
+    },
+    "PartRelationships::Small::pout": {
+      "id": "PartRelationships::Small::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::Small",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::Small::pin": {
+      "id": "PartRelationships::Small::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::Small",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::baseEng::capacity": {
+      "id": "PartRelationships::System::baseEng::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::System::baseEng",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::baseEng::pout": {
+      "id": "PartRelationships::System::baseEng::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::System::baseEng",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::baseEng::pin": {
+      "id": "PartRelationships::System::baseEng::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::System::baseEng",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::eng::capacity": {
+      "id": "PartRelationships::System::eng::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::System::eng",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::eng::pout": {
+      "id": "PartRelationships::System::eng::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::System::eng",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::eng::pin": {
+      "id": "PartRelationships::System::eng::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::System::eng",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::child::capacity": {
+      "id": "PartRelationships::System::child::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::System::child",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::child::pout": {
+      "id": "PartRelationships::System::child::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::System::child",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::child::pin": {
+      "id": "PartRelationships::System::child::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::System::child",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::logical::capacity": {
+      "id": "PartRelationships::System::logical::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::System::logical",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::logical::pout": {
+      "id": "PartRelationships::System::logical::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::System::logical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::logical::pin": {
+      "id": "PartRelationships::System::logical::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::System::logical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::physical::capacity": {
+      "id": "PartRelationships::System::physical::capacity",
+      "kind": "attribute",
+      "name": "capacity",
+      "parentId": "PartRelationships::System::physical",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "1.0",
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::physical::pout": {
+      "id": "PartRelationships::System::physical::pout",
+      "kind": "port",
+      "name": "pout",
+      "parentId": "PartRelationships::System::physical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "PartRelationships::System::physical::pin": {
+      "id": "PartRelationships::System::physical::pin",
+      "kind": "port",
+      "name": "pin",
+      "parentId": "PartRelationships::System::physical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "children": [],
+      "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    }
+  },
+  "visualization": {
+    "nodes": {
+      "ActionExample": {
+        "artifactId": "ActionExample",
+        "x": 80.0,
+        "y": 80.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow": {
+        "artifactId": "ActionExample::BootFlow",
+        "x": 280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::start": {
+        "artifactId": "ActionExample::BootFlow::start",
+        "x": 480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::loadApplication": {
+        "artifactId": "ActionExample::BootFlow::loadApplication",
+        "x": 680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::startupTests": {
+        "artifactId": "ActionExample::BootFlow::startupTests",
+        "x": 880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::testSuccessful": {
+        "artifactId": "ActionExample::BootFlow::testSuccessful",
+        "x": 1080.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::ready": {
+        "artifactId": "ActionExample::BootFlow::ready",
+        "x": 1280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::reportFailure": {
+        "artifactId": "ActionExample::BootFlow::reportFailure",
+        "x": 1480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "ActionExample::BootFlow::stop": {
+        "artifactId": "ActionExample::BootFlow::stop",
+        "x": 1680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "hbox": {
+        "artifactId": "hbox",
+        "x": 80.0,
+        "y": 620.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "hbox::EventPort": {
+        "artifactId": "hbox::EventPort",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "hbox::HBox": {
+        "artifactId": "hbox::HBox",
+        "x": 360.0,
+        "y": 620.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "hbox::HBox::BoxA": {
+        "artifactId": "hbox::HBox::BoxA",
+        "x": 640.0,
+        "y": 620.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "hbox::HBox::BoxA::event": {
+        "artifactId": "hbox::HBox::BoxA::event",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6000000000000001
+      },
+      "hbox::HBox::BoxB": {
+        "artifactId": "hbox::HBox::BoxB",
+        "x": 80.0,
+        "y": 800.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "hbox::HBox::BoxB::event": {
+        "artifactId": "hbox::HBox::BoxB::event",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.3
+      },
+      "hbox::HBox::BoxC": {
+        "artifactId": "hbox::HBox::BoxC",
+        "x": 360.0,
+        "y": 800.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "hbox::HBox::BoxC::event": {
+        "artifactId": "hbox::HBox::BoxC::event",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5
+      },
+      "hbox::HBox::EventBroker": {
+        "artifactId": "hbox::HBox::EventBroker",
+        "x": 640.0,
+        "y": 800.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "hbox::HBox::EventBroker::event": {
+        "artifactId": "hbox::HBox::EventBroker::event",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.7
+      },
+      "hbox::HBox::event": {
+        "artifactId": "hbox::HBox::event",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "hbox::EventInteraction": {
+        "artifactId": "hbox::EventInteraction",
+        "x": 40.0,
+        "y": 20.0,
+        "width": 480.0,
+        "height": 320.0,
+        "symbolRef": "default-interaction",
+        "side": null,
+        "offset": null
+      },
+      "hbox::EventInteraction::BoxA": {
+        "artifactId": "hbox::EventInteraction::BoxA",
+        "x": 60.0,
+        "y": 40.0,
+        "width": 120.0,
+        "height": 48.0,
+        "symbolRef": "default-lifeline",
+        "side": null,
+        "offset": null
+      },
+      "hbox::EventInteraction::BoxB": {
+        "artifactId": "hbox::EventInteraction::BoxB",
+        "x": 220.0,
+        "y": 40.0,
+        "width": 120.0,
+        "height": 48.0,
+        "symbolRef": "default-lifeline",
+        "side": null,
+        "offset": null
+      },
+      "hbox::EventInteraction::BoxC": {
+        "artifactId": "hbox::EventInteraction::BoxC",
+        "x": 380.0,
+        "y": 40.0,
+        "width": 120.0,
+        "height": 48.0,
+        "symbolRef": "default-lifeline",
+        "side": null,
+        "offset": null
+      },
+      "hbox::EventInteraction::EventBroker": {
+        "artifactId": "hbox::EventInteraction::EventBroker",
+        "x": 540.0,
+        "y": 40.0,
+        "width": 120.0,
+        "height": 48.0,
+        "symbolRef": "default-lifeline",
+        "side": null,
+        "offset": null
+      },
+      "StateExample": {
+        "artifactId": "StateExample",
+        "x": 640.0,
+        "y": 1160.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "StateExample::DoorMachine": {
+        "artifactId": "StateExample::DoorMachine",
+        "x": 80.0,
+        "y": 1340.0,
+        "width": 140.0,
+        "height": 72.0,
+        "symbolRef": "default-state",
+        "side": null,
+        "offset": null
+      },
+      "StateExample::DoorMachine::Closed": {
+        "artifactId": "StateExample::DoorMachine::Closed",
+        "x": 360.0,
+        "y": 1340.0,
+        "width": 140.0,
+        "height": 72.0,
+        "symbolRef": "default-state",
+        "side": null,
+        "offset": null
+      },
+      "StateExample::DoorMachine::Open": {
+        "artifactId": "StateExample::DoorMachine::Open",
+        "x": 640.0,
+        "y": 1340.0,
+        "width": 140.0,
+        "height": 72.0,
+        "symbolRef": "default-state",
+        "side": null,
+        "offset": null
+      },
+      "StateExample::DoorMachine::Locked": {
+        "artifactId": "StateExample::DoorMachine::Locked",
+        "x": 80.0,
+        "y": 1520.0,
+        "width": 140.0,
+        "height": 72.0,
+        "symbolRef": "default-state",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample": {
+        "artifactId": "TreeExample",
+        "x": 360.0,
+        "y": 1520.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample::Vehicle": {
+        "artifactId": "TreeExample::Vehicle",
+        "x": 640.0,
+        "y": 1520.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample::Vehicle::engine": {
+        "artifactId": "TreeExample::Vehicle::engine",
+        "x": 80.0,
+        "y": 1700.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample::Vehicle::engine::piston": {
+        "artifactId": "TreeExample::Vehicle::engine::piston",
+        "x": 360.0,
+        "y": 1700.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample::Vehicle::battery": {
+        "artifactId": "TreeExample::Vehicle::battery",
+        "x": 640.0,
+        "y": 1700.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample::Vehicle::cabin": {
+        "artifactId": "TreeExample::Vehicle::cabin",
+        "x": 80.0,
+        "y": 1880.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "TreeExample::Vehicle::cabin::seat": {
+        "artifactId": "TreeExample::Vehicle::cabin::seat",
+        "x": 360.0,
+        "y": 1880.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example": {
+        "artifactId": "Example",
+        "x": 640.0,
+        "y": 1880.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "Example::FunctionalModule": {
+        "artifactId": "Example::FunctionalModule",
+        "x": 80.0,
+        "y": 2060.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::FunctionalModule::powerIn": {
+        "artifactId": "Example::FunctionalModule::powerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "Example::Engine": {
+        "artifactId": "Example::Engine",
+        "x": 360.0,
+        "y": 2060.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Engine::powerIn": {
+        "artifactId": "Example::Engine::powerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5
+      },
+      "Example::Engine::statusOut": {
+        "artifactId": "Example::Engine::statusOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6000000000000001
+      },
+      "Example::Vehicle": {
+        "artifactId": "Example::Vehicle",
+        "x": 640.0,
+        "y": 2060.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Vehicle::engine": {
+        "artifactId": "Example::Vehicle::engine",
+        "x": 80.0,
+        "y": 2240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Vehicle::fm1": {
+        "artifactId": "Example::Vehicle::fm1",
+        "x": 360.0,
+        "y": 2240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Vehicle::powerOut": {
+        "artifactId": "Example::Vehicle::powerOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5
+      },
+      "Example::Vehicle::fuelIn": {
+        "artifactId": "Example::Vehicle::fuelIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.6000000000000001
+      },
+      "Example::EventClientPort": {
+        "artifactId": "Example::EventClientPort",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.7
+      },
+      "Example::EventBrokerPort": {
+        "artifactId": "Example::EventBrokerPort",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "Example::PowerPort": {
+        "artifactId": "Example::PowerPort",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.4
+      },
+      "Example::Axle": {
+        "artifactId": "Example::Axle",
+        "x": 640.0,
+        "y": 2240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Axle::TorqueIn": {
+        "artifactId": "Example::Axle::TorqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6000000000000001
+      },
+      "Example::Battery": {
+        "artifactId": "Example::Battery",
+        "x": 80.0,
+        "y": 2420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Battery::EventOut": {
+        "artifactId": "Example::Battery::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.3
+      },
+      "Example::Battery::powerOut": {
+        "artifactId": "Example::Battery::powerOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.4
+      },
+      "Example::Engine::EventOut": {
+        "artifactId": "Example::Engine::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5
+      },
+      "Example::Engine::GaugeIn": {
+        "artifactId": "Example::Engine::GaugeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.6000000000000001
+      },
+      "Example::Engine::PowerIn": {
+        "artifactId": "Example::Engine::PowerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.7
+      },
+      "Example::Engine::TorqueOut": {
+        "artifactId": "Example::Engine::TorqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "Example::Vehicle::axle": {
+        "artifactId": "Example::Vehicle::axle",
+        "x": 360.0,
+        "y": 2420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Vehicle::battery": {
+        "artifactId": "Example::Vehicle::battery",
+        "x": 640.0,
+        "y": 2420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Vehicle::EventOut": {
+        "artifactId": "Example::Vehicle::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6000000000000001
+      },
+      "Example::Vehicle::GaugeIn": {
+        "artifactId": "Example::Vehicle::GaugeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7
+      },
+      "CarLogical": {
+        "artifactId": "CarLogical",
+        "x": 80.0,
+        "y": 2600.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Chassis": {
+        "artifactId": "CarLogical::Chassis",
+        "x": 360.0,
+        "y": 2600.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Engine": {
+        "artifactId": "CarLogical::Engine",
+        "x": 640.0,
+        "y": 2600.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Transmission": {
+        "artifactId": "CarLogical::Transmission",
+        "x": 80.0,
+        "y": 2780.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::SteeringWheel": {
+        "artifactId": "CarLogical::SteeringWheel",
+        "x": 360.0,
+        "y": 2780.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Axle": {
+        "artifactId": "CarLogical::Axle",
+        "x": 640.0,
+        "y": 2780.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::BrakeSystem": {
+        "artifactId": "CarLogical::BrakeSystem",
+        "x": 80.0,
+        "y": 2960.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car": {
+        "artifactId": "CarLogical::Car",
+        "x": 360.0,
+        "y": 2960.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::chassis": {
+        "artifactId": "CarLogical::Car::chassis",
+        "x": 640.0,
+        "y": 2960.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::engine": {
+        "artifactId": "CarLogical::Car::engine",
+        "x": 80.0,
+        "y": 3140.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::transmission": {
+        "artifactId": "CarLogical::Car::transmission",
+        "x": 360.0,
+        "y": 3140.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::steeringWheel": {
+        "artifactId": "CarLogical::Car::steeringWheel",
+        "x": 640.0,
+        "y": 3140.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::frontAxle": {
+        "artifactId": "CarLogical::Car::frontAxle",
+        "x": 80.0,
+        "y": 3320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::rearAxle": {
+        "artifactId": "CarLogical::Car::rearAxle",
+        "x": 360.0,
+        "y": 3320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "CarLogical::Car::brakes": {
+        "artifactId": "CarLogical::Car::brakes",
+        "x": 640.0,
+        "y": 3320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships": {
+        "artifactId": "PartRelationships",
+        "x": 80.0,
+        "y": 3500.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::Base": {
+        "artifactId": "PartRelationships::Base",
+        "x": 360.0,
+        "y": 3500.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::Base::pout": {
+        "artifactId": "PartRelationships::Base::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5
+      },
+      "PartRelationships::Base::pin": {
+        "artifactId": "PartRelationships::Base::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6000000000000001
+      },
+      "PartRelationships::Small": {
+        "artifactId": "PartRelationships::Small",
+        "x": 640.0,
+        "y": 3500.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::System": {
+        "artifactId": "PartRelationships::System",
+        "x": 80.0,
+        "y": 3680.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::System::baseEng": {
+        "artifactId": "PartRelationships::System::baseEng",
+        "x": 360.0,
+        "y": 3680.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::System::eng": {
+        "artifactId": "PartRelationships::System::eng",
+        "x": 640.0,
+        "y": 3680.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::System::child": {
+        "artifactId": "PartRelationships::System::child",
+        "x": 80.0,
+        "y": 3860.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::System::logical": {
+        "artifactId": "PartRelationships::System::logical",
+        "x": 360.0,
+        "y": 3860.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PartRelationships::System::physical": {
+        "artifactId": "PartRelationships::System::physical",
+        "x": 640.0,
+        "y": 3860.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Example::Vehicle::engine::EventOut": {
+        "artifactId": "Example::Vehicle::engine::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.3
+      },
+      "Example::Vehicle::engine::GaugeIn": {
+        "artifactId": "Example::Vehicle::engine::GaugeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.4
+      },
+      "Example::Vehicle::engine::PowerIn": {
+        "artifactId": "Example::Vehicle::engine::PowerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5
+      },
+      "Example::Vehicle::engine::TorqueOut": {
+        "artifactId": "Example::Vehicle::engine::TorqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.6000000000000001
+      },
+      "Example::Vehicle::fm1::powerIn": {
+        "artifactId": "Example::Vehicle::fm1::powerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.7
+      },
+      "Example::Vehicle::axle::TorqueIn": {
+        "artifactId": "Example::Vehicle::axle::TorqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "Example::Vehicle::battery::EventOut": {
+        "artifactId": "Example::Vehicle::battery::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.4
+      },
+      "Example::Vehicle::battery::powerOut": {
+        "artifactId": "Example::Vehicle::battery::powerOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5
+      },
+      "CarLogical::Car::engine::EventOut": {
+        "artifactId": "CarLogical::Car::engine::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5991595162640516
+      },
+      "CarLogical::Car::engine::GaugeIn": {
+        "artifactId": "CarLogical::Car::engine::GaugeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.8399810900502273
+      },
+      "CarLogical::Car::engine::PowerIn": {
+        "artifactId": "CarLogical::Car::engine::PowerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8595936229370964
+      },
+      "CarLogical::Car::engine::TorqueOut": {
+        "artifactId": "CarLogical::Car::engine::TorqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.57
+      },
+      "CarLogical::Car::frontAxle::TorqueIn": {
+        "artifactId": "CarLogical::Car::frontAxle::TorqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3833333333333333
+      },
+      "CarLogical::Car::rearAxle::TorqueIn": {
+        "artifactId": "CarLogical::Car::rearAxle::TorqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.7751731099377148
+      },
+      "PartRelationships::Small::pout": {
+        "artifactId": "PartRelationships::Small::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.3
+      },
+      "PartRelationships::Small::pin": {
+        "artifactId": "PartRelationships::Small::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.4
+      },
+      "PartRelationships::System::baseEng::pout": {
+        "artifactId": "PartRelationships::System::baseEng::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5
+      },
+      "PartRelationships::System::baseEng::pin": {
+        "artifactId": "PartRelationships::System::baseEng::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.6000000000000001
+      },
+      "PartRelationships::System::eng::pout": {
+        "artifactId": "PartRelationships::System::eng::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.7
+      },
+      "PartRelationships::System::eng::pin": {
+        "artifactId": "PartRelationships::System::eng::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.3
+      },
+      "PartRelationships::System::child::pout": {
+        "artifactId": "PartRelationships::System::child::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.4
+      },
+      "PartRelationships::System::child::pin": {
+        "artifactId": "PartRelationships::System::child::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5
+      },
+      "PartRelationships::System::logical::pout": {
+        "artifactId": "PartRelationships::System::logical::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6000000000000001
+      },
+      "PartRelationships::System::logical::pin": {
+        "artifactId": "PartRelationships::System::logical::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7
+      },
+      "PartRelationships::System::physical::pout": {
+        "artifactId": "PartRelationships::System::physical::pout",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.3
+      },
+      "PartRelationships::System::physical::pin": {
+        "artifactId": "PartRelationships::System::physical::pin",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.4
+      }
+    },
+    "edges": {
+      "ActionExample::BootFlow::s1": {
+        "artifactId": "ActionExample::BootFlow::s1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ActionExample::BootFlow::s2": {
+        "artifactId": "ActionExample::BootFlow::s2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ActionExample::BootFlow::s3": {
+        "artifactId": "ActionExample::BootFlow::s3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ActionExample::BootFlow::yes": {
+        "artifactId": "ActionExample::BootFlow::yes",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ActionExample::BootFlow::no": {
+        "artifactId": "ActionExample::BootFlow::no",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ActionExample::BootFlow::s4": {
+        "artifactId": "ActionExample::BootFlow::s4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "ActionExample::BootFlow::s5": {
+        "artifactId": "ActionExample::BootFlow::s5",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "hbox::HBox::conn1": {
+        "artifactId": "hbox::HBox::conn1",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "hbox::HBox::conn2": {
+        "artifactId": "hbox::HBox::conn2",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "hbox::HBox::conn3": {
+        "artifactId": "hbox::HBox::conn3",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "hbox::HBox::conn4": {
+        "artifactId": "hbox::HBox::conn4",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "hbox::EventInteraction::msg1": {
+        "artifactId": "hbox::EventInteraction::msg1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "hbox::EventInteraction::msg2": {
+        "artifactId": "hbox::EventInteraction::msg2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "StateExample::DoorMachine::unlock": {
+        "artifactId": "StateExample::DoorMachine::unlock",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "StateExample::DoorMachine::open": {
+        "artifactId": "StateExample::DoorMachine::open",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "StateExample::DoorMachine::close": {
+        "artifactId": "StateExample::DoorMachine::close",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "StateExample::DoorMachine::lock": {
+        "artifactId": "StateExample::DoorMachine::lock",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Example::Vehicle::conn1": {
+        "artifactId": "Example::Vehicle::conn1",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "Example::Vehicle::poower": {
+        "artifactId": "Example::Vehicle::poower",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "Example::Vehicle::torque": {
+        "artifactId": "Example::Vehicle::torque",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "Example::Vehicle::gaugebus": {
+        "artifactId": "Example::Vehicle::gaugebus",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "CarLogical::Car::engineMount": {
+        "artifactId": "CarLogical::Car::engineMount",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::gearboxMount": {
+        "artifactId": "CarLogical::Car::gearboxMount",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::driveline": {
+        "artifactId": "CarLogical::Car::driveline",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::steerMount": {
+        "artifactId": "CarLogical::Car::steerMount",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::frontDrive": {
+        "artifactId": "CarLogical::Car::frontDrive",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::frontSupport": {
+        "artifactId": "CarLogical::Car::frontSupport",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::rearSupport": {
+        "artifactId": "CarLogical::Car::rearSupport",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::brakeMount": {
+        "artifactId": "CarLogical::Car::brakeMount",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::brakeActuation_1": {
+        "artifactId": "CarLogical::Car::brakeActuation_1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "CarLogical::Car::brakeActuation_2": {
+        "artifactId": "CarLogical::Car::brakeActuation_2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PartRelationships::Small_specializes_Base": {
+        "artifactId": "PartRelationships::Small_specializes_Base",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "PartRelationships::System::eng_redefines_baseEng": {
+        "artifactId": "PartRelationships::System::eng_redefines_baseEng",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "triangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "triangle"
+          }
+        }
+      },
+      "PartRelationships::System::child_subsets_baseEng": {
+        "artifactId": "PartRelationships::System::child_subsets_baseEng",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "PartRelationships::System::wire": {
+        "artifactId": "PartRelationships::System::wire",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "PartRelationships::System::uses": {
+        "artifactId": "PartRelationships::System::uses",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PartRelationships::System::multiDep_1": {
+        "artifactId": "PartRelationships::System::multiDep_1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PartRelationships::System::multiDep_2": {
+        "artifactId": "PartRelationships::System::multiDep_2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PartRelationships::System::alloc1": {
+        "artifactId": "PartRelationships::System::alloc1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "PartRelationships::System::bind1": {
+        "artifactId": "PartRelationships::System::bind1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dotted"
+          },
+          "dark": {
+            "lineStyle": "dotted"
+          }
+        }
+      },
+      "PartRelationships::System::power": {
+        "artifactId": "PartRelationships::System::power",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "arrow"
+          }
+        }
+      }
+    }
+  },
+  "views": [
+    {
+      "id": "ActionExample::BootFlowView",
+      "name": "BootFlowView",
+      "rootArtifactId": "ActionExample::BootFlow",
+      "parentViewId": null,
+      "typeRef": "ActionFlowView"
+    },
+    {
+      "id": "CarLogical::CarLogicalView",
+      "name": "CarLogicalView",
+      "rootArtifactId": "CarLogical::Car",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "Example::ExampleView",
+      "name": "ExampleView",
+      "rootArtifactId": "Example::Vehicle",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "PartRelationships::RelationshipsView",
+      "name": "RelationshipsView",
+      "rootArtifactId": "PartRelationships::System",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "StateExample::DoorStateView",
+      "name": "DoorStateView",
+      "rootArtifactId": "StateExample::DoorMachine",
+      "parentViewId": null,
+      "typeRef": "StateTransitionView"
+    },
+    {
+      "id": "TreeExample::PackageTree",
+      "name": "PackageTree",
+      "rootArtifactId": "TreeExample",
+      "parentViewId": "TreeExample::PackageTree",
+      "typeRef": "TreeView"
+    },
+    {
+      "id": "TreeExample::VehicleTree",
+      "name": "VehicleTree",
+      "rootArtifactId": "TreeExample::Vehicle",
+      "parentViewId": "TreeExample::PackageTree",
+      "typeRef": "TreeView"
+    },
+    {
+      "id": "hbox::HBoxEventView",
+      "name": "HBoxEventView",
+      "rootArtifactId": "hbox::EventInteraction",
+      "parentViewId": null,
+      "typeRef": "SequenceView"
+    },
+    {
+      "id": "hbox::HBoxView",
+      "name": "HBoxView",
+      "rootArtifactId": "hbox::HBox",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    }
+  ],
+  "sheet": {
+    "titleBlock": null,
+    "frame": null
+  }
+}

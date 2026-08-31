@@ -6,6 +6,8 @@ import argparse
 import os
 from pathlib import Path
 
+from adapters.api.static_paths import resolve_repo_root
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="sysmlviewer-api", description="SysML Viewer API")
@@ -63,6 +65,12 @@ def main(argv: list[str] | None = None) -> None:
         os.environ["SYSMLVIEWER_PROJECT"] = str(project_file)
     else:
         os.environ.pop("SYSMLVIEWER_PROJECT", None)
+
+    static = resolve_repo_root() / "frontend" / "dist"
+    if static.is_dir():
+        os.environ["SYSMLVIEWER_STATIC_DIR"] = str(static)
+    else:
+        os.environ.pop("SYSMLVIEWER_STATIC_DIR", None)
 
     import uvicorn
 

@@ -38,7 +38,7 @@ import {
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
-import { buildStructureGraph } from './modes/structure/buildStructureGraph'
+import { buildStructureGraph, orientRelationBoundaryHandles } from './modes/structure/buildStructureGraph'
 import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
 import { LifelineNode } from './modes/sequence/LifelineNode'
 import { MessageEdge } from './modes/sequence/MessageEdge'
@@ -640,6 +640,7 @@ export function DiagramCanvas({
             redrawConnectionsRef.current(allNodes, connected),
           )
         }
+        setEdges((current) => orientRelationBoundaryHandles(current, allNodes))
       }
 
       onNodesMovedRef.current(patch, edgePatch)
@@ -672,7 +673,9 @@ export function DiagramCanvas({
       })
       const nextEdges =
         mode === 'whitebox' || mode === 'structure' || mode === 'sequence'
-          ? edges
+          ? mode === 'sequence'
+            ? edges
+            : orientRelationBoundaryHandles(edges, nextNodes)
           : orientEdgeHandles(edges, direction, nextNodes)
 
       setNodes(nextNodes)

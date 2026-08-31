@@ -4,13 +4,13 @@ Logical **compute plane** (worker/control workloads).
 
 ## Interfaces
 
-| Port | Kind | Role |
+| Port | Type | Role |
 |------|------|------|
-| compute_sap | API | Northbound compute API |
-| compute_scp | control | Control channel |
-| compute_smp | metrics | Telemetry export |
-| compute_svp | compute | Virtualization/compute fabric |
+| `smp` | `compute_smi` | Metrics / health |
+| `scp` | `compute_sci` | Control / configuration |
+| `sdp` | `compute_svi` | Runtime face — containers and other execution components attach here |
+| `nwdp` | `k8n_vlan` | Cluster-internal network attachment (wired to `network.i_nwdp`) |
 
 ## Allocation
 
-Mapped to compute blade (`bladeCompute`): API→Ethernet, control/metrics→management, compute→CPU fabric.
+Mapped to compute blade (`bladeCompute`): control/metrics→management, `sdp`→CPU fabric, `nwdp`→Ethernet.

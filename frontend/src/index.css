@@ -1310,7 +1310,7 @@ body.port-dragging * {
   background: var(--panel);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
-  width: min(420px, 92vw);
+  width: min(520px, 94vw);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
@@ -1341,9 +1341,70 @@ body.port-dragging * {
   gap: 0.75rem;
 }
 
+.settings-note {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .settings-row select,
 .settings-row input[type='number'] {
   min-width: 7rem;
+}
+
+.path-input-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.path-input-row > span {
+  padding-top: 0;
+  font-weight: 500;
+}
+
+.path-input-group {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 0.4rem;
+}
+
+.path-input-group input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.path-browse-btn {
+  flex-shrink: 0;
+  font: inherit;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.path-browse-btn:hover:not(:disabled) {
+  background: var(--surface-raised);
+}
+
+.path-browse-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.modal-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9rem;
 }
 
 .settings-fieldset {
@@ -1460,6 +1521,43 @@ body.port-dragging * {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.85rem;
+}
+
+.projects-menu {
+  max-width: 11rem;
+}
+
+.example-projects {
+  margin-bottom: 1rem;
+}
+
+.example-projects-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #8fa3b8;
+}
+
+.example-projects-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.example-projects-list button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #3a4d61;
+  background: #1c2c3c;
+  color: inherit;
+  border-radius: 4px;
+  padding: 0.45rem 0.65rem;
+}
+
+.example-projects-list button:hover {
+  background: #254056;
 }
 
 .diagram-sheet-host {

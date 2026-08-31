@@ -1,5 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
 import type {
+  ArtifactKind,
   PortSide,
   RoutingType,
   SemanticElement,
@@ -8,15 +9,72 @@ import type {
   ElementStyle,
 } from '../../../api'
 import type { ViewMode } from '../../../settings'
-import { edgeStrokeStyle, nodeInlineStyle } from '../../elementStyle'
+import { edgeStrokeStyle, nodeInlineStyle, reactFlowMarker } from '../../elementStyle'
+import {
+  mergedEdgeVisual,
+  PART_CENTER_SOURCE_HANDLE,
+  PART_CENTER_TARGET_HANDLE,
+  STRUCTURE_EDGE_KINDS,
+  defaultRelationStyle,
+  pickRelationBoundarySides,
+  relationSourceHandle,
+  relationTargetHandle,
+  usesPortHandles,
+} from '../../relationshipStyle'
 import type { PartNodeData } from '../../PartNode'
 
+function nodeBox(
+  node: Node,
+  byId: Map<string, Node>,
+): { x: number; y: number; width: number; height: number } {
+  let x = node.position.x
+  let y = node.position.y
+  let cur: Node | undefined = node
+  while (cur?.parentId) {
+    const parent = byId.get(cur.parentId)
+    if (!parent) break
+    x += parent.position.x
+    y += parent.position.y
+    cur = parent
+  }
+  const width =
+    Number(node.style?.width ?? node.width ?? node.measured?.width) || 180
+  const height =
+    Number(node.style?.height ?? node.height ?? node.measured?.height) || 110
+  return { x, y, width, height }
+}
+
+/** Re-attach non-port relation edges to the facing part borders. */
+export function orientRelationBoundaryHandles(
+  edges: Edge[],
+  nodes: Node[],
+): Edge[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  return edges.map((e) => {
+    if (!e.sourceHandle?.startsWith('rel-out-')) return e
+    if (!e.targetHandle?.startsWith('rel-in-')) return e
+    const src = byId.get(e.source)
+    const tgt = byId.get(e.target)
+    if (!src || !tgt) return e
+    const { sourceSide, targetSide } = pickRelationBoundarySides(
+      nodeBox(src, byId),
+      nodeBox(tgt, byId),
+    )
+    return {
+      ...e,
+      sourceHandle: relationSourceHandle(sourceSide),
+      targetHandle: relationTargetHandle(targetSide),
+    }
+  })
+}
+
 export function findOwnerPart(
-  portId: string,
+  endpointId: string,
   semantic: Record<string, SemanticElement>,
   displayIds: Set<string>,
 ): string | null {
-  let current = semantic[portId]
+  let current = semantic[endpointId]
+  if (!current) return null
   while (current) {
     if (current.kind === 'part' && displayIds.has(current.id)) {
       return current.id
@@ -238,6 +296,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
   }
 
   const displaySet = new Set(builtNodes.map((n) => n.id))
+  const nodesById = new Map(builtNodes.map((n) => [n.id, n]))
 
   const rootViz = visualization.nodes[rootId]
   const parentBounds =
@@ -251,34 +310,79 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       : undefined
 
   const builtEdges: Edge[] = Object.values(semantic)
-    .filter((el) => el.kind === 'connection')
+    .filter((el) => STRUCTURE_EDGE_KINDS.includes(el.kind))
     .map((conn) => {
+      const relationKind = conn.kind as ArtifactKind
       const edgeViz: VisualizationEdge | undefined = visualization.edges[conn.id]
-      const routing = (edgeViz?.routing || 'angular') as RoutingType
-      const sourcePort = conn.sourceId || ''
-      const targetPort = conn.targetId || ''
-      const sourcePart = findOwnerPart(sourcePort, semantic, displaySet)
-      const targetPart = findOwnerPart(targetPort, semantic, displaySet)
+      const defaults = defaultRelationStyle(relationKind)
+      const routing = (edgeViz?.routing || defaults.routing) as RoutingType
+      const sourceEndpoint = conn.sourceId || ''
+      const targetEndpoint = conn.targetId || ''
+      const sourceEl = semantic[sourceEndpoint]
+      const targetEl = semantic[targetEndpoint]
+      const sourcePart = findOwnerPart(sourceEndpoint, semantic, displaySet)
+      const targetPart = findOwnerPart(targetEndpoint, semantic, displaySet)
       if (!sourcePart || !targetPart) return null
 
+      const portHandles = usesPortHandles(
+        relationKind,
+        sourceEl?.kind,
+        targetEl?.kind,
+      )
+      let sourceHandle = portHandles ? sourceEndpoint : PART_CENTER_SOURCE_HANDLE
+      let targetHandle = portHandles
+        ? `target:${targetEndpoint}`
+        : PART_CENTER_TARGET_HANDLE
+      if (!portHandles) {
+        const srcNode = nodesById.get(sourcePart)
+        const tgtNode = nodesById.get(targetPart)
+        if (srcNode && tgtNode) {
+          const { sourceSide, targetSide } = pickRelationBoundarySides(
+            nodeBox(srcNode, nodesById),
+            nodeBox(tgtNode, nodesById),
+          )
+          sourceHandle = relationSourceHandle(sourceSide)
+          targetHandle = relationTargetHandle(targetSide)
+        }
+      }
       const internal =
         whitebox &&
         (sourcePart === rootId ||
           targetPart === rootId ||
           (sourcePart !== rootId && targetPart !== rootId))
 
-      const stroke = edgeStrokeStyle(edgeViz?.style, viewMode)
+      const visual = mergedEdgeVisual(relationKind, edgeViz?.style, viewMode)
+      const stroke = edgeStrokeStyle(
+        {
+          light: {
+            lineColor: edgeViz?.style?.light?.lineColor,
+            lineThickness: edgeViz?.style?.light?.lineThickness,
+            textColor: edgeViz?.style?.light?.textColor,
+            lineStyle: visual.lineStyle,
+          },
+          dark: {
+            lineColor: edgeViz?.style?.dark?.lineColor,
+            lineThickness: edgeViz?.style?.dark?.lineThickness,
+            textColor: edgeViz?.style?.dark?.textColor,
+            lineStyle: visual.lineStyle,
+          },
+        },
+        viewMode,
+      )
+      const markerEnd = reactFlowMarker(visual.markerEnd)
 
       return {
         id: conn.id,
         source: sourcePart,
         target: targetPart,
-        sourceHandle: sourcePort,
-        targetHandle: `target:${targetPort}`,
+        sourceHandle,
+        targetHandle,
         type: 'sysml',
         label: conn.name,
+        markerEnd,
         data: {
           routing,
+          relationKind,
           artifactId: conn.id,
           waypoints: edgeViz?.waypoints || [],
           labelOffset: edgeViz?.labelOffset || { x: 0, y: 0 },
@@ -293,7 +397,11 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
           selectedLinewidth: selectedConnectionLinewidth,
         },
         zIndex: 0,
-        style: { strokeWidth: stroke.strokeWidth, stroke: stroke.stroke },
+        style: {
+          strokeWidth: stroke.strokeWidth,
+          stroke: stroke.stroke,
+          strokeDasharray: stroke.strokeDasharray,
+        },
       } as Edge
     })
     .filter((e): e is Edge => e !== null)

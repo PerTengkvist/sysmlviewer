@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "viewId": "DataCenterPhysical::DataCenterPhysicalView",
+  "name": "DataCenterPhysicalView",
+  "nodes": {
+    "DataCenterPhysical::DataCenterSite": {
+      "x": 466.30863774832653,
+      "y": 1787.930429954031,
+      "width": 1011.0,
+      "height": 754.0
+    },
+    "DataCenterPhysical::DataCenterSite::cooling": {
+      "x": 22.94653013399568,
+      "y": 553.2150173407015,
+      "width": 143.6,
+      "height": 76.0
+    },
+    "DataCenterPhysical::DataCenterSite::logical": {
+      "x": 446.9283278663763,
+      "y": 61.298065891586475,
+      "width": 266.0,
+      "height": 76.0
+    },
+    "DataCenterPhysical::DataCenterSite::nas": {
+      "x": 795.4155728533766,
+      "y": 276.2187867907462,
+      "width": 189.0,
+      "height": 122.0
+    },
+    "DataCenterPhysical::DataCenterSite::edgeRouter": {
+      "x": 226.33853166955726,
+      "y": 89.85860946265552,
+      "width": 165.0,
+      "height": 149.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeControl": {
+      "x": 288.98397687808654,
+      "y": 445.8024756323532,
+      "width": 213.0,
+      "height": 131.0
+    },
+    "DataCenterPhysical::DataCenterSite::bladeCompute": {
+      "x": 796.4752494034038,
+      "y": 74.54196623561506,
+      "width": 182.0,
+      "height": 126.0
+    },
+    "DataCenterPhysical::DataCenterSite::torSwitch": {
+      "x": 655.3590249937955,
+      "y": 522.9242011865911,
+      "width": 181.0,
+      "height": 152.0
+    }
+  },
+  "edges": {
+    "DataCenterPhysical::DataCenterSite::bladeAToSwitch": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1230.7838871517304,
+          "y": 1919.1723961896462
+        },
+        {
+          "x": 1230.7838871517304,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2409.6546311406223
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::pwrSwitch": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 458.30863774832653,
+          "y": 1980.490429954031
+        },
+        {
+          "x": 458.30863774832653,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 1089.667662742122,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 1089.667662742122,
+          "y": 2354.934631140622
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::pwrRouter": {
+      "routing": "angular",
+      "waypoints": [],
+      "labelOffset": {
+        "x": -14.7802734375,
+        "y": -34.48828125
+      }
+    },
+    "DataCenterPhysical::DataCenterSite::coolSwitch": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 644.8551678823222,
+          "y": 2370.2787806280658
+        },
+        {
+          "x": 644.8551678823222,
+          "y": 2474.854631140622
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2474.854631140622
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2447.930429954031
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::bladeBToSwitch": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 723.2926146264131,
+          "y": 2344.843411583667
+        },
+        {
+          "x": 723.2926146264131,
+          "y": 2474.854631140622
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2474.854631140622
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2409.6546311406223
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::switchToRouter": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1294.667662742122,
+          "y": 2348.854631140622
+        },
+        {
+          "x": 1294.667662742122,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 849.6471694178838,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 849.6471694178838,
+          "y": 2010.208954360567
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::pwrNas": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 458.30863774832653,
+          "y": 1980.490429954031
+        },
+        {
+          "x": 458.30863774832653,
+          "y": 2094.6492167447773
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::coolNas": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1433.3086377483264,
+          "y": 2370.2787806280658
+        },
+        {
+          "x": 1433.3086377483264,
+          "y": 2177.695440768749
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::routerWan": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 458.30863774832653,
+          "y": 1948.1994016660058
+        },
+        {
+          "x": 458.30863774832653,
+          "y": 2166.410429954031
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::pwrBladeB": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 458.30863774832653,
+          "y": 1980.490429954031
+        },
+        {
+          "x": 458.30863774832653,
+          "y": 2266.4829055863843
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::allocDcMonCtrl": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1191.236965614703,
+          "y": 1878.361829178951
+        },
+        {
+          "x": 1191.236965614703,
+          "y": 2283.949572253051
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::pwrCool": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 477.2551678823222,
+          "y": 1980.490429954031
+        },
+        {
+          "x": 477.2551678823222,
+          "y": 2370.2787806280658
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::nasToSwitch": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 1228.3086377483264,
+          "y": 2177.930429954031
+        },
+        {
+          "x": 1228.3086377483264,
+          "y": 2301.930429954031
+        },
+        {
+          "x": 1296.3086377483264,
+          "y": 2301.930429954031
+        },
+        {
+          "x": 1296.3086377483264,
+          "y": 2409.930429954031
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::coolBladeA": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 723.2926146264131,
+          "y": 2370.2787806280658
+        },
+        {
+          "x": 723.2926146264131,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 1230.7838871517304,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 1230.7838871517304,
+          "y": 1944.3723961896462
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::allocExternalApi": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 849.6471694178838,
+          "y": 1878.361829178951
+        },
+        {
+          "x": 849.6471694178838,
+          "y": 2010.208954360567
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::coolRouter": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 723.2926146264131,
+          "y": 2370.2787806280658
+        },
+        {
+          "x": 723.2926146264131,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 849.6471694178838,
+          "y": 2221.7329055863843
+        },
+        {
+          "x": 849.6471694178838,
+          "y": 1934.9057060833532
+        }
+      ]
+    },
+    "DataCenterPhysical::DataCenterSite::pwrBladeA": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 458.30863774832653,
+          "y": 1980.490429954031
+        },
+        {
+          "x": 458.30863774832653,
+          "y": 1837.2284958456175
+        },
+        {
+          "x": 1230.7838871517304,
+          "y": 1837.2284958456175
+        },
+        {
+          "x": 1230.7838871517304,
+          "y": 1893.9723961896461
+        }
+      ],
+      "labelOffset": {
+        "x": -36.93243945793927,
+        "y": 16.250273361493328
+      }
+    },
+    "DataCenterPhysical::DataCenterSite::coolBladeB": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 723.2926146264131,
+          "y": 2370.2787806280658
+        },
+        {
+          "x": 723.2926146264131,
+          "y": 2318.8829055863844
+        }
+      ]
+    }
+  }
+}

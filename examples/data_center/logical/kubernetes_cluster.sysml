@@ -5,7 +5,8 @@ package KubernetesClusterPkg {
   // Layer 2 — Workload plane (virtual K8s cluster)
   //
   // Each plane consumes substrate via ComputeSlice / StorageSlice / NetworkSlice (iaac_spi).
-  // Intra-cluster peer ports: smp, scp, sdp (see docs/kubernetes_cluster_interfaces.md).
+  // Intra-cluster peers: smp/scp plus dataplane roles (sdp, nwdp, e_nwdp, i_nwdp).
+  // See docs/kubernetes_cluster_interfaces.md.
 
   part def ComputeSlice {
     part cpu : LogicalCpu;
@@ -36,7 +37,10 @@ package KubernetesClusterPkg {
     part slice : ComputeSlice;
     port smp : compute_smi;
     port scp : compute_sci;
-    port sdp : k8n_vlan;
+    // Runtime / container execution face (pods attach here)
+    port sdp : compute_svi;
+    // Cluster-internal network attachment (east-west + storage path)
+    port nwdp : k8n_vlan;
     attribute role : String = "worker-and-control-plane";
   }
 
@@ -44,7 +48,10 @@ package KubernetesClusterPkg {
     part slice : StorageSlice;
     port smp : storage_smi;
     port scp : storage_sci;
-    port sdp : k8n_vlan;
+    // Logical write API (PV mount / volume attach semantics)
+    port sdp : storage_ssi;
+    // Actual I/O path into the cluster network fabric
+    port nwdp : k8n_vlan;
     attribute backend : String = "persistent-volume";
   }
 
@@ -52,7 +59,10 @@ package KubernetesClusterPkg {
     part slice : NetworkSlice;
     port smp : network_smi;
     port scp : network_sci;
-    port sdp : k8n_vlan;
+    // External cluster dataplane (north/south)
+    port e_nwdp : k8n_vlan;
+    // Internal fabric for compute/storage plane attachments
+    port i_nwdp : k8n_vlan;
     attribute cni : String = "overlay";
   }
 
@@ -72,10 +82,10 @@ package KubernetesClusterPkg {
     // Internal delegation to plane control/mgmt/dataplan
     port compute_scp : compute_sci;
     port compute_smp : compute_smi;
-    port compute_sdp : k8n_vlan;
+    port compute_sdp : compute_svi;
     port storage_scp : storage_sci;
     port storage_smp : storage_smi;
-    port storage_sdp : k8n_vlan;
+    port storage_sdp : storage_ssi;
     port network_scp : network_sci;
     port network_smp : network_smi;
     port network_sdp : k8n_vlan;
@@ -102,10 +112,21 @@ package KubernetesClusterPkg {
     connection network_smi
       connect network_smp to network.smp;
 
-    connection k8n_compute_network
-      connect compute_sdp to network.sdp;
-    connection k8n_storage_network
-      connect storage_sdp to network.sdp;
+    // Execution / logical I/O faces — delegated to plane sdp ports
+    connection compute_svi
+      connect compute_sdp to compute.sdp;
+    connection storage_ssi
+      connect storage_sdp to storage.sdp;
+
+    // Cluster-internal network: planes attach to NetworkPlane.i_nwdp
+    connection compute_nwdp
+      connect compute.nwdp to network.i_nwdp;
+    connection storage_nwdp
+      connect storage.nwdp to network.i_nwdp;
+
+    // External dataplane face on the cluster shell
+    connection network_e_nwdp
+      connect network_sdp to network.e_nwdp;
   }
 
   view def KubernetesClusterView : GeneralView {
