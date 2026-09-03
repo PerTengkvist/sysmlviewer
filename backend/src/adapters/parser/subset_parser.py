@@ -197,6 +197,32 @@ class SubsetSysmlParser:
                 return _strip_quotes(tok.value)
             return None
 
+        def expect_qualified_name() -> str | None:
+            """Read ``Name`` or ``A::B::c`` (not dotted port paths)."""
+            name = expect_ident()
+            if not name:
+                return None
+            parts = [name]
+            while peek() and peek().value == "::":
+                take()
+                nxt = expect_ident()
+                if not nxt:
+                    break
+                parts.append(nxt)
+            return "::".join(parts)
+
+        def read_multiplicity() -> str | None:
+            if not (peek() and peek().value == "["):
+                return None
+            take()
+            mult_parts: list[str] = []
+            while peek() and peek().value != "]":
+                mult_parts.append(peek().value)
+                take()
+            if peek() and peek().value == "]":
+                take()
+            return "".join(mult_parts).strip() or None
+
         def read_default_value() -> str | None:
             """Parse optional `= <literal>` after a feature declaration."""
             if not (peek() and peek().value == "="):
@@ -238,8 +264,34 @@ class SubsetSysmlParser:
                     break
 
         def resolve_ref(ref: str) -> str:
-            """Resolve relative or dotted names against current scope."""
+            """Resolve relative, dotted, or qualified names against current scope."""
             if "::" in ref:
+                if ref in state.elements:
+                    return ref
+                parent = state.current_parent()
+                while parent:
+                    candidate = f"{parent}::{ref}"
+                    if candidate in state.elements:
+                        return candidate
+                    el = state.elements.get(parent)
+                    parent = el.parent_id if el else None
+                # Prefer package-root qualification when unique-looking
+                root = None
+                if state.scopes:
+                    for sc in state.scopes:
+                        if sc.element_id and sc.kind == ArtifactKind.PACKAGE:
+                            root = sc.element_id
+                            break
+                    if not root:
+                        for sc in state.scopes:
+                            if sc.element_id:
+                                root = sc.element_id
+                                break
+                if root:
+                    candidate = f"{root}::{ref}"
+                    if candidate in state.elements:
+                        return candidate
+                    return candidate
                 return ref
             parent = state.current_parent()
             if not parent:
@@ -260,7 +312,7 @@ class SubsetSysmlParser:
 
         def read_endpoint() -> str | None:
             parts: list[str] = []
-            name = expect_ident()
+            name = expect_qualified_name()
             if not name:
                 return None
             parts.append(name)
@@ -281,6 +333,7 @@ class SubsetSysmlParser:
             *,
             counter_attr: str,
             default_prefix: str,
+            metadata_keywords: list[str] | None = None,
         ) -> None:
             source_id = resolve_ref(source_ref)
             target_id = resolve_ref(target_ref)
@@ -302,9 +355,89 @@ class SubsetSysmlParser:
                 source_id=source_id,
                 target_id=target_id,
                 file_id=file_id,
+                metadata_keywords=list(metadata_keywords or []),
             )
             state.add_child(el.parent_id, element_id)
             state.elements[element_id] = el
+
+        def take_prefix_metadata_keywords() -> list[str]:
+            """Consume zero or more `#Keyword` prefixes (SysML user-defined keywords)."""
+            keywords: list[str] = []
+            while peek() and peek().value == "#":
+                hash_tok = take()
+                nxt = peek()
+                if not nxt or nxt.kind != "ident":
+                    line = hash_tok.line if hash_tok else "?"
+                    state.warnings.append(f"line {line}: '#' without metadata name")
+                    break
+                keywords.append(expect_ident())
+            return keywords
+
+        def peek_is_part_declaration() -> bool:
+            nxt = peek()
+            if not nxt or nxt.kind != "ident":
+                return False
+            if nxt.value == "part":
+                return True
+            if nxt.value == "ref":
+                nxt2 = tokens[i + 1] if i + 1 < n else None
+                return bool(
+                    nxt2 and nxt2.kind == "ident" and nxt2.value == "part"
+                )
+            return False
+
+        def parse_dependency_statement(metadata_keywords: list[str]) -> None:
+            line = peek().line if peek() else 0
+            take()  # dependency
+            dep_name: str | None = None
+            if peek() and peek().value != "from":
+                dep_name = expect_ident()
+            if not (peek() and peek().value == "from"):
+                state.warnings.append(f"line {line}: dependency missing 'from'")
+                skip_until_semicolon_or_brace()
+                return
+            take()  # from
+            source_ref = read_endpoint()
+            if not source_ref:
+                state.warnings.append(f"line {line}: dependency missing source")
+                skip_until_semicolon_or_brace()
+                return
+            if not (peek() and peek().value == "to"):
+                state.warnings.append(f"line {line}: dependency missing 'to'")
+                skip_until_semicolon_or_brace()
+                return
+            take()  # to
+            targets: list[str] = []
+            while True:
+                target_ref = read_endpoint()
+                if target_ref:
+                    targets.append(target_ref)
+                if peek() and peek().value == ",":
+                    take()
+                    continue
+                break
+            if peek() and peek().value == ";":
+                take()
+            for idx, target_ref in enumerate(targets):
+                name = (
+                    dep_name
+                    if len(targets) == 1
+                    else f"{dep_name}_{idx + 1}"
+                    if dep_name
+                    else None
+                )
+                add_relationship(
+                    ArtifactKind.DEPENDENCY,
+                    source_ref,
+                    target_ref,
+                    line,
+                    name=name,
+                    counter_attr="anon_dependency",
+                    default_prefix="dep",
+                    metadata_keywords=metadata_keywords,
+                )
+
+        pending_metadata_keywords: list[str] = []
 
         while i < n:
             tok = peek()
@@ -353,7 +486,18 @@ class SubsetSysmlParser:
                     )
                 continue
 
-            if tok.kind == "ident" and tok.value == "part":
+            # `ref part …` — reference (non-composite) feature
+            is_ref_part = False
+            if tok.kind == "ident" and tok.value == "ref":
+                # Look ahead without consuming unless followed by part
+                nxt_tok = tokens[i + 1] if i + 1 < n else None
+                if nxt_tok and nxt_tok.kind == "ident" and nxt_tok.value == "part":
+                    take()  # ref
+                    is_ref_part = True
+                    tok = peek()
+                # else fall through to unknown-ident handling
+
+            if tok and tok.kind == "ident" and tok.value == "part":
                 take()
                 is_def = False
                 if peek() and peek().value == "def":
@@ -361,44 +505,50 @@ class SubsetSysmlParser:
                     is_def = True
                 name = expect_ident()
                 if not name:
+                    pending_metadata_keywords = []
                     state.warnings.append(f"line {tok.line}: part without name")
                     skip_until_semicolon_or_brace()
                     continue
                 type_ref = None
                 is_specialization = False
-                multiplicity = None
-                # Optional multiplicity, e.g. part compute [0..*] : ComputeEngine;
-                if peek() and peek().value == "[":
-                    take()
-                    mult_parts: list[str] = []
-                    while peek() and peek().value != "]":
-                        mult_parts.append(peek().value)
-                        take()
-                    if peek() and peek().value == "]":
-                        take()
-                    multiplicity = "".join(mult_parts).strip() or None
+                multiplicity = read_multiplicity()
                 # Usage typing `part x : Type` or specialization `part def X :> Type`
                 if peek() and peek().value in {":", ":>"}:
                     op = peek().value
                     take()
                     if op == ":>":
                         is_specialization = True
-                    # optional ~
                     if peek() and peek().value == "~":
                         take()
-                    type_ref = expect_ident()
+                    type_ref = expect_qualified_name()
+                if multiplicity is None:
+                    multiplicity = read_multiplicity()
                 subset_target: str | None = None
                 redefine_target: str | None = None
+                # Usage `part x : T :> Other::x` → subsetting after type
+                if (
+                    not is_def
+                    and not is_specialization
+                    and peek()
+                    and peek().value == ":>"
+                ):
+                    take()
+                    subset_target = expect_qualified_name()
                 if peek() and peek().value == "subsets":
                     take()
-                    subset_target = expect_ident()
+                    subset_target = expect_qualified_name()
                 elif peek() and peek().value == "redefines":
                     take()
-                    redefine_target = expect_ident()
+                    redefine_target = expect_qualified_name()
                 elif peek() and peek().value == ":>>":
                     take()
-                    redefine_target = expect_ident()
+                    redefine_target = expect_qualified_name()
                 element_id = state.qualify(name)
+                # Bare `part x :> Other` on usage → subsetting (not specialization)
+                if (not is_def) and is_specialization and type_ref and not subset_target:
+                    subset_target = type_ref
+                    type_ref = None
+                    is_specialization = False
                 el = SemanticElement(
                     id=element_id,
                     kind=ArtifactKind.PART,
@@ -406,8 +556,11 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     multiplicity=multiplicity,
+                    is_reference=is_ref_part,
+                    metadata_keywords=list(pending_metadata_keywords),
                     file_id=file_id,
                 )
+                pending_metadata_keywords = []
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if is_def and is_specialization and type_ref:
@@ -416,7 +569,7 @@ class SubsetSysmlParser:
                         name,
                         type_ref,
                         tok.line,
-                        name=f"{name}_specializes_{type_ref}",
+                        name=f"{name}_specializes_{type_ref.replace('::', '_')}",
                         counter_attr="anon_dependency",
                         default_prefix="spec",
                     )
@@ -426,7 +579,7 @@ class SubsetSysmlParser:
                         name,
                         subset_target,
                         tok.line,
-                        name=f"{name}_subsets_{subset_target}",
+                        name=f"{name}_subsets_{subset_target.replace('::', '_')}",
                         counter_attr="anon_dependency",
                         default_prefix="subset",
                     )
@@ -436,7 +589,7 @@ class SubsetSysmlParser:
                         name,
                         redefine_target,
                         tok.line,
-                        name=f"{name}_redefines_{redefine_target}",
+                        name=f"{name}_redefines_{redefine_target.replace('::', '_')}",
                         counter_attr="anon_dependency",
                         default_prefix="redef",
                     )
@@ -548,48 +701,24 @@ class SubsetSysmlParser:
                 continue
 
             if tok.kind == "ident" and tok.value == "dependency":
-                line = tok.line
-                take()
-                dep_name: str | None = None
-                if peek() and peek().value != "from":
-                    dep_name = expect_ident()
-                if not (peek() and peek().value == "from"):
-                    state.warnings.append(f"line {line}: dependency missing 'from'")
-                    skip_until_semicolon_or_brace()
+                parse_dependency_statement([])
+                continue
+
+            if tok.value == "#":
+                pending_metadata_keywords = take_prefix_metadata_keywords()
+                if peek() and peek().kind == "ident" and peek().value == "dependency":
+                    parse_dependency_statement(pending_metadata_keywords)
+                    pending_metadata_keywords = []
                     continue
-                take()  # from
-                source_ref = read_endpoint()
-                if not source_ref:
-                    state.warnings.append(f"line {line}: dependency missing source")
-                    skip_until_semicolon_or_brace()
+                if peek_is_part_declaration():
+                    # Next loop iteration parses part / ref part with pending keywords.
                     continue
-                if not (peek() and peek().value == "to"):
-                    state.warnings.append(f"line {line}: dependency missing 'to'")
-                    skip_until_semicolon_or_brace()
-                    continue
-                take()  # to
-                targets: list[str] = []
-                while True:
-                    target_ref = read_endpoint()
-                    if target_ref:
-                        targets.append(target_ref)
-                    if peek() and peek().value == ",":
-                        take()
-                        continue
-                    break
-                if peek() and peek().value == ";":
-                    take()
-                for idx, target_ref in enumerate(targets):
-                    name = dep_name if len(targets) == 1 else f"{dep_name}_{idx + 1}" if dep_name else None
-                    add_relationship(
-                        ArtifactKind.DEPENDENCY,
-                        source_ref,
-                        target_ref,
-                        line,
-                        name=name,
-                        counter_attr="anon_dependency",
-                        default_prefix="dep",
-                    )
+                state.warnings.append(
+                    f"line {tok.line}: metadata prefix ignored "
+                    f"(only supported on dependency and part in alpha)"
+                )
+                pending_metadata_keywords = []
+                skip_until_semicolon_or_brace()
                 continue
 
             if tok.kind == "ident" and tok.value in {"allocate", "allocation"}:

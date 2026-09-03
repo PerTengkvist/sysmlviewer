@@ -74,24 +74,26 @@ def _emit_element(
         parent = semantic.get(el.parent_id) if el.parent_id else None
         nested = _structural_children(semantic, el)
         mult = f" [{el.multiplicity}]" if el.multiplicity else ""
+        meta = "".join(f"#{kw} " for kw in el.metadata_keywords)
+        ref = "ref " if el.is_reference else ""
         if el.type_ref:
             if nested:
-                lines.append(f"{pad}part {el.name}{mult} : {el.type_ref} {{")
+                lines.append(f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref} {{")
                 _emit_children(semantic, el, lines, indent + 1)
                 lines.append(f"{pad}}}")
             else:
-                lines.append(f"{pad}part {el.name}{mult} : {el.type_ref};")
+                lines.append(f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref};")
             return
         # Nested under a part without type → usage/composite part (not a def)
         if parent and parent.kind == ArtifactKind.PART:
             if nested:
-                lines.append(f"{pad}part {el.name} {{")
+                lines.append(f"{pad}{meta}{ref}part {el.name} {{")
                 _emit_children(semantic, el, lines, indent + 1)
                 lines.append(f"{pad}}}")
             else:
-                lines.append(f"{pad}part {el.name};")
+                lines.append(f"{pad}{meta}{ref}part {el.name};")
             return
-        lines.append(f"{pad}part def {el.name} {{")
+        lines.append(f"{pad}{meta}{ref}part def {el.name} {{")
         _emit_children(semantic, el, lines, indent + 1)
         lines.append(f"{pad}}}")
         return
@@ -128,7 +130,12 @@ def _emit_element(
         src = _endpoint_ref(semantic, el, el.source_id)
         tgt = _endpoint_ref(semantic, el, el.target_id)
         if src and tgt:
-            lines.append(f"{pad}dependency {el.name} from {src} to {tgt};")
+            prefix = "".join(f"#{kw} " for kw in el.metadata_keywords)
+            auto_name = bool(re.fullmatch(r"dep\d+", el.name or ""))
+            if auto_name:
+                lines.append(f"{pad}{prefix}dependency from {src} to {tgt};")
+            else:
+                lines.append(f"{pad}{prefix}dependency {el.name} from {src} to {tgt};")
         return
 
     if el.kind == ArtifactKind.ALLOCATION:

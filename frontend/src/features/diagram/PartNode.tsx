@@ -19,6 +19,7 @@ import type { PortSide, ElementStyle } from '../../api'
 import type { ViewMode } from '../../settings'
 import { nodeInlineStyle, resolveModeStyle } from './elementStyle'
 import { portLabelStyle as computePortLabelStyle } from './edgeRouting'
+import { clampPortOffset } from './layout/portPlacement'
 
 export type PartPort = {
   id: string
@@ -36,6 +37,10 @@ export type PartNodeData = {
   typeRef: string | null
   /** Part multiplicity, e.g. `0..*` from `part x [0..*] : Type` */
   multiplicity?: string | null
+  /** `ref part` — non-composite reference feature */
+  isReference?: boolean
+  /** Prefix metadata keywords from `#mystereotype part …` */
+  metadataKeywords?: string[] | null
   ports: PartPort[]
   menuItems: { viewId: string; name: string }[]
   /** Option/Alt held — port drag (move) mode */
@@ -49,6 +54,21 @@ export type PartNodeData = {
   viewMode?: ViewMode
   onOpenView?: (viewId: string) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
+  /** Live drag of a relation endpoint along this part's boundary. */
+  onRelationEndDrag?: (
+    artifactId: string,
+    end: 'source' | 'target',
+    side: PortSide,
+    offset: number,
+    persist?: boolean,
+  ) => void
+  /** Per-relation boundary attachments (dependency etc.). */
+  relationHandles?: {
+    id: string
+    type: 'source' | 'target'
+    side: PortSide
+    offset: number
+  }[]
 }
 
 function sideToPosition(side: PortSide): Position {
@@ -78,6 +98,16 @@ function offsetStyle(side: PortSide, offset: number): CSSProperties {
 
 function guillemets(text: string): string {
   return `«${text}»`
+}
+
+/** Kind compartment: metadata keywords replace default «part» / «package». */
+export function partStereotypeKeyword(d: {
+  kind: string
+  metadataKeywords?: string[] | null
+}): string {
+  const keywords = d.metadataKeywords || []
+  if (keywords.length > 0) return keywords.join(', ')
+  return d.kind === 'package' ? 'package' : 'part'
 }
 
 function typeShortTag(typeRef: string): string {
@@ -118,6 +148,16 @@ export function nearestBorderAnchor(
   return { side: 'bottom', offset: clamp(x / width, 0.05, 0.95) }
 }
 
+/** True when pointer is inside the node box (not merely clamped onto it). */
+export function pointerInsideNodeBox(
+  px: number,
+  py: number,
+  width: number,
+  height: number,
+): boolean {
+  return px >= 0 && px <= width && py >= 0 && py <= height
+}
+
 function portLabelStyle(side: PortSide, offset: number, outside = false): CSSProperties {
   return {
     color: 'var(--ink)',
@@ -133,7 +173,7 @@ export function PartNode({ data, selected }: NodeProps) {
   const draggingPortId = useRef<string | null>(null)
   const nodeId = useNodeId()
   const updateNodeInternals = useUpdateNodeInternals()
-  const keyword = d.kind === 'package' ? 'package' : 'part'
+  const keyword = partStereotypeKeyword(d)
   const typeTag = d.typeRef ? typeShortTag(d.typeRef) : null
   const moveMode = !!d.portMoveMode
 
@@ -142,6 +182,10 @@ export function PartNode({ data, selected }: NodeProps) {
       setLocalPorts(d.ports)
     }
   }, [d.ports])
+
+  useEffect(() => {
+    if (nodeId) updateNodeInternals(nodeId)
+  }, [d.relationHandles, nodeId, updateNodeInternals, moveMode])
 
   const updatePortFromPointer = useCallback((portId: string, clientX: number, clientY: number) => {
     const el = rootRef.current
@@ -153,12 +197,14 @@ export function PartNode({ data, selected }: NodeProps) {
       rect.width,
       rect.height,
     )
+    const offset = clampPortOffset(anchor.offset, anchor.side, rect.height)
+    const clamped = { side: anchor.side, offset }
     setLocalPorts((prev) =>
       prev.map((p) =>
-        p.id === portId ? { ...p, side: anchor.side, offset: anchor.offset } : p,
+        p.id === portId ? { ...p, side: clamped.side, offset: clamped.offset } : p,
       ),
     )
-    return anchor
+    return clamped
   }, [])
 
   const endPortDrag = useCallback(
@@ -214,7 +260,7 @@ export function PartNode({ data, selected }: NodeProps) {
   return (
     <div
       ref={rootRef}
-      className={`part-node kind-${d.kind}${selected ? ' selected' : ''}${moveMode ? ' port-move-mode' : ''}${d.isBoundary ? ' boundary' : ''}`}
+      className={`part-node kind-${d.kind}${selected ? ' selected' : ''}${moveMode ? ' port-move-mode' : ''}${d.isBoundary ? ' boundary' : ''}${d.isReference ? ' is-reference' : ''}`}
       style={nodeInlineStyle(d.formatStyle, d.viewMode || 'light', {
         isBoundary: d.isBoundary,
       })}
@@ -379,6 +425,75 @@ export function PartNode({ data, selected }: NodeProps) {
             zIndex: 0,
           }}
           isConnectable={false}
+        />
+      ))}
+      {(d.relationHandles || []).map((h) => (
+        <Handle
+          key={h.id}
+          id={h.id}
+          type={h.type}
+          position={sideToPosition(h.side)}
+          style={{
+            ...offsetStyle(h.side, h.offset),
+            width: moveMode ? 10 : 8,
+            height: moveMode ? 10 : 8,
+            opacity: moveMode ? 0.85 : 0,
+            background: moveMode ? 'var(--accent)' : 'transparent',
+            border: moveMode ? '1px solid #fff' : 'none',
+            pointerEvents: moveMode ? 'all' : 'none',
+            zIndex: moveMode ? 5 : 0,
+            cursor: moveMode ? 'move' : 'default',
+          }}
+          isConnectable={false}
+          className={moveMode ? 'relation-handle-move' : undefined}
+          onPointerDown={(e) => {
+            if (!moveMode) return
+            e.stopPropagation()
+            e.preventDefault()
+            const root = rootRef.current
+            if (!root) return
+            const end: 'source' | 'target' = h.type === 'source' ? 'source' : 'target'
+            // artifact id encoded in handle id: rel-src-{id} / rel-tgt-{id}
+            const prefix = h.type === 'source' ? 'rel-src-' : 'rel-tgt-'
+            const artifactId = h.id.startsWith(prefix) ? h.id.slice(prefix.length) : ''
+            if (!artifactId || !d.onRelationEndDrag) return
+            let last = { side: h.side, offset: h.offset }
+            const readAnchor = (ev: PointerEvent) => {
+              const rect = root.getBoundingClientRect()
+              const localX =
+                ((ev.clientX - rect.left) / rect.width) * root.offsetWidth
+              const localY =
+                ((ev.clientY - rect.top) / rect.height) * root.offsetHeight
+              const inside = pointerInsideNodeBox(
+                localX,
+                localY,
+                root.offsetWidth,
+                root.offsetHeight,
+              )
+              return {
+                ...nearestBorderAnchor(
+                  localX,
+                  localY,
+                  root.offsetWidth,
+                  root.offsetHeight,
+                ),
+                inside,
+              }
+            }
+            const onMove = (ev: PointerEvent) => {
+              const next = readAnchor(ev)
+              if (!next.inside) return
+              last = { side: next.side, offset: next.offset }
+              d.onRelationEndDrag?.(artifactId, end, last.side, last.offset, false)
+            }
+            const onUp = () => {
+              window.removeEventListener('pointermove', onMove)
+              window.removeEventListener('pointerup', onUp)
+              d.onRelationEndDrag?.(artifactId, end, last.side, last.offset, true)
+            }
+            window.addEventListener('pointermove', onMove)
+            window.addEventListener('pointerup', onUp)
+          }}
         />
       ))}
     </div>

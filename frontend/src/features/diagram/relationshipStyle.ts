@@ -17,7 +17,7 @@ type DefaultEdgeStyle = {
   lineStyle: LineStyle
   markerEnd?: EdgeMarker
   markerStart?: EdgeMarker
-  routing: 'angular' | 'direct'
+  routing: 'angular' | 'direct' | 'spline'
 }
 
 export const DEFAULT_RELATION_EDGE_STYLE: Record<string, DefaultEdgeStyle> = {
@@ -63,6 +63,23 @@ export function usesPortHandles(
   if (relationKind === 'connection') return true
   if (relationKind === 'flow') return sourceKind === 'port' && targetKind === 'port'
   return false
+}
+
+const AUTO_DEP_NAME = /^dep\d+$/
+
+/** Edge label: `«Mount»` (+ optional user name) when metadata keywords present. */
+export function relationEdgeLabel(el: {
+  name: string
+  metadataKeywords?: string[] | null
+}): string {
+  const keywords = el.metadataKeywords || []
+  if (keywords.length > 0) {
+    const stereo = `«${keywords.join(', ')}»`
+    const auto = AUTO_DEP_NAME.test(el.name)
+    if (!auto && el.name) return `${stereo}\n${el.name}`
+    return stereo
+  }
+  return el.name
 }
 
 /** Invisible source handles on each side of a PartNode (relation edges). */

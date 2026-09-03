@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "viewId": "ActionExample::BootFlowView",
+  "name": "BootFlowView",
+  "nodes": {
+    "ActionExample::BootFlow::reportFailure": {
+      "x": 328.0,
+      "y": 540.0,
+      "width": 140.0,
+      "height": 56.0
+    },
+    "ActionExample::BootFlow::ready": {
+      "x": 48.0,
+      "y": 540.0,
+      "width": 140.0,
+      "height": 56.0
+    },
+    "ActionExample::BootFlow::stop": {
+      "x": 48.0,
+      "y": 652.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "ActionExample::BootFlow::loadApplication": {
+      "x": 48.0,
+      "y": 132.0,
+      "width": 140.0,
+      "height": 56.0
+    },
+    "ActionExample::BootFlow::start": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "ActionExample::BootFlow::startupTests": {
+      "x": 48.0,
+      "y": 244.0,
+      "width": 140.0,
+      "height": 56.0
+    },
+    "ActionExample::BootFlow::testSuccessful": {
+      "x": 48.0,
+      "y": 380.0,
+      "width": 120.0,
+      "height": 80.0
+    }
+  },
+  "edges": {}
+}

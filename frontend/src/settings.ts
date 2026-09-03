@@ -1,12 +1,16 @@
 export type AppMode = 'viewer' | 'editor'
 export type ViewMode = 'light' | 'dark'
 
+export type StructureNotation = 'sysmlv2' | 'arcadia'
+
 export type AppSettings = {
   mode: AppMode
   viewMode: ViewMode
   showDiagramDetails: {
     attributes: boolean
     hierarchicalLevels: number
+    /** GeneralView structure presentation. */
+    structureNotation: StructureNotation
   }
   /** Selected connection highlight (GeneralView / structure). */
   selectedConnectionColor: string
@@ -28,6 +32,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showDiagramDetails: {
     attributes: false,
     hierarchicalLevels: 2,
+    structureNotation: 'sysmlv2',
   },
   selectedConnectionColor: '#2563eb',
   selectedConnectionLinewidth: 4,
@@ -56,6 +61,10 @@ export function loadSettings(): AppSettings {
           1,
           Number(parsed.showDiagramDetails?.hierarchicalLevels) || 2,
         ),
+        structureNotation:
+          parsed.showDiagramDetails?.structureNotation === 'arcadia'
+            ? 'arcadia'
+            : 'sysmlv2',
       },
       selectedConnectionColor:
         typeof parsed.selectedConnectionColor === 'string' &&

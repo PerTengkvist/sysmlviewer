@@ -1084,6 +1084,8 @@ body.port-dragging * {
   padding: 0 4px;
   border-radius: 2px;
   user-select: none;
+  white-space: pre-line;
+  text-align: center;
 }
 
 .edge-label.editable {
@@ -1127,6 +1129,10 @@ body.port-dragging * {
   background: transparent;
   border: 2px dashed var(--part-stroke);
   box-shadow: none;
+}
+
+.part-node.is-reference:not(.boundary) {
+  border-style: dashed;
 }
 
 .part-node.boundary .part-node-header {

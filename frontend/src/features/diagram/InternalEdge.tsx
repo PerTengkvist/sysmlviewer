@@ -23,6 +23,8 @@ import {
   type PathJump,
 } from './layout/connectionSeparation'
 import { boundaryFlowBounds } from './layout/connectionRouting'
+import { nearestBorderAnchor, pointerInsideNodeBox } from './PartNode'
+import { absoluteNodeOrigin } from './modes/structure/buildStructureGraph'
 
 export type SysmlEdgeData = {
   artifactId: string
@@ -46,6 +48,18 @@ export type SysmlEdgeData = {
   /** Select this connection (used by mid-path handles on direct/spline). */
   onSelect?: (artifactId: string) => void
   relationKind?: string
+  manualAttachment?: boolean
+  sourceOffset?: number
+  targetOffset?: number
+  markerStartKind?: string
+  onRelationEndMoved?: (
+    artifactId: string,
+    end: 'source' | 'target',
+    side: import('../../api').PortSide,
+    offset: number,
+    /** false while dragging; true on pointer-up (persist to server). */
+    persist?: boolean,
+  ) => void
 }
 
 const LOOSE_BOUNDS: FlowBounds = {
@@ -65,13 +79,17 @@ export function SysmlEdge({
   targetPosition,
   style,
   markerEnd,
+  markerStart,
   label,
   data,
   selected,
+  source,
+  target,
 }: EdgeProps) {
   const d = (data || {}) as SysmlEdgeData
   const routing = d.routing || 'angular'
   const altHeld = !!d.altHeld
+  const { screenToFlowPosition, getNode, getNodes } = useReactFlow()
   const strokeStyle = useMemo(() => {
     if (!selected) return style
     return {
@@ -94,7 +112,6 @@ export function SysmlEdge({
     liveBoundary?.maxX,
     liveBoundary?.maxY,
   ])
-  const { screenToFlowPosition } = useReactFlow()
 
   const [localWps, setLocalWps] = useState<Pt[]>(() => d.waypoints || [])
   const [labelOff, setLabelOff] = useState(() => ({
@@ -238,6 +255,8 @@ export function SysmlEdge({
           y: startOff.y + (flow.y - origin.y),
         }
         setLabelOff(next)
+        // Ignore clicks without a real drag — avoids accidental routing side-effects.
+        if (Math.hypot(next.x - startOff.x, next.y - startOff.y) < 2) return
         d.onLabelOffsetChange?.(d.artifactId || id, next)
       }
       window.addEventListener('pointermove', move)
@@ -345,8 +364,103 @@ export function SysmlEdge({
         path={path}
         style={strokeStyle}
         markerEnd={markerEnd}
+        markerStart={markerStart}
         interactionWidth={24}
       />
+      {altHeld && d.onRelationEndMoved && d.relationKind && d.relationKind !== 'connection' && (
+        <EdgeLabelRenderer>
+          {(['source', 'target'] as const).map((end) => {
+            const x = end === 'source' ? sourceX : targetX
+            const y = end === 'source' ? sourceY : targetY
+            const nodeId = end === 'source' ? source : target
+            return (
+              <div
+                key={end}
+                className="nodrag nopan edge-waypoint editable relation-end-grip"
+                style={{
+                  position: 'absolute',
+                  transform: `translate(-50%, -50%) translate(${x}px,${y}px)`,
+                  pointerEvents: 'all',
+                  cursor: 'move',
+                  zIndex: 1003,
+                }}
+                title="Option-drag along part boundary"
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  const node = getNode(nodeId)
+                  if (!node) return
+                  const width =
+                    Number(node.style?.width ?? node.width ?? node.measured?.width) ||
+                    180
+                  const height =
+                    Number(
+                      node.style?.height ?? node.height ?? node.measured?.height,
+                    ) || 110
+                  const readAnchor = (ev: PointerEvent) => {
+                    const flow = screenToFlowPosition({
+                      x: ev.clientX,
+                      y: ev.clientY,
+                    })
+                    // Nested whitebox parts use parent-relative position; walk to
+                    // absolute flow so the pointer maps onto the true boundary.
+                    const byId = new Map(getNodes().map((n) => [n.id, n]))
+                    const origin = absoluteNodeOrigin(node, byId)
+                    const localX = flow.x - origin.x
+                    const localY = flow.y - origin.y
+                    const inside = pointerInsideNodeBox(
+                      localX,
+                      localY,
+                      width,
+                      height,
+                    )
+                    return {
+                      ...nearestBorderAnchor(localX, localY, width, height),
+                      inside,
+                    }
+                  }
+                  let last = readAnchor(e.nativeEvent)
+                  d.onRelationEndMoved?.(
+                    d.artifactId,
+                    end,
+                    last.side,
+                    last.offset,
+                    false,
+                  )
+                  const onMove = (ev: PointerEvent) => {
+                    const next = readAnchor(ev)
+                    // Outside the box: freeze at last on-boundary preview
+                    // (avoids diagonal corner jumps).
+                    if (!next.inside) return
+                    last = next
+                    d.onRelationEndMoved?.(
+                      d.artifactId,
+                      end,
+                      last.side,
+                      last.offset,
+                      false,
+                    )
+                  }
+                  const onUp = () => {
+                    window.removeEventListener('pointermove', onMove)
+                    window.removeEventListener('pointerup', onUp)
+                    // Persist the displayed boundary point, not a re-sample outside.
+                    d.onRelationEndMoved?.(
+                      d.artifactId,
+                      end,
+                      last.side,
+                      last.offset,
+                      true,
+                    )
+                  }
+                  window.addEventListener('pointermove', onMove)
+                  window.addEventListener('pointerup', onUp)
+                }}
+              />
+            )
+          })}
+        </EdgeLabelRenderer>
+      )}
       {label != null && label !== '' && (
         <EdgeLabelRenderer>
           <>

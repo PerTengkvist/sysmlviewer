@@ -45,6 +45,79 @@ def test_default_edge_style_dependency():
     assert style.light.marker_end == "openArrow"
 
 
+def test_semantic_element_metadata_keywords_roundtrip():
+    el = SemanticElement(
+        id="P::dep1",
+        kind=ArtifactKind.DEPENDENCY,
+        name="dep1",
+        source_id="P::A",
+        target_id="P::B",
+        parent_id="P",
+        file_id="f1",
+        metadata_keywords=["Mount", "Refine"],
+    )
+    data = el.to_dict()
+    assert data["metadataKeywords"] == ["Mount", "Refine"]
+    restored = SemanticElement.from_dict(data)
+    assert restored.metadata_keywords == ["Mount", "Refine"]
+
+
+def test_serialize_dependency_with_metadata_keywords():
+    from adapters.parser.subset_serializer import serialize_file
+
+    semantic = {
+        "P": SemanticElement(id="P", kind=ArtifactKind.PACKAGE, name="P", file_id="f1"),
+        "P::A": SemanticElement(
+            id="P::A", kind=ArtifactKind.PART, name="A", parent_id="P", file_id="f1"
+        ),
+        "P::B": SemanticElement(
+            id="P::B", kind=ArtifactKind.PART, name="B", parent_id="P", file_id="f1"
+        ),
+        "P::dep1": SemanticElement(
+            id="P::dep1",
+            kind=ArtifactKind.DEPENDENCY,
+            name="dep1",
+            parent_id="P",
+            source_id="P::A",
+            target_id="P::B",
+            file_id="f1",
+            metadata_keywords=["Mount"],
+        ),
+    }
+    # Wire children for serializer tree walk
+    semantic["P"].children = ["P::A", "P::B", "P::dep1"]
+    text = serialize_file(semantic, "f1")
+    assert "#Mount dependency from A to B;" in text
+    assert "dependency dep1" not in text
+
+
+def test_serialize_named_dependency_with_metadata_keywords():
+    from adapters.parser.subset_serializer import serialize_file
+
+    semantic = {
+        "P": SemanticElement(id="P", kind=ArtifactKind.PACKAGE, name="P", file_id="f1"),
+        "P::A": SemanticElement(
+            id="P::A", kind=ArtifactKind.PART, name="A", parent_id="P", file_id="f1"
+        ),
+        "P::B": SemanticElement(
+            id="P::B", kind=ArtifactKind.PART, name="B", parent_id="P", file_id="f1"
+        ),
+        "P::use": SemanticElement(
+            id="P::use",
+            kind=ArtifactKind.DEPENDENCY,
+            name="use",
+            parent_id="P",
+            source_id="P::A",
+            target_id="P::B",
+            file_id="f1",
+            metadata_keywords=["Mount"],
+        ),
+    }
+    semantic["P"].children = ["P::A", "P::B", "P::use"]
+    text = serialize_file(semantic, "f1")
+    assert "#Mount dependency use from A to B;" in text
+
+
 def test_default_edge_style_connection():
     style = get_default_edge_style(ArtifactKind.CONNECTION)
     assert style.light is not None

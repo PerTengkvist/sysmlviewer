@@ -2,6 +2,10 @@ import type { CSSProperties } from 'react'
 import { MarkerType } from '@xyflow/react'
 import type { ElementStyle, ElementStyleMode } from '../../api'
 import type { ViewMode } from '../../settings'
+import {
+  FILLED_DIAMOND_MARKER_ID,
+  HOLLOW_DIAMOND_MARKER_ID,
+} from './EdgeMarkerDefs'
 import { strokeDasharray } from './relationshipStyle'
 
 export const STYLE_DEFAULTS: Record<
@@ -74,10 +78,23 @@ export function edgeStrokeStyle(
   }
 }
 
+export type ReactFlowMarker =
+  | string
+  | {
+      type: MarkerType
+      width: number
+      height: number
+      color?: string
+    }
+
+/** Map SysML edge markers to React Flow markers (custom SVG ids for diamonds). */
 export function reactFlowMarker(
   marker: string | null | undefined,
-): { type: MarkerType; width: number; height: number; color?: string } | undefined {
+): ReactFlowMarker | undefined {
   if (!marker || marker === 'none') return undefined
+  // Real diamond glyphs via EdgeMarkerDefs — RF Arrow/ArrowClosed are triangles.
+  if (marker === 'hollowDiamond') return HOLLOW_DIAMOND_MARKER_ID
+  if (marker === 'filledDiamond') return FILLED_DIAMOND_MARKER_ID
   if (marker === 'openArrow' || marker === 'hollowTriangle') {
     return { type: MarkerType.Arrow, width: 16, height: 16 }
   }

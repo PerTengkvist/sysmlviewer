@@ -4,6 +4,7 @@ import {
   DEFAULT_RELATION_EDGE_STYLE,
   mergedEdgeVisual,
   pickRelationBoundarySides,
+  relationEdgeLabel,
   strokeDasharray,
 } from '../../relationshipStyle'
 
@@ -44,6 +45,19 @@ describe('relationshipStyle', () => {
         { x: 0, y: 200, width: 100, height: 80 },
       ),
     ).toEqual({ sourceSide: 'bottom', targetSide: 'top' })
+  })
+
+  it('relationEdgeLabel uses guillemets for metadata keywords', () => {
+    expect(
+      relationEdgeLabel({ name: 'dep1', metadataKeywords: ['Mount'] }),
+    ).toBe('«Mount»')
+    expect(
+      relationEdgeLabel({ name: 'dep1', metadataKeywords: ['Mount', 'Refine'] }),
+    ).toBe('«Mount, Refine»')
+    expect(
+      relationEdgeLabel({ name: 'use', metadataKeywords: ['Mount'] }),
+    ).toBe('«Mount»\nuse')
+    expect(relationEdgeLabel({ name: 'uses' })).toBe('uses')
   })
 })
 
@@ -159,11 +173,117 @@ describe('buildStructureGraph relationships', () => {
 
     const dep = edges.find((e) => e.id === 'P::System::dep1')
     expect(dep).toBeDefined()
-    expect(dep?.sourceHandle).toBe('rel-out-right')
-    expect(dep?.targetHandle).toBe('rel-in-left')
+    expect(dep?.sourceHandle).toBe('rel-src-P::System::dep1')
+    expect(dep?.targetHandle).toBe('rel-tgt-P::System::dep1')
     expect(dep?.data?.relationKind).toBe('dependency')
     expect(dep?.style?.strokeDasharray).toBe('8 4')
     expect(dep?.markerEnd).toBeTruthy()
+    expect(dep?.label).toBe('uses')
+  })
+
+  it('labels dependency edges with «keyword» from metadataKeywords', async () => {
+    const { buildStructureGraph } = await import('./buildStructureGraph')
+    const semantic: Record<string, SemanticElement> = {
+      'P::System': {
+        id: 'P::System',
+        kind: 'part',
+        name: 'System',
+        parentId: 'P',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: ['P::System::logical', 'P::System::physical', 'P::System::dep1'],
+        fileId: 'f1',
+      },
+      'P::System::logical': {
+        id: 'P::System::logical',
+        kind: 'part',
+        name: 'logical',
+        parentId: 'P::System',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f1',
+      },
+      'P::System::physical': {
+        id: 'P::System::physical',
+        kind: 'part',
+        name: 'physical',
+        parentId: 'P::System',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f1',
+      },
+      'P::System::dep1': {
+        id: 'P::System::dep1',
+        kind: 'dependency',
+        name: 'dep1',
+        parentId: 'P::System',
+        typeRef: null,
+        sourceId: 'P::System::logical',
+        targetId: 'P::System::physical',
+        metadataKeywords: ['Mount'],
+        children: [],
+        fileId: 'f1',
+      },
+    }
+
+    const view: ViewPayload = {
+      view: {
+        id: 'v',
+        name: 'V',
+        rootArtifactId: 'P::System',
+        parentViewId: null,
+        typeRef: 'GeneralView',
+      },
+      diagramMode: 'whitebox',
+      hierarchicalLevels: 2,
+      semantic,
+      visualization: {
+        nodes: {
+          'P::System::logical': {
+            artifactId: 'P::System::logical',
+            x: 40,
+            y: 60,
+            width: 160,
+            height: 90,
+            symbolRef: 'part',
+            side: null,
+            offset: null,
+          },
+          'P::System::physical': {
+            artifactId: 'P::System::physical',
+            x: 260,
+            y: 60,
+            width: 160,
+            height: 90,
+            symbolRef: 'part',
+            side: null,
+            offset: null,
+          },
+        },
+        edges: {},
+      },
+      subdiagrams: [],
+      menus: {},
+    }
+
+    const { edges } = buildStructureGraph({
+      view,
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+    })
+
+    const dep = edges.find((e) => e.id === 'P::System::dep1')
+    expect(dep?.label).toBe('«Mount»')
   })
 
   it('keeps port handles for connection edges', async () => {

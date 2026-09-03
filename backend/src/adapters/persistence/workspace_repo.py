@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -224,9 +226,17 @@ class WorkspaceProjectRepository:
         view_id: str,
         name: str | None,
         layout: ViewLayout,
+        *,
+        structure_notation: str = "sysmlv2",
     ) -> Path:
         """Persist a single view overlay file without rewriting state.json."""
-        return view_file_store.write_one(self.root, view_id, name, layout)
+        return view_file_store.write_one(
+            self.root,
+            view_id,
+            name,
+            layout,
+            structure_notation=structure_notation,
+        )
 
     def save(self, project: Project) -> Project:
         """Persist project.json + state.json only (no viewLayouts blob).
@@ -285,15 +295,34 @@ class WorkspaceProjectRepository:
             "views": [v.to_dict() for v in project.views],
             "sheet": sheet,
         }
-        self._manifest_path().write_text(
-            json.dumps(manifest, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        self._state_path().write_text(
-            json.dumps(state, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        self._atomic_write_json(self._manifest_path(), manifest)
+        self._atomic_write_json(self._state_path(), state)
         return project
+
+    @staticmethod
+    def _atomic_write_json(path: Path, data: dict[str, Any]) -> None:
+        """Write JSON via unique temp + replace (safe under concurrent PATCH).
+
+        A fixed ``path.tmp`` name races: two writers replace the same temp and the
+        loser hits FileNotFoundError on replace (500 Internal Server Error).
+        """
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+        )
+        tmp = Path(tmp_name)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(text)
+                handle.flush()
+                os.fsync(handle.fileno())
+            tmp.replace(path)
+        except Exception:
+            tmp.unlink(missing_ok=True)
+            raise
 
     def delete(self, project_id: str) -> bool:
         project = self.get(project_id)

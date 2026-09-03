@@ -4,6 +4,11 @@ import type { ViewMode } from '../../../../settings'
 import { edgeStrokeStyle, nodeInlineStyle } from '../../elementStyle'
 import type { PartNodeData } from '../../PartNode'
 import { findOwnerPart } from '../structure/buildStructureGraph'
+import {
+  clampPortOffset,
+  hasSavedPortPlacement,
+  packBodyOffsets,
+} from '../../layout/portPlacement'
 
 const LOGICAL_X = 80
 const PHYSICAL_X = 520
@@ -33,21 +38,37 @@ function buildPorts(
   semantic: Record<string, SemanticElement>,
   visualization: ViewPayload['visualization'],
 ) {
-  return (el.children || [])
+  const partH = Number(visualization.nodes[el.id]?.height) || NODE_HEIGHT
+  const portEls = (el.children || [])
     .map((cid) => semantic[cid])
     .filter((c): c is SemanticElement => !!c && c.kind === 'port')
-    .map((port, idx) => {
-      const pv = visualization.nodes[port.id]
-      const defaultSide: PortSide =
-        el.parentId && semantic[el.parentId]?.name === 'logical' ? 'right' : 'left'
+  const unsaved = portEls.filter(
+    (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
+  )
+  const packed = packBodyOffsets(unsaved.length, partH)
+  let ui = 0
+  const defaultSide: PortSide =
+    el.parentId && semantic[el.parentId]?.name === 'logical' ? 'right' : 'left'
+  return portEls.map((port, idx) => {
+    const pv = visualization.nodes[port.id]
+    if (!hasSavedPortPlacement(pv)) {
       return {
         id: port.id,
         name: port.name,
-        side: (pv?.side || defaultSide || (idx % 2 === 0 ? 'left' : 'right')) as PortSide,
-        offset: pv?.offset ?? 0.3 + idx * 0.12,
+        side: defaultSide || ((idx % 2 === 0 ? 'left' : 'right') as PortSide),
+        offset: packed[ui++] ?? 0.7,
         style: pv?.style,
       }
-    })
+    }
+    const side = (pv!.side || defaultSide) as PortSide
+    return {
+      id: port.id,
+      name: port.name,
+      side,
+      offset: clampPortOffset(Number(pv!.offset), side, partH),
+      style: pv?.style,
+    }
+  })
 }
 
 export function buildAllocationGraph(opts: AllocationBuildOpts): {
@@ -104,6 +125,7 @@ export function buildAllocationGraph(opts: AllocationBuildOpts): {
     artifactId: id,
     kind: el.kind,
     typeRef: el.typeRef,
+    metadataKeywords: el.metadataKeywords || [],
     ports: buildPorts(el, semantic, visualization),
     menuItems: menus[id] || [],
     portMoveMode,

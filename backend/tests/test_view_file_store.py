@@ -38,6 +38,12 @@ def test_view_filename_from_unique_name():
     assert safe_view_filename(
         "Pkg::BoxView", "BoxView", existing_names=set()
     ) == "BoxView.json"
+    assert safe_view_filename(
+        "Pkg::BoxView",
+        "BoxView",
+        existing_names=set(),
+        notation="arcadia",
+    ) == "BoxView.arcadia.json"
 
 
 def test_view_filename_disambiguates_duplicate_names():
@@ -204,3 +210,45 @@ def test_get_view_merges_per_view_file_overlay(tmp_path: Path):
     node = loaded["visualization"]["nodes"][box_id]
     assert node["x"] == 5.0
     assert node["width"] == 160.0
+
+
+def test_arcadia_notation_writes_sibling_layout_file(tmp_path: Path):
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post(api_url("/projects"), json={"name": "Arc"}).json()["id"]
+    add_content_file(client, project_id, tmp_path, "s.sysml", SAMPLE)
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    view_id = next(v["id"] for v in project["views"] if v["name"] == "BoxView")
+    box_id = "Sample::Box"
+
+    client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": view_id,
+            "structureNotation": "sysmlv2",
+            "nodes": {box_id: {"x": 10, "y": 10, "width": 100, "height": 50}},
+        },
+    )
+    client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": view_id,
+            "structureNotation": "arcadia",
+            "nodes": {box_id: {"x": 200, "y": 40, "width": 120, "height": 60}},
+        },
+    )
+
+    v2 = json.loads((tmp_path / "views" / "BoxView.json").read_text())
+    arc = json.loads((tmp_path / "views" / "BoxView.arcadia.json").read_text())
+    assert v2["nodes"][box_id]["x"] == 10
+    assert arc["nodes"][box_id]["x"] == 200
+    assert arc["structureNotation"] == "arcadia"
+
+    loaded_v2 = client.get(
+        api_url(f"/projects/{project_id}/views/{view_id}?notation=sysmlv2")
+    ).json()
+    loaded_arc = client.get(
+        api_url(f"/projects/{project_id}/views/{view_id}?notation=arcadia")
+    ).json()
+    assert loaded_v2["visualization"]["nodes"][box_id]["x"] == 10
+    assert loaded_arc["visualization"]["nodes"][box_id]["x"] == 200

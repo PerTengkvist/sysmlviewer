@@ -59,12 +59,16 @@ class ViewNodeLayout:
 
 @dataclass
 class ViewEdgeLayout:
-    """Per-view connection geometry — routing, waypoints, label offset."""
+    """Per-view connection geometry — routing, waypoints, label offset, attachment."""
 
     routing: str | None = None
     waypoints: list[Waypoint] | None = None
     label_offset_x: float | None = None
     label_offset_y: float | None = None
+    source_side: str | None = None
+    source_offset: float | None = None
+    target_side: str | None = None
+    target_offset: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -77,6 +81,14 @@ class ViewEdgeLayout:
                 "x": self.label_offset_x if self.label_offset_x is not None else 0.0,
                 "y": self.label_offset_y if self.label_offset_y is not None else 0.0,
             }
+        if self.source_side is not None:
+            out["sourceSide"] = self.source_side
+        if self.source_offset is not None:
+            out["sourceOffset"] = self.source_offset
+        if self.target_side is not None:
+            out["targetSide"] = self.target_side
+        if self.target_offset is not None:
+            out["targetOffset"] = self.target_offset
         return out
 
     @classmethod
@@ -94,6 +106,18 @@ class ViewEdgeLayout:
             ),
             label_offset_x=float(lo["x"]) if lo.get("x") is not None else None,
             label_offset_y=float(lo["y"]) if lo.get("y") is not None else None,
+            source_side=data.get("sourceSide"),
+            source_offset=(
+                float(data["sourceOffset"])
+                if data.get("sourceOffset") is not None
+                else None
+            ),
+            target_side=data.get("targetSide"),
+            target_offset=(
+                float(data["targetOffset"])
+                if data.get("targetOffset") is not None
+                else None
+            ),
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewEdgeLayout:
@@ -101,6 +125,10 @@ class ViewEdgeLayout:
         waypoints = self.waypoints
         label_offset_x = self.label_offset_x
         label_offset_y = self.label_offset_y
+        source_side = self.source_side
+        source_offset = self.source_offset
+        target_side = self.target_side
+        target_offset = self.target_offset
         if "routing" in patch and patch["routing"]:
             routing = str(patch["routing"])
         if "waypoints" in patch:
@@ -109,11 +137,23 @@ class ViewEdgeLayout:
             lo = patch["labelOffset"] or {}
             label_offset_x = float(lo.get("x", 0) or 0)
             label_offset_y = float(lo.get("y", 0) or 0)
+        if "sourceSide" in patch and patch["sourceSide"]:
+            source_side = str(patch["sourceSide"])
+        if "sourceOffset" in patch and patch["sourceOffset"] is not None:
+            source_offset = float(patch["sourceOffset"])
+        if "targetSide" in patch and patch["targetSide"]:
+            target_side = str(patch["targetSide"])
+        if "targetOffset" in patch and patch["targetOffset"] is not None:
+            target_offset = float(patch["targetOffset"])
         return ViewEdgeLayout(
             routing=routing,
             waypoints=waypoints,
             label_offset_x=label_offset_x,
             label_offset_y=label_offset_y,
+            source_side=source_side,
+            source_offset=source_offset,
+            target_side=target_side,
+            target_offset=target_offset,
         )
 
 
@@ -214,6 +254,14 @@ def resolve_view_edge(
         if overlay.label_offset_y is not None:
             lo["y"] = overlay.label_offset_y
         out["labelOffset"] = lo
+    if overlay.source_side is not None:
+        out["sourceSide"] = overlay.source_side
+    if overlay.source_offset is not None:
+        out["sourceOffset"] = overlay.source_offset
+    if overlay.target_side is not None:
+        out["targetSide"] = overlay.target_side
+    if overlay.target_offset is not None:
+        out["targetOffset"] = overlay.target_offset
     return out
 
 

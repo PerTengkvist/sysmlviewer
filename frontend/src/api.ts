@@ -41,12 +41,23 @@ export interface SemanticElement {
   exposeRef?: string | null
   defaultValue?: string | null
   multiplicity?: string | null
+  /** True for `ref part` (non-composite reference feature). */
+  isReference?: boolean | null
+  /** Prefix metadata keywords from `#Mount dependency …`. */
+  metadataKeywords?: string[] | null
   children: string[]
   fileId: string | null
 }
 
 export type LineStyle = 'solid' | 'dashed' | 'dotted'
-export type EdgeMarker = 'arrow' | 'openArrow' | 'triangle' | 'hollowTriangle' | 'none'
+export type EdgeMarker =
+  | 'arrow'
+  | 'openArrow'
+  | 'triangle'
+  | 'hollowTriangle'
+  | 'hollowDiamond'
+  | 'filledDiamond'
+  | 'none'
 
 export interface ElementStyleMode {
   backgroundColor?: string | null
@@ -88,6 +99,10 @@ export interface VisualizationEdge {
   waypoints: Waypoint[]
   labelOffset?: { x: number; y: number } | null
   style?: ElementStyle | null
+  sourceSide?: PortSide | null
+  sourceOffset?: number | null
+  targetSide?: PortSide | null
+  targetOffset?: number | null
 }
 
 export interface SysmlFile {
@@ -280,6 +295,7 @@ export const api = {
       nodes?: Record<string, Partial<VisualizationNode>>
       edges?: Record<string, Partial<VisualizationEdge>>
       viewId?: string
+      structureNotation?: 'sysmlv2' | 'arcadia'
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {
@@ -287,9 +303,14 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     }),
-  getView: (projectId: string, viewId: string, levels = 2) =>
+  getView: (
+    projectId: string,
+    viewId: string,
+    levels = 2,
+    structureNotation: 'sysmlv2' | 'arcadia' = 'sysmlv2',
+  ) =>
     request<ViewPayload>(
-      `/projects/${projectId}/views/${encodeURIComponent(viewId)}?levels=${levels}`,
+      `/projects/${projectId}/views/${encodeURIComponent(viewId)}?levels=${levels}&notation=${structureNotation}`,
     ),
   exportView: (projectId: string, viewId: string, path?: string) =>
     request<{ path: string | null }>(

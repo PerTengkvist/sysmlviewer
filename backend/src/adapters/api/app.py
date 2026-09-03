@@ -50,6 +50,7 @@ class VisualizationPatch(BaseModel):
     nodes: dict[str, Any] | None = None
     edges: dict[str, Any] | None = None
     viewId: str | None = None
+    structureNotation: str | None = None
 
 
 class AddConnectionBody(BaseModel):
@@ -492,9 +493,17 @@ def create_api_app(
 
     @app.get("/projects/{project_id}/views/{view_id:path}")
     def get_view(
-        project_id: str, view_id: str, levels: int = 2
+        project_id: str,
+        view_id: str,
+        levels: int = 2,
+        notation: str = "sysmlv2",
     ) -> dict:
-        view = _service().get_view(project_id, view_id, hierarchical_levels=levels)
+        view = _service().get_view(
+            project_id,
+            view_id,
+            hierarchical_levels=levels,
+            structure_notation=notation,
+        )
         if not view:
             raise HTTPException(status_code=404, detail="View not found")
         return view

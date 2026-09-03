@@ -683,19 +683,42 @@ class ProjectService:
         if not project:
             return None
 
-        from domain.view_layouts import apply_view_layout_edge_patch, apply_view_layout_patch
+        from domain.view_layouts import (
+            ViewLayout,
+            ViewLayouts,
+            apply_view_layout_edge_patch,
+            apply_view_layout_patch,
+        )
+        from adapters.persistence import view_file_store
 
         view_id = patch.get("viewId")
+        notation = view_file_store.normalize_notation(
+            patch.get("structureNotation")
+        )
         nodes_patch = dict(patch.get("nodes") or {})
         edges_patch = dict(patch.get("edges") or {})
+        # True when the only disk write needed is views/<name>.json (already done).
+        layout_only = False
 
         if view_id:
+            # Load notation-specific overlay (Arcadia falls back to SysML v2).
+            root = getattr(self.repo, "root", None)
+            if root is not None:
+                loaded = view_file_store.read_for_view(
+                    root, view_id, structure_notation=notation
+                )
+                by_view = dict(project.view_layouts.by_view)
+                by_view[view_id] = loaded or by_view.get(view_id) or ViewLayout()
+                project.view_layouts = ViewLayouts(by_view=by_view)
+
             geo_patch: dict[str, dict] = {}
             other_patch: dict[str, dict] = {}
             for artifact_id, node_data in nodes_patch.items():
                 geo: dict = {}
                 other: dict = {}
                 for key, value in node_data.items():
+                    if key == "artifactId":
+                        continue
                     if key in ("x", "y", "width", "height"):
                         geo[key] = value
                     else:
@@ -716,7 +739,17 @@ class ProjectService:
                 geo_e: dict = {}
                 other_e: dict = {}
                 for key, value in edge_data.items():
-                    if key in ("routing", "waypoints", "labelOffset"):
+                    if key == "artifactId":
+                        continue
+                    if key in (
+                        "routing",
+                        "waypoints",
+                        "labelOffset",
+                        "sourceSide",
+                        "sourceOffset",
+                        "targetSide",
+                        "targetOffset",
+                    ):
                         geo_e[key] = value
                     else:
                         other_e[key] = value
@@ -739,7 +772,15 @@ class ProjectService:
                     )
                     save_fn = getattr(self.repo, "save_view_layout", None)
                     if save_fn is not None:
-                        save_fn(view_id, view_name, layout)
+                        save_fn(
+                            view_id,
+                            view_name,
+                            layout,
+                            structure_notation=notation,
+                        )
+                # Relation-end / node moves with viewId only touch view files.
+                # Skip rewriting project.json+state.json (avoids PATCH races).
+                layout_only = not nodes_patch and not edges_patch
 
         for artifact_id, node_data in nodes_patch.items():
             existing = project.visualization.nodes.get(artifact_id)
@@ -780,6 +821,14 @@ class ProjectService:
                     lo = edge_data["labelOffset"] or {}
                     existing.label_offset_x = float(lo.get("x", 0) or 0)
                     existing.label_offset_y = float(lo.get("y", 0) or 0)
+                if "sourceSide" in edge_data and edge_data["sourceSide"]:
+                    existing.source_side = PortSide(edge_data["sourceSide"])
+                if "sourceOffset" in edge_data and edge_data["sourceOffset"] is not None:
+                    existing.source_offset = float(edge_data["sourceOffset"])
+                if "targetSide" in edge_data and edge_data["targetSide"]:
+                    existing.target_side = PortSide(edge_data["targetSide"])
+                if "targetOffset" in edge_data and edge_data["targetOffset"] is not None:
+                    existing.target_offset = float(edge_data["targetOffset"])
                 if "style" in edge_data and edge_data["style"] is not None:
                     if existing.style is None:
                         existing.style = ElementStyle()
@@ -790,6 +839,8 @@ class ProjectService:
                 )
 
         project.updated_at = utc_now()
+        if layout_only:
+            return project
         return self.repo.save(project)
 
     def export_view(
@@ -855,12 +906,30 @@ class ProjectService:
         return str(target)
 
     def get_view(
-        self, project_id: str, view_id: str, hierarchical_levels: int = 2
+        self,
+        project_id: str,
+        view_id: str,
+        hierarchical_levels: int = 2,
+        *,
+        structure_notation: str = "sysmlv2",
     ) -> dict | None:
         project = self.get_project(project_id)
         if not project:
             return None
 
+        from adapters.persistence import view_file_store
+        from domain.view_layouts import ViewLayouts
+
+        notation = view_file_store.normalize_notation(structure_notation)
+        root = getattr(self.repo, "root", None)
+        if root is not None:
+            loaded = view_file_store.read_for_view(
+                root, view_id, structure_notation=notation
+            )
+            if loaded is not None:
+                by_view = dict(project.view_layouts.by_view)
+                by_view[view_id] = loaded
+                project.view_layouts = ViewLayouts(by_view=by_view)
         from domain.details import collect_artifacts_to_depth
         from domain.diagram_mode import expected_root_kinds, resolve_diagram_mode
         from domain.merge import artifact_diagram_view_id
@@ -884,7 +953,10 @@ class ProjectService:
                 general_views.sort(key=lambda e: e.id)
                 if general_views:
                     return self.get_view(
-                        project_id, general_views[0].id, hierarchical_levels
+                        project_id,
+                        general_views[0].id,
+                        hierarchical_levels,
+                        structure_notation=notation,
                     )
                 view = ViewDef(
                     id=artifact_diagram_view_id(artifact_id),
@@ -1029,16 +1101,71 @@ class ProjectService:
                 if overlay is None or overlay.height is None:
                     resolved["height"] = DEFAULT_TREE_HEIGHT
             nodes[aid] = resolved
-        edges = {}
-        for aid in artifact_ids:
-            global_edge = project.visualization.edges.get(aid)
-            if not global_edge:
+
+        # Edges: include structure relations between view members + per-view overlays
+        # even when the relation id itself is outside the depth-limited artifact set.
+        structure_edge_kinds = {
+            ArtifactKind.CONNECTION,
+            ArtifactKind.DEPENDENCY,
+            ArtifactKind.ALLOCATION,
+            ArtifactKind.BINDING,
+            ArtifactKind.FLOW,
+            ArtifactKind.SPECIALIZATION,
+            ArtifactKind.SUBSETTING,
+            ArtifactKind.REDEFINITION,
+        }
+        edge_ids = set(artifact_ids)
+        for eid, el in project.semantic.items():
+            if el.kind not in structure_edge_kinds:
                 continue
+            src, tgt = el.source_id, el.target_id
+            if src and tgt and src in artifact_ids and tgt in artifact_ids:
+                edge_ids.add(eid)
+        if project.view_layouts is not None:
+            layout = project.view_layouts.by_view.get(view.id)
+            if layout is not None:
+                edge_ids.update(layout.edges.keys())
+
+        edges = {}
+        for aid in edge_ids:
+            global_edge = project.visualization.edges.get(aid)
             edge_overlay = (
                 project.view_layouts.get_edge(view.id, aid)
                 if project.view_layouts is not None
                 else None
             )
+            if not global_edge and edge_overlay is None:
+                continue
+            if not global_edge:
+                # Structure relations (dependency etc.) often have no global viz
+                # row — still surface per-view routing/attachment overlays.
+                out: dict = {
+                    "artifactId": aid,
+                    "waypoints": [],
+                    "labelOffset": {"x": 0, "y": 0},
+                }
+                if edge_overlay.routing is not None:
+                    out["routing"] = edge_overlay.routing
+                if edge_overlay.waypoints is not None:
+                    out["waypoints"] = [w.to_dict() for w in edge_overlay.waypoints]
+                if (
+                    edge_overlay.label_offset_x is not None
+                    or edge_overlay.label_offset_y is not None
+                ):
+                    out["labelOffset"] = {
+                        "x": edge_overlay.label_offset_x or 0,
+                        "y": edge_overlay.label_offset_y or 0,
+                    }
+                if edge_overlay.source_side is not None:
+                    out["sourceSide"] = edge_overlay.source_side
+                if edge_overlay.source_offset is not None:
+                    out["sourceOffset"] = edge_overlay.source_offset
+                if edge_overlay.target_side is not None:
+                    out["targetSide"] = edge_overlay.target_side
+                if edge_overlay.target_offset is not None:
+                    out["targetOffset"] = edge_overlay.target_offset
+                edges[aid] = out
+                continue
             resolved_edge = resolve_view_edge(global_edge, edge_overlay)
             if diagram_mode == "allocation":
                 conn = project.semantic.get(aid)

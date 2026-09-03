@@ -27,6 +27,44 @@ DEFAULT_LIFELINE_HEIGHT = 48.0
 DEFAULT_TREE_WIDTH = 160.0
 DEFAULT_TREE_HEIGHT = 40.0
 
+# Keep default L/R ports in the part body (below header), not over title text.
+PORT_BODY_OFFSET_MIN = 0.45
+PORT_BODY_OFFSET_MAX = 0.92
+PORT_CHAR_W = 7.2
+PORT_ROW_PX = 22.0
+PART_HEADER_PX = 48.0
+PART_PAD_X = 20.0
+PART_PAD_BOTTOM = 14.0
+
+
+def _pack_body_offsets(count: int) -> list[float]:
+    if count <= 0:
+        return []
+    lo = PORT_BODY_OFFSET_MIN
+    hi = PORT_BODY_OFFSET_MAX
+    if count == 1:
+        return [(lo + hi) / 2.0]
+    return [lo + (i + 0.5) / count * (hi - lo) for i in range(count)]
+
+
+def _estimate_part_size_for_ports(
+    part_name: str,
+    ports: list[tuple[str, PortSide]],
+) -> tuple[float, float]:
+    left_names = [n for n, s in ports if s == PortSide.LEFT]
+    right_names = [n for n, s in ports if s == PortSide.RIGHT]
+    left_w = max((len(n) * PORT_CHAR_W for n in left_names), default=0.0)
+    right_w = max((len(n) * PORT_CHAR_W for n in right_names), default=0.0)
+    title_w = max(24.0, len(part_name) * 8.0) + 36.0
+    width = max(DEFAULT_PART_WIDTH, title_w, PART_PAD_X * 2 + left_w + right_w + 10.0)
+    rows = max(len(left_names), len(right_names), 1)
+    height = max(
+        DEFAULT_PART_HEIGHT,
+        PART_HEADER_PX + rows * PORT_ROW_PX + PART_PAD_BOTTOM,
+    )
+    return width, height
+
+
 EDGE_KINDS = {
     ArtifactKind.CONNECTION,
     ArtifactKind.DEPENDENCY,
@@ -120,7 +158,13 @@ NODE_KINDS = {
 }
 
 
-def _default_node(element: SemanticElement, index: int) -> VisualizationNode:
+def _default_node(
+    element: SemanticElement,
+    index: int,
+    *,
+    port_side: PortSide | None = None,
+    port_offset: float | None = None,
+) -> VisualizationNode:
     col = index % 3
     row = index // 3
     x = 80.0 + col * 280.0
@@ -134,8 +178,12 @@ def _default_node(element: SemanticElement, index: int) -> VisualizationNode:
             width=12,
             height=12,
             symbol_ref="default-port",
-            side=PortSide.RIGHT if index % 2 == 0 else PortSide.LEFT,
-            offset=0.3 + (index % 5) * 0.1,
+            side=port_side
+            if port_side is not None
+            else (PortSide.RIGHT if index % 2 == 0 else PortSide.LEFT),
+            offset=port_offset
+            if port_offset is not None
+            else (PORT_BODY_OFFSET_MIN + PORT_BODY_OFFSET_MAX) / 2.0,
         )
     if element.kind == ArtifactKind.PACKAGE:
         return VisualizationNode(
@@ -217,6 +265,21 @@ def merge_visualization(
     ]
     part_index = {e.id: i for i, e in enumerate(part_like)}
 
+    # Sibling ports under the same parent — stable body packing for defaults
+    ports_by_parent: dict[str | None, list[SemanticElement]] = {}
+    for element in semantic.values():
+        if element.kind != ArtifactKind.PORT:
+            continue
+        ports_by_parent.setdefault(element.parent_id, []).append(element)
+    for siblings in ports_by_parent.values():
+        siblings.sort(key=lambda e: e.id)
+    port_placement: dict[str, tuple[PortSide, float]] = {}
+    for siblings in ports_by_parent.values():
+        offsets = _pack_body_offsets(len(siblings))
+        for i, port in enumerate(siblings):
+            side = PortSide.LEFT if i % 2 == 0 else PortSide.RIGHT
+            port_placement[port.id] = (side, offsets[i])
+
     for element in semantic.values():
         if element.kind in EDGE_KINDS:
             if element.id in existing.edges:
@@ -275,9 +338,45 @@ def merge_visualization(
                     (i for i, e in enumerate(siblings) if e.id == element.id),
                     0,
                 )
+                nodes[element.id] = _default_node(element, idx)
+            elif element.kind == ArtifactKind.PORT:
+                side, offset = port_placement.get(
+                    element.id,
+                    (PortSide.RIGHT, (PORT_BODY_OFFSET_MIN + PORT_BODY_OFFSET_MAX) / 2),
+                )
+                nodes[element.id] = _default_node(
+                    element,
+                    0,
+                    port_side=side,
+                    port_offset=offset,
+                )
             else:
                 idx = part_index.get(element.id, len(nodes))
-            nodes[element.id] = _default_node(element, idx)
+                nodes[element.id] = _default_node(element, idx)
+
+    # Grow default-sized parts so port names fit in the body
+    for part in semantic.values():
+        if part.kind != ArtifactKind.PART:
+            continue
+        node = nodes.get(part.id)
+        if not node:
+            continue
+        port_specs: list[tuple[str, PortSide]] = []
+        for cid in part.children:
+            child = semantic.get(cid)
+            if not child or child.kind != ArtifactKind.PORT:
+                continue
+            pv = nodes.get(cid)
+            if not pv or pv.side is None:
+                continue
+            port_specs.append((child.name, pv.side))
+        if not port_specs:
+            continue
+        need_w, need_h = _estimate_part_size_for_ports(part.name, port_specs)
+        if node.width < need_w:
+            node.width = need_w
+        if node.height < need_h:
+            node.height = need_h
 
     return VisualizationModel(nodes=nodes, edges=edges)
 

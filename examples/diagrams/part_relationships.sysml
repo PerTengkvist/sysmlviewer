@@ -12,18 +12,23 @@ package PartRelationships {
     attribute capacity : Real = 0.5;
   }
 
+  part def Aggregator {
+    part sharedEng : Base;
+  }
+
   part def System {
     part baseEng : Base;
-    part eng : Base redefines baseEng;
-    part child : Base subsets baseEng;
-    part logical : Base;
-    part physical : Base;
+    #function part eng : Base :>> baseEng;
+    #function part child : Base :> baseEng;
+    #function part logical : Base;
+    #function part physical : Base;
+    ref part sharedEng : Base[0..*] :> Aggregator::sharedEng;
     attribute temp : Real = 20.0;
     attribute reading : Real = 20.0;
 
     connection wire connect logical.pout to physical.pin;
-    dependency uses from logical to physical;
-    dependency multiDep from logical to physical, baseEng;
+    #uses dependency from logical to physical;
+    #multi dependency from logical to physical, baseEng;
     allocate logical to physical;
     bind temp = reading;
     flow power from logical.pout to physical.pin;

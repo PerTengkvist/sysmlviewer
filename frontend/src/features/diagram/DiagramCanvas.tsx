@@ -38,7 +38,8 @@ import {
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
-import { buildStructureGraph, orientRelationBoundaryHandles } from './modes/structure/buildStructureGraph'
+import { EdgeMarkerDefs } from './EdgeMarkerDefs'
+import { buildStructureGraph, orientRelationBoundaryHandles, applyRelationHandlesToNodes } from './modes/structure/buildStructureGraph'
 import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
 import { LifelineNode } from './modes/sequence/LifelineNode'
 import { MessageEdge } from './modes/sequence/MessageEdge'
@@ -149,6 +150,7 @@ type Props = {
   diagramEpoch: number
   viewMode?: ViewMode
   showAttributes?: boolean
+  structureNotation?: import('../../settings').StructureNotation
   sheet?: ProjectSheet
   selectedConnectionColor?: string
   selectedConnectionLinewidth?: number
@@ -160,6 +162,13 @@ type Props = {
     edges?: Record<string, Partial<VisualizationEdge>>,
   ) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
+  onRelationEndMoved?: (
+    artifactId: string,
+    end: 'source' | 'target',
+    side: PortSide,
+    offset: number,
+    companion?: { side: PortSide; offset: number },
+  ) => void
   onConnectPorts: (sourcePortId: string, targetPortId: string) => void
   onWaypointsMoved: (
     connectionId: string,
@@ -181,6 +190,7 @@ export function DiagramCanvas({
   diagramEpoch,
   viewMode = 'light',
   showAttributes = false,
+  structureNotation = 'sysmlv2',
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidth = 4,
@@ -189,6 +199,7 @@ export function DiagramCanvas({
   onOpenView,
   onNodesMoved,
   onPortMoved,
+  onRelationEndMoved,
   onConnectPorts,
   onWaypointsMoved,
   onLabelOffsetMoved,
@@ -211,6 +222,7 @@ export function DiagramCanvas({
   nodesRef.current = nodes
   const onOpenViewRef = useRef(onOpenView)
   const onPortMovedRef = useRef(onPortMoved)
+  const onRelationEndMovedRef = useRef(onRelationEndMoved)
   const onConnectPortsRef = useRef(onConnectPorts)
   const onWaypointsMovedRef = useRef(onWaypointsMoved)
   const onLabelOffsetMovedRef = useRef(onLabelOffsetMoved)
@@ -225,6 +237,15 @@ export function DiagramCanvas({
   const handlePortMovedRef = useRef<
     (portId: string, side: PortSide, offset: number) => void
   >(() => {})
+  const handleRelationEndDragRef = useRef<
+    (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      persist?: boolean,
+    ) => void
+  >(() => {})
   const lastAutorouteSeqRef = useRef(0)
   /** Structure graph awaiting one-shot obstacle routing after view open. */
   const pendingAutoRouteRef = useRef<{
@@ -234,6 +255,7 @@ export function DiagramCanvas({
   } | null>(null)
   onOpenViewRef.current = onOpenView
   onPortMovedRef.current = onPortMoved
+  onRelationEndMovedRef.current = onRelationEndMoved
   onConnectPortsRef.current = onConnectPorts
   onWaypointsMovedRef.current = onWaypointsMoved
   onLabelOffsetMovedRef.current = onLabelOffsetMoved
@@ -287,8 +309,9 @@ export function DiagramCanvas({
     ? Object.entries(view.visualization.edges)
         .map(([id, e]) => {
           const st = e.style ? JSON.stringify(e.style) : ''
+          const att = `${e.sourceSide || ''}:${e.sourceOffset ?? ''}:${e.targetSide || ''}:${e.targetOffset ?? ''}`
           // Omit routing, waypoints and labelOffset — synced without rebuilding graph.
-          return `${id}:st${st}`
+          return `${id}:st${st}:att${att}`
         })
         .sort()
         .join('|')
@@ -325,7 +348,7 @@ export function DiagramCanvas({
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${viewMode}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${viewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -346,6 +369,16 @@ export function DiagramCanvas({
       onWaypointsMovedRef.current(id, wps)
     const stableLabel = (id: string, offset: { x: number; y: number }) =>
       onLabelOffsetMovedRef.current(id, offset)
+    // Used only as a build-time placeholder; edges remap to handleRelationEndDrag
+    // so mid-drag updates stay local (persist=false) until pointer-up.
+    const stableRelEnd = (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      persist = true,
+    ) =>
+      handleRelationEndDragRef.current(artifactId, end, side, offset, persist)
     const toggleCollapse = (id: string) => {
       setCollapsedIds((prev) => {
         const next = new Set(prev)
@@ -392,15 +425,65 @@ export function DiagramCanvas({
           portMoveMode,
           showAttributes,
           viewMode,
+          structureNotation,
           selectedConnectionColor,
           selectedConnectionLinewidth,
           onWaypointsChange: stableWp,
           onLabelOffsetChange: stableLabel,
           onSelectConnection: (id: string) => onSelectArtifactRef.current(id),
+          onRelationEndMoved: stableRelEnd,
         })
     }
-    setNodes(built.nodes)
-    setEdges(built.edges)
+    setNodes(
+      built.nodes.map((node) => ({
+        ...node,
+        draggable: !portMoveMode,
+        data: {
+          ...(node.data as PartNodeData),
+          portMoveMode,
+          onOpenView: (id: string) => onOpenViewRef.current(id),
+          onPortDrag: (portId: string, side: PortSide, offset: number) =>
+            handlePortMovedRef.current(portId, side, offset),
+          onRelationEndDrag: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist?: boolean,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
+        },
+      })),
+    )
+    setEdges(
+      built.edges.map((edge) => ({
+        ...edge,
+        data: {
+          ...(edge.data as object),
+          altHeld: portMoveMode,
+          onRelationEndMoved: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist = true,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
+        },
+      })),
+    )
     const isStructureMode =
       view.diagramMode === 'whitebox' ||
       view.diagramMode === 'structure' ||
@@ -436,8 +519,10 @@ export function DiagramCanvas({
         const viz = v.visualization.edges[edge.id]
         if (!viz) return edge
         const data = (edge.data || {}) as SysmlEdgeData
-        const routing = viz.routing || 'angular'
-        if ((data.routing || 'angular') === routing) return edge
+        // Prefer explicit viz routing; otherwise keep the live edge routing
+        // (synthetic/deps default to direct — never promote missing → angular).
+        const routing = viz.routing ?? data.routing ?? 'direct'
+        if ((data.routing || 'direct') === routing) return edge
         return {
           ...edge,
           data: {
@@ -484,13 +569,44 @@ export function DiagramCanvas({
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
             handlePortMovedRef.current(portId, side, offset),
+          onRelationEndDrag: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist?: boolean,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
         },
       }))
     })
     setEdges((current) =>
       current.map((edge) => ({
         ...edge,
-        data: { ...(edge.data as object), altHeld: portMoveMode },
+        data: {
+          ...(edge.data as object),
+          altHeld: portMoveMode,
+          onRelationEndMoved: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist = true,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
+        },
       })),
     )
   }, [portMoveMode, isStructure])
@@ -640,7 +756,11 @@ export function DiagramCanvas({
             redrawConnectionsRef.current(allNodes, connected),
           )
         }
-        setEdges((current) => orientRelationBoundaryHandles(current, allNodes))
+        setEdges((current) => {
+          const oriented = orientRelationBoundaryHandles(current, allNodes)
+          setNodes((ns) => applyRelationHandlesToNodes(ns, oriented))
+          return oriented
+        })
       }
 
       onNodesMovedRef.current(patch, edgePatch)
@@ -678,7 +798,12 @@ export function DiagramCanvas({
             : orientRelationBoundaryHandles(edges, nextNodes)
           : orientEdgeHandles(edges, direction, nextNodes)
 
-      setNodes(nextNodes)
+      const nodesWithHandles =
+        mode === 'whitebox' || mode === 'structure'
+          ? applyRelationHandlesToNodes(nextNodes, nextEdges)
+          : nextNodes
+
+      setNodes(nodesWithHandles)
       setEdges(nextEdges)
 
       const patch: Record<string, Partial<VisualizationNode>> = {}
@@ -807,8 +932,84 @@ export function DiagramCanvas({
     [],
   )
 
+  const handleRelationEndDrag = useCallback(
+    (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      persist = false,
+    ) => {
+      setEdges((current) => {
+        const next = current.map((edge) => {
+          if (
+            edge.id !== artifactId &&
+            (edge.data as SysmlEdgeData)?.artifactId !== artifactId
+          ) {
+            return edge
+          }
+          const data = { ...(edge.data as SysmlEdgeData) }
+          if (end === 'source') {
+            data.sourceSide = side
+            data.sourceOffset = offset
+            data.manualAttachment = true
+            return {
+              ...edge,
+              sourceHandle: `rel-src-${edge.id}`,
+              data,
+            }
+          }
+          data.targetSide = side
+          data.targetOffset = offset
+          data.manualAttachment = true
+          return {
+            ...edge,
+            targetHandle: `rel-tgt-${edge.id}`,
+            data,
+          }
+        })
+        setNodes((ns) => applyRelationHandlesToNodes(ns, next))
+        // Persist only on pointer-up — mid-drag PATCH races corrupt project.json.
+        if (persist) {
+          const updated = next.find(
+            (e) =>
+              e.id === artifactId ||
+              (e.data as SysmlEdgeData)?.artifactId === artifactId,
+          )
+          const d = (updated?.data || {}) as SysmlEdgeData
+          const companion =
+            end === 'source'
+              ? d.targetSide
+                ? {
+                    side: d.targetSide,
+                    offset: d.targetOffset ?? 0.5,
+                  }
+                : undefined
+              : d.sourceSide
+                ? {
+                    side: d.sourceSide,
+                    offset: d.sourceOffset ?? 0.5,
+                  }
+                : undefined
+          queueMicrotask(() =>
+            onRelationEndMovedRef.current?.(
+              artifactId,
+              end,
+              side,
+              offset,
+              companion,
+            ),
+          )
+        }
+        return next
+      })
+    },
+    [],
+  )
+
   applyRedrawConnectionsRef.current = applyRedrawConnections
   handlePortMovedRef.current = handlePortMoved
+  handleRelationEndDragRef.current = handleRelationEndDrag
   redrawConnectionsRef.current = (n, e) => applyRedrawConnectionsRef.current(n, e)
 
   useEffect(() => {
@@ -1070,6 +1271,7 @@ export function DiagramCanvas({
           connectionLineType={connectionLineType}
           proOptions={{ hideAttribution: true }}
         >
+          <EdgeMarkerDefs />
           <FitViewOnViewKey
             viewKey={viewKey}
             layoutEpoch={layoutEpoch}

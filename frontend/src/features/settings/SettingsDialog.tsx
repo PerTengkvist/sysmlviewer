@@ -79,6 +79,23 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
                 }
               />
             </label>
+            <label className="settings-row">
+              <span>Structure notation</span>
+              <select
+                value={settings.showDiagramDetails.structureNotation ?? 'sysmlv2'}
+                onChange={(e) =>
+                  patchDetails({
+                    structureNotation:
+                      e.target.value === 'arcadia' ? 'arcadia' : 'sysmlv2',
+                  })
+                }
+              >
+                <option value="sysmlv2">SysML v2 aggregation notation</option>
+                <option value="arcadia">
+                  Arcadia / SysML v1 aggregation notation
+                </option>
+              </select>
+            </label>
           </fieldset>
           <fieldset className="settings-fieldset">
             <legend>Selected connection</legend>
