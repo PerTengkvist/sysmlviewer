@@ -830,12 +830,18 @@ export default function App() {
             ...page,
             diagrams: await Promise.all(
               page.diagrams.map(async (d) => {
-                const viewPayload = await api.getView(
-                  project.id,
-                  d.id,
-                  settings.showDiagramDetails.hierarchicalLevels,
-                  settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
-                )
+                // Prefer the live canvas payload for the open view so print
+                // matches hierarchy depth / notation currently on screen.
+                const live =
+                  viewPayload && viewPayload.view.id === d.id ? viewPayload : null
+                const payload =
+                  live ??
+                  (await api.getView(
+                    project.id,
+                    d.id,
+                    settings.showDiagramDetails.hierarchicalLevels,
+                    settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+                  ))
                 let documentation: string | null = null
                 if (options.includeDescriptions) {
                   const el = project.semantic[d.id]
@@ -849,7 +855,7 @@ export default function App() {
                     }
                   }
                 }
-                return { ...d, viewPayload, documentation }
+                return { ...d, viewPayload: payload, documentation }
               }),
             ),
           })),
@@ -863,7 +869,14 @@ export default function App() {
         setPrintPreparing(false)
       }
     },
-    [project, printDiagrams, sheet],
+    [
+      project,
+      printDiagrams,
+      sheet,
+      viewPayload,
+      settings.showDiagramDetails.hierarchicalLevels,
+      settings.showDiagramDetails.structureNotation,
+    ],
   )
 
   const printDiagramCount = useMemo(

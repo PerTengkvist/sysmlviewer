@@ -76,22 +76,73 @@ function FitViewOnViewKey({
   viewKey,
   layoutEpoch,
   onReady,
+  printMode = false,
 }: {
   viewKey: string | null
   layoutEpoch: number
   onReady?: () => void
+  printMode?: boolean
 }) {
-  const { fitView } = useReactFlow()
+  const { fitView, getNodes } = useReactFlow()
   useEffect(() => {
     if (!viewKey) return
-    const id = requestAnimationFrame(() => {
-      fitView({ padding: 0.15, duration: 0 })
-      if (onReady) {
-        requestAnimationFrame(() => onReady())
+    let cancelled = false
+    let readySent = false
+    let raf = 0
+
+    const doFit = () => {
+      fitView({
+        padding: printMode ? 0.04 : 0.15,
+        duration: 0,
+        minZoom: printMode ? 0.01 : undefined,
+        maxZoom: printMode ? 8 : undefined,
+      })
+    }
+
+    const signalReady = () => {
+      if (cancelled || readySent || !onReady) return
+      readySent = true
+      onReady()
+    }
+
+    const run = () => {
+      if (cancelled) return
+      const nodes = getNodes()
+      if (printMode && !nodes.length) {
+        raf = requestAnimationFrame(run)
+        return
       }
-    })
-    return () => cancelAnimationFrame(id)
-  }, [viewKey, layoutEpoch, fitView, onReady])
+      doFit()
+      raf = requestAnimationFrame(() => {
+        if (cancelled) return
+        // Re-fit after layout/measure settles (esp. print host size).
+        doFit()
+        raf = requestAnimationFrame(signalReady)
+      })
+    }
+
+    raf = requestAnimationFrame(run)
+
+    let ro: ResizeObserver | null = null
+    if (printMode && typeof ResizeObserver !== 'undefined') {
+      const pane = document.querySelector(
+        '.print-diagram-canvas-host .react-flow',
+      )
+      if (pane) {
+        ro = new ResizeObserver(() => {
+          if (cancelled || readySent) return
+          doFit()
+        })
+        ro.observe(pane)
+      }
+    }
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+      ro?.disconnect()
+    }
+  }, [viewKey, layoutEpoch, fitView, getNodes, onReady, printMode])
   return null
 }
 
@@ -1256,7 +1307,13 @@ export function DiagramCanvas({
           onEdgeClick={printMode ? undefined : (_e, edge) => onSelectArtifact(edge.id)}
           onPaneClick={printMode ? undefined : () => onSelectArtifact(null)}
           fitView
-          fitViewOptions={{ padding: 0.15 }}
+          fitViewOptions={
+            printMode
+              ? { padding: 0.04, minZoom: 0.01, maxZoom: 8 }
+              : { padding: 0.15 }
+          }
+          minZoom={printMode ? 0.01 : 0.5}
+          maxZoom={printMode ? 8 : 2}
           nodesDraggable={!printMode && !portMoveMode}
           nodesConnectable={!printMode && isStructure && !portMoveMode}
           elementsSelectable={!printMode}
@@ -1275,6 +1332,7 @@ export function DiagramCanvas({
           <FitViewOnViewKey
             viewKey={viewKey}
             layoutEpoch={layoutEpoch}
+            printMode={printMode}
             onReady={printMode ? onPrintReady : undefined}
           />
           {!printMode && <Background gap={18} size={1} />}

@@ -19,6 +19,10 @@ type Props = {
   onDiagramReady: (diagramId: string) => void
 }
 
+function pageCssSize(page: PrintPage): string {
+  return `${page.widthMm}mm ${page.heightMm}mm`
+}
+
 export function PrintSheet({
   pages,
   sheet,
@@ -29,8 +33,15 @@ export function PrintSheet({
   connectionSeparation,
   onDiagramReady,
 }: Props) {
+  const pageSizes = [...new Set(pages.map(pageCssSize))]
+  const pageRule =
+    pageSizes.length === 1
+      ? `@page { size: ${pageSizes[0]}; margin: 0; }`
+      : pageSizes.map((s) => `@page { size: ${s}; margin: 0; }`).join('\n')
+
   return (
     <div className="print-root" aria-hidden>
+      <style>{pageRule}</style>
       {pages.map((page, i) => (
         <div
           key={i}
@@ -60,7 +71,9 @@ export function PrintSheet({
           >
             {page.diagrams.map((d) => (
               <div key={d.id} className="print-diagram-slot">
-                <h3 className="print-diagram-title">{d.name}</h3>
+                {page.diagrams.length > 1 ? (
+                  <h3 className="print-diagram-title">{d.name}</h3>
+                ) : null}
                 {d.viewPayload ? (
                   <div className="print-diagram-canvas-host">
                     <DiagramCanvas
