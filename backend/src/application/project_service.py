@@ -686,6 +686,7 @@ class ProjectService:
         from domain.view_layouts import (
             ViewLayout,
             ViewLayouts,
+            apply_view_hierarchy_override,
             apply_view_layout_edge_patch,
             apply_view_layout_patch,
         )
@@ -697,6 +698,7 @@ class ProjectService:
         )
         nodes_patch = dict(patch.get("nodes") or {})
         edges_patch = dict(patch.get("edges") or {})
+        hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -710,6 +712,20 @@ class ProjectService:
                 by_view = dict(project.view_layouts.by_view)
                 by_view[view_id] = loaded or by_view.get(view_id) or ViewLayout()
                 project.view_layouts = ViewLayouts(by_view=by_view)
+
+            if hierarchy_override_patch:
+                raw_override = patch.get("hierarchicalLevelsOverride")
+                override_val: int | None
+                if raw_override is None:
+                    override_val = None
+                else:
+                    try:
+                        override_val = max(1, int(raw_override))
+                    except (TypeError, ValueError):
+                        override_val = None
+                project.view_layouts = apply_view_hierarchy_override(
+                    project.view_layouts, view_id, override_val
+                )
 
             geo_patch: dict[str, dict] = {}
             other_patch: dict[str, dict] = {}
@@ -763,7 +779,7 @@ class ProjectService:
                 )
             edges_patch = other_edge_patch
 
-            if geo_patch or geo_edge_patch:
+            if geo_patch or geo_edge_patch or hierarchy_override_patch:
                 layout = project.view_layouts.by_view.get(view_id)
                 if layout is not None:
                     view_name = next(
@@ -980,6 +996,23 @@ class ProjectService:
         if not root:
             return None
 
+        levels_override: int | None = None
+        layout_for_view = (
+            project.view_layouts.by_view.get(view.id)
+            if project.view_layouts is not None
+            else None
+        )
+        if (
+            layout_for_view is not None
+            and layout_for_view.hierarchical_levels_override is not None
+        ):
+            levels_override = layout_for_view.hierarchical_levels_override
+        effective_levels = (
+            levels_override
+            if levels_override is not None
+            else max(1, hierarchical_levels)
+        )
+
         diagram_mode = resolve_diagram_mode(view, root)
         mode_error: str | None = None
         expected = expected_root_kinds(diagram_mode)
@@ -1000,7 +1033,7 @@ class ProjectService:
                         artifact_ids.add(gc)
         elif diagram_mode == "tree":
             artifact_ids = collect_artifacts_to_depth(
-                project.semantic, root.id, hierarchical_levels
+                project.semantic, root.id, effective_levels
             )
             # Include non-part children for tree browsing
             extra: set[str] = set()
@@ -1031,7 +1064,7 @@ class ProjectService:
                 elif child.kind == ArtifactKind.PART:
                     if child.name == "logical":
                         artifact_ids |= collect_artifacts_to_depth(
-                            project.semantic, child.id, hierarchical_levels
+                            project.semantic, child.id, effective_levels
                         )
                     else:
                         artifact_ids.add(child.id)
@@ -1060,21 +1093,38 @@ class ProjectService:
                     artifact_ids.add(el.source_id)
                 if el.target_id:
                     artifact_ids.add(el.target_id)
-        elif root.kind == ArtifactKind.PART:
-            artifact_ids = collect_artifacts_to_depth(
-                project.semantic, root.id, hierarchical_levels
-            )
         else:
-            artifact_ids = {root.id}
-            queue = list(root.children)
-            while queue:
-                aid = queue.pop()
-                if aid in artifact_ids:
-                    continue
-                artifact_ids.add(aid)
-                child = project.semantic.get(aid)
-                if child:
-                    queue.extend(child.children)
+            # Structure / whitebox: depth-limit parts & packages (incl. package roots)
+            artifact_ids = collect_artifacts_to_depth(
+                project.semantic, root.id, effective_levels
+            )
+
+        structure_edge_kinds = {
+            ArtifactKind.CONNECTION,
+            ArtifactKind.DEPENDENCY,
+            ArtifactKind.ALLOCATION,
+            ArtifactKind.BINDING,
+            ArtifactKind.FLOW,
+            ArtifactKind.SPECIALIZATION,
+            ArtifactKind.SUBSETTING,
+            ArtifactKind.REDEFINITION,
+        }
+
+        # Drop relations to/from parts outside the depth window (even if nested
+        # under an included parent as a child feature).
+        hidden_relations = {
+            aid
+            for aid in artifact_ids
+            if (el := project.semantic.get(aid)) is not None
+            and el.kind in structure_edge_kinds
+            and not (
+                el.source_id
+                and el.target_id
+                and el.source_id in artifact_ids
+                and el.target_id in artifact_ids
+            )
+        }
+        artifact_ids -= hidden_relations
 
         semantic = {
             aid: project.semantic[aid].to_dict()
@@ -1102,29 +1152,27 @@ class ProjectService:
                     resolved["height"] = DEFAULT_TREE_HEIGHT
             nodes[aid] = resolved
 
-        # Edges: include structure relations between view members + per-view overlays
-        # even when the relation id itself is outside the depth-limited artifact set.
-        structure_edge_kinds = {
-            ArtifactKind.CONNECTION,
-            ArtifactKind.DEPENDENCY,
-            ArtifactKind.ALLOCATION,
-            ArtifactKind.BINDING,
-            ArtifactKind.FLOW,
-            ArtifactKind.SPECIALIZATION,
-            ArtifactKind.SUBSETTING,
-            ArtifactKind.REDEFINITION,
-        }
+        # Edges: only relations whose endpoints are both in the depth-limited set.
+        # Do not reintroduce hidden-subpart relations via layout overlays.
+        def _endpoints_visible(el: SemanticElement) -> bool:
+            src, tgt = el.source_id, el.target_id
+            return bool(src and tgt and src in artifact_ids and tgt in artifact_ids)
+
         edge_ids = set(artifact_ids)
         for eid, el in project.semantic.items():
             if el.kind not in structure_edge_kinds:
                 continue
-            src, tgt = el.source_id, el.target_id
-            if src and tgt and src in artifact_ids and tgt in artifact_ids:
+            if _endpoints_visible(el):
                 edge_ids.add(eid)
         if project.view_layouts is not None:
             layout = project.view_layouts.by_view.get(view.id)
             if layout is not None:
-                edge_ids.update(layout.edges.keys())
+                for eid in layout.edges:
+                    el = project.semantic.get(eid)
+                    if el is None or el.kind not in structure_edge_kinds:
+                        continue
+                    if _endpoints_visible(el):
+                        edge_ids.add(eid)
 
         edges = {}
         for aid in edge_ids:
@@ -1184,7 +1232,8 @@ class ProjectService:
         result: dict = {
             "view": view.to_dict(),
             "diagramMode": diagram_mode,
-            "hierarchicalLevels": hierarchical_levels,
+            "hierarchicalLevels": effective_levels,
+            "hierarchicalLevelsOverride": levels_override,
             "semantic": semantic,
             "visualization": {"nodes": nodes, "edges": edges},
             "subdiagrams": subdiagrams,

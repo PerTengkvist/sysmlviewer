@@ -51,6 +51,8 @@ class VisualizationPatch(BaseModel):
     edges: dict[str, Any] | None = None
     viewId: str | None = None
     structureNotation: str | None = None
+    # Present + null clears per-view override; omit to leave unchanged.
+    hierarchicalLevelsOverride: int | None = None
 
 
 class AddConnectionBody(BaseModel):
@@ -332,7 +334,7 @@ def create_api_app(
         project_id: str, payload: Annotated[VisualizationPatch, Body()]
     ) -> dict:
         project = _service().update_visualization(
-            project_id, payload.model_dump(exclude_none=True)
+            project_id, payload.model_dump(exclude_unset=True)
         )
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")

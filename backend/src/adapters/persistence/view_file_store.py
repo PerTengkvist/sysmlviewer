@@ -74,7 +74,7 @@ def layout_document(
     *,
     structure_notation: StructureNotation = "sysmlv2",
 ) -> dict[str, Any]:
-    return {
+    doc: dict[str, Any] = {
         "schemaVersion": SCHEMA_VERSION,
         "viewId": view_id,
         "name": name or view_id.split("::")[-1],
@@ -82,6 +82,9 @@ def layout_document(
         "nodes": {k: v.to_dict() for k, v in layout.nodes.items()},
         "edges": {k: v.to_dict() for k, v in layout.edges.items()},
     }
+    if layout.hierarchical_levels_override is not None:
+        doc["hierarchicalLevelsOverride"] = layout.hierarchical_levels_override
+    return doc
 
 
 def write_one(
@@ -182,7 +185,13 @@ def read_all(
         if not view_id or not isinstance(view_id, str):
             continue
         by_view[view_id] = ViewLayout.from_dict(
-            {"nodes": doc.get("nodes") or {}, "edges": doc.get("edges") or {}}
+            {
+                "nodes": doc.get("nodes") or {},
+                "edges": doc.get("edges") or {},
+                "hierarchicalLevelsOverride": doc.get(
+                    "hierarchicalLevelsOverride"
+                ),
+            }
         )
     return ViewLayouts(by_view=by_view)
 

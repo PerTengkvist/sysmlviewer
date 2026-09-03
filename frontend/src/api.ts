@@ -190,6 +190,8 @@ export interface ViewPayload {
   view: ViewDef
   diagramMode?: DiagramMode
   hierarchicalLevels?: number
+  /** Per-view override; null/undefined means inherit global Settings. */
+  hierarchicalLevelsOverride?: number | null
   modeError?: string | null
   semantic: Record<string, SemanticElement>
   visualization: {
@@ -296,6 +298,8 @@ export const api = {
       edges?: Record<string, Partial<VisualizationEdge>>
       viewId?: string
       structureNotation?: 'sysmlv2' | 'arcadia'
+      /** null clears per-view override; omit to leave unchanged. */
+      hierarchicalLevelsOverride?: number | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {

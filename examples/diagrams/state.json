@@ -52,6 +52,12 @@
       "name": "part_relationships.sysml",
       "path": "part_relationships.sysml",
       "warnings": []
+    },
+    {
+      "id": "hierarchicalParts.sysml",
+      "name": "hierarchicalParts.sysml",
+      "path": "hierarchicalParts.sysml",
+      "warnings": []
     }
   ],
   "semantic": {
@@ -3324,6 +3330,544 @@
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
+    "HierarchicalPartsPkg": {
+      "id": "HierarchicalPartsPkg",
+      "kind": "package",
+      "name": "HierarchicalPartsPkg",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [
+        "HierarchicalPartsPkg::PartDefinitions",
+        "HierarchicalPartsPkg::HierarchicalPartsView",
+        "HierarchicalPartsPkg::FD1View",
+        "HierarchicalPartsPkg::FD2View",
+        "HierarchicalPartsPkg::FD3View"
+      ],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions": {
+      "id": "HierarchicalPartsPkg::PartDefinitions",
+      "kind": "package",
+      "name": "PartDefinitions",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [
+        "HierarchicalPartsPkg::PartDefinitions::FD1",
+        "HierarchicalPartsPkg::PartDefinitions::FD2",
+        "HierarchicalPartsPkg::PartDefinitions::FD3",
+        "HierarchicalPartsPkg::PartDefinitions::dep10",
+        "HierarchicalPartsPkg::PartDefinitions::dep11",
+        "HierarchicalPartsPkg::PartDefinitions::dep12"
+      ],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "kind": "part",
+      "name": "FD1",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "functionDomain"
+      ],
+      "children": [
+        "HierarchicalPartsPkg::PartDefinitions::FD1::F1",
+        "HierarchicalPartsPkg::PartDefinitions::FD1::F2",
+        "HierarchicalPartsPkg::PartDefinitions::FD1::F3",
+        "HierarchicalPartsPkg::PartDefinitions::FD1::dep1",
+        "HierarchicalPartsPkg::PartDefinitions::FD1::dep2",
+        "HierarchicalPartsPkg::PartDefinitions::FD1::dep3"
+      ],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::F1": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1::F1",
+      "kind": "part",
+      "name": "F1",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::F2": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1::F2",
+      "kind": "part",
+      "name": "F2",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::F3": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1::F3",
+      "kind": "part",
+      "name": "F3",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::dep1": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1::dep1",
+      "kind": "dependency",
+      "name": "dep1",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD1::F1",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD1::F2",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::dep2": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1::dep2",
+      "kind": "dependency",
+      "name": "dep2",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD1::F2",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD1::F3",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::dep3": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD1::dep3",
+      "kind": "dependency",
+      "name": "dep3",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD1::F3",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD1::F1",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "kind": "part",
+      "name": "FD2",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "functionDomain"
+      ],
+      "children": [
+        "HierarchicalPartsPkg::PartDefinitions::FD2::F4",
+        "HierarchicalPartsPkg::PartDefinitions::FD2::F5",
+        "HierarchicalPartsPkg::PartDefinitions::FD2::F6",
+        "HierarchicalPartsPkg::PartDefinitions::FD2::dep4",
+        "HierarchicalPartsPkg::PartDefinitions::FD2::dep5",
+        "HierarchicalPartsPkg::PartDefinitions::FD2::dep6"
+      ],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2::F4": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2::F4",
+      "kind": "part",
+      "name": "F4",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2::F5": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2::F5",
+      "kind": "part",
+      "name": "F5",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2::F6": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2::F6",
+      "kind": "part",
+      "name": "F6",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2::dep4": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2::dep4",
+      "kind": "dependency",
+      "name": "dep4",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD2::F4",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD2::F5",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2::dep5": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2::dep5",
+      "kind": "dependency",
+      "name": "dep5",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD2::F5",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD2::F6",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2::dep6": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD2::dep6",
+      "kind": "dependency",
+      "name": "dep6",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD2::F6",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD2::F4",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "kind": "part",
+      "name": "FD3",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "functionDomain"
+      ],
+      "children": [
+        "HierarchicalPartsPkg::PartDefinitions::FD3::F7",
+        "HierarchicalPartsPkg::PartDefinitions::FD3::F8",
+        "HierarchicalPartsPkg::PartDefinitions::FD3::F9",
+        "HierarchicalPartsPkg::PartDefinitions::FD3::dep7",
+        "HierarchicalPartsPkg::PartDefinitions::FD3::dep8",
+        "HierarchicalPartsPkg::PartDefinitions::FD3::dep9"
+      ],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3::F7": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3::F7",
+      "kind": "part",
+      "name": "F7",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3::F8": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3::F8",
+      "kind": "part",
+      "name": "F8",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3::F9": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3::F9",
+      "kind": "part",
+      "name": "F9",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "function"
+      ],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3::dep7": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3::dep7",
+      "kind": "dependency",
+      "name": "dep7",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD3::F7",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD3::F8",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3::dep8": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3::dep8",
+      "kind": "dependency",
+      "name": "dep8",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD3::F8",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD3::F9",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3::dep9": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::FD3::dep9",
+      "kind": "dependency",
+      "name": "dep9",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD3::F9",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD3::F7",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::dep10": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::dep10",
+      "kind": "dependency",
+      "name": "dep10",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::dep11": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::dep11",
+      "kind": "dependency",
+      "name": "dep11",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitions::dep12": {
+      "id": "HierarchicalPartsPkg::PartDefinitions::dep12",
+      "kind": "dependency",
+      "name": "dep12",
+      "parentId": "HierarchicalPartsPkg::PartDefinitions",
+      "typeRef": null,
+      "sourceId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "targetId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::HierarchicalPartsView": {
+      "id": "HierarchicalPartsPkg::HierarchicalPartsView",
+      "kind": "view",
+      "name": "HierarchicalPartsView",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "HierarchicalPartsPkg::PartDefinitions",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::FD1View": {
+      "id": "HierarchicalPartsPkg::FD1View",
+      "kind": "view",
+      "name": "FD1View",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::FD2View": {
+      "id": "HierarchicalPartsPkg::FD2View",
+      "kind": "view",
+      "name": "FD2View",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::FD3View": {
+      "id": "HierarchicalPartsPkg::FD3View",
+      "kind": "view",
+      "name": "FD3View",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
     "Example::Vehicle::engine::EventOut": {
       "id": "Example::Vehicle::engine::EventOut",
       "kind": "port",
@@ -4614,7 +5158,7 @@
         "x": 80.0,
         "y": 2240.0,
         "width": 200.0,
-        "height": 120.0,
+        "height": 128.0,
         "symbolRef": "default-part",
         "side": null,
         "offset": null
@@ -5093,6 +5637,146 @@
         "artifactId": "PartRelationships::System::sharedEng",
         "x": 80.0,
         "y": 4040.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg": {
+        "artifactId": "HierarchicalPartsPkg",
+        "x": 80.0,
+        "y": 4220.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions",
+        "x": 360.0,
+        "y": 4220.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+        "x": 640.0,
+        "y": 4220.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1::F1": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1::F1",
+        "x": 80.0,
+        "y": 4400.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1::F2": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1::F2",
+        "x": 360.0,
+        "y": 4400.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1::F3": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1::F3",
+        "x": 640.0,
+        "y": 4400.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+        "x": 80.0,
+        "y": 4580.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2::F4": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2::F4",
+        "x": 360.0,
+        "y": 4580.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2::F5": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2::F5",
+        "x": 640.0,
+        "y": 4580.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2::F6": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2::F6",
+        "x": 80.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+        "x": 360.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3::F7": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3::F7",
+        "x": 640.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3::F8": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3::F8",
+        "x": 80.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3::F9": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3::F9",
+        "x": 360.0,
+        "y": 4940.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -6048,6 +6732,234 @@
             "markerEnd": "arrow"
           }
         }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1::dep1": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1::dep1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1::dep2": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1::dep2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD1::dep3": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1::dep3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2::dep4": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2::dep4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2::dep5": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2::dep5",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD2::dep6": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2::dep6",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3::dep7": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3::dep7",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3::dep8": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3::dep8",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::FD3::dep9": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3::dep9",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::dep10": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::dep10",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::dep11": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::dep11",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "HierarchicalPartsPkg::PartDefinitions::dep12": {
+        "artifactId": "HierarchicalPartsPkg::PartDefinitions::dep12",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
       }
     }
   },
@@ -6070,6 +6982,34 @@
       "id": "Example::ExampleView",
       "name": "ExampleView",
       "rootArtifactId": "Example::Vehicle",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "HierarchicalPartsPkg::FD1View",
+      "name": "FD1View",
+      "rootArtifactId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "HierarchicalPartsPkg::FD2View",
+      "name": "FD2View",
+      "rootArtifactId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "HierarchicalPartsPkg::FD3View",
+      "name": "FD3View",
+      "rootArtifactId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "HierarchicalPartsPkg::HierarchicalPartsView",
+      "name": "HierarchicalPartsView",
+      "rootArtifactId": "HierarchicalPartsPkg::PartDefinitions",
       "parentViewId": null,
       "typeRef": "GeneralView"
     },

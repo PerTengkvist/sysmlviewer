@@ -1251,13 +1251,13 @@ class SubsetSysmlParser:
 
             if tok.kind == "ident" and tok.value == "expose":
                 take()
-                # expose Vehicle; or expose Vehicle::*;
-                ref = expect_ident()
+                # expose Vehicle; or expose Pkg::Part; or expose Vehicle::*;
+                ref = expect_qualified_name()
                 if not ref:
                     state.warnings.append(f"line {tok.line}: expose without target")
                     skip_until_semicolon_or_brace()
                     continue
-                # optional .** / ::* style — skip trailing
+                # optional wildcard suffix (::*, .*, .**) — ignore for root selection
                 while peek() and peek().value in {".", "::", "*"}:
                     take()
                 if peek() and peek().value == ";":
@@ -1266,21 +1266,35 @@ class SubsetSysmlParser:
                 if parent and parent in state.elements:
                     view_el = state.elements[parent]
                     if view_el.kind == ArtifactKind.VIEW:
-                        # Resolve relative to the view's enclosing package, not the view itself
+                        # Resolve relative to the view's enclosing package
                         scope = view_el.parent_id
-                        if scope:
-                            candidate = f"{scope}::{ref.replace('.', '::')}"
-                        else:
-                            candidate = ref.replace(".", "::")
-                        if candidate in state.elements:
-                            view_el.expose_ref = candidate
-                        else:
+                        resolved: str | None = None
+                        if ref in state.elements:
+                            resolved = ref
+                        if resolved is None and scope:
+                            candidate = f"{scope}::{ref}"
+                            if candidate in state.elements:
+                                resolved = candidate
+                        if resolved is None:
+                            walk = scope
+                            while walk:
+                                candidate = f"{walk}::{ref}"
+                                if candidate in state.elements:
+                                    resolved = candidate
+                                    break
+                                el = state.elements.get(walk)
+                                walk = el.parent_id if el else None
+                        if resolved is None:
+                            leaf = ref.split("::")[-1]
                             matches = [
                                 e.id
                                 for e in state.elements.values()
-                                if e.name == ref and e.kind != ArtifactKind.VIEW
+                                if e.name == leaf and e.kind != ArtifactKind.VIEW
                             ]
-                            view_el.expose_ref = matches[0] if matches else candidate
+                            resolved = matches[0] if matches else (
+                                f"{scope}::{ref}" if scope else ref
+                            )
+                        view_el.expose_ref = resolved
                 continue
 
             if tok.kind == "ident" and tok.value == "attribute":

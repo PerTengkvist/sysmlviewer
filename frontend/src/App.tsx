@@ -439,6 +439,29 @@ export default function App() {
     [project, viewPayload?.view.id],
   )
 
+  const onHierarchyOverrideChange = useCallback(
+    async (override: number | null) => {
+      if (!project || !activeViewId) return
+      try {
+        await api.patchVisualization(project.id, {
+          viewId: activeViewId,
+          hierarchicalLevelsOverride: override,
+          structureNotation:
+            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+        })
+        await loadView(project.id, activeViewId)
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [
+      project,
+      activeViewId,
+      loadView,
+      settings.showDiagramDetails.structureNotation,
+    ],
+  )
+
   const onPortMoved = useCallback(
     async (portId: string, side: PortSide, offset: number) => {
       if (!project) return
@@ -1085,12 +1108,18 @@ export default function App() {
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
+                globalHierarchicalLevels={
+                  settings.showDiagramDetails.hierarchicalLevels
+                }
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
                 connectionSeparation={settings.connectionSeparation}
                 sheet={sheet}
                 onSelectArtifact={setSelectedId}
                 onOpenView={onOpenView}
+                onHierarchyOverrideChange={(override) =>
+                  void onHierarchyOverrideChange(override)
+                }
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
                 onRelationEndMoved={(id, end, side, offset, companion) =>

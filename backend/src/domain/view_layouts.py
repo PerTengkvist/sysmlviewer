@@ -161,11 +161,15 @@ class ViewEdgeLayout:
 class ViewLayout:
     nodes: dict[str, ViewNodeLayout] = field(default_factory=dict)
     edges: dict[str, ViewEdgeLayout] = field(default_factory=dict)
+    # None → inherit global Settings hierarchical levels for this view
+    hierarchical_levels_override: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
         if self.edges:
             out["edges"] = {k: v.to_dict() for k, v in self.edges.items()}
+        if self.hierarchical_levels_override is not None:
+            out["hierarchicalLevelsOverride"] = self.hierarchical_levels_override
         return out
 
     @classmethod
@@ -180,7 +184,18 @@ class ViewLayout:
             k: ViewEdgeLayout.from_dict(v)
             for k, v in (data.get("edges") or {}).items()
         }
-        return cls(nodes=nodes, edges=edges)
+        raw_override = data.get("hierarchicalLevelsOverride")
+        override: int | None = None
+        if raw_override is not None:
+            try:
+                override = max(1, int(raw_override))
+            except (TypeError, ValueError):
+                override = None
+        return cls(
+            nodes=nodes,
+            edges=edges,
+            hierarchical_levels_override=override,
+        )
 
 
 @dataclass
@@ -277,7 +292,11 @@ def apply_view_layout_patch(
     for artifact_id, patch in nodes_patch.items():
         existing = nodes.get(artifact_id) or ViewNodeLayout()
         nodes[artifact_id] = existing.merge_patch(patch)
-    by_view[view_id] = ViewLayout(nodes=nodes, edges=dict(view_layout.edges))
+    by_view[view_id] = ViewLayout(
+        nodes=nodes,
+        edges=dict(view_layout.edges),
+        hierarchical_levels_override=view_layout.hierarchical_levels_override,
+    )
     return ViewLayouts(by_view=by_view)
 
 
@@ -294,5 +313,26 @@ def apply_view_layout_edge_patch(
     for artifact_id, patch in edges_patch.items():
         existing = edges.get(artifact_id) or ViewEdgeLayout()
         edges[artifact_id] = existing.merge_patch(patch)
-    by_view[view_id] = ViewLayout(nodes=nodes, edges=edges)
+    by_view[view_id] = ViewLayout(
+        nodes=nodes,
+        edges=edges,
+        hierarchical_levels_override=view_layout.hierarchical_levels_override,
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_view_hierarchy_override(
+    layouts: ViewLayouts,
+    view_id: str,
+    override: int | None,
+) -> ViewLayouts:
+    """Set or clear per-view hierarchicalLevelsOverride (None clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    levels = max(1, int(override)) if override is not None else None
+    by_view[view_id] = ViewLayout(
+        nodes=dict(view_layout.nodes),
+        edges=dict(view_layout.edges),
+        hierarchical_levels_override=levels,
+    )
     return ViewLayouts(by_view=by_view)

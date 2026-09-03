@@ -172,6 +172,11 @@ export function applyRelationHandlesToNodes(
   })
 }
 
+/**
+ * Owning part for an endpoint that is itself on the diagram.
+ * Does not promote hidden nested parts to a visible ancestor (avoids
+ * showing dependencies/connections of collapsed subparts).
+ */
 export function findOwnerPart(
   endpointId: string,
   semantic: Record<string, SemanticElement>,
@@ -179,14 +184,12 @@ export function findOwnerPart(
 ): string | null {
   let current = semantic[endpointId]
   if (!current) return null
-  while (current) {
-    if (current.kind === 'part' && displayIds.has(current.id)) {
-      return current.id
-    }
-    if (!current.parentId) break
+  while (current && current.kind !== 'part') {
+    if (!current.parentId) return null
     current = semantic[current.parentId]
   }
-  return null
+  if (!current || current.kind !== 'part') return null
+  return displayIds.has(current.id) ? current.id : null
 }
 
 function buildPorts(
@@ -277,11 +280,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
   const whitebox = view.diagramMode === 'whitebox' || root?.kind === 'part'
   const levels = Math.max(1, view.hierarchicalLevels ?? 2)
 
-  const childParts = Object.values(semantic)
-    .filter((el) => el.kind === 'part' && el.parentId === rootId)
-    .map((el) => el.id)
-
-  /** Parts within depth levels under root (for Arcadia flatten). */
+  /** Part ids in semantic under root within hierarchicalLevels (root depth = 1). */
   const collectDescendantParts = (startId: string, maxDepth: number): string[] => {
     const out: string[] = []
     const walk = (id: string, depth: number) => {
@@ -380,6 +379,51 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
   let boundaryW = 420
   let boundaryH = 260
 
+  /** Part ids in semantic under root within hierarchicalLevels (root depth = 1). */
+  const partDepth = new Map<string, number>()
+  {
+    const walk = (id: string, depth: number) => {
+      if (depth > levels) return
+      const el = semantic[id]
+      if (!el) return
+      if (el.kind === 'part') partDepth.set(id, depth)
+      if (depth >= levels) return
+      for (const cid of el.children || []) {
+        const child = semantic[cid]
+        if (!child) continue
+        if (child.kind === 'part' || child.kind === 'package') {
+          walk(cid, depth + 1)
+        }
+      }
+    }
+    walk(rootId, 1)
+  }
+  const nestedChildParts = (parentId: string) =>
+    Object.values(semantic)
+      .filter(
+        (el) =>
+          el.kind === 'part' &&
+          el.parentId === parentId &&
+          partDepth.has(el.id),
+      )
+      .map((el) => el.id)
+
+  const defaultNestedBox = (
+    id: string,
+    hasKids: boolean,
+  ): { width: number; height: number; fallbackW: number; fallbackH: number } => {
+    const kids = nestedChildParts(id)
+    if (!hasKids && !kids.length) {
+      return { width: 180, height: 110, fallbackW: 180, fallbackH: 110 }
+    }
+    const n = Math.max(1, kids.length)
+    const cols = Math.max(1, Math.min(3, n))
+    const rows = Math.max(1, Math.ceil(n / cols))
+    const w = Math.max(280, 36 * 2 + cols * 140 + (cols - 1) * 20)
+    const h = Math.max(180, 48 + 28 + rows * 90 + (rows - 1) * 16)
+    return { width: w, height: h, fallbackW: w, fallbackH: h }
+  }
+
   if (arcadia && root?.kind === 'part') {
     const peerIds = [rootId, ...collectDescendantParts(rootId, levels)]
     const uniquePeers = [...new Set(peerIds)]
@@ -460,8 +504,9 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       } as Edge)
     }
   } else if (whitebox && root?.kind === 'part') {
-    const cols = Math.max(1, Math.min(3, childParts.length || 1))
-    const rows = Math.max(1, Math.ceil((childParts.length || 1) / cols))
+    const rootKids = nestedChildParts(rootId)
+    const cols = Math.max(1, Math.min(3, rootKids.length || 1))
+    const rows = Math.max(1, Math.ceil((rootKids.length || 1) / cols))
     const childW = 180
     const childH = 110
     const padX = 36
@@ -496,50 +541,101 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       data: partData(rootId, root, true),
     })
 
-    childParts.forEach((id, index) => {
-      const el = semantic[id]
-      const viz = visualization.nodes[id]
-      const col = index % cols
-      const row = Math.floor(index / cols)
-      const defaultX = padX + col * (childW + gapX)
-      const defaultY = padY + row * (childH + gapY)
-      const useStored =
-        viz &&
-        Number.isFinite(viz.x) &&
-        Number.isFinite(viz.y) &&
-        viz.x >= 0 &&
-        viz.y >= 0 &&
-        viz.x < boundaryW - 40 &&
-        viz.y < boundaryH - 40
+    const placeUnder = (
+      parentId: string,
+      parentW: number,
+      parentH: number,
+      depthFromRoot: number,
+    ) => {
+      const kids = nestedChildParts(parentId)
+      kids.forEach((id, index) => {
+        const el = semantic[id]
+        if (!el) return
+        const viz = visualization.nodes[id]
+        const grandKids = nestedChildParts(id)
+        const defaults = defaultNestedBox(id, grandKids.length > 0)
+        const kcols = Math.max(1, Math.min(3, kids.length || 1))
+        const col = index % kcols
+        const row = Math.floor(index / kcols)
+        const defaultX = padX + col * (defaults.fallbackW + gapX)
+        const defaultY = padY + row * (defaults.fallbackH + gapY)
+        const useStored =
+          viz &&
+          Number.isFinite(viz.x) &&
+          Number.isFinite(viz.y) &&
+          viz.x >= 0 &&
+          viz.y >= 0 &&
+          viz.x < parentW - 40 &&
+          viz.y < parentH - 40
 
-      const childStyle = nodeInlineStyle(formatFor(id), viewMode)
-      const data = partData(id, el, false)
-      const box = sizedPartBox(id, el, data.ports, childW, childH)
-      builtNodes.push({
-        id,
-        type: 'part',
-        parentId: rootId,
-        extent: 'parent',
-        position: {
-          x: useStored ? viz.x : defaultX,
-          y: useStored ? viz.y : defaultY,
-        },
-        style: {
-          width: box.width,
-          height: box.height,
-          ...childStyle,
-        },
-        zIndex: 1,
-        data,
+        const isContainer = grandKids.length > 0
+        const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
+          isBoundary: isContainer,
+        })
+        const data = partData(id, el, isContainer)
+        const box = sizedPartBox(
+          id,
+          el,
+          data.ports,
+          defaults.fallbackW,
+          defaults.fallbackH,
+        )
+        builtNodes.push({
+          id,
+          type: 'part',
+          parentId,
+          extent: 'parent',
+          position: {
+            x: useStored ? viz.x : defaultX,
+            y: useStored ? viz.y : defaultY,
+          },
+          style: {
+            width: box.width,
+            height: box.height,
+            ...(isContainer ? { background: 'transparent' } : {}),
+            ...childStyle,
+          },
+          zIndex: depthFromRoot,
+          data,
+        })
+        if (grandKids.length) {
+          placeUnder(id, box.width, box.height, depthFromRoot + 1)
+        }
       })
-    })
+    }
+    placeUnder(rootId, boundaryW, boundaryH, 1)
   } else {
-    childParts.forEach((id, index) => {
+    // Structure (typically package root): top-level parts + nested by depth
+    const topLevel = Object.values(semantic)
+      .filter(
+        (el) =>
+          el.kind === 'part' &&
+          partDepth.has(el.id) &&
+          (el.parentId === rootId ||
+            !el.parentId ||
+            !partDepth.has(el.parentId) ||
+            semantic[el.parentId!]?.kind === 'package'),
+      )
+      .map((el) => el.id)
+
+    topLevel.forEach((id, index) => {
       const el = semantic[id]
+      if (!el) return
       const viz = visualization.nodes[id]
-      const childStyle = nodeInlineStyle(formatFor(id), viewMode)
-      const data = partData(id, el, false)
-      const box = sizedPartBox(id, el, data.ports, 200, 120)
+      const grandKids = nestedChildParts(id)
+      const defaults = defaultNestedBox(id, grandKids.length > 0)
+      const isContainer = grandKids.length > 0
+      const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
+        isBoundary: isContainer,
+      })
+      const data = partData(id, el, isContainer)
+      const box = sizedPartBox(
+        id,
+        el,
+        data.ports,
+        defaults.fallbackW,
+        isContainer ? defaults.fallbackH : 120,
+      )
       builtNodes.push({
         id,
         type: 'part',
@@ -550,11 +646,80 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         style: {
           width: box.width,
           height: box.height,
+          ...(isContainer ? { background: 'transparent' } : {}),
           ...childStyle,
         },
         data,
       })
     })
+
+    const placeNested = (parentId: string, parentW: number, parentH: number, z: number) => {
+      const kids = nestedChildParts(parentId)
+      const padX = 28
+      const padY = 48
+      const gapX = 20
+      const gapY = 16
+      kids.forEach((id, index) => {
+        const el = semantic[id]
+        if (!el) return
+        const viz = visualization.nodes[id]
+        const grandKids = nestedChildParts(id)
+        const defaults = defaultNestedBox(id, grandKids.length > 0)
+        const kcols = Math.max(1, Math.min(3, kids.length || 1))
+        const col = index % kcols
+        const row = Math.floor(index / kcols)
+        const defaultX = padX + col * (defaults.fallbackW + gapX)
+        const defaultY = padY + row * (defaults.fallbackH + gapY)
+        const useStored =
+          viz &&
+          Number.isFinite(viz.x) &&
+          Number.isFinite(viz.y) &&
+          viz.x >= 0 &&
+          viz.y >= 0 &&
+          viz.x < parentW - 40 &&
+          viz.y < parentH - 40
+        const isContainer = grandKids.length > 0
+        const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
+          isBoundary: isContainer,
+        })
+        const data = partData(id, el, isContainer)
+        const box = sizedPartBox(
+          id,
+          el,
+          data.ports,
+          defaults.fallbackW,
+          defaults.fallbackH,
+        )
+        builtNodes.push({
+          id,
+          type: 'part',
+          parentId,
+          extent: 'parent',
+          position: {
+            x: useStored ? viz.x : defaultX,
+            y: useStored ? viz.y : defaultY,
+          },
+          style: {
+            width: box.width,
+            height: box.height,
+            ...(isContainer ? { background: 'transparent' } : {}),
+            ...childStyle,
+          },
+          zIndex: z,
+          data,
+        })
+        if (grandKids.length) {
+          placeNested(id, box.width, box.height, z + 1)
+        }
+      })
+    }
+    for (const id of topLevel) {
+      const node = builtNodes.find((n) => n.id === id)
+      if (!node) continue
+      const w = Number(node.style?.width) || 200
+      const h = Number(node.style?.height) || 120
+      if (nestedChildParts(id).length) placeNested(id, w, h, 1)
+    }
   }
 
   const displaySet = new Set(builtNodes.map((n) => n.id))
