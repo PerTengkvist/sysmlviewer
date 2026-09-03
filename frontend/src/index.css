@@ -531,34 +531,30 @@ input {
   margin-left: 8px;
 }
 
-.diagram-levels-override {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  pointer-events: auto;
-  margin-left: 4px;
-  padding: 3px 8px;
+.view-hierarchy-control {
+  margin: 12px 0 16px;
+  padding: 10px 12px;
   border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
-  color: var(--ink);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
 }
 
-.diagram-levels-override input[type='number'] {
-  width: 3.2rem;
-  padding: 2px 4px;
-  border: 1px solid var(--panel-border);
-  border-radius: 3px;
-  background: var(--panel);
-  color: var(--ink);
-  font-size: 0.72rem;
+.view-hierarchy-control h3 {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-.diagram-levels-override input[type='number']:disabled {
-  opacity: 0.55;
+.view-hierarchy-control .settings-row {
+  margin: 6px 0;
+}
+
+.view-hierarchy-control .settings-note {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
 }
 
 .diagram-canvas-header .redraw-actions button {

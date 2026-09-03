@@ -80,8 +80,8 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
               />
             </label>
             <p className="muted settings-note">
-              Default depth for diagrams (1 = root only). Each diagram can
-              override this via the Levels control on the canvas.
+              Default depth for diagrams (1 = root only). Override per diagram
+              under Details → Diagram levels.
             </p>
             <label className="settings-row">
               <span>Structure notation</span>

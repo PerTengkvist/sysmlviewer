@@ -1108,18 +1108,12 @@ export default function App() {
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
-                globalHierarchicalLevels={
-                  settings.showDiagramDetails.hierarchicalLevels
-                }
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
                 connectionSeparation={settings.connectionSeparation}
                 sheet={sheet}
                 onSelectArtifact={setSelectedId}
                 onOpenView={onOpenView}
-                onHierarchyOverrideChange={(override) =>
-                  void onHierarchyOverrideChange(override)
-                }
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
                 onRelationEndMoved={(id, end, side, offset, companion) =>
@@ -1139,9 +1133,16 @@ export default function App() {
             onLayoutChange={updateRightLayout}
             project={project}
             viewVisualization={viewPayload?.visualization}
+            viewPayload={viewPayload}
+            globalHierarchicalLevels={
+              settings.showDiagramDetails.hierarchicalLevels
+            }
             selectedId={selectedId}
             editorMode={editorMode}
             viewMode={settings.viewMode}
+            onHierarchyOverrideChange={(override) =>
+              void onHierarchyOverrideChange(override)
+            }
             onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
             onAutoroute={(id) => void onAutorouteConnection(id)}
             onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}

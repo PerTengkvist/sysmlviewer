@@ -151,15 +151,12 @@ type Props = {
   viewMode?: ViewMode
   showAttributes?: boolean
   structureNotation?: import('../../settings').StructureNotation
-  /** Global Settings default; per-view override lives on view payload. */
-  globalHierarchicalLevels?: number
   sheet?: ProjectSheet
   selectedConnectionColor?: string
   selectedConnectionLinewidth?: number
   connectionSeparation?: number
   onSelectArtifact: (id: string | null) => void
   onOpenView: (viewId: string) => void
-  onHierarchyOverrideChange?: (override: number | null) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -194,14 +191,12 @@ export function DiagramCanvas({
   viewMode = 'light',
   showAttributes = false,
   structureNotation = 'sysmlv2',
-  globalHierarchicalLevels = 2,
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidth = 4,
   connectionSeparation = 5,
   onSelectArtifact,
   onOpenView,
-  onHierarchyOverrideChange,
   onNodesMoved,
   onPortMoved,
   onRelationEndMoved,
@@ -1186,45 +1181,6 @@ export function DiagramCanvas({
         <div className="diagram-canvas-header">
           <strong className="diagram-view-name">{view.view.name}</strong>
           <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
-          {isStructure && onHierarchyOverrideChange && (
-            <label
-              className="diagram-levels-override"
-              title="Override global hierarchical diagram levels for this view"
-            >
-              <input
-                type="checkbox"
-                checked={view.hierarchicalLevelsOverride != null}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    onHierarchyOverrideChange(
-                      Math.max(
-                        1,
-                        view.hierarchicalLevels ?? globalHierarchicalLevels,
-                      ),
-                    )
-                  } else {
-                    onHierarchyOverrideChange(null)
-                  }
-                }}
-              />
-              <span>Levels</span>
-              <input
-                type="number"
-                min={1}
-                max={8}
-                disabled={view.hierarchicalLevelsOverride == null}
-                value={
-                  view.hierarchicalLevelsOverride != null
-                    ? view.hierarchicalLevelsOverride
-                    : globalHierarchicalLevels
-                }
-                onChange={(e) => {
-                  const n = Math.max(1, Number(e.target.value) || 1)
-                  onHierarchyOverrideChange(n)
-                }}
-              />
-            </label>
-          )}
           <div className="redraw-actions">
             {isStructure ? (
               <>

@@ -17,9 +17,13 @@ type Props = {
   project: Project | null
   /** Merged per-view visualization from the active diagram (nodes/edges overlays). */
   viewVisualization?: ViewPayload['visualization']
+  /** Active view payload — used for per-diagram hierarchy override. */
+  viewPayload?: ViewPayload | null
+  globalHierarchicalLevels?: number
   selectedId: string | null
   editorMode?: boolean
   viewMode?: ViewMode
+  onHierarchyOverrideChange?: (override: number | null) => void
   onRoutingChange: (connectionId: string, routing: RoutingType) => void
   onAutoroute?: (connectionId: string) => void
   onWaypointsChange?: (
@@ -232,12 +236,77 @@ function FormatControls({
   )
 }
 
+function HierarchyLevelsSection({
+  viewPayload,
+  globalHierarchicalLevels,
+  onHierarchyOverrideChange,
+}: {
+  viewPayload: ViewPayload
+  globalHierarchicalLevels: number
+  onHierarchyOverrideChange: (override: number | null) => void
+}) {
+  const mode = viewPayload.diagramMode
+  if (mode !== 'whitebox' && mode !== 'structure' && mode !== 'tree') {
+    return null
+  }
+  const override = viewPayload.hierarchicalLevelsOverride
+  return (
+    <div className="view-hierarchy-control">
+      <h3>Diagram levels</h3>
+      <p className="muted settings-note" style={{ marginTop: 0 }}>
+        Diagram: <strong>{viewPayload.view.name}</strong>
+      </p>
+      <label className="settings-row">
+        <span>Override global levels</span>
+        <input
+          type="checkbox"
+          checked={override != null}
+          onChange={(e) => {
+            if (e.target.checked) {
+              onHierarchyOverrideChange(
+                Math.max(
+                  1,
+                  viewPayload.hierarchicalLevels ?? globalHierarchicalLevels,
+                ),
+              )
+            } else {
+              onHierarchyOverrideChange(null)
+            }
+          }}
+        />
+      </label>
+      <label className="settings-row">
+        <span>Hierarchical levels</span>
+        <input
+          type="number"
+          min={1}
+          max={8}
+          disabled={override == null}
+          value={override != null ? override : globalHierarchicalLevels}
+          onChange={(e) => {
+            const n = Math.max(1, Number(e.target.value) || 1)
+            onHierarchyOverrideChange(n)
+          }}
+        />
+      </label>
+      <p className="muted settings-note">
+        {override != null
+          ? `This diagram uses ${override} levels.`
+          : `Using global setting (${globalHierarchicalLevels}).`}
+      </p>
+    </div>
+  )
+}
+
 export function DetailsPanel({
   project,
   viewVisualization,
+  viewPayload,
+  globalHierarchicalLevels = 2,
   selectedId,
   editorMode,
   viewMode: _viewMode,
+  onHierarchyOverrideChange,
   onRoutingChange,
   onAutoroute,
   onWaypointsChange,
@@ -248,11 +317,23 @@ export function DetailsPanel({
   onAddAttribute,
   onDelete,
 }: Props) {
+  const hierarchyBlock =
+    viewPayload && onHierarchyOverrideChange ? (
+      <HierarchyLevelsSection
+        viewPayload={viewPayload}
+        globalHierarchicalLevels={globalHierarchicalLevels}
+        onHierarchyOverrideChange={onHierarchyOverrideChange}
+      />
+    ) : null
+
   if (!project || !selectedId) {
     return (
       <div className="details-panel">
         <h2>Details</h2>
-        <p className="muted">Select an artifact in the diagram.</p>
+        {hierarchyBlock}
+        {!hierarchyBlock && (
+          <p className="muted">Select an artifact in the diagram.</p>
+        )}
       </div>
     )
   }
@@ -273,6 +354,7 @@ export function DetailsPanel({
     return (
       <div className="details-panel">
         <h2>Details</h2>
+        {hierarchyBlock}
         <dl className="detail-list">
           <dt>Kind</dt>
           <dd>{kindLabel} (Arcadia)</dd>
@@ -324,6 +406,7 @@ export function DetailsPanel({
     return (
       <div className="details-panel">
         <h2>Details</h2>
+        {hierarchyBlock}
         <p className="muted">Unknown artifact.</p>
       </div>
     )
@@ -356,6 +439,7 @@ export function DetailsPanel({
   return (
     <div className="details-panel">
       <h2>Details</h2>
+      {hierarchyBlock}
       <dl className="detail-list">
         <dt>Name</dt>
         <dd>
