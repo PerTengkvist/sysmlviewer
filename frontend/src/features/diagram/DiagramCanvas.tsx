@@ -57,6 +57,11 @@ import {
 } from './layout/dependencyLayout'
 import { redrawStructureConnections, boundaryFlowBounds, syncInternalEdgeBounds } from './layout/connectionRouting'
 import { autoLayoutStructure } from './layout/structureAutoLayout'
+import {
+  diagramElementToPngBlob,
+  waitFrames,
+  writeImageBlobToClipboard,
+} from './copyDiagramImage'
 
 /** All custom types registered together — React Flow caches nodeTypes on mount. */
 const allNodeTypes: NodeTypes = {
@@ -264,6 +269,11 @@ export function DiagramCanvas({
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
   const [layoutEpoch, setLayoutEpoch] = useState(0)
   const [flowDir, setFlowDir] = useState<RedrawDirection>('LR')
+  /** Temporarily force light styling while exporting an image to the clipboard. */
+  const [captureLight, setCaptureLight] = useState(false)
+  const [copyState, setCopyState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
+  const pendingCopyRef = useRef(false)
+  const sheetHostRef = useRef<HTMLDivElement>(null)
   const viewKeyRef = useRef<string | null>(null)
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
@@ -323,6 +333,7 @@ export function DiagramCanvas({
 
   const mode: DiagramMode = view?.diagramMode || 'structure'
   const isStructure = mode === 'whitebox' || mode === 'structure'
+  const renderViewMode: ViewMode = captureLight ? 'light' : viewMode
 
   useEffect(() => {
     if (!printMode || !onPrintReady || !view?.modeError) return
@@ -399,7 +410,7 @@ export function DiagramCanvas({
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${viewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -442,21 +453,21 @@ export function DiagramCanvas({
     let built: { nodes: Node[]; edges: Edge[] }
     switch (view.diagramMode) {
       case 'sequence':
-        built = buildSequenceGraph(view, viewMode)
+        built = buildSequenceGraph(view, renderViewMode)
         break
       case 'state':
-        built = buildStateGraph(view, viewMode)
+        built = buildStateGraph(view, renderViewMode)
         break
       case 'actionFlow':
-        built = buildActionFlowGraph(view, viewMode, flowDirRef.current)
+        built = buildActionFlowGraph(view, renderViewMode, flowDirRef.current)
         break
       case 'tree':
-        built = buildTreeGraph(view, viewMode, collapsedIds, toggleCollapse)
+        built = buildTreeGraph(view, renderViewMode, collapsedIds, toggleCollapse)
         break
       case 'allocation':
         built = buildAllocationGraph({
           view,
-          viewMode,
+          viewMode: renderViewMode,
           showAttributes,
           portMoveMode,
           selectedConnectionColor: selectedConnectionColor || '#7c3aed',
@@ -475,7 +486,7 @@ export function DiagramCanvas({
           onPortMoved: stablePort,
           portMoveMode,
           showAttributes,
-          viewMode,
+          viewMode: renderViewMode,
           structureNotation,
           selectedConnectionColor,
           selectedConnectionLinewidth,
@@ -559,7 +570,55 @@ export function DiagramCanvas({
     }
     viewKeyRef.current = viewKey
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewKey, showAttributes, viewMode])
+  }, [viewKey, showAttributes, renderViewMode])
+
+  const onCopyImage = useCallback(() => {
+    if (printMode || pendingCopyRef.current || copyState === 'busy') return
+    pendingCopyRef.current = true
+    setCopyState('busy')
+    setCaptureLight(true)
+  }, [printMode, copyState])
+
+  useEffect(() => {
+    if (!captureLight || !pendingCopyRef.current) return
+    let cancelled = false
+    const run = async () => {
+      try {
+        // Allow graph rebuild + paint with light styles before rasterizing.
+        await waitFrames(4)
+        await new Promise((r) => setTimeout(r, 60))
+        if (cancelled) return
+        const host = sheetHostRef.current
+        const flow = host?.querySelector('.react-flow') as HTMLElement | null
+        if (!flow) throw new Error('Diagram not ready')
+        const blob = await diagramElementToPngBlob(flow)
+        if (cancelled) return
+        await writeImageBlobToClipboard(blob)
+        if (cancelled) return
+        setCopyState('ok')
+        window.setTimeout(() => {
+          setCopyState((s) => (s === 'ok' ? 'idle' : s))
+        }, 2000)
+      } catch (err) {
+        console.error(err)
+        if (!cancelled) {
+          setCopyState('err')
+          window.setTimeout(() => {
+            setCopyState((s) => (s === 'err' ? 'idle' : s))
+          }, 3000)
+        }
+      } finally {
+        if (!cancelled) {
+          pendingCopyRef.current = false
+          setCaptureLight(false)
+        }
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [captureLight, viewKey, nodes, edges])
 
   // Sync routing into edges without resetting part/port layout.
   useEffect(() => {
@@ -1227,12 +1286,27 @@ export function DiagramCanvas({
       className={`diagram-canvas${portMoveMode ? ' tool-move-ports' : ' tool-connect'}${
         printMode ? ' diagram-canvas-print' : ''
       }`}
+      data-theme={captureLight ? 'light' : undefined}
     >
       {!printMode && (
         <div className="diagram-canvas-header">
           <strong className="diagram-view-name">{view.view.name}</strong>
           <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
           <div className="redraw-actions">
+            <button
+              type="button"
+              onClick={onCopyImage}
+              disabled={copyState === 'busy'}
+              title="Copy diagram image to clipboard (always light theme, white background)"
+            >
+              {copyState === 'busy'
+                ? 'Copying…'
+                : copyState === 'ok'
+                  ? 'Copied'
+                  : copyState === 'err'
+                    ? 'Copy failed'
+                    : 'Copy'}
+            </button>
             {isStructure ? (
               <>
                 <button
@@ -1268,7 +1342,7 @@ export function DiagramCanvas({
           Move ports — dra längs partens kant
         </div>
       )}
-      <div className="diagram-sheet-host">
+      <div className="diagram-sheet-host" ref={sheetHostRef}>
         {!printMode && sheet?.frame?.visible && (
           <div
             className="diagram-paper-frame"
@@ -1335,9 +1409,9 @@ export function DiagramCanvas({
             printMode={printMode}
             onReady={printMode ? onPrintReady : undefined}
           />
-          {!printMode && <Background gap={18} size={1} />}
-          {!printMode && <Controls />}
-          {!printMode && <MiniMap pannable zoomable />}
+          {!printMode && !captureLight && <Background gap={18} size={1} />}
+          {!printMode && !captureLight && <Controls />}
+          {!printMode && !captureLight && <MiniMap pannable zoomable />}
         </ReactFlow>
       </div>
     </div>
