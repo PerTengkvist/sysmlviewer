@@ -55,3 +55,21 @@ def test_qualified_expose_resolves_nested_parts():
     assert views["FD2View"].root_artifact_id.endswith("::FD2")
     assert views["FD3View"].root_artifact_id.endswith("::FD3")
     assert views["FD1View"].root_artifact_id != views["FD2View"].root_artifact_id
+
+
+def test_forward_qualified_dependency_endpoints_not_double_prefixed():
+    """Qualified refs before their declarations must stay Package::Name, not Package::Package::Name."""
+    from domain.models import ArtifactKind
+
+    content = """
+    package P {
+      dependency from P::A to P::B;
+      part def A;
+      part def B;
+    }
+    """
+    result = SubsetSysmlParser().parse(content, "f1")
+    deps = [e for e in result.elements.values() if e.kind == ArtifactKind.DEPENDENCY]
+    assert len(deps) == 1
+    assert deps[0].source_id == "P::A"
+    assert deps[0].target_id == "P::B"

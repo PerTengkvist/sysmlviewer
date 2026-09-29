@@ -291,7 +291,6 @@ class SubsetSysmlParser:
                     candidate = f"{root}::{ref}"
                     if candidate in state.elements:
                         return candidate
-                    return candidate
                 return ref
             parent = state.current_parent()
             if not parent:

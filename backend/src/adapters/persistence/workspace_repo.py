@@ -238,6 +238,17 @@ class WorkspaceProjectRepository:
             structure_notation=structure_notation,
         )
 
+    def load_view_layout(
+        self,
+        view_id: str,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> ViewLayout | None:
+        """Load notation-specific layout; Arcadia falls back to SysML v2."""
+        return view_file_store.read_for_view(
+            self.root, view_id, structure_notation=structure_notation
+        )
+
     def save(self, project: Project) -> Project:
         """Persist project.json + state.json only (no viewLayouts blob).
 

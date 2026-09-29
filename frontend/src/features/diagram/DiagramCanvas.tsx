@@ -32,6 +32,7 @@ import type { ProjectSheet } from '../sheet/sheet'
 import { paperSizeMm } from '../sheet/sheet'
 import { PartNode, type PartNodeData } from './PartNode'
 import { SysmlEdge, type SysmlEdgeData } from './InternalEdge'
+import { applyRelationEndDrag } from './applyRelationEndDrag'
 import {
   translateFlowBounds,
   translatePoints,
@@ -1050,69 +1051,29 @@ export function DiagramCanvas({
       offset: number,
       persist = false,
     ) => {
-      setEdges((current) => {
-        const next = current.map((edge) => {
-          if (
-            edge.id !== artifactId &&
-            (edge.data as SysmlEdgeData)?.artifactId !== artifactId
-          ) {
-            return edge
-          }
-          const data = { ...(edge.data as SysmlEdgeData) }
-          if (end === 'source') {
-            data.sourceSide = side
-            data.sourceOffset = offset
-            data.manualAttachment = true
-            return {
-              ...edge,
-              sourceHandle: `rel-src-${edge.id}`,
-              data,
-            }
-          }
-          data.targetSide = side
-          data.targetOffset = offset
-          data.manualAttachment = true
-          return {
-            ...edge,
-            targetHandle: `rel-tgt-${edge.id}`,
-            data,
-          }
-        })
-        setNodes((ns) => applyRelationHandlesToNodes(ns, next))
-        // Persist only on pointer-up — mid-drag PATCH races corrupt project.json.
-        if (persist) {
-          const updated = next.find(
-            (e) =>
-              e.id === artifactId ||
-              (e.data as SysmlEdgeData)?.artifactId === artifactId,
-          )
-          const d = (updated?.data || {}) as SysmlEdgeData
-          const companion =
-            end === 'source'
-              ? d.targetSide
-                ? {
-                    side: d.targetSide,
-                    offset: d.targetOffset ?? 0.5,
-                  }
-                : undefined
-              : d.sourceSide
-                ? {
-                    side: d.sourceSide,
-                    offset: d.sourceOffset ?? 0.5,
-                  }
-                : undefined
-          queueMicrotask(() =>
-            onRelationEndMovedRef.current?.(
-              artifactId,
-              end,
-              side,
-              offset,
-              companion,
-            ),
-          )
-        }
-        return next
-      })
+      const { edges: next, persist: payload } = applyRelationEndDrag(
+        edgesRef.current,
+        artifactId,
+        end,
+        side,
+        offset,
+        persist,
+      )
+      setEdges(next)
+      setNodes((ns) => applyRelationHandlesToNodes(ns, next))
+      // Persist only on pointer-up — mid-drag PATCH races corrupt project.json.
+      // Call outside setEdges so StrictMode double-invoke cannot double-PATCH.
+      if (payload) {
+        queueMicrotask(() =>
+          onRelationEndMovedRef.current?.(
+            payload.artifactId,
+            payload.end,
+            payload.side,
+            payload.offset,
+            payload.companion,
+          ),
+        )
+      }
     },
     [],
   )

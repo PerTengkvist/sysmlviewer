@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { SemanticElement, ViewPayload } from '../../../api'
+import type { SemanticElement, ViewPayload } from '../../../../api'
 import {
   buildStructureGraph,
   findOwnerPart,

@@ -30,6 +30,7 @@ import {
   saveSettings,
   type AppSettings,
 } from './settings'
+import { structureNotationForPatch } from './features/diagram/structureNotationForPatch'
 
 type CanvasMode =
   | { type: 'diagram' }
@@ -62,8 +63,9 @@ export default function App() {
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
 
-  const structureNotation =
-    settings.showDiagramDetails.structureNotation ?? 'sysmlv2'
+  const structureNotation = structureNotationForPatch(
+    settings.showDiagramDetails.structureNotation,
+  )
 
   const applySession = useCallback(
     async (session: { workspaceRoot: string | null; project: Project | null }) => {
@@ -386,8 +388,7 @@ export default function App() {
           nodes,
           ...(edges && Object.keys(edges).length ? { edges } : {}),
           ...(viewId ? { viewId } : {}),
-          structureNotation:
-            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -436,7 +437,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onHierarchyOverrideChange = useCallback(
@@ -446,20 +447,14 @@ export default function App() {
         await api.patchVisualization(project.id, {
           viewId: activeViewId,
           hierarchicalLevelsOverride: override,
-          structureNotation:
-            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+          structureNotation,
         })
         await loadView(project.id, activeViewId)
       } catch (e) {
         setError(String(e))
       }
     },
-    [
-      project,
-      activeViewId,
-      loadView,
-      settings.showDiagramDetails.structureNotation,
-    ],
+    [project, activeViewId, loadView, structureNotation],
   )
 
   const onPortMoved = useCallback(
@@ -537,8 +532,7 @@ export default function App() {
         const viewId = viewPayload?.view.id
         const patched = await api.patchVisualization(project.id, {
           viewId: viewId || undefined,
-          structureNotation:
-            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+          structureNotation,
           edges: { [artifactId]: { artifactId, ...patch } },
         })
         // Keep identity stable — only merge visualization/viewLayouts from response
@@ -581,7 +575,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onAutorouteConnection = useCallback((connectionId: string) => {
@@ -602,8 +596,7 @@ export default function App() {
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, waypoints } },
           ...(viewId ? { viewId } : {}),
-          structureNotation:
-            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -634,7 +627,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onLabelOffsetMoved = useCallback(
@@ -645,8 +638,7 @@ export default function App() {
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, labelOffset } },
           ...(viewId ? { viewId } : {}),
-          structureNotation:
-            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -677,7 +669,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onRoutingChange = useCallback(
@@ -688,8 +680,7 @@ export default function App() {
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, routing } },
           ...(viewId ? { viewId } : {}),
-          structureNotation:
-            settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -720,7 +711,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onStyleChange = useCallback(

@@ -49,6 +49,8 @@ export type SysmlEdgeData = {
   onSelect?: (artifactId: string) => void
   relationKind?: string
   manualAttachment?: boolean
+  sourceSide?: import('../../api').PortSide
+  targetSide?: import('../../api').PortSide
   sourceOffset?: number
   targetOffset?: number
   markerStartKind?: string

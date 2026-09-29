@@ -7,8 +7,8 @@ import type {
   ViewPayload,
   VisualizationEdge,
   ElementStyle,
-} from '../../../api'
-import type { ViewMode, StructureNotation } from '../../../settings'
+} from '../../../../api'
+import type { ViewMode, StructureNotation } from '../../../../settings'
 import { edgeStrokeStyle, nodeInlineStyle, reactFlowMarker } from '../../elementStyle'
 import {
   mergedEdgeVisual,

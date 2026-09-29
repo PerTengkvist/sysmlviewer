@@ -178,6 +178,21 @@ class JsonFileProjectRepository:
             structure_notation=structure_notation,
         )
 
+    def load_view_layout(
+        self,
+        view_id: str,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> ViewLayout | None:
+        project_id = getattr(self, "_current_project_id", None)
+        if not project_id:
+            return None
+        return view_file_store.read_for_view(
+            self._project_dir(project_id),
+            view_id,
+            structure_notation=structure_notation,
+        )
+
     def write_sysml(self, rel: str, content: str, *, project_id: str | None = None) -> None:
         """Write a new SysML file. Requires project_id for multi-project roots."""
         if not project_id:

@@ -15,7 +15,7 @@ from domain.view_layouts import (
 )
 from fastapi.testclient import TestClient
 
-from tests.helpers import add_content_file, api_url
+from helpers import add_content_file, api_url
 
 
 def test_visualization_edge_roundtrip_source_target_side_offset():
@@ -237,4 +237,105 @@ def test_concurrent_relation_end_patches_do_not_500(tmp_path: Path):
 
     with ThreadPoolExecutor(max_workers=8) as pool:
         codes = list(pool.map(one_patch, range(24)))
-    assert codes == [200] * 24
+    assert all(c == 200 for c in codes)
+
+
+def test_get_view_returns_arcadia_composition_edge_attachment(tmp_path: Path):
+    """Synthetic viz::composition edges must round-trip through GET ?notation=arcadia."""
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post(api_url("/projects"), json={"name": "Comp"}).json()["id"]
+    add_content_file(client, project_id, tmp_path, "rel.sysml", SAMPLE_REL)
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    view_id = next(v["id"] for v in project["views"] if "RelView" in v["name"])
+    parent_id = "Rel::System"
+    child_id = "Rel::System::a"
+    edge_id = f"viz::composition::{parent_id}::{child_id}"
+
+    res = client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": view_id,
+            "structureNotation": "arcadia",
+            "edges": {
+                edge_id: {
+                    "artifactId": edge_id,
+                    "sourceSide": "bottom",
+                    "sourceOffset": 0.33,
+                    "targetSide": "top",
+                    "targetOffset": 0.5,
+                }
+            },
+        },
+    )
+    assert res.status_code == 200, res.text
+
+    loaded = client.get(
+        api_url(f"/projects/{project_id}/views/{view_id}?notation=arcadia")
+    ).json()
+    edges = loaded["visualization"]["edges"]
+    assert edge_id in edges, f"missing composition edge; got {list(edges)}"
+    assert edges[edge_id]["sourceSide"] == "bottom"
+    assert edges[edge_id]["sourceOffset"] == 0.33
+    assert edges[edge_id]["targetSide"] == "top"
+
+
+def test_arcadia_style_patch_does_not_migrate_into_sysmlv2_file(tmp_path: Path):
+    """Non-layout Arcadia PATCH must not write Arcadia edges into views/<name>.json."""
+    app = create_app(data_dir=tmp_path)
+    client = TestClient(app)
+    project_id = client.post(api_url("/projects"), json={"name": "Mig"}).json()["id"]
+    add_content_file(client, project_id, tmp_path, "rel.sysml", SAMPLE_REL)
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    view_id = next(v["id"] for v in project["views"] if "RelView" in v["name"])
+    parent_id = "Rel::System"
+    child_id = "Rel::System::a"
+    edge_id = f"viz::composition::{parent_id}::{child_id}"
+    part_id = "Rel::System::a"
+
+    # Seed Arcadia layout only (no SysML v2 sibling).
+    assert (
+        client.patch(
+            api_url(f"/projects/{project_id}/visualization"),
+            json={
+                "viewId": view_id,
+                "structureNotation": "arcadia",
+                "edges": {
+                    edge_id: {
+                        "artifactId": edge_id,
+                        "sourceSide": "bottom",
+                        "sourceOffset": 0.2,
+                    }
+                },
+            },
+        ).status_code
+        == 200
+    )
+    arc_path = tmp_path / "views" / "RelView.arcadia.json"
+    v2_path = tmp_path / "views" / "RelView.json"
+    assert arc_path.is_file()
+    # Remove any sysmlv2 file so migrate-on-save would invent one.
+    if v2_path.exists():
+        v2_path.unlink()
+
+    # Style patch is not layout-only → triggers repo.save() migrate path.
+    res = client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": view_id,
+            "structureNotation": "arcadia",
+            "nodes": {
+                part_id: {
+                    "artifactId": part_id,
+                    "style": {"light": {"fillColor": "#ff0000"}},
+                }
+            },
+        },
+    )
+    assert res.status_code == 200, res.text
+
+    if v2_path.exists():
+        doc = json.loads(v2_path.read_text(encoding="utf-8"))
+        assert edge_id not in (doc.get("edges") or {}), (
+            "Arcadia composition edge leaked into SysML v2 layout file"
+        )
