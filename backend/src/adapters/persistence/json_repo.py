@@ -164,12 +164,33 @@ class JsonFileProjectRepository:
         view_id: str,
         name: str | None,
         layout: ViewLayout,
+        *,
+        structure_notation: str = "sysmlv2",
     ) -> Path:
         project_id = getattr(self, "_current_project_id", None)
         if not project_id:
             raise RuntimeError("No project context for save_view_layout")
         return view_file_store.write_one(
-            self._project_dir(project_id), view_id, name, layout
+            self._project_dir(project_id),
+            view_id,
+            name,
+            layout,
+            structure_notation=structure_notation,
+        )
+
+    def load_view_layout(
+        self,
+        view_id: str,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> ViewLayout | None:
+        project_id = getattr(self, "_current_project_id", None)
+        if not project_id:
+            return None
+        return view_file_store.read_for_view(
+            self._project_dir(project_id),
+            view_id,
+            structure_notation=structure_notation,
         )
 
     def write_sysml(self, rel: str, content: str, *, project_id: str | None = None) -> None:

@@ -168,6 +168,10 @@ class SemanticElement:
     default_value: str | None = None
     # Optional multiplicity for part usages, e.g. `0..*` from `part x [0..*] : Type`
     multiplicity: str | None = None
+    # True when declared as `ref part` (non-composite / reference feature)
+    is_reference: bool = False
+    # Prefix metadata keywords from `#Mount dependency …` (not resolved defs)
+    metadata_keywords: list[str] = field(default_factory=list)
     children: list[str] = field(default_factory=list)
     file_id: str | None = None
 
@@ -183,6 +187,8 @@ class SemanticElement:
             "exposeRef": self.expose_ref,
             "defaultValue": self.default_value,
             "multiplicity": self.multiplicity,
+            "isReference": self.is_reference,
+            "metadataKeywords": list(self.metadata_keywords),
             "children": list(self.children),
             "fileId": self.file_id,
         }
@@ -200,6 +206,8 @@ class SemanticElement:
             expose_ref=data.get("exposeRef"),
             default_value=data.get("defaultValue"),
             multiplicity=data.get("multiplicity"),
+            is_reference=bool(data.get("isReference", False)),
+            metadata_keywords=list(data.get("metadataKeywords") or []),
             children=list(data.get("children") or []),
             file_id=data.get("fileId"),
         )
@@ -279,6 +287,10 @@ class VisualizationEdge:
     label_offset_x: float = 0.0
     label_offset_y: float = 0.0
     style: ElementStyle | None = None
+    source_side: PortSide | None = None
+    source_offset: float | None = None
+    target_side: PortSide | None = None
+    target_offset: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -294,11 +306,21 @@ class VisualizationEdge:
             style = self.style.to_dict()
             if style:
                 out["style"] = style
+        if self.source_side is not None:
+            out["sourceSide"] = self.source_side.value
+        if self.source_offset is not None:
+            out["sourceOffset"] = self.source_offset
+        if self.target_side is not None:
+            out["targetSide"] = self.target_side.value
+        if self.target_offset is not None:
+            out["targetOffset"] = self.target_offset
         return out
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VisualizationEdge:
         lo = data.get("labelOffset") or {}
+        source_side = data.get("sourceSide")
+        target_side = data.get("targetSide")
         return cls(
             artifact_id=data["artifactId"],
             routing=RoutingType(data.get("routing", RoutingType.ANGULAR.value)),
@@ -306,6 +328,18 @@ class VisualizationEdge:
             label_offset_x=float(lo.get("x", 0) or 0),
             label_offset_y=float(lo.get("y", 0) or 0),
             style=ElementStyle.from_dict(data.get("style")),
+            source_side=PortSide(source_side) if source_side else None,
+            source_offset=(
+                float(data["sourceOffset"])
+                if data.get("sourceOffset") is not None
+                else None
+            ),
+            target_side=PortSide(target_side) if target_side else None,
+            target_offset=(
+                float(data["targetOffset"])
+                if data.get("targetOffset") is not None
+                else None
+            ),
         )
 
 

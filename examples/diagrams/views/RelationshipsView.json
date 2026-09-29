@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "viewId": "PartRelationships::RelationshipsView",
+  "name": "RelationshipsView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "PartRelationships::System": {
+      "x": -219.8409584382531,
+      "y": 3592.6290073318096,
+      "width": 472.0,
+      "height": 726.0
+    },
+    "PartRelationships::System::eng": {
+      "x": 34.03532518440727,
+      "y": 188.31092420831556,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PartRelationships::System::baseEng": {
+      "x": 284.0,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PartRelationships::System::logical": {
+      "x": 38.73979591836735,
+      "y": 422.22448979591854,
+      "width": 140.0,
+      "height": 98.0
+    },
+    "PartRelationships::System::physical": {
+      "x": 277.51785714285717,
+      "y": 550.2551020408164,
+      "width": 140.0,
+      "height": 98.0
+    },
+    "PartRelationships::System::child": {
+      "x": 48.0,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PartRelationships::System::sharedEng": {
+      "x": 48.0,
+      "y": 594.0,
+      "width": 140.0,
+      "height": 76.0
+    }
+  },
+  "edges": {
+    "PartRelationships::System::wire": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 45.67689870460407,
+          "y": 4043.273497127728
+        },
+        {
+          "x": 45.67689870460407,
+          "y": 4171.304109372626
+        }
+      ]
+    },
+    "PartRelationships::System::multiDep_2": {
+      "labelOffset": {
+        "x": 64.02560805875102,
+        "y": -0.042256390751845174
+      }
+    },
+    "PartRelationships::System::dep1": {
+      "labelOffset": {
+        "x": -31.57790975599207,
+        "y": 18.329991126321147
+      },
+      "sourceSide": "bottom",
+      "sourceOffset": 0.3658849421465013,
+      "targetSide": "left",
+      "targetOffset": 0.6178218296595982
+    },
+    "PartRelationships::System::alloc1": {
+      "labelOffset": {
+        "x": -29.909190031858998,
+        "y": -15.423186789036663
+      },
+      "sourceSide": "bottom",
+      "sourceOffset": 0.7419430668778043,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "PartRelationships::System::multiDep_1": {
+      "labelOffset": {
+        "x": -20.274168774279694,
+        "y": 7.345531722645319
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5672844840417578,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "PartRelationships::System::power": {
+      "labelOffset": {
+        "x": 6.637564211475606,
+        "y": -22.372985995545605
+      },
+      "targetSide": "left",
+      "targetOffset": 0.26158770686732874
+    }
+  }
+}

@@ -60,3 +60,42 @@ def test_merge_preserves_layout():
     assert merged.nodes["Example::Vehicle"].x == 42
     assert merged.nodes["Example::Vehicle"].y == 99
     assert "Example::Engine" in merged.nodes
+
+
+def test_merge_default_ports_stay_in_body_and_size_part():
+    from domain.merge import PORT_BODY_OFFSET_MIN
+    from domain.models import SemanticElement
+
+    semantic = {
+        "P": SemanticElement(
+            id="P", kind=ArtifactKind.PACKAGE, name="P", children=["P::A"]
+        ),
+        "P::A": SemanticElement(
+            id="P::A",
+            kind=ArtifactKind.PART,
+            name="Box",
+            parent_id="P",
+            children=["P::A::longPortName", "P::A::other"],
+        ),
+        "P::A::longPortName": SemanticElement(
+            id="P::A::longPortName",
+            kind=ArtifactKind.PORT,
+            name="longPortName",
+            parent_id="P::A",
+        ),
+        "P::A::other": SemanticElement(
+            id="P::A::other",
+            kind=ArtifactKind.PORT,
+            name="other",
+            parent_id="P::A",
+        ),
+    }
+    merged = merge_visualization(semantic)
+    for pid in ("P::A::longPortName", "P::A::other"):
+        node = merged.nodes[pid]
+        assert node.side is not None
+        assert node.offset is not None
+        assert node.offset >= PORT_BODY_OFFSET_MIN
+    part = merged.nodes["P::A"]
+    assert part.width >= 200
+    assert part.height >= 120

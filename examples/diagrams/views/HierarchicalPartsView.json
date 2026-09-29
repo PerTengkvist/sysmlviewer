@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "viewId": "HierarchicalPartsPkg::HierarchicalPartsView",
+  "name": "HierarchicalPartsView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "HierarchicalPartsPkg::PartDefinitions::FD2": {
+      "x": 129.51833350908817,
+      "y": 4405.197890414426,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3": {
+      "x": 627.895434185664,
+      "y": 4551.913779027879,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {
+    "HierarchicalPartsPkg::PartDefinitions::FD2::dep5": {
+      "sourceSide": "top",
+      "sourceOffset": 0.6091016970694011,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    }
+  }
+}

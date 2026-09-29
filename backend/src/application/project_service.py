@@ -683,19 +683,72 @@ class ProjectService:
         if not project:
             return None
 
-        from domain.view_layouts import apply_view_layout_edge_patch, apply_view_layout_patch
+        from domain.view_layouts import (
+            ViewLayout,
+            ViewLayouts,
+            apply_view_hierarchy_override,
+            apply_view_layout_edge_patch,
+            apply_view_layout_patch,
+        )
+
+        def _normalize_notation(raw: object) -> str:
+            return (
+                "arcadia"
+                if str(raw or "").strip().lower() == "arcadia"
+                else "sysmlv2"
+            )
 
         view_id = patch.get("viewId")
+        notation = _normalize_notation(patch.get("structureNotation"))
         nodes_patch = dict(patch.get("nodes") or {})
         edges_patch = dict(patch.get("edges") or {})
+        hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
+        # True when the only disk write needed is views/<name>.json (already done).
+        layout_only = False
 
         if view_id:
+            load_fn = getattr(self.repo, "load_view_layout", None)
+            loaded = (
+                load_fn(view_id, structure_notation=notation)
+                if load_fn is not None
+                else None
+            )
+            # Arcadia layouts must not land on project.view_layouts — save() would
+            # migrate them into the SysML v2 views/<name>.json file.
+            if notation == "arcadia":
+                working = ViewLayouts(
+                    by_view={view_id: loaded or ViewLayout()}
+                )
+            else:
+                by_view = dict(project.view_layouts.by_view)
+                by_view[view_id] = loaded or by_view.get(view_id) or ViewLayout()
+                project.view_layouts = ViewLayouts(by_view=by_view)
+                working = project.view_layouts
+
+            if hierarchy_override_patch:
+                raw_override = patch.get("hierarchicalLevelsOverride")
+                override_val: int | None
+                if raw_override is None:
+                    override_val = None
+                else:
+                    try:
+                        override_val = max(1, int(raw_override))
+                    except (TypeError, ValueError):
+                        override_val = None
+                working = apply_view_hierarchy_override(
+                    working, view_id, override_val
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
             geo_patch: dict[str, dict] = {}
             other_patch: dict[str, dict] = {}
             for artifact_id, node_data in nodes_patch.items():
                 geo: dict = {}
                 other: dict = {}
                 for key, value in node_data.items():
+                    if key == "artifactId":
+                        continue
                     if key in ("x", "y", "width", "height"):
                         geo[key] = value
                     else:
@@ -705,9 +758,9 @@ class ProjectService:
                 if other:
                     other_patch[artifact_id] = other
             if geo_patch:
-                project.view_layouts = apply_view_layout_patch(
-                    project.view_layouts, view_id, geo_patch
-                )
+                working = apply_view_layout_patch(working, view_id, geo_patch)
+                if notation != "arcadia":
+                    project.view_layouts = working
             nodes_patch = other_patch
 
             geo_edge_patch: dict[str, dict] = {}
@@ -716,7 +769,17 @@ class ProjectService:
                 geo_e: dict = {}
                 other_e: dict = {}
                 for key, value in edge_data.items():
-                    if key in ("routing", "waypoints", "labelOffset"):
+                    if key == "artifactId":
+                        continue
+                    if key in (
+                        "routing",
+                        "waypoints",
+                        "labelOffset",
+                        "sourceSide",
+                        "sourceOffset",
+                        "targetSide",
+                        "targetOffset",
+                    ):
                         geo_e[key] = value
                     else:
                         other_e[key] = value
@@ -725,13 +788,15 @@ class ProjectService:
                 if other_e:
                     other_edge_patch[artifact_id] = other_e
             if geo_edge_patch:
-                project.view_layouts = apply_view_layout_edge_patch(
-                    project.view_layouts, view_id, geo_edge_patch
+                working = apply_view_layout_edge_patch(
+                    working, view_id, geo_edge_patch
                 )
+                if notation != "arcadia":
+                    project.view_layouts = working
             edges_patch = other_edge_patch
 
-            if geo_patch or geo_edge_patch:
-                layout = project.view_layouts.by_view.get(view_id)
+            if geo_patch or geo_edge_patch or hierarchy_override_patch:
+                layout = working.by_view.get(view_id)
                 if layout is not None:
                     view_name = next(
                         (v.name for v in project.views if v.id == view_id),
@@ -739,7 +804,15 @@ class ProjectService:
                     )
                     save_fn = getattr(self.repo, "save_view_layout", None)
                     if save_fn is not None:
-                        save_fn(view_id, view_name, layout)
+                        save_fn(
+                            view_id,
+                            view_name,
+                            layout,
+                            structure_notation=notation,
+                        )
+                # Relation-end / node moves with viewId only touch view files.
+                # Skip rewriting project.json+state.json (avoids PATCH races).
+                layout_only = not nodes_patch and not edges_patch
 
         for artifact_id, node_data in nodes_patch.items():
             existing = project.visualization.nodes.get(artifact_id)
@@ -780,6 +853,14 @@ class ProjectService:
                     lo = edge_data["labelOffset"] or {}
                     existing.label_offset_x = float(lo.get("x", 0) or 0)
                     existing.label_offset_y = float(lo.get("y", 0) or 0)
+                if "sourceSide" in edge_data and edge_data["sourceSide"]:
+                    existing.source_side = PortSide(edge_data["sourceSide"])
+                if "sourceOffset" in edge_data and edge_data["sourceOffset"] is not None:
+                    existing.source_offset = float(edge_data["sourceOffset"])
+                if "targetSide" in edge_data and edge_data["targetSide"]:
+                    existing.target_side = PortSide(edge_data["targetSide"])
+                if "targetOffset" in edge_data and edge_data["targetOffset"] is not None:
+                    existing.target_offset = float(edge_data["targetOffset"])
                 if "style" in edge_data and edge_data["style"] is not None:
                     if existing.style is None:
                         existing.style = ElementStyle()
@@ -790,6 +871,8 @@ class ProjectService:
                 )
 
         project.updated_at = utc_now()
+        if layout_only:
+            return project
         return self.repo.save(project)
 
     def export_view(
@@ -855,12 +938,40 @@ class ProjectService:
         return str(target)
 
     def get_view(
-        self, project_id: str, view_id: str, hierarchical_levels: int = 2
+        self,
+        project_id: str,
+        view_id: str,
+        hierarchical_levels: int = 2,
+        *,
+        structure_notation: str = "sysmlv2",
     ) -> dict | None:
         project = self.get_project(project_id)
         if not project:
             return None
 
+        from domain.view_layouts import ViewLayouts
+
+        notation = (
+            "arcadia"
+            if str(structure_notation or "").strip().lower() == "arcadia"
+            else "sysmlv2"
+        )
+        load_fn = getattr(self.repo, "load_view_layout", None)
+        loaded = (
+            load_fn(view_id, structure_notation=notation)
+            if load_fn is not None
+            else None
+        )
+        # Prefer notation file for this response. Keep Arcadia off project.view_layouts
+        # so a later save() cannot migrate it into views/<name>.json.
+        if loaded is not None:
+            by_view = dict(project.view_layouts.by_view)
+            by_view[view_id] = loaded
+            overlay_layouts = ViewLayouts(by_view=by_view)
+            if notation != "arcadia":
+                project.view_layouts = overlay_layouts
+        else:
+            overlay_layouts = project.view_layouts
         from domain.details import collect_artifacts_to_depth
         from domain.diagram_mode import expected_root_kinds, resolve_diagram_mode
         from domain.merge import artifact_diagram_view_id
@@ -884,7 +995,10 @@ class ProjectService:
                 general_views.sort(key=lambda e: e.id)
                 if general_views:
                     return self.get_view(
-                        project_id, general_views[0].id, hierarchical_levels
+                        project_id,
+                        general_views[0].id,
+                        hierarchical_levels,
+                        structure_notation=notation,
                     )
                 view = ViewDef(
                     id=artifact_diagram_view_id(artifact_id),
@@ -908,6 +1022,23 @@ class ProjectService:
         if not root:
             return None
 
+        levels_override: int | None = None
+        layout_for_view = (
+            overlay_layouts.by_view.get(view.id)
+            if overlay_layouts is not None
+            else None
+        )
+        if (
+            layout_for_view is not None
+            and layout_for_view.hierarchical_levels_override is not None
+        ):
+            levels_override = layout_for_view.hierarchical_levels_override
+        effective_levels = (
+            levels_override
+            if levels_override is not None
+            else max(1, hierarchical_levels)
+        )
+
         diagram_mode = resolve_diagram_mode(view, root)
         mode_error: str | None = None
         expected = expected_root_kinds(diagram_mode)
@@ -928,7 +1059,7 @@ class ProjectService:
                         artifact_ids.add(gc)
         elif diagram_mode == "tree":
             artifact_ids = collect_artifacts_to_depth(
-                project.semantic, root.id, hierarchical_levels
+                project.semantic, root.id, effective_levels
             )
             # Include non-part children for tree browsing
             extra: set[str] = set()
@@ -959,7 +1090,7 @@ class ProjectService:
                 elif child.kind == ArtifactKind.PART:
                     if child.name == "logical":
                         artifact_ids |= collect_artifacts_to_depth(
-                            project.semantic, child.id, hierarchical_levels
+                            project.semantic, child.id, effective_levels
                         )
                     else:
                         artifact_ids.add(child.id)
@@ -988,21 +1119,38 @@ class ProjectService:
                     artifact_ids.add(el.source_id)
                 if el.target_id:
                     artifact_ids.add(el.target_id)
-        elif root.kind == ArtifactKind.PART:
-            artifact_ids = collect_artifacts_to_depth(
-                project.semantic, root.id, hierarchical_levels
-            )
         else:
-            artifact_ids = {root.id}
-            queue = list(root.children)
-            while queue:
-                aid = queue.pop()
-                if aid in artifact_ids:
-                    continue
-                artifact_ids.add(aid)
-                child = project.semantic.get(aid)
-                if child:
-                    queue.extend(child.children)
+            # Structure / whitebox: depth-limit parts & packages (incl. package roots)
+            artifact_ids = collect_artifacts_to_depth(
+                project.semantic, root.id, effective_levels
+            )
+
+        structure_edge_kinds = {
+            ArtifactKind.CONNECTION,
+            ArtifactKind.DEPENDENCY,
+            ArtifactKind.ALLOCATION,
+            ArtifactKind.BINDING,
+            ArtifactKind.FLOW,
+            ArtifactKind.SPECIALIZATION,
+            ArtifactKind.SUBSETTING,
+            ArtifactKind.REDEFINITION,
+        }
+
+        # Drop relations to/from parts outside the depth window (even if nested
+        # under an included parent as a child feature).
+        hidden_relations = {
+            aid
+            for aid in artifact_ids
+            if (el := project.semantic.get(aid)) is not None
+            and el.kind in structure_edge_kinds
+            and not (
+                el.source_id
+                and el.target_id
+                and el.source_id in artifact_ids
+                and el.target_id in artifact_ids
+            )
+        }
+        artifact_ids -= hidden_relations
 
         semantic = {
             aid: project.semantic[aid].to_dict()
@@ -1018,8 +1166,8 @@ class ProjectService:
             if not global_node:
                 continue
             overlay = (
-                project.view_layouts.get_node(view.id, aid)
-                if project.view_layouts is not None
+                overlay_layouts.get_node(view.id, aid)
+                if overlay_layouts is not None
                 else None
             )
             resolved = resolve_view_node(global_node, overlay)
@@ -1029,16 +1177,87 @@ class ProjectService:
                 if overlay is None or overlay.height is None:
                     resolved["height"] = DEFAULT_TREE_HEIGHT
             nodes[aid] = resolved
-        edges = {}
-        for aid in artifact_ids:
-            global_edge = project.visualization.edges.get(aid)
-            if not global_edge:
+
+        # Edges: only relations whose endpoints are both in the depth-limited set.
+        # Do not reintroduce hidden-subpart relations via layout overlays.
+        def _endpoints_visible(el: SemanticElement) -> bool:
+            src, tgt = el.source_id, el.target_id
+            return bool(src and tgt and src in artifact_ids and tgt in artifact_ids)
+
+        def _viz_synthetic_endpoints(eid: str) -> bool:
+            """True for Arcadia composition/aggregation edges with both ends visible."""
+            for prefix in ("viz::composition::", "viz::aggregation::"):
+                if not eid.startswith(prefix):
+                    continue
+                rest = eid[len(prefix) :]
+                # Prefer longest parent match — both ids contain '::'.
+                for parent in sorted(artifact_ids, key=len, reverse=True):
+                    marker = f"{parent}::"
+                    if rest.startswith(marker):
+                        child = rest[len(marker) :]
+                        return parent in artifact_ids and child in artifact_ids
+                return False
+            return False
+
+        edge_ids = set(artifact_ids)
+        for eid, el in project.semantic.items():
+            if el.kind not in structure_edge_kinds:
                 continue
+            if _endpoints_visible(el):
+                edge_ids.add(eid)
+        if overlay_layouts is not None:
+            layout = overlay_layouts.by_view.get(view.id)
+            if layout is not None:
+                for eid in layout.edges:
+                    if _viz_synthetic_endpoints(eid):
+                        edge_ids.add(eid)
+                        continue
+                    el = project.semantic.get(eid)
+                    if el is None or el.kind not in structure_edge_kinds:
+                        continue
+                    if _endpoints_visible(el):
+                        edge_ids.add(eid)
+
+        edges = {}
+        for aid in edge_ids:
+            global_edge = project.visualization.edges.get(aid)
             edge_overlay = (
-                project.view_layouts.get_edge(view.id, aid)
-                if project.view_layouts is not None
+                overlay_layouts.get_edge(view.id, aid)
+                if overlay_layouts is not None
                 else None
             )
+            if not global_edge and edge_overlay is None:
+                continue
+            if not global_edge:
+                # Structure relations (dependency etc.) often have no global viz
+                # row — still surface per-view routing/attachment overlays.
+                out: dict = {
+                    "artifactId": aid,
+                    "waypoints": [],
+                    "labelOffset": {"x": 0, "y": 0},
+                }
+                if edge_overlay.routing is not None:
+                    out["routing"] = edge_overlay.routing
+                if edge_overlay.waypoints is not None:
+                    out["waypoints"] = [w.to_dict() for w in edge_overlay.waypoints]
+                if (
+                    edge_overlay.label_offset_x is not None
+                    or edge_overlay.label_offset_y is not None
+                ):
+                    out["labelOffset"] = {
+                        "x": edge_overlay.label_offset_x or 0,
+                        "y": edge_overlay.label_offset_y or 0,
+                    }
+                if edge_overlay.source_side is not None:
+                    out["sourceSide"] = edge_overlay.source_side
+                if edge_overlay.source_offset is not None:
+                    out["sourceOffset"] = edge_overlay.source_offset
+                if edge_overlay.target_side is not None:
+                    out["targetSide"] = edge_overlay.target_side
+                if edge_overlay.target_offset is not None:
+                    out["targetOffset"] = edge_overlay.target_offset
+                edges[aid] = out
+                continue
             resolved_edge = resolve_view_edge(global_edge, edge_overlay)
             if diagram_mode == "allocation":
                 conn = project.semantic.get(aid)
@@ -1057,7 +1276,8 @@ class ProjectService:
         result: dict = {
             "view": view.to_dict(),
             "diagramMode": diagram_mode,
-            "hierarchicalLevels": hierarchical_levels,
+            "hierarchicalLevels": effective_levels,
+            "hierarchicalLevelsOverride": levels_override,
             "semantic": semantic,
             "visualization": {"nodes": nodes, "edges": edges},
             "subdiagrams": subdiagrams,

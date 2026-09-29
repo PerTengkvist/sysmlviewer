@@ -101,6 +101,8 @@ Supported textual constructs:
 - `interaction def` / `lifeline` / `message … from … to …` / `then message …`
 - `state def` / nested `state` / `transition … from … to …`
 - `action def` / nested `action` / `succession … first … then …`
+- `#Keyword dependency … from … to …` (prefix metadata on dependencies; shown as `«Keyword»`)
+- `#Keyword part def …` / `#Keyword part …` / `#Keyword ref part …` (replaces `«part»` with `«Keyword»`)
 
 Unknown constructs emit warnings and are skipped when possible.
 

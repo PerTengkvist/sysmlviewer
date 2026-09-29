@@ -25,6 +25,7 @@ def test_parse_dependency_single_target():
     assert len(deps) == 1
     assert deps[0].source_id == "P::A"
     assert deps[0].target_id == "P::B"
+    assert deps[0].metadata_keywords == []
 
 
 def test_parse_dependency_multi_target():
@@ -43,6 +44,67 @@ def test_parse_dependency_multi_target():
     assert targets == {"P::B", "P::C"}
     assert all(d.source_id == "P::A" for d in deps)
     assert all(d.name.startswith("multiDep") for d in deps)
+    assert all(d.metadata_keywords == [] for d in deps)
+
+
+def test_parse_dependency_with_metadata_keyword():
+    content = """
+    package P {
+      part def A;
+      part def B;
+      #Mount dependency from A to B;
+    }
+    """
+    result = _parse(content)
+    deps = _rels(result, ArtifactKind.DEPENDENCY)
+    assert len(deps) == 1
+    assert deps[0].source_id == "P::A"
+    assert deps[0].target_id == "P::B"
+    assert deps[0].metadata_keywords == ["Mount"]
+
+
+def test_parse_dependency_with_multiple_metadata_keywords():
+    content = """
+    package P {
+      part def A;
+      part def B;
+      #Mount #Refine dependency from A to B;
+    }
+    """
+    result = _parse(content)
+    deps = _rels(result, ArtifactKind.DEPENDENCY)
+    assert len(deps) == 1
+    assert deps[0].metadata_keywords == ["Mount", "Refine"]
+
+
+def test_parse_named_dependency_with_metadata_keyword():
+    content = """
+    package P {
+      part def A;
+      part def B;
+      #Mount dependency use from A to B;
+    }
+    """
+    result = _parse(content)
+    deps = _rels(result, ArtifactKind.DEPENDENCY)
+    assert len(deps) == 1
+    assert deps[0].name == "use"
+    assert deps[0].metadata_keywords == ["Mount"]
+
+
+def test_parse_metadata_dependency_multi_target_copies_keywords():
+    content = """
+    package P {
+      part def A;
+      part def B;
+      part def C;
+      #Mount dependency multiDep from A to B, C;
+    }
+    """
+    result = _parse(content)
+    deps = _rels(result, ArtifactKind.DEPENDENCY)
+    assert len(deps) == 2
+    assert all(d.metadata_keywords == ["Mount"] for d in deps)
 
 
 def test_parse_allocation():

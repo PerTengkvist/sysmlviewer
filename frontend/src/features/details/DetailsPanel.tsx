@@ -7,15 +7,23 @@ import type {
   ViewPayload,
 } from '../../api'
 import { STYLE_DEFAULTS } from '../diagram/elementStyle'
+import {
+  defaultRelationStyle,
+  STRUCTURE_EDGE_KINDS,
+} from '../diagram/relationshipStyle'
 import type { ViewMode } from '../../settings'
 
 type Props = {
   project: Project | null
   /** Merged per-view visualization from the active diagram (nodes/edges overlays). */
   viewVisualization?: ViewPayload['visualization']
+  /** Active view payload — used for per-diagram hierarchy override. */
+  viewPayload?: ViewPayload | null
+  globalHierarchicalLevels?: number
   selectedId: string | null
   editorMode?: boolean
   viewMode?: ViewMode
+  onHierarchyOverrideChange?: (override: number | null) => void
   onRoutingChange: (connectionId: string, routing: RoutingType) => void
   onAutoroute?: (connectionId: string) => void
   onWaypointsChange?: (
@@ -228,12 +236,77 @@ function FormatControls({
   )
 }
 
+function HierarchyLevelsSection({
+  viewPayload,
+  globalHierarchicalLevels,
+  onHierarchyOverrideChange,
+}: {
+  viewPayload: ViewPayload
+  globalHierarchicalLevels: number
+  onHierarchyOverrideChange: (override: number | null) => void
+}) {
+  const mode = viewPayload.diagramMode
+  if (mode !== 'whitebox' && mode !== 'structure' && mode !== 'tree') {
+    return null
+  }
+  const override = viewPayload.hierarchicalLevelsOverride
+  return (
+    <div className="view-hierarchy-control">
+      <h3>Diagram levels</h3>
+      <p className="muted settings-note" style={{ marginTop: 0 }}>
+        Diagram: <strong>{viewPayload.view.name}</strong>
+      </p>
+      <label className="settings-row">
+        <span>Override global levels</span>
+        <input
+          type="checkbox"
+          checked={override != null}
+          onChange={(e) => {
+            if (e.target.checked) {
+              onHierarchyOverrideChange(
+                Math.max(
+                  1,
+                  viewPayload.hierarchicalLevels ?? globalHierarchicalLevels,
+                ),
+              )
+            } else {
+              onHierarchyOverrideChange(null)
+            }
+          }}
+        />
+      </label>
+      <label className="settings-row">
+        <span>Hierarchical levels</span>
+        <input
+          type="number"
+          min={1}
+          max={8}
+          disabled={override == null}
+          value={override != null ? override : globalHierarchicalLevels}
+          onChange={(e) => {
+            const n = Math.max(1, Number(e.target.value) || 1)
+            onHierarchyOverrideChange(n)
+          }}
+        />
+      </label>
+      <p className="muted settings-note">
+        {override != null
+          ? `This diagram uses ${override} levels.`
+          : `Using global setting (${globalHierarchicalLevels}).`}
+      </p>
+    </div>
+  )
+}
+
 export function DetailsPanel({
   project,
   viewVisualization,
+  viewPayload,
+  globalHierarchicalLevels = 2,
   selectedId,
   editorMode,
   viewMode: _viewMode,
+  onHierarchyOverrideChange,
   onRoutingChange,
   onAutoroute,
   onWaypointsChange,
@@ -244,20 +317,96 @@ export function DetailsPanel({
   onAddAttribute,
   onDelete,
 }: Props) {
+  const hierarchyBlock =
+    viewPayload && onHierarchyOverrideChange ? (
+      <HierarchyLevelsSection
+        viewPayload={viewPayload}
+        globalHierarchicalLevels={globalHierarchicalLevels}
+        onHierarchyOverrideChange={onHierarchyOverrideChange}
+      />
+    ) : null
+
   if (!project || !selectedId) {
     return (
       <div className="details-panel">
         <h2>Details</h2>
-        <p className="muted">Select an artifact in the diagram.</p>
+        {hierarchyBlock}
+        {!hierarchyBlock && (
+          <p className="muted">Select an artifact in the diagram.</p>
+        )}
       </div>
     )
   }
 
   const el: SemanticElement | undefined = project.semantic[selectedId]
+
+  // Arcadia composition/aggregation edges are viz-only (viz::…).
+  if (!el && selectedId.startsWith('viz::')) {
+    const edge =
+      viewVisualization?.edges[selectedId] ??
+      project.visualization.edges[selectedId]
+    const isAgg = selectedId.startsWith('viz::aggregation::')
+    const kindLabel = isAgg ? 'aggregation' : 'composition'
+    const rest = selectedId.replace(/^viz::(aggregation|composition)::/, '')
+    const sep = rest.lastIndexOf('::')
+    const sourceId = sep >= 0 ? rest.slice(0, sep) : rest
+    const targetId = sep >= 0 ? rest.slice(sep + 2) : ''
+    return (
+      <div className="details-panel">
+        <h2>Details</h2>
+        {hierarchyBlock}
+        <dl className="detail-list">
+          <dt>Kind</dt>
+          <dd>{kindLabel} (Arcadia)</dd>
+          <dt>Id</dt>
+          <dd className="mono">{selectedId}</dd>
+          {sourceId && (
+            <>
+              <dt>Whole</dt>
+              <dd className="mono">{sourceId}</dd>
+            </>
+          )}
+          {targetId && (
+            <>
+              <dt>Part</dt>
+              <dd className="mono">{targetId}</dd>
+            </>
+          )}
+        </dl>
+        <div className="routing-control">
+          <label htmlFor="routing">Routing</label>
+          <select
+            id="routing"
+            value={edge?.routing || 'direct'}
+            onChange={(e) =>
+              onRoutingChange(selectedId, e.target.value as RoutingType)
+            }
+          >
+            <option value="angular">angular</option>
+            <option value="direct">direct</option>
+            <option value="spline">spline</option>
+          </select>
+          {(edge?.routing || 'direct') === 'angular' && (
+            <button
+              type="button"
+              className="autoroute-btn"
+              onClick={() => onAutoroute?.(selectedId)}
+              title="Clear waypoints and redraw the orthogonal route"
+            >
+              Autoroute
+            </button>
+          )}
+          <p className="muted">Option+drag ends along part boundary</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!el) {
     return (
       <div className="details-panel">
         <h2>Details</h2>
+        {hierarchyBlock}
         <p className="muted">Unknown artifact.</p>
       </div>
     )
@@ -290,6 +439,7 @@ export function DetailsPanel({
   return (
     <div className="details-panel">
       <h2>Details</h2>
+      {hierarchyBlock}
       <dl className="detail-list">
         <dt>Name</dt>
         <dd>
@@ -363,12 +513,14 @@ export function DetailsPanel({
         )}
       </dl>
 
-      {el.kind === 'connection' && (
+      {STRUCTURE_EDGE_KINDS.includes(el.kind) && (
         <div className="routing-control">
           <label htmlFor="routing">Routing</label>
           <select
             id="routing"
-            value={edge?.routing || 'angular'}
+            value={
+              edge?.routing || defaultRelationStyle(el.kind).routing
+            }
             onChange={(e) =>
               onRoutingChange(selectedId, e.target.value as RoutingType)
             }
@@ -377,7 +529,8 @@ export function DetailsPanel({
             <option value="direct">direct</option>
             <option value="spline">spline</option>
           </select>
-          {(edge?.routing || 'angular') === 'angular' && (
+          {(edge?.routing || defaultRelationStyle(el.kind).routing) ===
+            'angular' && (
             <button
               type="button"
               className="autoroute-btn"

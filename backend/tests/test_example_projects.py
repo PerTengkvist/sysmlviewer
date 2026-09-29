@@ -54,4 +54,5 @@ def test_session_open_example_diagrams_from_other_workspace(tmp_path: Path):
     opened = client.post(api_url("/session/open"), json={"folder": diagrams["folder"]}).json()
     assert opened["project"]["name"] == "Diagrams"
     assert opened["workspaceRoot"] == diagrams["folder"]
-    assert len(opened["project"]["files"]) == 8
+    file_names = {f["name"] for f in opened["project"]["files"]}
+    assert "hierarchicalParts.sysml" in file_names

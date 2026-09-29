@@ -1,6 +1,6 @@
 package CarLogical {
   // Simple logical resource model of a car.
-  // Dependencies express soft "depends on" between parts (no port wiring).
+  // Metadata keywords classify soft "depends on" relations (shown as «Keyword»).
 
   attribute def Real;
   attribute def Integer;
@@ -40,16 +40,16 @@ package CarLogical {
     part rearAxle : Axle;
     part brakes : BrakeSystem;
 
-    // Soft resource dependencies (logical "depends on")
-    dependency engineMount from engine to chassis;
-    dependency gearboxMount from transmission to chassis;
-    dependency driveline from transmission to engine;
-    dependency steerMount from steeringWheel to chassis;
-    dependency frontDrive from frontAxle to transmission;
-    dependency frontSupport from frontAxle to chassis;
-    dependency rearSupport from rearAxle to chassis;
-    dependency brakeMount from brakes to chassis;
-    dependency brakeActuation from brakes to frontAxle, rearAxle;
+    // Soft resource dependencies classified by metadata keyword
+    #Mount dependency from engine to chassis;
+    #Mount dependency from transmission to chassis;
+    #Driveline dependency from transmission to engine;
+    #Mount dependency from steeringWheel to chassis;
+    #Drive dependency from frontAxle to transmission;
+    #Mount dependency from frontAxle to chassis;
+    #Mount dependency from rearAxle to chassis;
+    #Mount dependency from brakes to chassis;
+    #Actuation dependency from brakes to frontAxle, rearAxle;
   }
 
   view def CarLogicalView : GeneralView {

@@ -6,6 +6,7 @@ import type { Edge, Node } from '@xyflow/react'
 import type { PortSide, VisualizationNode } from '../../../api'
 import type { PartNodeData, PartPort } from '../PartNode'
 import { dependencyLayers } from './dependencyLayout'
+import { packBodyOffsets } from './portPlacement'
 
 const CHAR_W = 7.2
 const TITLE_CHAR_W = 8
@@ -194,7 +195,7 @@ export function assignPortSidesAndOffsets(
     const bottom = tentative.filter((t) => t.side === 'bottom')
 
     // Sort each side by barycenter of peer offsets along the edge
-    const sortSide = (group: Tentative[]) => {
+    const sortSide = (group: Tentative[], useBodyPack: boolean) => {
       group.sort((a, b) => {
         const med = (id: string) => {
           const vals: number[] = []
@@ -214,16 +215,22 @@ export function assignPortSidesAndOffsets(
         return med(a.id) - med(b.id)
       })
       const n = Math.max(1, group.length)
+      const bodyPacked = useBodyPack
+        ? packBodyOffsets(n, readSize(node).height)
+        : null
       group.forEach((t, i) => {
-        const offset = 0.15 + ((i + 0.5) / (n + 0.5)) * 0.7
+        const offset =
+          bodyPacked != null
+            ? bodyPacked[i]!
+            : 0.15 + ((i + 0.5) / (n + 0.5)) * 0.7
         result.set(t.id, { side: t.side, offset })
       })
     }
 
-    sortSide(left)
-    sortSide(right)
-    sortSide(top)
-    sortSide(bottom)
+    sortSide(left, true)
+    sortSide(right, true)
+    sortSide(top, false)
+    sortSide(bottom, false)
   }
 
   return result

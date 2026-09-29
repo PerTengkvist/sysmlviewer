@@ -30,6 +30,7 @@ import {
   saveSettings,
   type AppSettings,
 } from './settings'
+import { structureNotationForPatch } from './features/diagram/structureNotationForPatch'
 
 type CanvasMode =
   | { type: 'diagram' }
@@ -62,6 +63,10 @@ export default function App() {
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
 
+  const structureNotation = structureNotationForPatch(
+    settings.showDiagramDetails.structureNotation,
+  )
+
   const applySession = useCallback(
     async (session: { workspaceRoot: string | null; project: Project | null }) => {
       setWorkspaceRoot(session.workspaceRoot)
@@ -75,6 +80,7 @@ export default function App() {
             session.project.id,
             declared.id,
             settings.showDiagramDetails.hierarchicalLevels,
+            structureNotation,
           )
           setViewPayload(payload)
           setActiveViewId(declared.id)
@@ -89,6 +95,7 @@ export default function App() {
               session.project.id,
               `artifact::${pkg.id}`,
               settings.showDiagramDetails.hierarchicalLevels,
+              structureNotation,
             )
             setViewPayload(payload)
             setActiveViewId(`artifact::${pkg.id}`)
@@ -104,7 +111,7 @@ export default function App() {
         setActiveViewId(null)
       }
     },
-    [settings.showDiagramDetails.hierarchicalLevels],
+    [settings.showDiagramDetails.hierarchicalLevels, structureNotation],
   )
 
   useEffect(() => {
@@ -132,21 +139,27 @@ export default function App() {
 
   const loadView = useCallback(
     async (projectId: string, viewId: string) => {
-      const payload = await api.getView(projectId, viewId, levels)
+      const payload = await api.getView(
+        projectId,
+        viewId,
+        levels,
+        structureNotation,
+      )
       setViewPayload(payload)
       setActiveViewId(viewId)
       setDiagramEpoch((n) => n + 1)
       setCanvasMode({ type: 'diagram' })
     },
-    [levels],
+    [levels, structureNotation],
   )
 
   useEffect(() => {
     if (project && activeViewId) {
       void loadView(project.id, activeViewId)
     }
+    // Reload when hierarchy depth or structure notation changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [levels])
+  }, [levels, structureNotation])
 
   useEffect(() => {
     if (!project) {
@@ -375,6 +388,7 @@ export default function App() {
           nodes,
           ...(edges && Object.keys(edges).length ? { edges } : {}),
           ...(viewId ? { viewId } : {}),
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -423,7 +437,24 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
+  )
+
+  const onHierarchyOverrideChange = useCallback(
+    async (override: number | null) => {
+      if (!project || !activeViewId) return
+      try {
+        await api.patchVisualization(project.id, {
+          viewId: activeViewId,
+          hierarchicalLevelsOverride: override,
+          structureNotation,
+        })
+        await loadView(project.id, activeViewId)
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, loadView, structureNotation],
   )
 
   const onPortMoved = useCallback(
@@ -465,6 +496,88 @@ export default function App() {
     [project],
   )
 
+  const onRelationEndMoved = useCallback(
+    async (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      companion?: { side: PortSide; offset: number },
+    ) => {
+      if (!project) return
+      // Persist synthetic Arcadia composition/aggregation under the view layout too.
+      const patch =
+        end === 'source'
+          ? {
+              sourceSide: side,
+              sourceOffset: offset,
+              ...(companion
+                ? {
+                    targetSide: companion.side,
+                    targetOffset: companion.offset,
+                  }
+                : {}),
+            }
+          : {
+              targetSide: side,
+              targetOffset: offset,
+              ...(companion
+                ? {
+                    sourceSide: companion.side,
+                    sourceOffset: companion.offset,
+                  }
+                : {}),
+            }
+      try {
+        const viewId = viewPayload?.view.id
+        const patched = await api.patchVisualization(project.id, {
+          viewId: viewId || undefined,
+          structureNotation,
+          edges: { [artifactId]: { artifactId, ...patch } },
+        })
+        // Keep identity stable — only merge visualization/viewLayouts from response
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                visualization: patched.visualization,
+                viewLayouts: patched.viewLayouts,
+                updatedAt: patched.updatedAt,
+              }
+            : patched,
+        )
+        setViewPayload((prev) => {
+          if (!prev) return prev
+          const existing = prev.visualization.edges[artifactId]
+          return {
+            ...prev,
+            visualization: {
+              ...prev.visualization,
+              edges: {
+                ...prev.visualization.edges,
+                [artifactId]: {
+                  artifactId,
+                  routing: existing?.routing ?? 'direct',
+                  waypoints: existing?.waypoints ?? [],
+                  labelOffset: existing?.labelOffset,
+                  style: existing?.style,
+                  sourceSide: existing?.sourceSide,
+                  sourceOffset: existing?.sourceOffset,
+                  targetSide: existing?.targetSide,
+                  targetOffset: existing?.targetOffset,
+                  ...patch,
+                },
+              },
+            },
+          }
+        })
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, viewPayload?.view.id, structureNotation],
+  )
+
   const onAutorouteConnection = useCallback((connectionId: string) => {
     setAutorouteRequest((prev) => ({
       connectionId,
@@ -483,6 +596,7 @@ export default function App() {
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, waypoints } },
           ...(viewId ? { viewId } : {}),
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -496,10 +610,14 @@ export default function App() {
                 ...prev.visualization.edges,
                 [connectionId]: {
                   artifactId: connectionId,
-                  routing: existing?.routing ?? 'angular',
+                  routing: existing?.routing ?? 'direct',
                   waypoints,
                   labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
                   style: existing?.style,
+                  sourceSide: existing?.sourceSide,
+                  sourceOffset: existing?.sourceOffset,
+                  targetSide: existing?.targetSide,
+                  targetOffset: existing?.targetOffset,
                 },
               },
             },
@@ -509,7 +627,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onLabelOffsetMoved = useCallback(
@@ -520,6 +638,7 @@ export default function App() {
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, labelOffset } },
           ...(viewId ? { viewId } : {}),
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -533,9 +652,14 @@ export default function App() {
                 ...prev.visualization.edges,
                 [connectionId]: {
                   artifactId: connectionId,
-                  routing: existing?.routing ?? 'angular',
+                  routing: existing?.routing ?? 'direct',
                   waypoints: existing?.waypoints ?? [],
                   labelOffset,
+                  style: existing?.style,
+                  sourceSide: existing?.sourceSide,
+                  sourceOffset: existing?.sourceOffset,
+                  targetSide: existing?.targetSide,
+                  targetOffset: existing?.targetOffset,
                 },
               },
             },
@@ -545,7 +669,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onRoutingChange = useCallback(
@@ -556,6 +680,7 @@ export default function App() {
         const patched = await api.patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, routing } },
           ...(viewId ? { viewId } : {}),
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -573,6 +698,10 @@ export default function App() {
                   waypoints: existing?.waypoints ?? [],
                   labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
                   style: existing?.style,
+                  sourceSide: existing?.sourceSide,
+                  sourceOffset: existing?.sourceOffset,
+                  targetSide: existing?.targetSide,
+                  targetOffset: existing?.targetOffset,
                 },
               },
             },
@@ -582,7 +711,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onStyleChange = useCallback(
@@ -605,13 +734,17 @@ export default function App() {
                 ...prev.visualization,
                 edges: {
                   ...prev.visualization.edges,
-                  [artifactId]: {
-                    artifactId,
-                    routing: existing?.routing ?? 'angular',
-                    waypoints: existing?.waypoints ?? [],
-                    labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
-                    style,
-                  },
+                [artifactId]: {
+                  artifactId,
+                  routing: existing?.routing ?? 'direct',
+                  waypoints: existing?.waypoints ?? [],
+                  labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
+                  style,
+                  sourceSide: existing?.sourceSide,
+                  sourceOffset: existing?.sourceOffset,
+                  targetSide: existing?.targetSide,
+                  targetOffset: existing?.targetOffset,
+                },
                 },
               },
             }
@@ -688,7 +821,18 @@ export default function App() {
             ...page,
             diagrams: await Promise.all(
               page.diagrams.map(async (d) => {
-                const viewPayload = await api.getView(project.id, d.id)
+                // Prefer the live canvas payload for the open view so print
+                // matches hierarchy depth / notation currently on screen.
+                const live =
+                  viewPayload && viewPayload.view.id === d.id ? viewPayload : null
+                const payload =
+                  live ??
+                  (await api.getView(
+                    project.id,
+                    d.id,
+                    settings.showDiagramDetails.hierarchicalLevels,
+                    settings.showDiagramDetails.structureNotation ?? 'sysmlv2',
+                  ))
                 let documentation: string | null = null
                 if (options.includeDescriptions) {
                   const el = project.semantic[d.id]
@@ -702,7 +846,7 @@ export default function App() {
                     }
                   }
                 }
-                return { ...d, viewPayload, documentation }
+                return { ...d, viewPayload: payload, documentation }
               }),
             ),
           })),
@@ -716,7 +860,14 @@ export default function App() {
         setPrintPreparing(false)
       }
     },
-    [project, printDiagrams, sheet],
+    [
+      project,
+      printDiagrams,
+      sheet,
+      viewPayload,
+      settings.showDiagramDetails.hierarchicalLevels,
+      settings.showDiagramDetails.structureNotation,
+    ],
   )
 
   const printDiagramCount = useMemo(
@@ -960,6 +1111,7 @@ export default function App() {
                 diagramEpoch={diagramEpoch}
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
+                structureNotation={settings.showDiagramDetails.structureNotation}
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
                 connectionSeparation={settings.connectionSeparation}
@@ -968,6 +1120,9 @@ export default function App() {
                 onOpenView={onOpenView}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
+                onRelationEndMoved={(id, end, side, offset, companion) =>
+                  void onRelationEndMoved(id, end, side, offset, companion)
+                }
                 onConnectPorts={(source, target) => void onConnectPorts(source, target)}
                 onWaypointsMoved={(id, wps) => void onWaypointsMoved(id, wps)}
                 onLabelOffsetMoved={(id, off) => void onLabelOffsetMoved(id, off)}
@@ -982,9 +1137,16 @@ export default function App() {
             onLayoutChange={updateRightLayout}
             project={project}
             viewVisualization={viewPayload?.visualization}
+            viewPayload={viewPayload}
+            globalHierarchicalLevels={
+              settings.showDiagramDetails.hierarchicalLevels
+            }
             selectedId={selectedId}
             editorMode={editorMode}
             viewMode={settings.viewMode}
+            onHierarchyOverrideChange={(override) =>
+              void onHierarchyOverrideChange(override)
+            }
             onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
             onAutoroute={(id) => void onAutorouteConnection(id)}
             onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}

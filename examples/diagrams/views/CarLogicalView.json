@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "viewId": "CarLogical::CarLogicalView",
   "name": "CarLogicalView",
+  "structureNotation": "sysmlv2",
   "nodes": {
     "CarLogical::Car": {
       "x": 224.515585430707,
@@ -10,8 +11,8 @@
       "height": 677.0
     },
     "CarLogical::Car::rearAxle": {
-      "x": 432.95662100456616,
-      "y": 480.0083713850836,
+      "x": 306.54875152280033,
+      "y": 503.6360105405538,
       "width": 140.0,
       "height": 76.0
     },
@@ -52,5 +53,18 @@
       "height": 76.0
     }
   },
-  "edges": {}
+  "edges": {
+    "CarLogical::Car::brakeActuation_2": {
+      "sourceSide": "right",
+      "sourceOffset": 0.95
+    },
+    "CarLogical::Car::brakeMount": {
+      "sourceSide": "left",
+      "sourceOffset": 0.95
+    },
+    "CarLogical::Car::driveline": {
+      "sourceSide": "left",
+      "sourceOffset": 0.95
+    }
+  }
 }

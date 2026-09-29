@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "viewId": "HierarchicalPartsPkg::FD1View",
+  "name": "FD1View",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "HierarchicalPartsPkg::PartDefinitions::FD1": {
+      "x": 508.0,
+      "y": 4220.0,
+      "width": 420.0,
+      "height": 532.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::F1": {
+      "x": 30.357142857142776,
+      "y": 75.67857142857156,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::F3": {
+      "x": 74.46428571428567,
+      "y": 395.92857142857156,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1::F2": {
+      "x": 267.17857142857144,
+      "y": 224.60714285714312,
+      "width": 140.0,
+      "height": 76.0
+    }
+  },
+  "edges": {}
+}

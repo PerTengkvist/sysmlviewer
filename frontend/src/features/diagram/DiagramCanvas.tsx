@@ -32,13 +32,15 @@ import type { ProjectSheet } from '../sheet/sheet'
 import { paperSizeMm } from '../sheet/sheet'
 import { PartNode, type PartNodeData } from './PartNode'
 import { SysmlEdge, type SysmlEdgeData } from './InternalEdge'
+import { applyRelationEndDrag } from './applyRelationEndDrag'
 import {
   translateFlowBounds,
   translatePoints,
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
-import { buildStructureGraph, orientRelationBoundaryHandles } from './modes/structure/buildStructureGraph'
+import { EdgeMarkerDefs } from './EdgeMarkerDefs'
+import { buildStructureGraph, orientRelationBoundaryHandles, applyRelationHandlesToNodes } from './modes/structure/buildStructureGraph'
 import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
 import { LifelineNode } from './modes/sequence/LifelineNode'
 import { MessageEdge } from './modes/sequence/MessageEdge'
@@ -56,6 +58,11 @@ import {
 } from './layout/dependencyLayout'
 import { redrawStructureConnections, boundaryFlowBounds, syncInternalEdgeBounds } from './layout/connectionRouting'
 import { autoLayoutStructure } from './layout/structureAutoLayout'
+import {
+  diagramElementToPngBlob,
+  waitFrames,
+  writeImageBlobToClipboard,
+} from './copyDiagramImage'
 
 /** All custom types registered together — React Flow caches nodeTypes on mount. */
 const allNodeTypes: NodeTypes = {
@@ -75,22 +82,73 @@ function FitViewOnViewKey({
   viewKey,
   layoutEpoch,
   onReady,
+  printMode = false,
 }: {
   viewKey: string | null
   layoutEpoch: number
   onReady?: () => void
+  printMode?: boolean
 }) {
-  const { fitView } = useReactFlow()
+  const { fitView, getNodes } = useReactFlow()
   useEffect(() => {
     if (!viewKey) return
-    const id = requestAnimationFrame(() => {
-      fitView({ padding: 0.15, duration: 0 })
-      if (onReady) {
-        requestAnimationFrame(() => onReady())
+    let cancelled = false
+    let readySent = false
+    let raf = 0
+
+    const doFit = () => {
+      fitView({
+        padding: printMode ? 0.04 : 0.15,
+        duration: 0,
+        minZoom: printMode ? 0.01 : undefined,
+        maxZoom: printMode ? 8 : undefined,
+      })
+    }
+
+    const signalReady = () => {
+      if (cancelled || readySent || !onReady) return
+      readySent = true
+      onReady()
+    }
+
+    const run = () => {
+      if (cancelled) return
+      const nodes = getNodes()
+      if (printMode && !nodes.length) {
+        raf = requestAnimationFrame(run)
+        return
       }
-    })
-    return () => cancelAnimationFrame(id)
-  }, [viewKey, layoutEpoch, fitView, onReady])
+      doFit()
+      raf = requestAnimationFrame(() => {
+        if (cancelled) return
+        // Re-fit after layout/measure settles (esp. print host size).
+        doFit()
+        raf = requestAnimationFrame(signalReady)
+      })
+    }
+
+    raf = requestAnimationFrame(run)
+
+    let ro: ResizeObserver | null = null
+    if (printMode && typeof ResizeObserver !== 'undefined') {
+      const pane = document.querySelector(
+        '.print-diagram-canvas-host .react-flow',
+      )
+      if (pane) {
+        ro = new ResizeObserver(() => {
+          if (cancelled || readySent) return
+          doFit()
+        })
+        ro.observe(pane)
+      }
+    }
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+      ro?.disconnect()
+    }
+  }, [viewKey, layoutEpoch, fitView, getNodes, onReady, printMode])
   return null
 }
 
@@ -149,6 +207,7 @@ type Props = {
   diagramEpoch: number
   viewMode?: ViewMode
   showAttributes?: boolean
+  structureNotation?: import('../../settings').StructureNotation
   sheet?: ProjectSheet
   selectedConnectionColor?: string
   selectedConnectionLinewidth?: number
@@ -160,6 +219,13 @@ type Props = {
     edges?: Record<string, Partial<VisualizationEdge>>,
   ) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
+  onRelationEndMoved?: (
+    artifactId: string,
+    end: 'source' | 'target',
+    side: PortSide,
+    offset: number,
+    companion?: { side: PortSide; offset: number },
+  ) => void
   onConnectPorts: (sourcePortId: string, targetPortId: string) => void
   onWaypointsMoved: (
     connectionId: string,
@@ -181,6 +247,7 @@ export function DiagramCanvas({
   diagramEpoch,
   viewMode = 'light',
   showAttributes = false,
+  structureNotation = 'sysmlv2',
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidth = 4,
@@ -189,6 +256,7 @@ export function DiagramCanvas({
   onOpenView,
   onNodesMoved,
   onPortMoved,
+  onRelationEndMoved,
   onConnectPorts,
   onWaypointsMoved,
   onLabelOffsetMoved,
@@ -202,6 +270,11 @@ export function DiagramCanvas({
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
   const [layoutEpoch, setLayoutEpoch] = useState(0)
   const [flowDir, setFlowDir] = useState<RedrawDirection>('LR')
+  /** Temporarily force light styling while exporting an image to the clipboard. */
+  const [captureLight, setCaptureLight] = useState(false)
+  const [copyState, setCopyState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
+  const pendingCopyRef = useRef(false)
+  const sheetHostRef = useRef<HTMLDivElement>(null)
   const viewKeyRef = useRef<string | null>(null)
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
@@ -211,6 +284,7 @@ export function DiagramCanvas({
   nodesRef.current = nodes
   const onOpenViewRef = useRef(onOpenView)
   const onPortMovedRef = useRef(onPortMoved)
+  const onRelationEndMovedRef = useRef(onRelationEndMoved)
   const onConnectPortsRef = useRef(onConnectPorts)
   const onWaypointsMovedRef = useRef(onWaypointsMoved)
   const onLabelOffsetMovedRef = useRef(onLabelOffsetMoved)
@@ -225,6 +299,15 @@ export function DiagramCanvas({
   const handlePortMovedRef = useRef<
     (portId: string, side: PortSide, offset: number) => void
   >(() => {})
+  const handleRelationEndDragRef = useRef<
+    (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      persist?: boolean,
+    ) => void
+  >(() => {})
   const lastAutorouteSeqRef = useRef(0)
   /** Structure graph awaiting one-shot obstacle routing after view open. */
   const pendingAutoRouteRef = useRef<{
@@ -234,6 +317,7 @@ export function DiagramCanvas({
   } | null>(null)
   onOpenViewRef.current = onOpenView
   onPortMovedRef.current = onPortMoved
+  onRelationEndMovedRef.current = onRelationEndMoved
   onConnectPortsRef.current = onConnectPorts
   onWaypointsMovedRef.current = onWaypointsMoved
   onLabelOffsetMovedRef.current = onLabelOffsetMoved
@@ -250,6 +334,7 @@ export function DiagramCanvas({
 
   const mode: DiagramMode = view?.diagramMode || 'structure'
   const isStructure = mode === 'whitebox' || mode === 'structure'
+  const renderViewMode: ViewMode = captureLight ? 'light' : viewMode
 
   useEffect(() => {
     if (!printMode || !onPrintReady || !view?.modeError) return
@@ -287,8 +372,9 @@ export function DiagramCanvas({
     ? Object.entries(view.visualization.edges)
         .map(([id, e]) => {
           const st = e.style ? JSON.stringify(e.style) : ''
+          const att = `${e.sourceSide || ''}:${e.sourceOffset ?? ''}:${e.targetSide || ''}:${e.targetOffset ?? ''}`
           // Omit routing, waypoints and labelOffset — synced without rebuilding graph.
-          return `${id}:st${st}`
+          return `${id}:st${st}:att${att}`
         })
         .sort()
         .join('|')
@@ -325,7 +411,7 @@ export function DiagramCanvas({
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${viewMode}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidth}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -346,6 +432,16 @@ export function DiagramCanvas({
       onWaypointsMovedRef.current(id, wps)
     const stableLabel = (id: string, offset: { x: number; y: number }) =>
       onLabelOffsetMovedRef.current(id, offset)
+    // Used only as a build-time placeholder; edges remap to handleRelationEndDrag
+    // so mid-drag updates stay local (persist=false) until pointer-up.
+    const stableRelEnd = (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      persist = true,
+    ) =>
+      handleRelationEndDragRef.current(artifactId, end, side, offset, persist)
     const toggleCollapse = (id: string) => {
       setCollapsedIds((prev) => {
         const next = new Set(prev)
@@ -358,21 +454,21 @@ export function DiagramCanvas({
     let built: { nodes: Node[]; edges: Edge[] }
     switch (view.diagramMode) {
       case 'sequence':
-        built = buildSequenceGraph(view, viewMode)
+        built = buildSequenceGraph(view, renderViewMode)
         break
       case 'state':
-        built = buildStateGraph(view, viewMode)
+        built = buildStateGraph(view, renderViewMode)
         break
       case 'actionFlow':
-        built = buildActionFlowGraph(view, viewMode, flowDirRef.current)
+        built = buildActionFlowGraph(view, renderViewMode, flowDirRef.current)
         break
       case 'tree':
-        built = buildTreeGraph(view, viewMode, collapsedIds, toggleCollapse)
+        built = buildTreeGraph(view, renderViewMode, collapsedIds, toggleCollapse)
         break
       case 'allocation':
         built = buildAllocationGraph({
           view,
-          viewMode,
+          viewMode: renderViewMode,
           showAttributes,
           portMoveMode,
           selectedConnectionColor: selectedConnectionColor || '#7c3aed',
@@ -391,16 +487,66 @@ export function DiagramCanvas({
           onPortMoved: stablePort,
           portMoveMode,
           showAttributes,
-          viewMode,
+          viewMode: renderViewMode,
+          structureNotation,
           selectedConnectionColor,
           selectedConnectionLinewidth,
           onWaypointsChange: stableWp,
           onLabelOffsetChange: stableLabel,
           onSelectConnection: (id: string) => onSelectArtifactRef.current(id),
+          onRelationEndMoved: stableRelEnd,
         })
     }
-    setNodes(built.nodes)
-    setEdges(built.edges)
+    setNodes(
+      built.nodes.map((node) => ({
+        ...node,
+        draggable: !portMoveMode,
+        data: {
+          ...(node.data as PartNodeData),
+          portMoveMode,
+          onOpenView: (id: string) => onOpenViewRef.current(id),
+          onPortDrag: (portId: string, side: PortSide, offset: number) =>
+            handlePortMovedRef.current(portId, side, offset),
+          onRelationEndDrag: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist?: boolean,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
+        },
+      })),
+    )
+    setEdges(
+      built.edges.map((edge) => ({
+        ...edge,
+        data: {
+          ...(edge.data as object),
+          altHeld: portMoveMode,
+          onRelationEndMoved: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist = true,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
+        },
+      })),
+    )
     const isStructureMode =
       view.diagramMode === 'whitebox' ||
       view.diagramMode === 'structure' ||
@@ -425,7 +571,55 @@ export function DiagramCanvas({
     }
     viewKeyRef.current = viewKey
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewKey, showAttributes, viewMode])
+  }, [viewKey, showAttributes, renderViewMode])
+
+  const onCopyImage = useCallback(() => {
+    if (printMode || pendingCopyRef.current || copyState === 'busy') return
+    pendingCopyRef.current = true
+    setCopyState('busy')
+    setCaptureLight(true)
+  }, [printMode, copyState])
+
+  useEffect(() => {
+    if (!captureLight || !pendingCopyRef.current) return
+    let cancelled = false
+    const run = async () => {
+      try {
+        // Allow graph rebuild + paint with light styles before rasterizing.
+        await waitFrames(4)
+        await new Promise((r) => setTimeout(r, 60))
+        if (cancelled) return
+        const host = sheetHostRef.current
+        const flow = host?.querySelector('.react-flow') as HTMLElement | null
+        if (!flow) throw new Error('Diagram not ready')
+        const blob = await diagramElementToPngBlob(flow)
+        if (cancelled) return
+        await writeImageBlobToClipboard(blob)
+        if (cancelled) return
+        setCopyState('ok')
+        window.setTimeout(() => {
+          setCopyState((s) => (s === 'ok' ? 'idle' : s))
+        }, 2000)
+      } catch (err) {
+        console.error(err)
+        if (!cancelled) {
+          setCopyState('err')
+          window.setTimeout(() => {
+            setCopyState((s) => (s === 'err' ? 'idle' : s))
+          }, 3000)
+        }
+      } finally {
+        if (!cancelled) {
+          pendingCopyRef.current = false
+          setCaptureLight(false)
+        }
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [captureLight, viewKey, nodes, edges])
 
   // Sync routing into edges without resetting part/port layout.
   useEffect(() => {
@@ -436,8 +630,10 @@ export function DiagramCanvas({
         const viz = v.visualization.edges[edge.id]
         if (!viz) return edge
         const data = (edge.data || {}) as SysmlEdgeData
-        const routing = viz.routing || 'angular'
-        if ((data.routing || 'angular') === routing) return edge
+        // Prefer explicit viz routing; otherwise keep the live edge routing
+        // (synthetic/deps default to direct — never promote missing → angular).
+        const routing = viz.routing ?? data.routing ?? 'direct'
+        if ((data.routing || 'direct') === routing) return edge
         return {
           ...edge,
           data: {
@@ -484,13 +680,44 @@ export function DiagramCanvas({
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
             handlePortMovedRef.current(portId, side, offset),
+          onRelationEndDrag: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist?: boolean,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
         },
       }))
     })
     setEdges((current) =>
       current.map((edge) => ({
         ...edge,
-        data: { ...(edge.data as object), altHeld: portMoveMode },
+        data: {
+          ...(edge.data as object),
+          altHeld: portMoveMode,
+          onRelationEndMoved: (
+            artifactId: string,
+            end: 'source' | 'target',
+            side: PortSide,
+            offset: number,
+            persist = true,
+          ) =>
+            handleRelationEndDragRef.current(
+              artifactId,
+              end,
+              side,
+              offset,
+              persist,
+            ),
+        },
       })),
     )
   }, [portMoveMode, isStructure])
@@ -640,7 +867,11 @@ export function DiagramCanvas({
             redrawConnectionsRef.current(allNodes, connected),
           )
         }
-        setEdges((current) => orientRelationBoundaryHandles(current, allNodes))
+        setEdges((current) => {
+          const oriented = orientRelationBoundaryHandles(current, allNodes)
+          setNodes((ns) => applyRelationHandlesToNodes(ns, oriented))
+          return oriented
+        })
       }
 
       onNodesMovedRef.current(patch, edgePatch)
@@ -678,7 +909,12 @@ export function DiagramCanvas({
             : orientRelationBoundaryHandles(edges, nextNodes)
           : orientEdgeHandles(edges, direction, nextNodes)
 
-      setNodes(nextNodes)
+      const nodesWithHandles =
+        mode === 'whitebox' || mode === 'structure'
+          ? applyRelationHandlesToNodes(nextNodes, nextEdges)
+          : nextNodes
+
+      setNodes(nodesWithHandles)
       setEdges(nextEdges)
 
       const patch: Record<string, Partial<VisualizationNode>> = {}
@@ -807,8 +1043,44 @@ export function DiagramCanvas({
     [],
   )
 
+  const handleRelationEndDrag = useCallback(
+    (
+      artifactId: string,
+      end: 'source' | 'target',
+      side: PortSide,
+      offset: number,
+      persist = false,
+    ) => {
+      const { edges: next, persist: payload } = applyRelationEndDrag(
+        edgesRef.current,
+        artifactId,
+        end,
+        side,
+        offset,
+        persist,
+      )
+      setEdges(next)
+      setNodes((ns) => applyRelationHandlesToNodes(ns, next))
+      // Persist only on pointer-up — mid-drag PATCH races corrupt project.json.
+      // Call outside setEdges so StrictMode double-invoke cannot double-PATCH.
+      if (payload) {
+        queueMicrotask(() =>
+          onRelationEndMovedRef.current?.(
+            payload.artifactId,
+            payload.end,
+            payload.side,
+            payload.offset,
+            payload.companion,
+          ),
+        )
+      }
+    },
+    [],
+  )
+
   applyRedrawConnectionsRef.current = applyRedrawConnections
   handlePortMovedRef.current = handlePortMoved
+  handleRelationEndDragRef.current = handleRelationEndDrag
   redrawConnectionsRef.current = (n, e) => applyRedrawConnectionsRef.current(n, e)
 
   useEffect(() => {
@@ -975,12 +1247,27 @@ export function DiagramCanvas({
       className={`diagram-canvas${portMoveMode ? ' tool-move-ports' : ' tool-connect'}${
         printMode ? ' diagram-canvas-print' : ''
       }`}
+      data-theme={captureLight ? 'light' : undefined}
     >
       {!printMode && (
         <div className="diagram-canvas-header">
           <strong className="diagram-view-name">{view.view.name}</strong>
           <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
           <div className="redraw-actions">
+            <button
+              type="button"
+              onClick={onCopyImage}
+              disabled={copyState === 'busy'}
+              title="Copy diagram image to clipboard (always light theme, white background)"
+            >
+              {copyState === 'busy'
+                ? 'Copying…'
+                : copyState === 'ok'
+                  ? 'Copied'
+                  : copyState === 'err'
+                    ? 'Copy failed'
+                    : 'Copy'}
+            </button>
             {isStructure ? (
               <>
                 <button
@@ -1016,7 +1303,7 @@ export function DiagramCanvas({
           Move ports — dra längs partens kant
         </div>
       )}
-      <div className="diagram-sheet-host">
+      <div className="diagram-sheet-host" ref={sheetHostRef}>
         {!printMode && sheet?.frame?.visible && (
           <div
             className="diagram-paper-frame"
@@ -1055,7 +1342,13 @@ export function DiagramCanvas({
           onEdgeClick={printMode ? undefined : (_e, edge) => onSelectArtifact(edge.id)}
           onPaneClick={printMode ? undefined : () => onSelectArtifact(null)}
           fitView
-          fitViewOptions={{ padding: 0.15 }}
+          fitViewOptions={
+            printMode
+              ? { padding: 0.04, minZoom: 0.01, maxZoom: 8 }
+              : { padding: 0.15 }
+          }
+          minZoom={printMode ? 0.01 : 0.5}
+          maxZoom={printMode ? 8 : 2}
           nodesDraggable={!printMode && !portMoveMode}
           nodesConnectable={!printMode && isStructure && !portMoveMode}
           elementsSelectable={!printMode}
@@ -1070,14 +1363,16 @@ export function DiagramCanvas({
           connectionLineType={connectionLineType}
           proOptions={{ hideAttribution: true }}
         >
+          <EdgeMarkerDefs />
           <FitViewOnViewKey
             viewKey={viewKey}
             layoutEpoch={layoutEpoch}
+            printMode={printMode}
             onReady={printMode ? onPrintReady : undefined}
           />
-          {!printMode && <Background gap={18} size={1} />}
-          {!printMode && <Controls />}
-          {!printMode && <MiniMap pannable zoomable />}
+          {!printMode && !captureLight && <Background gap={18} size={1} />}
+          {!printMode && !captureLight && <Controls />}
+          {!printMode && !captureLight && <MiniMap pannable zoomable />}
         </ReactFlow>
       </div>
     </div>
