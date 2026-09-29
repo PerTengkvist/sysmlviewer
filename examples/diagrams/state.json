@@ -5791,7 +5791,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.44999999999999996
+        "offset": 0.6545858382247165
       },
       "Example::Vehicle::engine::GaugeIn": {
         "artifactId": "Example::Vehicle::engine::GaugeIn",
@@ -5811,7 +5811,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.65
+        "offset": 0.8795136144731662
       },
       "Example::Vehicle::engine::TorqueOut": {
         "artifactId": "Example::Vehicle::engine::TorqueOut",
@@ -5821,7 +5821,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.25
+        "offset": 0.49097351105112197
       },
       "Example::Vehicle::fm1::powerIn": {
         "artifactId": "Example::Vehicle::fm1::powerIn",
