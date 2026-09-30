@@ -1,0 +1,510 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Requirements::RequirementsGraphView",
+  "name": "RequirementsGraphView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Requirements::VehicleWidth": {
+      "x": -531.1283538051579,
+      "y": 92.67224191827958,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.9117135948164975
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "Requirements::VehicleLength": {
+      "x": 2.0709127674160754,
+      "y": 65.02749641383105,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.0516176159243512
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "Requirements::VehicleHeight": {
+      "x": -276.4603972340311,
+      "y": 385.0862207272853,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::PassengerCapacity": {
+      "x": -94.84742487404617,
+      "y": 189.98901166376942,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "top",
+          "offset": 0.131331823618979
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "Requirements::CargoVolume": {
+      "x": -423.5164617411509,
+      "y": 212.29166020355666,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::Size": {
+      "x": -284.9029540047055,
+      "y": -120.75381355892597,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "bottom",
+          "offset": 0.07970983973983359
+        },
+        {
+          "id": "a-right",
+          "side": "bottom",
+          "offset": 0.8252651068505125
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "extra-1790800607403",
+          "side": "bottom",
+          "offset": 0.2213308085375206
+        },
+        {
+          "id": "extra-1790800647369",
+          "side": "right",
+          "offset": 0.932215812293125
+        }
+      ]
+    },
+    "Requirements::Performance": {
+      "x": 626.5142127703069,
+      "y": -86.74597245267694,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.14884931515175714
+        },
+        {
+          "id": "extra-1790800778203",
+          "side": "left",
+          "offset": 0.95
+        },
+        {
+          "id": "extra-1790800796935",
+          "side": "bottom",
+          "offset": 0.581171413755608
+        },
+        {
+          "id": "extra-1790800818668",
+          "side": "bottom",
+          "offset": 0.6384741579370772
+        },
+        {
+          "id": "extra-1790801191971",
+          "side": "bottom",
+          "offset": 0.7543469611118296
+        }
+      ]
+    },
+    "Requirements::Range": {
+      "x": 930.801215135427,
+      "y": -62.45897008755679,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::PedestrianProtection": {
+      "x": 903.5625609533632,
+      "y": 983.0627490187061,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::DriveToDestination": {
+      "x": 359.530411057537,
+      "y": -88.05937514500391,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::ChargeAtHome": {
+      "x": 1180.921897055964,
+      "y": 111.25957769435638,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::Acceleration": {
+      "x": 346.5142127703069,
+      "y": 92.28254745271823,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.113859261930587
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "Requirements::ChargeTime": {
+      "x": 924.122063663145,
+      "y": 111.06425507174555,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::CrashProtection": {
+      "x": 959.7807853571302,
+      "y": 578.4500839844403,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::Safety": {
+      "x": 623.5455884847371,
+      "y": 572.4625858266612,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::OccupantRestraint": {
+      "x": 932.6427822831153,
+      "y": 739.668376365413,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::ChargeAway": {
+      "x": 924.0529462159985,
+      "y": 289.0944956563445,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::ControlSpeed": {
+      "x": 153.2958863221985,
+      "y": 378.22874658765943,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "top",
+          "offset": 0.7284037388539746
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.6820215720352301
+        }
+      ]
+    },
+    "Requirements::ForwardVisibility": {
+      "x": 660.1148856599128,
+      "y": 902.8970439096865,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::Security": {
+      "x": 115.82003629008318,
+      "y": 793.3653533283732,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::FollowTheRoad": {
+      "x": 193.67115086690683,
+      "y": 1255.3425972103455,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "right",
+          "offset": 0.05
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "Requirements::LockIndication": {
+      "x": 193.67115086690683,
+      "y": 1075.3425972103455,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::Immobilizer": {
+      "x": -141.07661844568963,
+      "y": 1189.5599566002734,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::ParkAndLeave": {
+      "x": 193.67115086690683,
+      "y": 1435.3425972103455,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::AccessControl": {
+      "x": -187.64692654607518,
+      "y": 847.3591033088711,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::DirectionalControl": {
+      "x": 409.7146210006812,
+      "y": 906.4743682983299,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::EnjoyTheCabin": {
+      "x": -430.01954741675866,
+      "y": 1174.6882470633213,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::PropulsionModes": {
+      "x": 346.5142127703069,
+      "y": 272.28254745271823,
+      "width": 200.0,
+      "height": 120.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.8842011438212944
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "Requirements::TopSpeed": {
+      "x": 638.3269100817726,
+      "y": 126.8768752934393,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Requirements::BrakingDistance": {
+      "x": 347.75900847902244,
+      "y": 556.2031401232381,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {
+    "Requirements::dep1": {
+      "routing": "direct",
+      "sourceSide": "left",
+      "sourceOffset": 0.0516176159243512,
+      "targetSide": "right",
+      "targetOffset": 0.932215812293125,
+      "sourceAnchorId": "a-left",
+      "targetAnchorId": "extra-1790800647369"
+    },
+    "Requirements::dep5": {
+      "sourceSide": "top",
+      "sourceOffset": 0.5,
+      "targetSide": "bottom",
+      "targetOffset": 0.20417216718985487
+    },
+    "Requirements::dep4": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.131331823618979,
+      "targetSide": "bottom",
+      "targetOffset": 0.8413421484374219,
+      "sourceAnchorId": "a-left"
+    },
+    "Requirements::dep2": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.9117135948164975,
+      "targetSide": "bottom",
+      "targetOffset": 0.07970983973983359,
+      "sourceAnchorId": "a-top",
+      "targetAnchorId": "a-left"
+    },
+    "Requirements::dep24": {
+      "sourceSide": "top",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.45464120321337115
+    },
+    "Requirements::dep9": {
+      "routing": "direct",
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "bottom",
+      "targetOffset": 0.7543469611118296,
+      "targetAnchorId": "extra-1790801191971"
+    },
+    "Requirements::dep7": {
+      "routing": "direct",
+      "sourceSide": "right",
+      "sourceOffset": 0.113859261930587,
+      "targetSide": "left",
+      "targetOffset": 0.95,
+      "sourceAnchorId": "a-right",
+      "targetAnchorId": "extra-1790800778203"
+    },
+    "Requirements::dep8": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.5,
+      "targetSide": "bottom",
+      "targetOffset": 0.581171413755608,
+      "targetAnchorId": "extra-1790800796935"
+    },
+    "Requirements::dep23": {
+      "routing": "direct",
+      "sourceSide": "right",
+      "sourceOffset": 0.05,
+      "sourceAnchorId": "a-left"
+    },
+    "Requirements::dep22": {
+      "routing": "direct",
+      "sourceSide": "bottom",
+      "sourceOffset": 0.6820215720352301,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "a-bottom"
+    },
+    "Requirements::dep10": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.8842011438212944,
+      "targetSide": "bottom",
+      "targetOffset": 0.14884931515175714,
+      "sourceAnchorId": "a-top",
+      "targetAnchorId": "a-bottom"
+    },
+    "Requirements::dep21": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.7284037388539746,
+      "sourceAnchorId": "a-right"
+    }
+  }
+}

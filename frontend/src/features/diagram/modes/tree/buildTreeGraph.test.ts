@@ -21,7 +21,7 @@ function treeFixture(): ViewPayload {
         typeRef: null,
         sourceId: null,
         targetId: null,
-        children: ['P::Root::A', 'P::Root::B'],
+        children: ['P::Root::A', 'P::Root::B', 'P::Root::dep', 'P::Root::wire'],
         fileId: 'f',
       },
       'P::Root::A': {
@@ -39,6 +39,28 @@ function treeFixture(): ViewPayload {
         id: 'P::Root::B',
         kind: 'part',
         name: 'B',
+        parentId: 'P::Root',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f',
+      },
+      'P::Root::dep': {
+        id: 'P::Root::dep',
+        kind: 'dependency',
+        name: 'dep',
+        parentId: 'P::Root',
+        typeRef: null,
+        sourceId: 'P::Root::A',
+        targetId: 'P::Root::B',
+        children: [],
+        fileId: 'f',
+      },
+      'P::Root::wire': {
+        id: 'P::Root::wire',
+        kind: 'connection',
+        name: 'wire',
         parentId: 'P::Root',
         typeRef: null,
         sourceId: null,
@@ -74,6 +96,8 @@ describe('buildTreeGraph', () => {
       'P::Root::B',
     ])
     expect(full.edges).toHaveLength(3)
+    expect(full.nodes.find((n) => n.id === 'P::Root::dep')).toBeUndefined()
+    expect(full.nodes.find((n) => n.id === 'P::Root::wire')).toBeUndefined()
 
     const collapsed = buildTreeGraph(
       treeFixture(),

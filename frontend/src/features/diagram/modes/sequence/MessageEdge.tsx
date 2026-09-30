@@ -5,10 +5,15 @@ import {
   type EdgeProps,
 } from '@xyflow/react'
 import { memo } from 'react'
+import { selectedEdgeStyle } from '../../selectedEdgeStyle'
 
 export type MessageEdgeData = {
   label?: string
   sequenceIndex?: number
+  artifactId?: string
+  selectedColor?: string
+  selectedFactor?: number
+  onSelect?: (artifactId: string) => void
 }
 
 /**
@@ -25,8 +30,10 @@ function MessageEdgeInner({
   markerEnd,
   data,
   label,
+  selected,
 }: EdgeProps) {
   const d = (data || {}) as MessageEdgeData
+  const stroke = selectedEdgeStyle(style, !!selected, d.selectedColor, d.selectedFactor)
   // Keep a tiny horizontal gap so arrowheads don't sit on the axis stroke
   const goingRight = targetX >= sourceX
   const inset = 2
@@ -42,13 +49,25 @@ function MessageEdgeInner({
   const idx = d.sequenceIndex
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        style={stroke}
+        markerEnd={markerEnd}
+        interactionWidth={24}
+      />
       {text ? (
         <EdgeLabelRenderer>
           <div
             className="message-edge-label"
             style={{
               transform: `translate(-50%, -100%) translate(${labelX}px,${labelY - 4}px)`,
+              pointerEvents: 'all',
+              cursor: 'pointer',
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              d.onSelect?.(d.artifactId || id)
             }}
           >
             {typeof idx === 'number' ? `${idx + 1}. ` : ''}

@@ -171,3 +171,49 @@ def test_apply_view_layout_edge_patch_and_node_patch_preserve_each_other():
     view = layouts.by_view["View::A"]
     assert view.nodes["Pkg::Part"].width == 100.0
     assert len(view.edges["Pkg::conn"].waypoints or []) == 1
+
+
+def test_boundary_anchors_round_trip_on_view_layout():
+    layouts = apply_view_layout_patch(
+        ViewLayouts(),
+        "View::A",
+        {
+            "Pkg::UC": {
+                "x": 10,
+                "anchors": [
+                    {"id": "a-left", "side": "left", "offset": 0.2},
+                    {"id": "extra-1", "side": "right", "offset": 0.8},
+                    {"id": "bad", "side": "nope", "offset": 0.1},
+                ],
+            }
+        },
+    )
+    node = layouts.by_view["View::A"].nodes["Pkg::UC"]
+    assert node.x == 10.0
+    assert node.anchors == [
+        {"id": "a-left", "side": "left", "offset": 0.2},
+        {"id": "extra-1", "side": "right", "offset": 0.8},
+    ]
+    resolved = resolve_view_node(_global_node(artifact_id="Pkg::UC"), node)
+    assert resolved["anchors"][1]["id"] == "extra-1"
+
+    layouts = apply_view_layout_edge_patch(
+        layouts,
+        "View::A",
+        {
+            "Pkg::inc": {
+                "routing": "direct",
+                "sourceAnchorId": "a-right",
+                "targetAnchorId": "extra-1",
+            }
+        },
+    )
+    edge = layouts.by_view["View::A"].edges["Pkg::inc"]
+    assert edge.routing == "direct"
+    assert edge.source_anchor_id == "a-right"
+    assert edge.target_anchor_id == "extra-1"
+    # A later geometry patch must keep the anchors.
+    layouts = apply_view_layout_patch(
+        layouts, "View::A", {"Pkg::UC": {"y": 4}}
+    )
+    assert layouts.by_view["View::A"].nodes["Pkg::UC"].anchors[0]["offset"] == 0.2

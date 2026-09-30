@@ -2,7 +2,7 @@
 """Split legacy state.json viewLayouts into views/*.json and drop the key.
 
 Usage:
-  python scripts/migrate_view_layouts.py examples/data_center
+  python scripts/migrate_view_layouts.py examples/electric_car
   python scripts/migrate_view_layouts.py /path/to/project
 """
 

@@ -8,7 +8,7 @@ from pathlib import Path
 from adapters.api.static_paths import resolve_repo_root
 
 _DEFAULT_NAMES = {
-    "data_center": "Data Center",
+    "electric_car": "Electric Car",
     "diagrams": "Diagrams",
 }
 

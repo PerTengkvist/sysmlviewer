@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "viewId": "LogicalArchitecture::CarLogicalTree",
+  "name": "CarLogicalTree",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "LogicalArchitecture::Car::acceleratorPedal": {
+      "x": 419.0940111476554,
+      "y": 157.62873763101888,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::battery": {
+      "x": 419.0940111476554,
+      "y": 237.62873763101888,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body": {
+      "x": 419.0940111476554,
+      "y": 317.6287376310189,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::brakePedal": {
+      "x": 419.0940111476554,
+      "y": 397.6287376310189,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::chargeInlet": {
+      "x": 419.0940111476554,
+      "y": 477.6287376310188,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::chassis": {
+      "x": 419.0940111476554,
+      "y": 557.6287376310188,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::climateSystem": {
+      "x": 419.0940111476554,
+      "y": 637.6287376310188,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::dep1": {
+      "x": 992.0499443892987,
+      "y": 48.347065365964866,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep10": {
+      "x": 1010.0499443892987,
+      "y": 712.3470653659648,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep11": {
+      "x": 1012.0499443892987,
+      "y": 762.3470653659648,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep12": {
+      "x": 1012.0499443892987,
+      "y": 818.3470653659648,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep13": {
+      "x": 1018.0499443892987,
+      "y": 864.3470653659648,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep14": {
+      "x": 1014.0499443892987,
+      "y": 926.3470653659648,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep15": {
+      "x": 1017.5832944018834,
+      "y": 973.9774523150783,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep16": {
+      "x": 1011.5832944018834,
+      "y": 1037.9774523150782,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep17": {
+      "x": 1013.5832944018834,
+      "y": 1093.9774523150782,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep18": {
+      "x": 996.0499443892987,
+      "y": 118.34706536596487,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep19": {
+      "x": 992.0499443892987,
+      "y": 172.34706536596485,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep2": {
+      "x": 992.0499443892987,
+      "y": 210.34706536596485,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep20": {
+      "x": 990.0499443892987,
+      "y": 264.34706536596485,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep3": {
+      "x": 990.1223995125985,
+      "y": 318.2265484979018,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep4": {
+      "x": 982.1223995125985,
+      "y": 366.2265484979018,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep5": {
+      "x": 986.1223995125985,
+      "y": 420.2265484979018,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep6": {
+      "x": 990.1223995125985,
+      "y": 476.2265484979018,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep7": {
+      "x": 992.1223995125985,
+      "y": 538.2265484979018,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep8": {
+      "x": 996.1223995125985,
+      "y": 594.2265484979017,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::dep9": {
+      "x": 1000.1223995125985,
+      "y": 642.2265484979017,
+      "width": 160.0,
+      "height": 36.0
+    },
+    "LogicalArchitecture::Car::engine": {
+      "x": 415.0940111476554,
+      "y": 725.6287376310188,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::entertainmentSystem": {
+      "x": 415.0940111476554,
+      "y": 805.6287376310188,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::gearStick": {
+      "x": 415.0940111476554,
+      "y": 885.6287376310188,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::lamps": {
+      "x": -19.12234684214549,
+      "y": 154.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::locks": {
+      "x": -19.12234684214549,
+      "y": 234.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::steeringWheel": {
+      "x": -19.12234684214549,
+      "y": 314.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::suspension": {
+      "x": -19.12234684214549,
+      "y": 394.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::wheels": {
+      "x": -19.12234684214549,
+      "y": 474.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::windows": {
+      "x": -19.12234684214549,
+      "y": 554.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::windshield": {
+      "x": -19.12234684214549,
+      "y": 634.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::wipers": {
+      "x": -19.12234684214549,
+      "y": 714.7248425634948,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car": {
+      "x": -253.072940388649,
+      "y": -6.967265971562252,
+      "width": 160.0,
+      "height": 40.0
+    }
+  },
+  "edges": {}
+}

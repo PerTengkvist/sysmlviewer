@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::FunctionsView",
+  "name": "FunctionsView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::Charging": {
+      "x": 359.33059012757866,
+      "y": 2570.213596146949,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::Climate": {
+      "x": 713.7562700947202,
+      "y": 2464.296478347287,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::WindshieldCleaning": {
+      "x": 715.1225277036702,
+      "y": 2324.5355189499137,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::SpeedControl": {
+      "x": 405.772447752895,
+      "y": 2284.290425177199,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::Entertainment": {
+      "x": 52.47490363554661,
+      "y": 1862.199950974359,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::Lighting": {
+      "x": 9.180991892076065,
+      "y": 2220.7909560758358,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::Maneuvrability": {
+      "x": 492.70614026448334,
+      "y": 1859.7587600125605,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::Security": {
+      "x": 723.6338218114272,
+      "y": 2172.3817739388714,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {
+    "Functions::dep3": {
+      "sourceSide": "right",
+      "sourceOffset": 0.9413196050102499,
+      "targetSide": "top",
+      "targetOffset": 0.4347801810871391
+    },
+    "Functions::dep4": {
+      "sourceSide": "bottom",
+      "sourceOffset": 0.1684254202988245,
+      "targetSide": "top",
+      "targetOffset": 0.4266508297283349
+    },
+    "Functions::dep12": {
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.2690316849981211
+    },
+    "Functions::dep10": {
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.2931361612351187
+    },
+    "Functions::dep1": {
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.8047361970480059
+    },
+    "Functions::dep5": {
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.1822311480700667
+    }
+  }
+}

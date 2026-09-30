@@ -12,9 +12,14 @@ export type AppSettings = {
     /** GeneralView structure presentation. */
     structureNotation: StructureNotation
   }
-  /** Selected connection highlight (GeneralView / structure). */
+  /** Selected connection highlight color. */
   selectedConnectionColor: string
-  selectedConnectionLinewidth: number
+  /** Multiplier applied to the edge's own stroke width when selected. */
+  selectedConnectionLinewidthFactor: number
+  /** Pending relation todo: change overlay color. */
+  pendingChangeColor: string
+  /** Pending relation todo: add overlay color. */
+  pendingAddColor: string
   /**
    * Min gap (flow px at 100% zoom) between unrelated connection tracks.
    * Related nets (shared port) may still coincide.
@@ -35,7 +40,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     structureNotation: 'sysmlv2',
   },
   selectedConnectionColor: '#2563eb',
-  selectedConnectionLinewidth: 4,
+  selectedConnectionLinewidthFactor: 3,
+  pendingChangeColor: '#dc2626',
+  pendingAddColor: '#16a34a',
   connectionSeparation: 5,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
@@ -51,7 +58,9 @@ export function loadSettings(): AppSettings {
         ...DEFAULT_SETTINGS,
         showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
       }
-    const parsed = JSON.parse(raw) as Partial<AppSettings>
+    const parsed = JSON.parse(raw) as Partial<AppSettings> & {
+      selectedConnectionLinewidth?: number
+    }
     return {
       mode: 'viewer',
       viewMode: parsed.viewMode === 'dark' ? 'dark' : 'light',
@@ -71,11 +80,21 @@ export function loadSettings(): AppSettings {
         parsed.selectedConnectionColor
           ? parsed.selectedConnectionColor
           : DEFAULT_SETTINGS.selectedConnectionColor,
-      selectedConnectionLinewidth: Math.max(
-        1,
-        Number(parsed.selectedConnectionLinewidth) ||
-          DEFAULT_SETTINGS.selectedConnectionLinewidth,
-      ),
+      selectedConnectionLinewidthFactor: (() => {
+        const raw = Number(parsed.selectedConnectionLinewidthFactor)
+        if (!Number.isFinite(raw)) {
+          return DEFAULT_SETTINGS.selectedConnectionLinewidthFactor
+        }
+        return Math.max(1, raw)
+      })(),
+      pendingChangeColor:
+        typeof parsed.pendingChangeColor === 'string' && parsed.pendingChangeColor
+          ? parsed.pendingChangeColor
+          : DEFAULT_SETTINGS.pendingChangeColor,
+      pendingAddColor:
+        typeof parsed.pendingAddColor === 'string' && parsed.pendingAddColor
+          ? parsed.pendingAddColor
+          : DEFAULT_SETTINGS.pendingAddColor,
       connectionSeparation: Math.max(
         0,
         Number(parsed.connectionSeparation) ||

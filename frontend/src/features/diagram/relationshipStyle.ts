@@ -11,6 +11,8 @@ export const STRUCTURE_EDGE_KINDS: ArtifactKind[] = [
   'specialization',
   'subsetting',
   'redefinition',
+  'satisfy',
+  'include',
 ]
 
 type DefaultEdgeStyle = {
@@ -29,6 +31,8 @@ export const DEFAULT_RELATION_EDGE_STYLE: Record<string, DefaultEdgeStyle> = {
   specialization: { lineStyle: 'solid', markerEnd: 'hollowTriangle', routing: 'direct' },
   subsetting: { lineStyle: 'dashed', markerEnd: 'hollowTriangle', routing: 'direct' },
   redefinition: { lineStyle: 'solid', markerEnd: 'triangle', routing: 'direct' },
+  satisfy: { lineStyle: 'dashed', markerEnd: 'openArrow', routing: 'direct' },
+  include: { lineStyle: 'dashed', markerEnd: 'openArrow', routing: 'direct' },
 }
 
 export function defaultRelationStyle(kind: ArtifactKind): DefaultEdgeStyle {

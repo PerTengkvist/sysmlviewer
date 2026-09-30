@@ -47,7 +47,12 @@ export function nodeInlineStyle(
   const defaults = STYLE_DEFAULTS[viewMode]
   const thickness = mode.lineThickness ?? defaults.nodeThickness
   const out: CSSProperties = {}
-  if (mode.backgroundColor) out.backgroundColor = mode.backgroundColor
+  const headerOn = mode.backgroundHeader !== false
+  const bodyOn = mode.backgroundBody !== false
+  // Whole-object fill only when both regions accept the color
+  if (mode.backgroundColor && headerOn && bodyOn) {
+    out.backgroundColor = mode.backgroundColor
+  }
   if (mode.lineColor) {
     out.borderColor = mode.lineColor
   }
@@ -57,6 +62,47 @@ export function nodeInlineStyle(
   }
   if (mode.textColor) out.color = mode.textColor
   return out
+}
+
+export type NodeRegionStyles = {
+  root: CSSProperties
+  header: CSSProperties
+  body: CSSProperties
+}
+
+/** Resolve root/header/body backgrounds from style flags. */
+export function nodeInlineStyles(
+  style: ElementStyle | null | undefined,
+  viewMode: ViewMode,
+  opts?: { isBoundary?: boolean },
+): NodeRegionStyles {
+  const mode = resolveModeStyle(style, viewMode)
+  const defaults = STYLE_DEFAULTS[viewMode]
+  const root = nodeInlineStyle(style, viewMode, opts)
+  const headerOn = mode.backgroundHeader !== false
+  const bodyOn = mode.backgroundBody !== false
+  const color = mode.backgroundColor
+  const header: CSSProperties = {}
+  const body: CSSProperties = {}
+  if (color) {
+    if (headerOn && bodyOn) {
+      // Also paint header/body: .part-node-header has an opaque CSS fill that
+      // would otherwise mask the root backgroundColor.
+      header.backgroundColor = color
+      body.backgroundColor = color
+    } else if (headerOn && !bodyOn) {
+      header.backgroundColor = color
+      body.backgroundColor = defaults.backgroundColor
+    } else if (!headerOn && bodyOn) {
+      header.backgroundColor = defaults.backgroundColor
+      body.backgroundColor = color
+    } else {
+      // both off → defaults
+      header.backgroundColor = defaults.backgroundColor
+      body.backgroundColor = defaults.backgroundColor
+    }
+  }
+  return { root, header, body }
 }
 
 export function edgeStrokeStyle(
@@ -75,6 +121,20 @@ export function edgeStrokeStyle(
     strokeWidth: mode.lineThickness ?? defaults.edgeThickness,
     color: mode.textColor || undefined,
     strokeDasharray: strokeDasharray(mode.lineStyle as 'solid' | 'dashed' | 'dotted' | null | undefined),
+  }
+}
+
+/** Stroke for a selected edge: highlight color and thickness × factor. */
+export function selectedEdgeStroke(
+  style: ElementStyle | null | undefined,
+  viewMode: ViewMode,
+  highlight: { color: string; factor: number },
+): { stroke: string; strokeWidth: number } {
+  const base = edgeStrokeStyle(style, viewMode)
+  const factor = Math.max(1, highlight.factor)
+  return {
+    stroke: highlight.color,
+    strokeWidth: base.strokeWidth * factor,
   }
 }
 

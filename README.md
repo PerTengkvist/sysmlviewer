@@ -67,7 +67,7 @@ cd frontend && npm run build
 
 [`examples/diagrams/`](examples/diagrams) - shows different types of sysml diagrams
 
-Data-center example workspace: [`examples/data_center/`](examples/data_center/) (logical + physical). Interface naming: [`docs/interface_naming.md`](docs/interface_naming.md).
+Electric-car example workspace: [`examples/electric_car/`](examples/electric_car/) (requirements, functions, use cases, logical architecture, sequences, and physical architecture). Interface naming notes: [`docs/interface_naming.md`](docs/interface_naming.md).
 
 ## Alpha features
 

@@ -48,6 +48,24 @@ def test_resolve_diagram_mode_by_type_ref():
     )
 
 
+def test_resolve_grid_and_usecase_views():
+    pkg = SemanticElement(id="P", kind=ArtifactKind.PACKAGE, name="P")
+    assert (
+        resolve_diagram_mode(
+            ViewDef(id="v", name="v", root_artifact_id="P", type_ref="GridView"),
+            pkg,
+        )
+        == "requirementTable"
+    )
+    assert (
+        resolve_diagram_mode(
+            ViewDef(id="v", name="v", root_artifact_id="P", type_ref="UseCaseView"),
+            pkg,
+        )
+        == "useCase"
+    )
+
+
 def test_resolve_general_view_falls_back_to_root_kind():
     part = SemanticElement(id="P::X", kind=ArtifactKind.PART, name="X")
     assert (
@@ -83,26 +101,8 @@ def test_unknown_type_ref_falls_back_safely():
     part = SemanticElement(id="P::X", kind=ArtifactKind.PART, name="X")
     assert (
         resolve_diagram_mode(
-            ViewDef(id="v", name="v", root_artifact_id="P::X", type_ref="WeirdView"),
+            ViewDef(id="v", name="v", root_artifact_id="P::X", type_ref="NoSuchView"),
             part,
         )
         == "whitebox"
     )
-
-
-def test_hbox_sequence_view_get_view(tmp_path: Path):
-    app = create_app(data_dir=tmp_path)
-    client = TestClient(app)
-    project_id = client.post(api_url("/projects"), json={"name": "HBox"}).json()["id"]
-    add_example_file(client, project_id, tmp_path, "hbox.sysml")
-
-    project = client.get(api_url(f"/projects/{project_id}")).json()
-    views = {v["name"]: v for v in project["views"]}
-    assert "HBoxEventView" in views
-    assert views["HBoxEventView"].get("typeRef") == "SequenceView"
-
-    payload = client.get(api_url(f"/projects/{project_id}/views/{views['HBoxEventView']['id']}")).json()
-    assert payload["diagramMode"] == "sequence"
-    assert payload["view"]["rootArtifactId"].endswith("EventInteraction")
-    kinds = {e["kind"] for e in payload["semantic"].values()}
-    assert "lifeline" in kinds or "message" in kinds or "interaction" in kinds

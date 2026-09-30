@@ -3,6 +3,7 @@ import { MarkerType } from '@xyflow/react'
 import type { ViewPayload } from '../../../api'
 import type { ViewMode } from '../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
+import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import type { StateNodeData } from './StateNode'
 
 const COL_W = 200
@@ -13,7 +14,11 @@ const TOP = 60
 export function buildStateGraph(
   view: ViewPayload,
   viewMode: ViewMode,
+  highlight: HighlightOpts = {},
 ): { nodes: Node[]; edges: Edge[] } {
+  const selectedConnectionColor = highlight.selectedConnectionColor ?? '#2563eb'
+  const selectedConnectionLinewidthFactor =
+    highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
 
@@ -73,6 +78,10 @@ export function buildStateGraph(
         label: tr.name.startsWith('t') && /^t\d+$/.test(tr.name) ? '' : tr.name,
         markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
         style: { stroke: stroke.stroke, strokeWidth: stroke.strokeWidth },
+        data: {
+          selectedColor: selectedConnectionColor,
+          selectedFactor: selectedConnectionLinewidthFactor,
+        },
       } as Edge
     })
     .filter((e): e is Edge => e !== null)

@@ -41,6 +41,36 @@ describe('docPathForArtifact', () => {
     ).toBeNull()
   })
 
+  it('maps requirements, use cases, actors and interactions', () => {
+    expect(
+      docPathForArtifact(
+        el({
+          kind: 'requirement',
+          name: 'VehicleLength',
+          fileId: 'requirements/requirements.sysml',
+        }),
+      ),
+    ).toBe('requirements/docs/VehicleLength.md')
+    expect(
+      docPathForArtifact(
+        el({
+          kind: 'useCase',
+          name: 'Unlock',
+          fileId: 'use_cases/use_cases.sysml',
+        }),
+      ),
+    ).toBe('use_cases/docs/Unlock.md')
+    expect(
+      docPathForArtifact(
+        el({
+          kind: 'interaction',
+          name: 'UnlockSequence',
+          fileId: 'dynamics/sequences.sysml',
+        }),
+      ),
+    ).toBe('dynamics/docs/UnlockSequence.md')
+  })
+
   it('includes port defs and views', () => {
     expect(
       docPathForArtifact(

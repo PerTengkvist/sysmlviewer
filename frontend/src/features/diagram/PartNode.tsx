@@ -17,7 +17,7 @@ import {
 } from 'react'
 import type { PortSide, ElementStyle } from '../../api'
 import type { ViewMode } from '../../settings'
-import { nodeInlineStyle, resolveModeStyle } from './elementStyle'
+import { nodeInlineStyles, resolveModeStyle } from './elementStyle'
 import { portLabelStyle as computePortLabelStyle } from './edgeRouting'
 import { clampPortOffset } from './layout/portPlacement'
 
@@ -168,7 +168,7 @@ function portLabelStyle(side: PortSide, offset: number, outside = false): CSSPro
 export function PartNode({ data, selected }: NodeProps) {
   const d = data as PartNodeData
   const [menuOpen, setMenuOpen] = useState(false)
-  const [localPorts, setLocalPorts] = useState<PartPort[]>(d.ports)
+  const [localPorts, setLocalPorts] = useState<PartPort[]>(d.ports ?? [])
   const rootRef = useRef<HTMLDivElement>(null)
   const draggingPortId = useRef<string | null>(null)
   const nodeId = useNodeId()
@@ -179,7 +179,7 @@ export function PartNode({ data, selected }: NodeProps) {
 
   useEffect(() => {
     if (!draggingPortId.current) {
-      setLocalPorts(d.ports)
+      setLocalPorts(d.ports ?? [])
     }
   }, [d.ports])
 
@@ -257,13 +257,15 @@ export function PartNode({ data, selected }: NodeProps) {
     window.addEventListener('mouseup', onUp)
   }
 
+  const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light', {
+    isBoundary: d.isBoundary,
+  })
+
   return (
     <div
       ref={rootRef}
       className={`part-node kind-${d.kind}${selected ? ' selected' : ''}${moveMode ? ' port-move-mode' : ''}${d.isBoundary ? ' boundary' : ''}${d.isReference ? ' is-reference' : ''}`}
-      style={nodeInlineStyle(d.formatStyle, d.viewMode || 'light', {
-        isBoundary: d.isBoundary,
-      })}
+      style={regions.root}
     >
       <NodeResizer
         minWidth={d.isBoundary ? 280 : 120}
@@ -272,7 +274,7 @@ export function PartNode({ data, selected }: NodeProps) {
         lineClassName="part-resize-line"
         handleClassName="part-resize-handle"
       />
-      <div className="part-node-header">
+      <div className="part-node-header" style={regions.header}>
         <div className="part-node-heading">
           <div className="part-stereotypes">
             <span className="stereotype">{guillemets(keyword)}</span>
@@ -322,7 +324,7 @@ export function PartNode({ data, selected }: NodeProps) {
           </div>
         ) : null}
       </div>
-      <div className="part-node-body">
+      <div className="part-node-body" style={regions.body}>
         {d.showAttributes && d.attributeNames && d.attributeNames.length > 0 && (
           <ul className="part-attr-list">
             {d.attributeNames.map((n) => (
@@ -354,7 +356,8 @@ export function PartNode({ data, selected }: NodeProps) {
       {localPorts.map((port) => {
         const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
         const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')
-        const bg = portMode.backgroundColor || parentMode.backgroundColor
+        // Ports keep their own fill; do not inherit the part backgroundColor.
+        const bg = portMode.backgroundColor
         const border = portMode.lineColor || parentMode.lineColor
         return (
         <Handle

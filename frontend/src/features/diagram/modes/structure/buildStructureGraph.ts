@@ -18,6 +18,11 @@ import {
   relationEdgeLabel,
   usesPortHandles,
 } from '../../relationshipStyle'
+import {
+  bindStoredAnchor,
+  resolveAnchors,
+  type BoundaryAnchor,
+} from '../../boundaryAnchors'
 import type { PartNodeData } from '../../PartNode'
 import { sizePartForPorts } from '../../layout/structureAutoLayout'
 import {
@@ -66,16 +71,19 @@ export function orientRelationBoundaryHandles(
     const data = (e.data || {}) as {
       manualAttachment?: boolean
       relationKind?: string
+      sourceSide?: PortSide
+      targetSide?: PortSide
+      sourceOffset?: number
+      targetOffset?: number
     }
     if (data.manualAttachment) return e
     const srcHandle = e.sourceHandle || ''
     const tgtHandle = e.targetHandle || ''
-    const isRel =
-      srcHandle.startsWith('rel-out-') ||
-      srcHandle.startsWith('rel-src-') ||
-      tgtHandle.startsWith('rel-in-') ||
-      tgtHandle.startsWith('rel-tgt-')
-    if (!isRel) return e
+    const srcIsRel =
+      srcHandle.startsWith('rel-out-') || srcHandle.startsWith('rel-src-')
+    const tgtIsRel =
+      tgtHandle.startsWith('rel-in-') || tgtHandle.startsWith('rel-tgt-')
+    if (!srcIsRel && !tgtIsRel) return e
     const src = byId.get(e.source)
     const tgt = byId.get(e.target)
     if (!src || !tgt) return e
@@ -86,14 +94,16 @@ export function orientRelationBoundaryHandles(
     const edgeId = e.id
     return {
       ...e,
-      sourceHandle: `rel-src-${edgeId}`,
-      targetHandle: `rel-tgt-${edgeId}`,
+      sourceHandle: srcIsRel ? `rel-src-${edgeId}` : e.sourceHandle,
+      targetHandle: tgtIsRel ? `rel-tgt-${edgeId}` : e.targetHandle,
       data: {
         ...data,
-        sourceSide,
-        targetSide,
-        sourceOffset: 0.5,
-        targetOffset: 0.5,
+        ...(srcIsRel
+          ? { sourceSide, sourceOffset: 0.5 }
+          : {}),
+        ...(tgtIsRel
+          ? { targetSide, targetOffset: 0.5 }
+          : {}),
       },
     }
   })
@@ -173,7 +183,7 @@ export function applyRelationHandlesToNodes(
 }
 
 /**
- * Owning part for an endpoint that is itself on the diagram.
+ * Owning diagram node for an endpoint that is itself on the diagram.
  * Does not promote hidden nested parts to a visible ancestor (avoids
  * showing dependencies/connections of collapsed subparts).
  */
@@ -182,13 +192,21 @@ export function findOwnerPart(
   semantic: Record<string, SemanticElement>,
   displayIds: Set<string>,
 ): string | null {
+  const OWNER_KINDS = new Set([
+    'part',
+    'requirement',
+    'useCase',
+    'interface',
+    'actor',
+    'package',
+  ])
   let current = semantic[endpointId]
   if (!current) return null
-  while (current && current.kind !== 'part') {
+  while (current && !OWNER_KINDS.has(current.kind)) {
     if (!current.parentId) return null
     current = semantic[current.parentId]
   }
-  if (!current || current.kind !== 'part') return null
+  if (!current || !OWNER_KINDS.has(current.kind)) return null
   return displayIds.has(current.id) ? current.id : null
 }
 
@@ -235,7 +253,7 @@ export type StructureBuildOpts = {
   viewMode: ViewMode
   structureNotation?: StructureNotation
   selectedConnectionColor?: string
-  selectedConnectionLinewidth?: number
+  selectedConnectionLinewidthFactor?: number
   onWaypointsChange: (
     artifactId: string,
     waypoints: { x: number; y: number; locked?: boolean }[],
@@ -267,7 +285,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     viewMode,
     structureNotation = 'sysmlv2',
     selectedConnectionColor = '#2563eb',
-    selectedConnectionLinewidth = 4,
+    selectedConnectionLinewidthFactor = 3,
     onWaypointsChange,
     onLabelOffsetChange,
     onSelectConnection,
@@ -381,17 +399,27 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
 
   /** Part ids in semantic under root within hierarchicalLevels (root depth = 1). */
   const partDepth = new Map<string, number>()
+  const STRUCTURE_NODE_KINDS = new Set([
+    'part',
+    'requirement',
+    'useCase',
+    'interface',
+    'actor',
+  ])
   {
     const walk = (id: string, depth: number) => {
       if (depth > levels) return
       const el = semantic[id]
       if (!el) return
-      if (el.kind === 'part') partDepth.set(id, depth)
+      if (STRUCTURE_NODE_KINDS.has(el.kind)) partDepth.set(id, depth)
       if (depth >= levels) return
       for (const cid of el.children || []) {
         const child = semantic[cid]
         if (!child) continue
-        if (child.kind === 'part' || child.kind === 'package') {
+        if (
+          STRUCTURE_NODE_KINDS.has(child.kind) ||
+          child.kind === 'package'
+        ) {
           walk(cid, depth + 1)
         }
       }
@@ -402,7 +430,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     Object.values(semantic)
       .filter(
         (el) =>
-          el.kind === 'part' &&
+          STRUCTURE_NODE_KINDS.has(el.kind) &&
           el.parentId === parentId &&
           partDepth.has(el.id),
       )
@@ -609,7 +637,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     const topLevel = Object.values(semantic)
       .filter(
         (el) =>
-          el.kind === 'part' &&
+          STRUCTURE_NODE_KINDS.has(el.kind) &&
           partDepth.has(el.id) &&
           (el.parentId === rootId ||
             !el.parentId ||
@@ -628,17 +656,51 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
         isBoundary: isContainer,
       })
-      const data = partData(id, el, isContainer)
+      const nodeType =
+        el.kind === 'requirement'
+          ? 'requirement'
+          : el.kind === 'useCase'
+            ? 'useCase'
+            : 'part'
+      const data =
+        nodeType === 'requirement'
+          ? {
+              label: el.name,
+              artifactId: id,
+              shortId: el.shortId,
+              documentation: el.documentation,
+              typeAttr: (() => {
+                for (const cid of el.children || []) {
+                  const c = semantic[cid]
+                  if (c?.kind === 'attribute' && c.name === 'Type') {
+                    return c.defaultValue
+                  }
+                }
+                return null
+              })(),
+              formatStyle: formatFor(id),
+              viewMode,
+              anchors: resolveAnchors(viz?.anchors),
+            }
+          : nodeType === 'useCase'
+            ? {
+                label: el.name,
+                artifactId: id,
+                formatStyle: formatFor(id),
+                viewMode,
+                anchors: resolveAnchors(viz?.anchors),
+              }
+            : partData(id, el, isContainer)
       const box = sizedPartBox(
         id,
         el,
-        data.ports,
+        nodeType === 'part' ? (data as ReturnType<typeof partData>).ports : [],
         defaults.fallbackW,
         isContainer ? defaults.fallbackH : 120,
       )
       builtNodes.push({
         id,
-        type: 'part',
+        type: nodeType,
         position: {
           x: viz?.x ?? 80 + (index % 2) * 320,
           y: viz?.y ?? 80 + Math.floor(index / 2) * 180,
@@ -756,6 +818,12 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         sourceEl?.kind,
         targetEl?.kind,
       )
+      const srcNode = nodesById.get(sourcePart)
+      const tgtNode = nodesById.get(targetPart)
+      const srcAnchored =
+        srcNode?.type === 'requirement' || srcNode?.type === 'useCase'
+      const tgtAnchored =
+        tgtNode?.type === 'requirement' || tgtNode?.type === 'useCase'
       let sourceHandle = portHandles ? sourceEndpoint : `rel-src-${conn.id}`
       let targetHandle = portHandles
         ? `target:${targetEndpoint}`
@@ -765,13 +833,12 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       let manualAttachment = false
       let sourceSide: PortSide | undefined
       let targetSide: PortSide | undefined
+      let sourceAnchorId: string | undefined
+      let targetAnchorId: string | undefined
       if (!portHandles) {
         const srcSide = edgeViz?.sourceSide as PortSide | null | undefined
         const tgtSide = edgeViz?.targetSide as PortSide | null | undefined
         if (srcSide || tgtSide) {
-          // Either end persisted → keep manual; fill the missing end from geometry.
-          const srcNode = nodesById.get(sourcePart)
-          const tgtNode = nodesById.get(targetPart)
           const picked =
             srcNode && tgtNode
               ? pickRelationBoundarySides(
@@ -789,21 +856,48 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
             tgtSide && edgeViz?.targetOffset != null
               ? Number(edgeViz.targetOffset)
               : 0.5
-          manualAttachment = true
+          // Saved sides on parts stay per-edge handles. Use cases and
+          // requirements share the node's boundary anchors.
+          manualAttachment =
+            (!srcAnchored && !!srcSide) || (!tgtAnchored && !!tgtSide)
+        } else if (srcNode && tgtNode) {
+          const picked = pickRelationBoundarySides(
+            nodeBox(srcNode, nodesById),
+            nodeBox(tgtNode, nodesById),
+          )
+          sourceSide = picked.sourceSide
+          targetSide = picked.targetSide
         } else {
-          const srcNode = nodesById.get(sourcePart)
-          const tgtNode = nodesById.get(targetPart)
-          if (srcNode && tgtNode) {
-            const picked = pickRelationBoundarySides(
-              nodeBox(srcNode, nodesById),
-              nodeBox(tgtNode, nodesById),
-            )
-            sourceSide = picked.sourceSide
-            targetSide = picked.targetSide
-          } else {
-            sourceSide = 'right'
-            targetSide = 'left'
-          }
+          sourceSide = 'right'
+          targetSide = 'left'
+        }
+        if (srcAnchored && srcNode && sourceSide) {
+          const bound = bindStoredAnchor(
+            resolveAnchors(
+              (srcNode.data as { anchors?: BoundaryAnchor[] }).anchors,
+            ),
+            sourceSide,
+            sourceOffset,
+            edgeViz?.sourceAnchorId,
+          )
+          sourceHandle = bound.id
+          sourceSide = bound.side
+          sourceOffset = bound.offset
+          sourceAnchorId = bound.id
+        }
+        if (tgtAnchored && tgtNode && targetSide) {
+          const bound = bindStoredAnchor(
+            resolveAnchors(
+              (tgtNode.data as { anchors?: BoundaryAnchor[] }).anchors,
+            ),
+            targetSide,
+            targetOffset,
+            edgeViz?.targetAnchorId,
+          )
+          targetHandle = `target:${bound.id}`
+          targetSide = bound.side
+          targetOffset = bound.offset
+          targetAnchorId = bound.id
         }
       }
       const internal =
@@ -864,11 +958,13 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
           internal,
           labelColor: stroke.color,
           selectedColor: selectedConnectionColor,
-          selectedLinewidth: selectedConnectionLinewidth,
+          selectedFactor: selectedConnectionLinewidthFactor,
           sourceOffset,
           targetOffset,
           sourceSide,
           targetSide,
+          sourceAnchorId,
+          targetAnchorId,
           manualAttachment,
           markerStartKind,
           onRelationEndMoved,

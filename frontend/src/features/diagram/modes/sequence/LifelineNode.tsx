@@ -3,6 +3,7 @@ import { memo, type CSSProperties } from 'react'
 import type { ElementStyle } from '../../../api'
 import type { ViewMode } from '../../../settings'
 import { kindBackground, nodeInlineStyle } from '../../elementStyle'
+import { camelCaseSegments } from './camelWrap'
 
 export type LifelineNodeData = {
   label: string
@@ -11,6 +12,8 @@ export type LifelineNodeData = {
   viewMode: ViewMode
   /** Pixel height of the dashed life line below the header */
   lineHeight: number
+  /** Shared header box so wrapped names stay above the message rows */
+  headerHeight: number
   messageCount?: number
 }
 
@@ -27,8 +30,10 @@ function LifelineNodeInner({ data, selected }: NodeProps) {
   const base = nodeInlineStyle(d.formatStyle, d.viewMode)
   const bg = kindBackground('lifeline', d.viewMode, d.formatStyle)
   const msgCount = d.messageCount ?? 0
-  const totalH = 48 + d.lineHeight
+  const headerHeight = d.headerHeight || 48
+  const totalH = headerHeight + d.lineHeight
   const isDark = d.viewMode === 'dark'
+  const nameParts = camelCaseSegments(d.label)
 
   return (
     <div
@@ -37,14 +42,24 @@ function LifelineNodeInner({ data, selected }: NodeProps) {
     >
       <div
         className="lifeline-header"
-        style={bg ? { backgroundColor: bg } : undefined}
+        style={{
+          minHeight: headerHeight,
+          ...(bg ? { backgroundColor: bg } : {}),
+        }}
       >
         <span className="stereotype">«lifeline»</span>
-        <strong>{d.label}</strong>
+        <strong className="lifeline-name">
+          {nameParts.map((part, index) => (
+            <span key={`${part}-${index}`}>
+              {index > 0 ? <wbr /> : null}
+              {part}
+            </span>
+          ))}
+        </strong>
       </div>
       <div className="lifeline-axis" style={{ height: d.lineHeight }} />
       {Array.from({ length: msgCount }, (_, index) => {
-        const y = 48 + 40 + index * 56
+        const y = headerHeight + 40 + index * 56
         const topPct = `${(y / totalH) * 100}%`
         const centered = centerHandleStyle(topPct)
         return (

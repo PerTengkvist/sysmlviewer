@@ -79,6 +79,29 @@ describe('buildSequenceGraph', () => {
     expect((edges[0].data as { sequenceIndex: number }).sequenceIndex).toBe(0)
   })
 
+  it('passes selectedColor and selectedFactor on edges', () => {
+    const { edges } = buildSequenceGraph(seqFixture(), 'light', {
+      selectedConnectionColor: '#112233',
+      selectedConnectionLinewidthFactor: 3,
+    })
+    expect(edges[0].data).toMatchObject({
+      selectedColor: '#112233',
+      selectedFactor: 3,
+    })
+  })
+
+  it('uses one taller header when a camelCase lifeline name wraps', () => {
+    const fixture = seqFixture()
+    fixture.semantic['P::I::A'].name = 'ManeuvrabilityController'
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    const headers = nodes.map(
+      (node) => (node.data as { headerHeight: number }).headerHeight,
+    )
+    expect(headers[0]).toBeGreaterThan(48)
+    expect(headers[1]).toBe(headers[0])
+    expect(nodes[0].style?.height).toBe(nodes[1].style?.height)
+  })
+
   it('ignores merge-index positions far off to the right', () => {
     const fixture = seqFixture()
     fixture.visualization.nodes = {

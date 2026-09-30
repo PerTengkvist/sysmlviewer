@@ -15,7 +15,7 @@ Logical service interfaces follow a fixed suffix scheme so **service** (S) and *
 | compute service | `<S>_svi` | `<S>_svp` | `<S>_rvp` / … | `<S>_svi` |
 
 - `s` = service (providing), `r` = resource (using). The middle letter (`c`/`a`/`m`/…) selects kind.
-- **S_entity** token is normally the part def’s simple name (e.g. `KubernetesCluster`). In `data/projects/data_center` the token is the **part usage name** instead (`cluster`, `iaac`, `orchestrator`, …).
+- **S_entity** token is normally the part def’s simple name (e.g. `KubernetesCluster`). The previous data-center model used the **part usage name** instead (`cluster`, `iaac`, `orchestrator`, …).
 - **1:1** U-port: `<S>_r?p`. **Several** ports of the same kind on one U: `<U>_<A|B>_r?p`.
 - One U-port must not fan out to several different S APIs; use one `r*p` per S_entity.
 
@@ -26,9 +26,9 @@ Logical service interfaces follow a fixed suffix scheme so **service** (S) and *
 - Creating a port with a `*_s?i` typeRef and no name defaults to `*_s?p` on the S part, otherwise `*_r?p`.
 - After reparse, soft warnings are attached to files when names diverge from the policy (load is not blocked).
 
-## Example (data center)
+## Example
 
-See `data/projects/data_center/logical/` — e.g. `orchestrator_sap : orchestrator_sai`, `cluster_rap : cluster_sai`, connection `cluster_sai` (`iaac_smp` on the IaaC part, not `InfrastructurePlatform_smp`).
+The shipped model is [`examples/electric_car`](../examples/electric_car). It uses dependencies (`«implements»`, `«refine»`, functional dependencies) rather than these service ports. The previous data-center model used names such as `orchestrator_sap : orchestrator_sai` and `cluster_rap : cluster_sai` (connection `cluster_sai`; `iaac_smp` on the IaaC part, not `InfrastructurePlatform_smp`).
 
 ### Intra-cluster peer ports
 

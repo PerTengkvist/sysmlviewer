@@ -15,7 +15,7 @@ from application.project_service import ProjectService
 from domain.models import Project, SysmlFile, new_id
 
 _DEFAULT_NAMES = {
-    "data_center": "Data Center",
+    "electric_car": "Electric Car",
     "diagrams": "Diagrams",
 }
 

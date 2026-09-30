@@ -5,12 +5,14 @@ import {
   type ExampleProject,
   type PortSide,
   type Project,
+  type RelationTodoItem,
   type RoutingType,
   type ViewPayload,
   type VisualizationEdge,
   type VisualizationNode,
 } from './api'
 import { DiagramCanvas } from './features/diagram/DiagramCanvas'
+import { nextSelection, selectionFromFlow } from './features/diagram/selection'
 import { RightSidebar } from './features/details/RightSidebar'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
@@ -24,6 +26,7 @@ import { docPathForArtifact } from './features/docs/docPath'
 import { SheetDialog } from './features/sheet/SheetDialog'
 import { normalizeSheet, type ProjectSheet } from './features/sheet/sheet'
 import { SettingsDialog } from './features/settings/SettingsDialog'
+import { RelationTodosDialog } from './features/diagram/RelationTodosDialog'
 import {
   applyTheme,
   loadSettings,
@@ -31,11 +34,17 @@ import {
   type AppSettings,
 } from './settings'
 import { structureNotationForPatch } from './features/diagram/structureNotationForPatch'
+import { copyStyle } from './features/diagram/formatPainter'
 
 type CanvasMode =
   | { type: 'diagram' }
   | { type: 'text'; fileId: string }
   | { type: 'markdown'; docPath: string }
+
+type PaintMode = {
+  style: ElementStyle
+  sourceKind: string
+}
 
 export default function App() {
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null)
@@ -45,12 +54,26 @@ export default function App() {
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
   const [viewPayload, setViewPayload] = useState<ViewPayload | null>(null)
   const [diagramEpoch, setDiagramEpoch] = useState(0)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [primaryId, setPrimaryId] = useState<string | null>(null)
+  const selectedId = primaryId
+  const setSelectedId = (id: string | null) => {
+    if (id == null) {
+      setSelectedIds([])
+      setPrimaryId(null)
+      return
+    }
+    setSelectedIds([id])
+    setPrimaryId(id)
+  }
+  const [paintMode, setPaintMode] = useState<PaintMode | null>(null)
   const [canvasMode, setCanvasMode] = useState<CanvasMode>({ type: 'diagram' })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [todosOpen, setTodosOpen] = useState(false)
+  const [relationTodos, setRelationTodos] = useState<RelationTodoItem[]>([])
   const [workspaceDialog, setWorkspaceDialog] = useState<'new' | 'open' | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
@@ -66,6 +89,17 @@ export default function App() {
   const structureNotation = structureNotationForPatch(
     settings.showDiagramDetails.structureNotation,
   )
+
+  useEffect(() => {
+    if (!project) {
+      setRelationTodos([])
+      return
+    }
+    void api
+      .listRelationTodos(project.id)
+      .then((r) => setRelationTodos(r.items))
+      .catch(() => setRelationTodos([]))
+  }, [project?.id])
 
   const applySession = useCallback(
     async (session: { workspaceRoot: string | null; project: Project | null }) => {
@@ -358,6 +392,8 @@ export default function App() {
     setError(null)
     try {
       const p = await fn()
+      const todos = await api.listRelationTodos(p.id).catch(() => null)
+      if (todos) setRelationTodos(todos.items)
       await applyProject(p)
     } catch (e) {
       setError(String(e))
@@ -416,11 +452,17 @@ export default function App() {
               const existing = nextEdges[id]
               nextEdges[id] = {
                 artifactId: id,
-                routing: patch.routing ?? existing?.routing ?? 'angular',
+                routing: patch.routing ?? existing?.routing ?? 'direct',
                 waypoints: patch.waypoints ?? existing?.waypoints ?? [],
                 labelOffset:
                   patch.labelOffset ?? existing?.labelOffset ?? { x: 0, y: 0 },
                 style: patch.style ?? existing?.style,
+                sourceSide: patch.sourceSide ?? existing?.sourceSide,
+                sourceOffset: patch.sourceOffset ?? existing?.sourceOffset,
+                targetSide: patch.targetSide ?? existing?.targetSide,
+                targetOffset: patch.targetOffset ?? existing?.targetOffset,
+                sourceAnchorId: patch.sourceAnchorId ?? existing?.sourceAnchorId,
+                targetAnchorId: patch.targetAnchorId ?? existing?.targetAnchorId,
               }
             }
           }
@@ -565,6 +607,8 @@ export default function App() {
                   sourceOffset: existing?.sourceOffset,
                   targetSide: existing?.targetSide,
                   targetOffset: existing?.targetOffset,
+                  sourceAnchorId: existing?.sourceAnchorId,
+                  targetAnchorId: existing?.targetAnchorId,
                   ...patch,
                 },
               },
@@ -618,6 +662,8 @@ export default function App() {
                   sourceOffset: existing?.sourceOffset,
                   targetSide: existing?.targetSide,
                   targetOffset: existing?.targetOffset,
+                  sourceAnchorId: existing?.sourceAnchorId,
+                  targetAnchorId: existing?.targetAnchorId,
                 },
               },
             },
@@ -660,6 +706,8 @@ export default function App() {
                   sourceOffset: existing?.sourceOffset,
                   targetSide: existing?.targetSide,
                   targetOffset: existing?.targetOffset,
+                  sourceAnchorId: existing?.sourceAnchorId,
+                  targetAnchorId: existing?.targetAnchorId,
                 },
               },
             },
@@ -702,6 +750,8 @@ export default function App() {
                   sourceOffset: existing?.sourceOffset,
                   targetSide: existing?.targetSide,
                   targetOffset: existing?.targetOffset,
+                  sourceAnchorId: existing?.sourceAnchorId,
+                  targetAnchorId: existing?.targetAnchorId,
                 },
               },
             },
@@ -744,6 +794,8 @@ export default function App() {
                   sourceOffset: existing?.sourceOffset,
                   targetSide: existing?.targetSide,
                   targetOffset: existing?.targetOffset,
+                  sourceAnchorId: existing?.sourceAnchorId,
+                  targetAnchorId: existing?.targetAnchorId,
                 },
                 },
               },
@@ -777,6 +829,97 @@ export default function App() {
     },
     [project],
   )
+
+  const vizFormatKind = useCallback(
+    (artifactId: string): 'node' | 'edge' | null => {
+      if (!project) return null
+      const edges =
+        viewPayload?.visualization.edges ?? project.visualization.edges
+      const nodes =
+        viewPayload?.visualization.nodes ?? project.visualization.nodes
+      if (edges[artifactId]) return 'edge'
+      if (nodes[artifactId]) return 'node'
+      const el = project.semantic[artifactId]
+      if (!el) return null
+      if (
+        el.kind === 'connection' ||
+        el.kind === 'message' ||
+        el.kind === 'transition' ||
+        el.kind === 'succession'
+      ) {
+        return 'edge'
+      }
+      return 'node'
+    },
+    [project, viewPayload],
+  )
+
+  const styleForArtifact = useCallback(
+    (artifactId: string): ElementStyle | undefined => {
+      if (!project) return undefined
+      const kind = vizFormatKind(artifactId)
+      if (kind === 'edge') {
+        return (
+          viewPayload?.visualization.edges[artifactId]?.style ??
+          project.visualization.edges[artifactId]?.style
+        )
+      }
+      return (
+        viewPayload?.visualization.nodes[artifactId]?.style ??
+        project.visualization.nodes[artifactId]?.style
+      )
+    },
+    [project, viewPayload, vizFormatKind],
+  )
+
+  const applyPaintedStyle = useCallback(
+    (targetId: string, source: PaintMode) => {
+      if (!project) return
+      const target = project.semantic[targetId]
+      if (!target) return
+      const painted = copyStyle(source.style, source.sourceKind, target.kind)
+      if (!painted) return
+      const kind = vizFormatKind(targetId)
+      if (!kind) return
+      void onStyleChange(targetId, painted, kind)
+    },
+    [project, vizFormatKind, onStyleChange],
+  )
+
+  const onFormatPaint = useCallback(() => {
+    if (!project || !selectedId) return
+    if (paintMode) {
+      setPaintMode(null)
+      return
+    }
+    const source = project.semantic[selectedId]
+    if (!source) return
+    const sourceStyle = styleForArtifact(selectedId) || {}
+    const next: PaintMode = { style: sourceStyle, sourceKind: source.kind }
+    if (selectedIds.length > 1) {
+      for (const id of selectedIds) {
+        if (id === selectedId) continue
+        applyPaintedStyle(id, next)
+      }
+    }
+    setPaintMode(next)
+  }, [
+    project,
+    selectedId,
+    selectedIds,
+    paintMode,
+    styleForArtifact,
+    applyPaintedStyle,
+  ])
+
+  useEffect(() => {
+    if (!paintMode) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPaintMode(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [paintMode])
 
   const onOpenView = useCallback(
     (viewId: string) => {
@@ -963,6 +1106,20 @@ export default function App() {
           </button>
           <button
             type="button"
+            disabled={!project || busy}
+            onClick={() => {
+              if (!project) return
+              void api.listRelationTodos(project.id).then((r) => {
+                setRelationTodos(r.items)
+                setTodosOpen(true)
+              })
+            }}
+            title="Pending relation edits"
+          >
+            TODOs ({relationTodos.length})
+          </button>
+          <button
+            type="button"
             className="settings-btn"
             title="Settings"
             aria-label="Settings"
@@ -990,6 +1147,19 @@ export default function App() {
         settings={settings}
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
+      />
+      <RelationTodosDialog
+        open={todosOpen}
+        items={relationTodos}
+        onClose={() => setTodosOpen(false)}
+        onDelete={(id) => {
+          if (!project) return
+          void api.deleteRelationTodo(project.id, id).then(() =>
+            api
+              .listRelationTodos(project.id)
+              .then((r) => setRelationTodos(r.items)),
+          )
+        }}
       />
       <WorkspaceDialog
         open={workspaceDialog != null}
@@ -1113,10 +1283,41 @@ export default function App() {
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
                 selectedConnectionColor={settings.selectedConnectionColor}
-                selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
+                selectedConnectionLinewidthFactor={
+                  settings.selectedConnectionLinewidthFactor
+                }
                 connectionSeparation={settings.connectionSeparation}
                 sheet={sheet}
-                onSelectArtifact={setSelectedId}
+                selectedIds={selectedIds}
+                relationTodos={relationTodos}
+                pendingChangeColor={settings.pendingChangeColor}
+                pendingAddColor={settings.pendingAddColor}
+                formatPaintMode={!!paintMode}
+                onSelectArtifact={(artifactId, opts) => {
+                  if (paintMode && artifactId) {
+                    applyPaintedStyle(artifactId, paintMode)
+                    setSelectedIds([artifactId])
+                    setPrimaryId(artifactId)
+                    return
+                  }
+                  const next = nextSelection(selectedIds, artifactId, {
+                    shift: !!opts?.shift,
+                  })
+                  setSelectedIds(next.selectedIds)
+                  setPrimaryId(next.primaryId)
+                }}
+                onSelectionFromFlow={(ids) => {
+                  const next = selectionFromFlow(ids)
+                  setSelectedIds((prev) =>
+                    prev.length === next.selectedIds.length &&
+                    prev.every((id, i) => id === next.selectedIds[i])
+                      ? prev
+                      : next.selectedIds,
+                  )
+                  setPrimaryId((prev) =>
+                    prev === next.primaryId ? prev : next.primaryId,
+                  )
+                }}
                 onOpenView={onOpenView}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
@@ -1142,6 +1343,7 @@ export default function App() {
               settings.showDiagramDetails.hierarchicalLevels
             }
             selectedId={selectedId}
+            relationTodos={relationTodos}
             editorMode={editorMode}
             viewMode={settings.viewMode}
             onHierarchyOverrideChange={(override) =>
@@ -1151,6 +1353,8 @@ export default function App() {
             onAutoroute={(id) => void onAutorouteConnection(id)}
             onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}
             onStyleChange={(id, style, kind) => void onStyleChange(id, style, kind)}
+            onFormatPaint={onFormatPaint}
+            paintModeActive={!!paintMode}
             onRename={(id, name) =>
               void mutateAndSync(() => api.renameArtifact(project!.id, id, name))
             }
@@ -1167,6 +1371,11 @@ export default function App() {
               if (!window.confirm('Delete this element?')) return
               void mutateAndSync(() => api.deleteArtifact(project!.id, id))
             }}
+            onRetargetRelation={(id, sourceId, targetId) => {
+              void mutateAndSync(() =>
+                api.updateRelationEnds(project!.id, id, sourceId, targetId),
+              )
+            }}
           />
         }
       />
@@ -1178,7 +1387,9 @@ export default function App() {
           viewMode={settings.viewMode}
           showAttributes={settings.showDiagramDetails.attributes}
           selectedConnectionColor={settings.selectedConnectionColor}
-          selectedConnectionLinewidth={settings.selectedConnectionLinewidth}
+          selectedConnectionLinewidthFactor={
+            settings.selectedConnectionLinewidthFactor
+          }
           connectionSeparation={settings.connectionSeparation}
           onDiagramReady={onPrintDiagramReady}
         />

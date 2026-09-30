@@ -12,6 +12,8 @@ TYPE_REF_TO_MODE: dict[str, str] = {
     "GeneralView": "general",
     "InterconnectionView": "general",
     "AllocationView": "allocation",
+    "GridView": "requirementTable",
+    "UseCaseView": "useCase",
 }
 
 

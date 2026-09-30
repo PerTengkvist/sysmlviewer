@@ -25,6 +25,7 @@ import {
 import { boundaryFlowBounds } from './layout/connectionRouting'
 import { nearestBorderAnchor, pointerInsideNodeBox } from './PartNode'
 import { absoluteNodeOrigin } from './modes/structure/buildStructureGraph'
+import { selectedEdgeStyle } from './selectedEdgeStyle'
 
 export type SysmlEdgeData = {
   artifactId: string
@@ -39,7 +40,10 @@ export type SysmlEdgeData = {
   internal?: boolean
   labelColor?: string
   selectedColor?: string
+  /** Absolute highlight width when selected (precomputed with factor). */
   selectedLinewidth?: number
+  /** Multiplier applied to current strokeWidth when selected. */
+  selectedFactor?: number
   onWaypointsChange?: (artifactId: string, waypoints: Pt[]) => void
   onLabelOffsetChange?: (
     artifactId: string,
@@ -53,6 +57,8 @@ export type SysmlEdgeData = {
   targetSide?: import('../../api').PortSide
   sourceOffset?: number
   targetOffset?: number
+  sourceAnchorId?: string
+  targetAnchorId?: string
   markerStartKind?: string
   onRelationEndMoved?: (
     artifactId: string,
@@ -93,13 +99,15 @@ export function SysmlEdge({
   const altHeld = !!d.altHeld
   const { screenToFlowPosition, getNode, getNodes } = useReactFlow()
   const strokeStyle = useMemo(() => {
-    if (!selected) return style
-    return {
-      ...style,
-      stroke: d.selectedColor || '#2563eb',
-      strokeWidth: d.selectedLinewidth ?? Math.max(4, Number(style?.strokeWidth) * 2 || 4),
+    if (selected && d.selectedLinewidth != null) {
+      return {
+        ...style,
+        stroke: d.selectedColor || '#2563eb',
+        strokeWidth: d.selectedLinewidth,
+      }
     }
-  }, [selected, style, d.selectedColor, d.selectedLinewidth])
+    return selectedEdgeStyle(style, !!selected, d.selectedColor, d.selectedFactor)
+  }, [selected, style, d.selectedColor, d.selectedLinewidth, d.selectedFactor])
   const liveBoundary = useStore((state) => boundaryFlowBounds(state.nodes))
   const bounds = useMemo<FlowBounds>(() => {
     if (!d.internal && !d.parentBounds) return LOOSE_BOUNDS
@@ -258,7 +266,10 @@ export function SysmlEdge({
         }
         setLabelOff(next)
         // Ignore clicks without a real drag — avoids accidental routing side-effects.
-        if (Math.hypot(next.x - startOff.x, next.y - startOff.y) < 2) return
+        if (Math.hypot(next.x - startOff.x, next.y - startOff.y) < 2) {
+          d.onSelect?.(d.artifactId || id)
+          return
+        }
         d.onLabelOffsetChange?.(d.artifactId || id, next)
       }
       window.addEventListener('pointermove', move)
@@ -494,16 +505,24 @@ export function SysmlEdge({
               </svg>
             )}
             <div
-              className={`nodrag nopan edge-label${altHeld ? ' editable' : ''}`}
+              className={`nodrag nopan edge-label${altHeld ? ' editable' : ''}${selected ? ' selected' : ''}`}
               style={{
                 position: 'absolute',
                 transform: `translate(-50%, -50%) translate(${labelX + labelOff.x}px,${labelY + labelOff.y}px)`,
-                pointerEvents: altHeld ? 'all' : 'none',
+                pointerEvents: 'all',
+                cursor: altHeld ? 'grab' : 'pointer',
                 zIndex: 1002,
-                ...(d.labelColor ? { color: d.labelColor } : {}),
+                ...(d.labelColor && !selected ? { color: d.labelColor } : {}),
               }}
-              onPointerDown={onLabelPointerDown}
-              title={altHeld ? 'Drag to move connection name' : undefined}
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                if (!altHeld) {
+                  d.onSelect?.(d.artifactId || id)
+                  return
+                }
+                onLabelPointerDown(e)
+              }}
+              title={altHeld ? 'Drag to move connection name' : 'Select relation'}
             >
               {String(label)}
             </div>

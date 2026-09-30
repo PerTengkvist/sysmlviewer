@@ -58,6 +58,18 @@
       "name": "hierarchicalParts.sysml",
       "path": "hierarchicalParts.sysml",
       "warnings": []
+    },
+    {
+      "id": "requirements.sysml",
+      "name": "requirements.sysml",
+      "path": "requirements.sysml",
+      "warnings": []
+    },
+    {
+      "id": "use_cases.sysml",
+      "name": "use_cases.sysml",
+      "path": "use_cases.sysml",
+      "warnings": []
     }
   ],
   "semantic": {
@@ -74,6 +86,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "ActionExample::BootFlow",
         "ActionExample::BootFlowView"
@@ -93,6 +107,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "ActionExample::BootFlow::start",
         "ActionExample::BootFlow::loadApplication",
@@ -124,6 +140,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -140,6 +158,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -156,6 +176,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -172,6 +194,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -188,6 +212,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -204,6 +230,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -220,6 +248,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -236,6 +266,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -252,6 +284,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -268,6 +302,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -284,6 +320,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -300,6 +338,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -316,6 +356,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -332,6 +374,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -348,6 +392,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "169e1978-e6ae-46d4-94d1-af4df49e950c"
     },
@@ -364,6 +410,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::EventPort",
         "hbox::HBox",
@@ -391,6 +439,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -407,6 +457,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::HBox::BoxA",
         "hbox::HBox::BoxB",
@@ -435,6 +487,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::HBox::BoxA::event",
         "hbox::HBox::BoxA::eventlog",
@@ -455,6 +509,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -471,6 +527,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -487,6 +545,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -503,6 +563,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::HBox::BoxB::event",
         "hbox::HBox::BoxB::eventlog",
@@ -523,6 +585,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -539,6 +603,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -555,6 +621,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -571,6 +639,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::HBox::BoxC::event",
         "hbox::HBox::BoxC::eventlog",
@@ -591,6 +661,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -607,6 +679,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -623,6 +697,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -639,6 +715,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::HBox::EventBroker::event",
         "hbox::HBox::EventBroker::eventlog"
@@ -658,6 +736,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -674,6 +754,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -690,6 +772,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -706,6 +790,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -722,6 +808,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -738,6 +826,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -754,6 +844,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -770,6 +862,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -786,6 +880,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -802,6 +898,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "hbox::EventInteraction::BoxA",
         "hbox::EventInteraction::BoxB",
@@ -825,6 +923,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -841,6 +941,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -857,6 +959,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -873,6 +977,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -889,6 +995,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -905,6 +1013,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -921,6 +1031,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -937,6 +1049,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -953,6 +1067,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -969,6 +1085,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -985,6 +1103,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -1001,6 +1121,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -1017,6 +1139,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "3d63884c-2f47-4fc9-9ec9-81e3b527d10e"
     },
@@ -1033,6 +1157,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "StateExample::DoorMachine",
         "StateExample::DoorStateView"
@@ -1052,6 +1178,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "StateExample::DoorMachine::Closed",
         "StateExample::DoorMachine::Open",
@@ -1076,6 +1204,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1092,6 +1222,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1108,6 +1240,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1124,6 +1258,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1140,6 +1276,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1156,6 +1294,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1172,6 +1312,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1188,6 +1330,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "537ddb8a-bbf3-4521-9440-c090a24e7f06"
     },
@@ -1204,6 +1348,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "TreeExample::Vehicle",
         "TreeExample::VehicleTree",
@@ -1224,6 +1370,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "TreeExample::Vehicle::engine",
         "TreeExample::Vehicle::battery",
@@ -1244,6 +1392,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "TreeExample::Vehicle::engine::piston"
       ],
@@ -1262,6 +1412,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
     },
@@ -1278,6 +1430,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
     },
@@ -1294,6 +1448,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "TreeExample::Vehicle::cabin::seat"
       ],
@@ -1312,6 +1468,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
     },
@@ -1328,6 +1486,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
     },
@@ -1344,6 +1504,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "d93bdc91-ea77-4c46-8230-4de7dce17411"
     },
@@ -1360,6 +1522,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Real",
         "Example::Integer",
@@ -1388,6 +1552,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::FunctionalModule::powerIn"
       ],
@@ -1406,6 +1572,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -1422,6 +1590,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Engine::EventOut",
         "Example::Engine::GaugeIn",
@@ -1446,6 +1616,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -1462,6 +1634,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -1478,6 +1652,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Vehicle::axle",
         "Example::Vehicle::battery",
@@ -1504,6 +1680,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Vehicle::engine::EventOut",
         "Example::Vehicle::engine::GaugeIn",
@@ -1528,6 +1706,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Vehicle::fm1::powerIn"
       ],
@@ -1546,6 +1726,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -1562,6 +1744,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -1578,6 +1762,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -1594,6 +1780,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1610,6 +1798,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1626,6 +1816,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1642,6 +1834,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1658,6 +1852,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1674,6 +1870,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1690,6 +1888,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Axle::TorqueIn",
         "Example::Axle::rotationSpeed"
@@ -1709,6 +1909,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1725,6 +1927,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1741,6 +1945,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Battery::EventOut",
         "Example::Battery::powerOut",
@@ -1762,6 +1968,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1778,6 +1986,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1794,6 +2004,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1810,6 +2022,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1826,6 +2040,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1842,6 +2058,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1858,6 +2076,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1874,6 +2094,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1890,6 +2112,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1906,6 +2130,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1922,6 +2148,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1938,6 +2166,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Vehicle::axle::TorqueIn",
         "Example::Vehicle::axle::rotationSpeed"
@@ -1957,6 +2187,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "Example::Vehicle::battery::EventOut",
         "Example::Vehicle::battery::powerOut",
@@ -1978,6 +2210,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -1994,6 +2228,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -2010,6 +2246,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -2026,6 +2264,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -2042,6 +2282,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -2058,6 +2300,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -2074,6 +2318,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -2090,6 +2336,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Real",
         "CarLogical::Integer",
@@ -2119,6 +2367,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2135,6 +2385,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2151,6 +2403,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2167,6 +2421,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2183,6 +2439,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Chassis::role"
       ],
@@ -2201,6 +2459,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2217,6 +2477,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Engine::powerKW"
       ],
@@ -2235,6 +2497,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2251,6 +2515,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Transmission::gears"
       ],
@@ -2269,6 +2535,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2285,6 +2553,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::SteeringWheel::diameterMM"
       ],
@@ -2303,6 +2573,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2319,6 +2591,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Axle::driven"
       ],
@@ -2337,6 +2611,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2353,6 +2629,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::BrakeSystem::type"
       ],
@@ -2371,6 +2649,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2387,6 +2667,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::chassis",
         "CarLogical::Car::engine",
@@ -2421,6 +2703,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::chassis::role"
       ],
@@ -2439,6 +2723,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::engine::EventOut",
         "CarLogical::Car::engine::GaugeIn",
@@ -2463,6 +2749,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::transmission::gears"
       ],
@@ -2481,6 +2769,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::steeringWheel::diameterMM"
       ],
@@ -2499,6 +2789,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::frontAxle::TorqueIn",
         "CarLogical::Car::frontAxle::rotationSpeed"
@@ -2518,6 +2810,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::rearAxle::TorqueIn",
         "CarLogical::Car::rearAxle::rotationSpeed"
@@ -2537,6 +2831,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "CarLogical::Car::brakes::type"
       ],
@@ -2557,6 +2853,8 @@
       "metadataKeywords": [
         "Mount"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2575,6 +2873,8 @@
       "metadataKeywords": [
         "Mount"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2593,6 +2893,8 @@
       "metadataKeywords": [
         "Driveline"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2611,6 +2913,8 @@
       "metadataKeywords": [
         "Mount"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2629,6 +2933,8 @@
       "metadataKeywords": [
         "Drive"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2647,6 +2953,8 @@
       "metadataKeywords": [
         "Mount"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2665,6 +2973,8 @@
       "metadataKeywords": [
         "Mount"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2683,6 +2993,8 @@
       "metadataKeywords": [
         "Mount"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2701,6 +3013,8 @@
       "metadataKeywords": [
         "Actuation"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2719,6 +3033,8 @@
       "metadataKeywords": [
         "Actuation"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2735,6 +3051,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -2751,6 +3069,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::Real",
         "PartRelationships::String",
@@ -2776,6 +3096,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2792,6 +3114,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2808,6 +3132,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::Base::capacity",
         "PartRelationships::Base::pout",
@@ -2828,6 +3154,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2844,6 +3172,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2860,6 +3190,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2876,6 +3208,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::Small::capacity",
         "PartRelationships::Small::pout",
@@ -2896,6 +3230,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2912,6 +3248,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -2928,6 +3266,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::Aggregator::sharedEng"
       ],
@@ -2946,6 +3286,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::Aggregator::sharedEng::capacity",
         "PartRelationships::Aggregator::sharedEng::pout",
@@ -2966,6 +3308,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::baseEng",
         "PartRelationships::System::eng",
@@ -3001,6 +3345,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::baseEng::capacity",
         "PartRelationships::System::baseEng::pout",
@@ -3023,6 +3369,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::eng::capacity",
         "PartRelationships::System::eng::pout",
@@ -3043,6 +3391,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3061,6 +3411,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::child::capacity",
         "PartRelationships::System::child::pout",
@@ -3081,6 +3433,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3099,6 +3453,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::logical::capacity",
         "PartRelationships::System::logical::pout",
@@ -3121,6 +3477,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::physical::capacity",
         "PartRelationships::System::physical::pout",
@@ -3141,6 +3499,8 @@
       "multiplicity": "0..*",
       "isReference": true,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "PartRelationships::System::sharedEng::capacity",
         "PartRelationships::System::sharedEng::pout",
@@ -3161,6 +3521,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3177,6 +3539,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3193,6 +3557,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3209,6 +3575,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3227,6 +3595,8 @@
       "metadataKeywords": [
         "uses"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3245,6 +3615,8 @@
       "metadataKeywords": [
         "multi"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3263,6 +3635,8 @@
       "metadataKeywords": [
         "multi"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3279,6 +3653,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3295,6 +3671,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3311,6 +3689,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3327,6 +3707,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -3343,6 +3725,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "HierarchicalPartsPkg::PartDefinitions",
         "HierarchicalPartsPkg::HierarchicalPartsView",
@@ -3365,6 +3749,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "HierarchicalPartsPkg::PartDefinitions::FD1",
         "HierarchicalPartsPkg::PartDefinitions::FD2",
@@ -3390,6 +3776,8 @@
       "metadataKeywords": [
         "functionDomain"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "HierarchicalPartsPkg::PartDefinitions::FD1::F1",
         "HierarchicalPartsPkg::PartDefinitions::FD1::F2",
@@ -3415,6 +3803,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3433,6 +3823,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3451,6 +3843,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3467,6 +3861,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3483,6 +3879,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3499,6 +3897,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3517,6 +3917,8 @@
       "metadataKeywords": [
         "functionDomain"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "HierarchicalPartsPkg::PartDefinitions::FD2::F4",
         "HierarchicalPartsPkg::PartDefinitions::FD2::F5",
@@ -3542,6 +3944,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3560,6 +3964,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3578,6 +3984,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3594,6 +4002,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3610,6 +4020,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3626,6 +4038,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3644,6 +4058,8 @@
       "metadataKeywords": [
         "functionDomain"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [
         "HierarchicalPartsPkg::PartDefinitions::FD3::F7",
         "HierarchicalPartsPkg::PartDefinitions::FD3::F8",
@@ -3669,6 +4085,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3687,6 +4105,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3705,6 +4125,8 @@
       "metadataKeywords": [
         "function"
       ],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3721,6 +4143,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3737,6 +4161,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3753,6 +4179,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3769,6 +4197,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3785,6 +4215,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3801,6 +4233,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3817,6 +4251,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3833,6 +4269,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3849,6 +4287,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3865,8 +4305,695 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "hierarchicalParts.sysml"
+    },
+    "RequirementsExample": {
+      "id": "RequirementsExample",
+      "kind": "package",
+      "name": "RequirementsExample",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "RequirementsExample::SomeDef",
+        "RequirementsExample::Safety",
+        "RequirementsExample::ShowStatus",
+        "RequirementsExample::ConfirmAction",
+        "RequirementsExample::functional",
+        "RequirementsExample::Parent",
+        "RequirementsExample::Controller",
+        "RequirementsExample::PowerBus",
+        "RequirementsExample::RequirementsGraphView",
+        "RequirementsExample::RequirementsTableView"
+      ],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::SomeDef": {
+      "id": "RequirementsExample::SomeDef",
+      "kind": "requirement",
+      "name": "SomeDef",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::Safety": {
+      "id": "RequirementsExample::Safety",
+      "kind": "requirement",
+      "name": "Safety",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "System must shut down safely under fault conditions",
+      "shortId": "R-01",
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::ShowStatus": {
+      "id": "RequirementsExample::ShowStatus",
+      "kind": "requirement",
+      "name": "ShowStatus",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "As a driver I want clear status so that I can act",
+      "shortId": "US-01",
+      "children": [
+        "RequirementsExample::ShowStatus::Type"
+      ],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::ShowStatus::Type": {
+      "id": "RequirementsExample::ShowStatus::Type",
+      "kind": "attribute",
+      "name": "Type",
+      "parentId": "RequirementsExample::ShowStatus",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"UserStory\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::ConfirmAction": {
+      "id": "RequirementsExample::ConfirmAction",
+      "kind": "requirement",
+      "name": "ConfirmAction",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "As an operator I want confirmation before critical actions",
+      "shortId": "US-02",
+      "children": [
+        "RequirementsExample::ConfirmAction::Type"
+      ],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::ConfirmAction::Type": {
+      "id": "RequirementsExample::ConfirmAction::Type",
+      "kind": "attribute",
+      "name": "Type",
+      "parentId": "RequirementsExample::ConfirmAction",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"UserStory\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::functional": {
+      "id": "RequirementsExample::functional",
+      "kind": "requirement",
+      "name": "functional",
+      "parentId": "RequirementsExample",
+      "typeRef": "SomeDef",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Provide power-on self test within 2 seconds",
+      "shortId": null,
+      "children": [
+        "RequirementsExample::functional::Type"
+      ],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::functional::Type": {
+      "id": "RequirementsExample::functional::Type",
+      "kind": "attribute",
+      "name": "Type",
+      "parentId": "RequirementsExample::functional",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "\"Functional\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::Parent": {
+      "id": "RequirementsExample::Parent",
+      "kind": "requirement",
+      "name": "Parent",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Top-level capability requirement",
+      "shortId": null,
+      "children": [
+        "RequirementsExample::Parent::child"
+      ],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::Parent::child": {
+      "id": "RequirementsExample::Parent::child",
+      "kind": "requirement",
+      "name": "child",
+      "parentId": "RequirementsExample::Parent",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Nested child requirement",
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::Controller": {
+      "id": "RequirementsExample::Controller",
+      "kind": "part",
+      "name": "Controller",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "RequirementsExample::Controller::powerIn"
+      ],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::Controller::powerIn": {
+      "id": "RequirementsExample::Controller::powerIn",
+      "kind": "port",
+      "name": "powerIn",
+      "parentId": "RequirementsExample::Controller",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::PowerBus": {
+      "id": "RequirementsExample::PowerBus",
+      "kind": "interface",
+      "name": "PowerBus",
+      "parentId": "RequirementsExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::RequirementsGraphView": {
+      "id": "RequirementsExample::RequirementsGraphView",
+      "kind": "view",
+      "name": "RequirementsGraphView",
+      "parentId": "RequirementsExample",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "RequirementsExample",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "RequirementsExample::RequirementsTableView": {
+      "id": "RequirementsExample::RequirementsTableView",
+      "kind": "view",
+      "name": "RequirementsTableView",
+      "parentId": "RequirementsExample",
+      "typeRef": "GridView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "RequirementsExample",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "requirements.sysml"
+    },
+    "UseCasesExample": {
+      "id": "UseCasesExample",
+      "kind": "package",
+      "name": "UseCasesExample",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCasesExample::Vehicle",
+        "UseCasesExample::Operator",
+        "UseCasesExample::Driver",
+        "UseCasesExample::AuthenticatedAccess",
+        "UseCasesExample::Authenticate",
+        "UseCasesExample::Login",
+        "UseCasesExample::Drive",
+        "UseCasesExample::EmergencyStop",
+        "UseCasesExample::dep1",
+        "UseCasesExample::dep2",
+        "UseCasesExample::VehicleUseCaseView",
+        "UseCasesExample::UseCasesStructureView"
+      ],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Vehicle": {
+      "id": "UseCasesExample::Vehicle",
+      "kind": "part",
+      "name": "Vehicle",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Operator": {
+      "id": "UseCasesExample::Operator",
+      "kind": "actor",
+      "name": "Operator",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Driver": {
+      "id": "UseCasesExample::Driver",
+      "kind": "actor",
+      "name": "Driver",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::AuthenticatedAccess": {
+      "id": "UseCasesExample::AuthenticatedAccess",
+      "kind": "requirement",
+      "name": "AuthenticatedAccess",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Access requires successful authentication",
+      "shortId": "R-UC-01",
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Authenticate": {
+      "id": "UseCasesExample::Authenticate",
+      "kind": "useCase",
+      "name": "Authenticate",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Verify operator credentials",
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Login": {
+      "id": "UseCasesExample::Login",
+      "kind": "useCase",
+      "name": "Login",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCasesExample::Login::operator",
+        "UseCasesExample::Login::include_1",
+        "UseCasesExample::Login::objective_1"
+      ],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Login::operator": {
+      "id": "UseCasesExample::Login::operator",
+      "kind": "actor",
+      "name": "operator",
+      "parentId": "UseCasesExample::Login",
+      "typeRef": "Operator",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Login::include_1": {
+      "id": "UseCasesExample::Login::include_1",
+      "kind": "include",
+      "name": "include_1",
+      "parentId": "UseCasesExample::Login",
+      "typeRef": null,
+      "sourceId": "UseCasesExample::Login",
+      "targetId": "UseCasesExample::Authenticate",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Login::objective_1": {
+      "id": "UseCasesExample::Login::objective_1",
+      "kind": "dependency",
+      "name": "objective_1",
+      "parentId": "UseCasesExample::Login",
+      "typeRef": null,
+      "sourceId": "UseCasesExample::Login",
+      "targetId": "UseCasesExample::AuthenticatedAccess",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "objective"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Drive": {
+      "id": "UseCasesExample::Drive",
+      "kind": "useCase",
+      "name": "Drive",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCasesExample::Drive::driver",
+        "UseCasesExample::Drive::vehicle"
+      ],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Drive::driver": {
+      "id": "UseCasesExample::Drive::driver",
+      "kind": "actor",
+      "name": "driver",
+      "parentId": "UseCasesExample::Drive",
+      "typeRef": "Driver",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Drive::vehicle": {
+      "id": "UseCasesExample::Drive::vehicle",
+      "kind": "part",
+      "name": "vehicle",
+      "parentId": "UseCasesExample::Drive",
+      "typeRef": "Vehicle",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "subject"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCasesExample::Drive::vehicle::engine",
+        "UseCasesExample::Drive::vehicle::battery",
+        "UseCasesExample::Drive::vehicle::cabin"
+      ],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::EmergencyStop": {
+      "id": "UseCasesExample::EmergencyStop",
+      "kind": "useCase",
+      "name": "EmergencyStop",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCasesExample::EmergencyStop::driver"
+      ],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::EmergencyStop::driver": {
+      "id": "UseCasesExample::EmergencyStop::driver",
+      "kind": "actor",
+      "name": "driver",
+      "parentId": "UseCasesExample::EmergencyStop",
+      "typeRef": "Driver",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::dep1": {
+      "id": "UseCasesExample::dep1",
+      "kind": "dependency",
+      "name": "dep1",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": "UseCasesExample::EmergencyStop",
+      "targetId": "UseCasesExample::Drive",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "extend"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::dep2": {
+      "id": "UseCasesExample::dep2",
+      "kind": "dependency",
+      "name": "dep2",
+      "parentId": "UseCasesExample",
+      "typeRef": null,
+      "sourceId": "UseCasesExample::Drive",
+      "targetId": "UseCasesExample::Login",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "use"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::VehicleUseCaseView": {
+      "id": "UseCasesExample::VehicleUseCaseView",
+      "kind": "view",
+      "name": "VehicleUseCaseView",
+      "parentId": "UseCasesExample",
+      "typeRef": "UseCaseView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "UseCasesExample",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::UseCasesStructureView": {
+      "id": "UseCasesExample::UseCasesStructureView",
+      "kind": "view",
+      "name": "UseCasesStructureView",
+      "parentId": "UseCasesExample",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "UseCasesExample",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
     },
     "Example::Vehicle::engine::EventOut": {
       "id": "Example::Vehicle::engine::EventOut",
@@ -3881,6 +5008,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3897,6 +5026,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3913,6 +5044,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3929,6 +5062,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3945,6 +5080,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3961,6 +5098,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3977,6 +5116,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -3993,6 +5134,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "0f3024d6-101d-4269-acc8-c1f4c280a29e"
     },
@@ -4009,6 +5152,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -4025,6 +5170,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -4041,6 +5188,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -4057,6 +5206,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -4073,6 +5224,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -4089,6 +5242,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "143ff90b-1008-4c5b-ba16-069e30d249df"
     },
@@ -4105,6 +5260,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4121,6 +5278,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4137,6 +5296,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4153,6 +5314,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4169,6 +5332,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4185,6 +5350,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4201,6 +5368,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4217,6 +5386,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4233,6 +5404,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4249,6 +5422,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4265,6 +5440,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4281,6 +5458,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4297,6 +5476,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4313,6 +5494,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4329,6 +5512,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "c77c2173-de1b-44ef-b03a-a5ab1ac05634"
     },
@@ -4345,6 +5530,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4361,6 +5548,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4377,6 +5566,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4393,6 +5584,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4409,6 +5602,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4425,6 +5620,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4441,6 +5638,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4457,6 +5656,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4473,6 +5674,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4489,6 +5692,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4505,6 +5710,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4521,6 +5728,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4537,6 +5746,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4553,6 +5764,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4569,6 +5782,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4585,6 +5800,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4601,6 +5818,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4617,6 +5836,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4633,6 +5854,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4649,6 +5872,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4665,6 +5890,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4681,6 +5908,8 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
     },
@@ -4697,8 +5926,64 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
       "children": [],
       "fileId": "46c66134-7d63-49d1-bdfc-2f0a7561920e"
+    },
+    "UseCasesExample::Drive::vehicle::engine": {
+      "id": "UseCasesExample::Drive::vehicle::engine",
+      "kind": "part",
+      "name": "engine",
+      "parentId": "UseCasesExample::Drive::vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Drive::vehicle::battery": {
+      "id": "UseCasesExample::Drive::vehicle::battery",
+      "kind": "part",
+      "name": "battery",
+      "parentId": "UseCasesExample::Drive::vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
+    },
+    "UseCasesExample::Drive::vehicle::cabin": {
+      "id": "UseCasesExample::Drive::vehicle::cabin",
+      "kind": "part",
+      "name": "cabin",
+      "parentId": "UseCasesExample::Drive::vehicle",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases.sysml"
     }
   },
   "visualization": {
@@ -5431,7 +6716,14 @@
         "height": 120.0,
         "symbolRef": "default-part",
         "side": null,
-        "offset": null
+        "offset": null,
+        "style": {
+          "light": {
+            "backgroundColor": "#ffffff",
+            "backgroundHeader": false,
+            "backgroundBody": false
+          }
+        }
       },
       "CarLogical::Car::chassis": {
         "artifactId": "CarLogical::Car::chassis",
@@ -5451,7 +6743,14 @@
         "height": 120.0,
         "symbolRef": "default-part",
         "side": null,
-        "offset": null
+        "offset": null,
+        "style": {
+          "light": {
+            "backgroundColor": "#787878",
+            "backgroundHeader": false,
+            "backgroundBody": false
+          }
+        }
       },
       "CarLogical::Car::transmission": {
         "artifactId": "CarLogical::Car::transmission",
@@ -5783,6 +7082,236 @@
         "side": null,
         "offset": null
       },
+      "RequirementsExample": {
+        "artifactId": "RequirementsExample",
+        "x": 640.0,
+        "y": 4940.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::SomeDef": {
+        "artifactId": "RequirementsExample::SomeDef",
+        "x": 80.0,
+        "y": 5120.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::Safety": {
+        "artifactId": "RequirementsExample::Safety",
+        "x": 360.0,
+        "y": 5120.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::ShowStatus": {
+        "artifactId": "RequirementsExample::ShowStatus",
+        "x": 640.0,
+        "y": 5120.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::ConfirmAction": {
+        "artifactId": "RequirementsExample::ConfirmAction",
+        "x": 80.0,
+        "y": 5300.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::functional": {
+        "artifactId": "RequirementsExample::functional",
+        "x": 360.0,
+        "y": 5300.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::Parent": {
+        "artifactId": "RequirementsExample::Parent",
+        "x": 640.0,
+        "y": 5300.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::Parent::child": {
+        "artifactId": "RequirementsExample::Parent::child",
+        "x": 80.0,
+        "y": 5480.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::Controller": {
+        "artifactId": "RequirementsExample::Controller",
+        "x": 360.0,
+        "y": 5480.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "RequirementsExample::Controller::powerIn": {
+        "artifactId": "RequirementsExample::Controller::powerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.75
+      },
+      "UseCasesExample": {
+        "artifactId": "UseCasesExample",
+        "x": 640.0,
+        "y": 5480.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Vehicle": {
+        "artifactId": "UseCasesExample::Vehicle",
+        "x": 80.0,
+        "y": 5660.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Operator": {
+        "artifactId": "UseCasesExample::Operator",
+        "x": 360.0,
+        "y": 5660.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Driver": {
+        "artifactId": "UseCasesExample::Driver",
+        "x": 640.0,
+        "y": 5660.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::AuthenticatedAccess": {
+        "artifactId": "UseCasesExample::AuthenticatedAccess",
+        "x": 80.0,
+        "y": 5840.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Authenticate": {
+        "artifactId": "UseCasesExample::Authenticate",
+        "x": 360.0,
+        "y": 5840.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Login": {
+        "artifactId": "UseCasesExample::Login",
+        "x": 640.0,
+        "y": 5840.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Login::operator": {
+        "artifactId": "UseCasesExample::Login::operator",
+        "x": 80.0,
+        "y": 6020.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Drive": {
+        "artifactId": "UseCasesExample::Drive",
+        "x": 360.0,
+        "y": 6020.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Drive::driver": {
+        "artifactId": "UseCasesExample::Drive::driver",
+        "x": 640.0,
+        "y": 6020.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Drive::vehicle": {
+        "artifactId": "UseCasesExample::Drive::vehicle",
+        "x": 80.0,
+        "y": 6200.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::EmergencyStop": {
+        "artifactId": "UseCasesExample::EmergencyStop",
+        "x": 360.0,
+        "y": 6200.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::EmergencyStop::driver": {
+        "artifactId": "UseCasesExample::EmergencyStop::driver",
+        "x": 640.0,
+        "y": 6200.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "Example::Vehicle::engine::EventOut": {
         "artifactId": "Example::Vehicle::engine::EventOut",
         "x": 0.0,
@@ -6082,6 +7611,36 @@
         "symbolRef": "default-port",
         "side": "left",
         "offset": 0.3833333333333333
+      },
+      "UseCasesExample::Drive::vehicle::engine": {
+        "artifactId": "UseCasesExample::Drive::vehicle::engine",
+        "x": 80.0,
+        "y": 6380.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Drive::vehicle::battery": {
+        "artifactId": "UseCasesExample::Drive::vehicle::battery",
+        "x": 360.0,
+        "y": 6380.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCasesExample::Drive::vehicle::cabin": {
+        "artifactId": "UseCasesExample::Drive::vehicle::cabin",
+        "x": 640.0,
+        "y": 6380.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
       }
     },
     "edges": {
@@ -6960,6 +8519,82 @@
             "markerEnd": "openArrow"
           }
         }
+      },
+      "UseCasesExample::Login::include_1": {
+        "artifactId": "UseCasesExample::Login::include_1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCasesExample::Login::objective_1": {
+        "artifactId": "UseCasesExample::Login::objective_1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCasesExample::dep1": {
+        "artifactId": "UseCasesExample::dep1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCasesExample::dep2": {
+        "artifactId": "UseCasesExample::dep2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
       }
     }
   },
@@ -7021,6 +8656,20 @@
       "typeRef": "GeneralView"
     },
     {
+      "id": "RequirementsExample::RequirementsGraphView",
+      "name": "RequirementsGraphView",
+      "rootArtifactId": "RequirementsExample",
+      "parentViewId": "RequirementsExample::RequirementsGraphView",
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "RequirementsExample::RequirementsTableView",
+      "name": "RequirementsTableView",
+      "rootArtifactId": "RequirementsExample",
+      "parentViewId": "RequirementsExample::RequirementsGraphView",
+      "typeRef": "GridView"
+    },
+    {
       "id": "StateExample::DoorStateView",
       "name": "DoorStateView",
       "rootArtifactId": "StateExample::DoorMachine",
@@ -7040,6 +8689,20 @@
       "rootArtifactId": "TreeExample::Vehicle",
       "parentViewId": "TreeExample::PackageTree",
       "typeRef": "TreeView"
+    },
+    {
+      "id": "UseCasesExample::UseCasesStructureView",
+      "name": "UseCasesStructureView",
+      "rootArtifactId": "UseCasesExample",
+      "parentViewId": "UseCasesExample::UseCasesStructureView",
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "UseCasesExample::VehicleUseCaseView",
+      "name": "VehicleUseCaseView",
+      "rootArtifactId": "UseCasesExample",
+      "parentViewId": "UseCasesExample::UseCasesStructureView",
+      "typeRef": "UseCaseView"
     },
     {
       "id": "hbox::HBoxEventView",

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "viewId": "UseCasesExample::UseCasesStructureView",
+  "name": "UseCasesStructureView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "UseCasesExample::AuthenticatedAccess": {
+      "x": 84.66296923500792,
+      "y": 5856.786689246028,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {}
+}

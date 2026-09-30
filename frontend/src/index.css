@@ -429,6 +429,55 @@ input {
   min-width: 0;
 }
 
+.tree-grip {
+  flex: 0 0 0.85rem;
+  width: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: grab;
+  font-size: 0.65rem;
+  letter-spacing: -0.14em;
+  line-height: 1;
+  user-select: none;
+  border-radius: 3px;
+}
+
+.tree-item button.tree-grip {
+  width: 0.85rem;
+  flex: 0 0 0.85rem;
+}
+
+.tree-grip:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.tree-grip:active {
+  cursor: grabbing;
+}
+
+.tree-grip.spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tree-row.is-dragging {
+  opacity: 0.45;
+}
+
+.tree-row.drop-before {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.tree-row.drop-after {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
 .tree-expand-btn {
   flex: 0 0 1.35rem;
   width: 1.35rem;
@@ -619,6 +668,7 @@ input {
 
 .lifeline-header {
   width: 100%;
+  box-sizing: border-box;
   min-height: 44px;
   padding: 6px 8px;
   border: 2px solid;
@@ -627,7 +677,23 @@ input {
   align-items: center;
   gap: 2px;
   text-align: center;
+  /* 25% below the default 1rem diagram name */
+  font-size: 0.75rem;
   font-weight: 600;
+}
+
+.lifeline-header .stereotype {
+  font-size: 0.51rem;
+}
+
+.lifeline-name {
+  display: block;
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: break-word;
 }
 
 .lifeline-node.theme-light .lifeline-header {
@@ -935,6 +1001,45 @@ body.port-dragging * {
   overflow: auto;
 }
 
+.relation-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+
+.relation-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+}
+
+.relation-edit select {
+  font: inherit;
+}
+
+.relation-lock {
+  align-self: flex-start;
+  width: auto;
+  border: 1px solid var(--panel-border);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+}
+
+.relation-lock.is-open {
+  border-color: var(--accent);
+}
+
+.plain-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
 .detail-list {
   display: grid;
   grid-template-columns: 88px 1fr;
@@ -1011,9 +1116,28 @@ body.port-dragging * {
   border-top: 1px solid var(--panel-border);
 }
 
+.format-controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
 .format-controls h3 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 0.85rem;
+}
+
+.format-paint-btn {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.format-paint-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
 }
 
 .format-mode {
@@ -1166,6 +1290,10 @@ body.port-dragging * {
   border-bottom: 1px solid var(--panel-border);
 }
 
+.part-node.boundary .part-node-header[style*="background"] {
+  /* inline style from format controls wins */
+}
+
 .part-node.boundary .part-node-body {
   /* Room for nested child nodes inside the boundary */
   min-height: 120px;
@@ -1282,6 +1410,38 @@ body.port-dragging * {
   stroke: #2c3e50;
 }
 
+/* The wide hit path is drawn with stroke-opacity 0. visibleStroke on the
+   edge group ignores it, so only the hairline was clickable. */
+.react-flow__edge-interaction {
+  pointer-events: stroke;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 4.5px;
+}
+
+.edge-label {
+  cursor: pointer;
+}
+
+.edge-label.selected {
+  color: var(--accent, #2563eb);
+  font-weight: 700;
+}
+
+/* Whitebox / use-case subject frames must not swallow clicks on the lines
+   that cross their interior. React Flow sets pointer-events inline, so this
+   needs !important. The header, resize handles, and ports stay clickable. */
+.react-flow__node:has(.part-node.boundary) {
+  pointer-events: none !important;
+}
+
+.react-flow__node:has(.part-node.boundary) .part-node-header,
+.react-flow__node:has(.part-node.boundary) .react-flow__resize-control,
+.react-flow__node:has(.part-node.boundary) .react-flow__handle {
+  pointer-events: all !important;
+}
+
 .react-flow__edge .react-flow__edge-textbg {
   fill: #f7fafc;
 }
@@ -1291,6 +1451,13 @@ body.port-dragging * {
   height: 10px;
   background: var(--accent);
   border: 1px solid #fff;
+}
+
+.boundary-anchor {
+  width: 9px;
+  height: 9px;
+  z-index: 6;
+  cursor: grab;
 }
 
 .part-resize-line {
@@ -1840,4 +2007,100 @@ body.port-dragging * {
     border-left: none;
     border-top: 1px solid var(--panel-border);
   }
+}
+
+.requirement-node {
+  min-width: 160px;
+  border: 1.5px solid var(--part-stroke);
+  border-radius: 4px;
+  background: var(--part-fill);
+  font-size: 12px;
+}
+.requirement-header {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.requirement-body {
+  padding: 6px 8px;
+  min-height: 2rem;
+  white-space: pre-wrap;
+}
+.req-id {
+  font-family: var(--mono, monospace);
+  margin-right: 0.4rem;
+  opacity: 0.8;
+}
+.usecase-node {
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--part-stroke);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--part-fill);
+  text-align: center;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+.usecase-label {
+  font-size: 12px;
+  max-width: 90%;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+.actor-node {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: transparent;
+  color: var(--ink, #1a1a1a);
+  box-sizing: border-box;
+}
+.actor-node.selected .actor-figure {
+  filter: drop-shadow(0 0 1px var(--accent, #2563eb));
+}
+.actor-figure {
+  width: 40px;
+  height: 60px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.actor-name {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+.actor-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+.requirement-table-wrap {
+  overflow: auto;
+  padding: 0.5rem 1rem 1rem;
+}
+.requirement-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.requirement-table th,
+.requirement-table td {
+  border: 1px solid var(--panel-border);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.requirement-table tr.selected td {
+  background: color-mix(in srgb, var(--accent, #2563eb) 18%, transparent);
+}
+.requirement-table tr {
+  cursor: pointer;
 }

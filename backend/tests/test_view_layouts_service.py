@@ -152,3 +152,59 @@ def test_patch_with_view_id_writes_edge_overlay_not_global(tmp_path: Path):
 
     loaded = client.get(api_url(f"/projects/{project_id}/views/{view_id}")).json()
     assert loaded["visualization"]["edges"][conn_id]["waypoints"] == waypoints
+
+
+REQ_GRAPH_SYSML = """\
+package ReqPkg {
+  requirement def Safety {
+    doc /* Be safe */
+  }
+  part def Controller;
+
+  view def ReqGraph : GeneralView {
+    expose ReqPkg;
+  }
+}
+"""
+
+
+def test_get_view_places_new_requirements_in_view_local_space(tmp_path: Path):
+    """Nodes missing from a view overlay must not use far-away global coords."""
+    client, project_id = _client(tmp_path)
+    add_content_file(client, project_id, tmp_path, "req.sysml", REQ_GRAPH_SYSML)
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    view_id = next(v["id"] for v in project["views"] if v["name"] == "ReqGraph")
+    controller = "ReqPkg::Controller"
+    safety = "ReqPkg::Safety"
+
+    # Global positions far from origin (simulates packed project canvas).
+    client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "nodes": {
+                controller: {"x": 360.0, "y": 5480.0, "width": 200.0, "height": 120.0},
+                safety: {"x": 360.0, "y": 5120.0, "width": 200.0, "height": 120.0},
+            }
+        },
+    )
+    # View layout only knows about Controller (as when reqs were added later).
+    client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": view_id,
+            "nodes": {
+                controller: {"x": 48.0, "y": 56.0, "width": 140.0, "height": 76.0},
+            },
+        },
+    )
+
+    loaded = client.get(api_url(f"/projects/{project_id}/views/{view_id}")).json()
+    assert loaded["diagramMode"] == "structure"
+    assert safety in loaded["semantic"]
+    ctrl = loaded["visualization"]["nodes"][controller]
+    req = loaded["visualization"]["nodes"][safety]
+    assert ctrl["x"] == 48.0 and ctrl["y"] == 56.0
+    # Requirement must be placed in view-local grid, not global y=5120.
+    assert req["y"] < 1000.0
+    assert req["x"] == 80.0
+    assert req["y"] == 80.0

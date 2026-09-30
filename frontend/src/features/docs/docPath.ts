@@ -1,6 +1,15 @@
 import type { SemanticElement } from '../../api'
 
-const DOCUMENTED_KINDS = new Set(['package', 'part', 'view', 'port'])
+const DOCUMENTED_KINDS = new Set([
+  'package',
+  'part',
+  'view',
+  'port',
+  'requirement',
+  'useCase',
+  'actor',
+  'interaction',
+])
 
 /** Resolve project-relative markdown path for a semantic artifact. */
 export function docPathForArtifact(el: SemanticElement | null | undefined): string | null {

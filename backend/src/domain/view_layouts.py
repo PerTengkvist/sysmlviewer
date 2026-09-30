@@ -1,4 +1,4 @@
-"""View-scoped node geometry overlays (x/y/width/height only)."""
+"""View-scoped node geometry overlays (x/y/width/height and boundary anchors)."""
 
 from __future__ import annotations
 
@@ -7,15 +7,46 @@ from typing import Any
 
 from domain.models import VisualizationEdge, VisualizationNode, Waypoint
 
+_ANCHOR_SIDES = frozenset({"left", "right", "top", "bottom"})
+
+
+def parse_boundary_anchors(raw: Any) -> list[dict[str, Any]] | None:
+    """Keep id/side/offset points. None means the patch did not set anchors."""
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        return None
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        side = item.get("side")
+        anchor_id = str(item.get("id") or "").strip()
+        if side not in _ANCHOR_SIDES or not anchor_id:
+            continue
+        try:
+            offset = float(item.get("offset", 0.5))
+        except (TypeError, ValueError):
+            continue
+        out.append(
+            {
+                "id": anchor_id,
+                "side": side,
+                "offset": max(0.0, min(1.0, offset)),
+            }
+        )
+    return out
+
 
 @dataclass
 class ViewNodeLayout:
-    """Per-view geometry for one artifact — no style/side/offset."""
+    """Per-view geometry for one artifact, plus optional boundary anchors."""
 
     x: float | None = None
     y: float | None = None
     width: float | None = None
     height: float | None = None
+    anchors: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -27,6 +58,8 @@ class ViewNodeLayout:
             out["width"] = self.width
         if self.height is not None:
             out["height"] = self.height
+        if self.anchors is not None:
+            out["anchors"] = list(self.anchors)
         return out
 
     @classmethod
@@ -38,6 +71,9 @@ class ViewNodeLayout:
             y=float(data["y"]) if data.get("y") is not None else None,
             width=float(data["width"]) if data.get("width") is not None else None,
             height=float(data["height"]) if data.get("height") is not None else None,
+            anchors=parse_boundary_anchors(data.get("anchors"))
+            if "anchors" in data
+            else None,
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewNodeLayout:
@@ -46,6 +82,7 @@ class ViewNodeLayout:
         y = self.y
         width = self.width
         height = self.height
+        anchors = self.anchors
         if "x" in patch and patch["x"] is not None:
             x = float(patch["x"])
         if "y" in patch and patch["y"] is not None:
@@ -54,7 +91,11 @@ class ViewNodeLayout:
             width = float(patch["width"])
         if "height" in patch and patch["height"] is not None:
             height = float(patch["height"])
-        return ViewNodeLayout(x=x, y=y, width=width, height=height)
+        if "anchors" in patch:
+            anchors = parse_boundary_anchors(patch.get("anchors"))
+        return ViewNodeLayout(
+            x=x, y=y, width=width, height=height, anchors=anchors
+        )
 
 
 @dataclass
@@ -69,6 +110,8 @@ class ViewEdgeLayout:
     source_offset: float | None = None
     target_side: str | None = None
     target_offset: float | None = None
+    source_anchor_id: str | None = None
+    target_anchor_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -89,6 +132,10 @@ class ViewEdgeLayout:
             out["targetSide"] = self.target_side
         if self.target_offset is not None:
             out["targetOffset"] = self.target_offset
+        if self.source_anchor_id is not None:
+            out["sourceAnchorId"] = self.source_anchor_id
+        if self.target_anchor_id is not None:
+            out["targetAnchorId"] = self.target_anchor_id
         return out
 
     @classmethod
@@ -118,6 +165,8 @@ class ViewEdgeLayout:
                 if data.get("targetOffset") is not None
                 else None
             ),
+            source_anchor_id=data.get("sourceAnchorId") or None,
+            target_anchor_id=data.get("targetAnchorId") or None,
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewEdgeLayout:
@@ -129,6 +178,8 @@ class ViewEdgeLayout:
         source_offset = self.source_offset
         target_side = self.target_side
         target_offset = self.target_offset
+        source_anchor_id = self.source_anchor_id
+        target_anchor_id = self.target_anchor_id
         if "routing" in patch and patch["routing"]:
             routing = str(patch["routing"])
         if "waypoints" in patch:
@@ -145,6 +196,10 @@ class ViewEdgeLayout:
             target_side = str(patch["targetSide"])
         if "targetOffset" in patch and patch["targetOffset"] is not None:
             target_offset = float(patch["targetOffset"])
+        if "sourceAnchorId" in patch and patch["sourceAnchorId"]:
+            source_anchor_id = str(patch["sourceAnchorId"])
+        if "targetAnchorId" in patch and patch["targetAnchorId"]:
+            target_anchor_id = str(patch["targetAnchorId"])
         return ViewEdgeLayout(
             routing=routing,
             waypoints=waypoints,
@@ -154,6 +209,8 @@ class ViewEdgeLayout:
             source_offset=source_offset,
             target_side=target_side,
             target_offset=target_offset,
+            source_anchor_id=source_anchor_id,
+            target_anchor_id=target_anchor_id,
         )
 
 
@@ -247,7 +304,27 @@ def resolve_view_node(
         out["width"] = overlay.width
     if overlay.height is not None:
         out["height"] = overlay.height
+    if overlay.anchors is not None:
+        out["anchors"] = list(overlay.anchors)
     return out
+
+
+def layout_has_local_geometry(layout: ViewLayout | None) -> bool:
+    """True when the view layout already places at least one node in view space."""
+    if layout is None:
+        return False
+    return any(n.x is not None or n.y is not None for n in layout.nodes.values())
+
+
+def default_view_local_xy(index: int) -> tuple[float, float]:
+    """Grid position for a node newly appearing in a view that already has a layout."""
+    col = index % 3
+    row = index // 3
+    return 80.0 + col * 280.0, 80.0 + row * 180.0
+
+
+def overlay_has_xy(overlay: ViewNodeLayout | None) -> bool:
+    return overlay is not None and (overlay.x is not None or overlay.y is not None)
 
 
 def resolve_view_edge(
@@ -277,6 +354,10 @@ def resolve_view_edge(
         out["targetSide"] = overlay.target_side
     if overlay.target_offset is not None:
         out["targetOffset"] = overlay.target_offset
+    if overlay.source_anchor_id is not None:
+        out["sourceAnchorId"] = overlay.source_anchor_id
+    if overlay.target_anchor_id is not None:
+        out["targetAnchorId"] = overlay.target_anchor_id
     return out
 
 
