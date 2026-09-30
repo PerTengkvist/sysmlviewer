@@ -104,7 +104,7 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
           <fieldset className="settings-fieldset">
             <legend>Selected connection</legend>
             <label className="settings-row">
-              <span>Selected Connection Color</span>
+              <span>Highlight color</span>
               <input
                 type="color"
                 value={settings.selectedConnectionColor}
@@ -114,21 +114,42 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
               />
             </label>
             <label className="settings-row">
-              <span>Selected Connection Linewidth</span>
+              <span>Highlight factor</span>
               <input
                 type="number"
                 min={1}
                 max={16}
                 step={0.5}
-                value={settings.selectedConnectionLinewidth}
+                value={settings.selectedConnectionLinewidthFactor}
                 onChange={(e) =>
                   patch({
-                    selectedConnectionLinewidth: Math.max(
+                    selectedConnectionLinewidthFactor: Math.max(
                       1,
-                      Number(e.target.value) || 4,
+                      Number(e.target.value) || 3,
                     ),
                   })
                 }
+              />
+            </label>
+          </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Pending relation edits</legend>
+            <label className="settings-row">
+              <span>Change color</span>
+              <input
+                type="color"
+                value={settings.pendingChangeColor}
+                onChange={(e) =>
+                  patch({ pendingChangeColor: e.target.value })
+                }
+              />
+            </label>
+            <label className="settings-row">
+              <span>Add color</span>
+              <input
+                type="color"
+                value={settings.pendingAddColor}
+                onChange={(e) => patch({ pendingAddColor: e.target.value })}
               />
             </label>
           </fieldset>

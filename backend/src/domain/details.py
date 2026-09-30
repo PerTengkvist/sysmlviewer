@@ -13,6 +13,8 @@ RELATION_KINDS = {
     ArtifactKind.SPECIALIZATION,
     ArtifactKind.SUBSETTING,
     ArtifactKind.REDEFINITION,
+    ArtifactKind.INCLUDE,
+    ArtifactKind.SATISFY,
 }
 
 
@@ -69,20 +71,38 @@ def classify_children(
     }
 
 
+# Structural nodes that count toward hierarchical depth
+_DEPTH_KINDS = {
+    ArtifactKind.PART,
+    ArtifactKind.PACKAGE,
+    ArtifactKind.REQUIREMENT,
+    ArtifactKind.USE_CASE,
+}
+
+# Always attached under an included structural node (not depth-limited)
+_ATTACHED_KINDS = {
+    ArtifactKind.PORT,
+    ArtifactKind.ATTRIBUTE,
+    ArtifactKind.VIEW,
+    ArtifactKind.ACTOR,
+    *RELATION_KINDS,
+}
+
+
 def collect_artifacts_to_depth(
     semantic: dict[str, SemanticElement],
     root_id: str,
     depth: int,
 ) -> set[str]:
     """
-    Collect root + part/package descendants up to `depth` levels.
-    depth=1 → only root; depth=2 → root + direct child parts (current whitebox).
-    Always include ports/connections/attributes/views under included parts.
+    Collect root + structural descendants up to `depth` levels.
+    depth=1 → only root; depth=2 → root + direct children (parts/packages/
+    requirements/use cases).
+    Always include ports/connections/attributes/views/actors under included nodes.
     """
     if depth < 1:
         depth = 1
     included: set[str] = {root_id}
-    # BFS on parts/packages only for depth
     frontier = [root_id]
     for level in range(1, depth):
         nxt: list[str] = []
@@ -94,12 +114,11 @@ def collect_artifacts_to_depth(
                 child = semantic.get(cid)
                 if not child:
                     continue
-                if child.kind in {ArtifactKind.PART, ArtifactKind.PACKAGE}:
+                if child.kind in _DEPTH_KINDS:
                     included.add(cid)
                     nxt.append(cid)
         frontier = nxt
 
-    # Expand: include non-part children of every included part/package
     extra: set[str] = set()
     for aid in list(included):
         el = semantic.get(aid)
@@ -109,14 +128,9 @@ def collect_artifacts_to_depth(
             child = semantic.get(cid)
             if not child:
                 continue
-            if child.kind in {
-                ArtifactKind.PORT,
-                *RELATION_KINDS,
-                ArtifactKind.ATTRIBUTE,
-                ArtifactKind.VIEW,
-            }:
+            if child.kind in _ATTACHED_KINDS:
                 extra.add(cid)
-            # nested parts beyond depth already excluded
+            # nested structural nodes beyond depth already excluded
     included |= extra
     from domain.relationships import collect_related_edges
 

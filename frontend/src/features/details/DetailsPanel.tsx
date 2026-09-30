@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import type {
   ElementStyle,
   ElementStyleMode,
   Project,
+  RelationTodoItem,
   RoutingType,
   SemanticElement,
   ViewPayload,
@@ -12,6 +14,7 @@ import {
   STRUCTURE_EDGE_KINDS,
 } from '../diagram/relationshipStyle'
 import type { ViewMode } from '../../settings'
+import { isRelationKind } from '../diagram/relationKinds'
 
 type Props = {
   project: Project | null
@@ -21,6 +24,7 @@ type Props = {
   viewPayload?: ViewPayload | null
   globalHierarchicalLevels?: number
   selectedId: string | null
+  relationTodos?: RelationTodoItem[]
   editorMode?: boolean
   viewMode?: ViewMode
   onHierarchyOverrideChange?: (override: number | null) => void
@@ -31,11 +35,149 @@ type Props = {
     waypoints: { x: number; y: number; locked?: boolean }[],
   ) => void
   onStyleChange?: (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => void
+  onFormatPaint?: () => void
+  paintModeActive?: boolean
   onRename?: (artifactId: string, name: string) => void
   onAddPart?: (parentId: string) => void
   onAddPort?: (parentId: string) => void
   onAddAttribute?: (parentId: string) => void
   onDelete?: (artifactId: string) => void
+  onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
+}
+
+function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
+  const same = choices.filter((c) => c.kind === item.kind && c.name === item.name)
+  if (same.length < 2) return `${item.kind} ${item.name}`
+  const parent = choices.find((c) => c.id === item.parentId)
+  const hint = parent?.name || item.parentId || item.id
+  return `${item.kind} ${item.name} (${hint})`
+}
+
+function pendingEnds(
+  relationId: string,
+  sourceId: string,
+  targetId: string,
+  todos: RelationTodoItem[] | undefined,
+): { sourceId: string; targetId: string } {
+  const last = [...(todos || [])]
+    .reverse()
+    .find((todo) => todo.relationId === relationId)
+  if (last && (last.action === 'change' || last.action === 'add')) {
+    return { sourceId: last.source, targetId: last.target }
+  }
+  return { sourceId, targetId }
+}
+
+function diagramChoices(
+  project: Project,
+  viewPayload?: ViewPayload | null,
+): SemanticElement[] {
+  const source = viewPayload?.semantic || project.semantic
+  return Object.values(source)
+    .filter((el) => !isRelationKind(el.kind))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+}
+
+function RelationEndpoints({
+  unlocked,
+  onToggleLock,
+  sourceId,
+  targetId,
+  choices,
+  onChange,
+  onDelete,
+}: {
+  unlocked: boolean
+  onToggleLock: () => void
+  sourceId: string
+  targetId: string
+  choices: SemanticElement[]
+  onChange: (sourceId: string, targetId: string) => void
+  onDelete?: () => void
+}) {
+  const options = [...choices]
+  for (const id of [sourceId, targetId]) {
+    if (id && !options.some((item) => item.id === id)) {
+      options.unshift({
+        id,
+        kind: 'part',
+        name: id,
+        parentId: null,
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: null,
+      })
+    }
+  }
+  return (
+    <>
+      <dt>Edit</dt>
+      <dd className="relation-edit">
+        <button
+          type="button"
+          className={`relation-lock${unlocked ? ' is-open' : ''}`}
+          aria-pressed={unlocked}
+          aria-label={unlocked ? 'Lock relation details' : 'Unlock relation details'}
+          title={unlocked ? 'Lock' : 'Unlock to edit'}
+          onClick={onToggleLock}
+        >
+          {unlocked ? '🔓' : '🔒'}
+        </button>
+        <label>
+          Source
+          <select
+            value={sourceId}
+            disabled={!unlocked}
+            onChange={(event) => onChange(event.target.value, targetId)}
+          >
+            {options.map((item) => (
+              <option key={item.id} value={item.id}>
+                {choiceLabel(item, options)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Target
+          <select
+            value={targetId}
+            disabled={!unlocked}
+            onChange={(event) => onChange(sourceId, event.target.value)}
+          >
+            {options.map((item) => (
+              <option key={`t-${item.id}`} value={item.id}>
+                {choiceLabel(item, options)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="danger"
+          disabled={!unlocked || !onDelete}
+          onClick={onDelete}
+        >
+          Delete
+        </button>
+      </dd>
+    </>
+  )
+}
+
+function parseUseEdge(id: string | null): { sourceId: string; targetId: string } | null {
+  if (!id?.startsWith('use:') || !id.includes('->')) return null
+  const body = id.slice('use:'.length)
+  const arrow = body.indexOf('->')
+  const sourceId = body.slice(0, arrow)
+  const targetId = body.slice(arrow + 2)
+  if (!sourceId || !targetId) return null
+  return { sourceId, targetId }
+}
+
+function isRelationDetailKind(kind: string): boolean {
+  return isRelationKind(kind) || kind === 'message' || kind === 'transition' || kind === 'succession'
 }
 
 function findPartDefByName(
@@ -165,10 +307,14 @@ function FormatControls({
   style,
   isEdge,
   onChange,
+  onPaint,
+  paintActive,
 }: {
   style: ElementStyle | null | undefined
   isEdge: boolean
   onChange: (next: ElementStyle) => void
+  onPaint?: () => void
+  paintActive?: boolean
 }) {
   const modes: ViewMode[] = ['light', 'dark']
 
@@ -184,7 +330,20 @@ function FormatControls({
 
   return (
     <div className="format-controls">
-      <h3>Format</h3>
+      <div className="format-controls-header">
+        <h3>Format</h3>
+        {onPaint && (
+          <button
+            type="button"
+            className={paintActive ? 'format-paint-btn active' : 'format-paint-btn'}
+            onClick={onPaint}
+            title="Copy format — click another element to paint"
+            aria-pressed={!!paintActive}
+          >
+            Paint
+          </button>
+        )}
+      </div>
       {modes.map((mode) => {
         const defaults = STYLE_DEFAULTS[mode]
         const current = (mode === 'dark' ? style?.dark : style?.light) || {}
@@ -198,6 +357,26 @@ function FormatControls({
                 type="color"
                 value={current.backgroundColor || defaults.backgroundColor}
                 onChange={(e) => update(mode, { backgroundColor: e.target.value })}
+              />
+            </label>
+            <label className="settings-row">
+              <span>Header</span>
+              <input
+                type="checkbox"
+                checked={current.backgroundHeader !== false}
+                onChange={(e) =>
+                  update(mode, { backgroundHeader: e.target.checked })
+                }
+              />
+            </label>
+            <label className="settings-row">
+              <span>Body</span>
+              <input
+                type="checkbox"
+                checked={current.backgroundBody !== false}
+                onChange={(e) =>
+                  update(mode, { backgroundBody: e.target.checked })
+                }
               />
             </label>
             <label>
@@ -304,6 +483,7 @@ export function DetailsPanel({
   viewPayload,
   globalHierarchicalLevels = 2,
   selectedId,
+  relationTodos = [],
   editorMode,
   viewMode: _viewMode,
   onHierarchyOverrideChange,
@@ -311,12 +491,20 @@ export function DetailsPanel({
   onAutoroute,
   onWaypointsChange,
   onStyleChange,
+  onFormatPaint,
+  paintModeActive,
   onRename,
   onAddPart,
   onAddPort,
   onAddAttribute,
   onDelete,
+  onRetargetRelation,
 }: Props) {
+  const [relationUnlocked, setRelationUnlocked] = useState(false)
+  useEffect(() => {
+    setRelationUnlocked(false)
+  }, [selectedId])
+
   const hierarchyBlock =
     viewPayload && onHierarchyOverrideChange ? (
       <HierarchyLevelsSection
@@ -372,12 +560,27 @@ export function DetailsPanel({
               <dd className="mono">{targetId}</dd>
             </>
           )}
+          <dt>Edit</dt>
+          <dd>
+            <button
+              type="button"
+              className={`relation-lock${relationUnlocked ? ' is-open' : ''}`}
+              aria-pressed={relationUnlocked}
+              aria-label={
+                relationUnlocked ? 'Lock relation details' : 'Unlock relation details'
+              }
+              onClick={() => setRelationUnlocked((open) => !open)}
+            >
+              {relationUnlocked ? '🔓' : '🔒'}
+            </button>
+          </dd>
         </dl>
         <div className="routing-control">
           <label htmlFor="routing">Routing</label>
           <select
             id="routing"
             value={edge?.routing || 'direct'}
+            disabled={!relationUnlocked}
             onChange={(e) =>
               onRoutingChange(selectedId, e.target.value as RoutingType)
             }
@@ -391,6 +594,7 @@ export function DetailsPanel({
               type="button"
               className="autoroute-btn"
               onClick={() => onAutoroute?.(selectedId)}
+              disabled={!relationUnlocked}
               title="Clear waypoints and redraw the orthogonal route"
             >
               Autoroute
@@ -403,6 +607,42 @@ export function DetailsPanel({
   }
 
   if (!el) {
+    const useEdge = parseUseEdge(selectedId)
+    if (useEdge) {
+      const ends = pendingEnds(
+        selectedId,
+        useEdge.sourceId,
+        useEdge.targetId,
+        relationTodos,
+      )
+      return (
+        <div className="details-panel">
+          <h2>Details</h2>
+          {hierarchyBlock}
+          <dl className="detail-list">
+            <dt>Kind</dt>
+            <dd>use</dd>
+            <dt>Id</dt>
+            <dd className="mono">{selectedId}</dd>
+            <dt>Source</dt>
+            <dd className="mono">{ends.sourceId}</dd>
+            <dt>Target</dt>
+            <dd className="mono">{ends.targetId}</dd>
+            <RelationEndpoints
+              unlocked={relationUnlocked}
+              onToggleLock={() => setRelationUnlocked((open) => !open)}
+              sourceId={ends.sourceId}
+              targetId={ends.targetId}
+              choices={diagramChoices(project, viewPayload)}
+              onChange={(sourceId, targetId) =>
+                onRetargetRelation?.(selectedId, sourceId, targetId)
+              }
+              onDelete={onDelete ? () => onDelete(selectedId) : undefined}
+            />
+          </dl>
+        </div>
+      )
+    }
     return (
       <div className="details-panel">
         <h2>Details</h2>
@@ -422,6 +662,9 @@ export function DetailsPanel({
     el.kind === 'message' ||
     el.kind === 'transition' ||
     el.kind === 'succession'
+  const relationEnds = isRelationDetailKind(el.kind)
+    ? pendingEnds(selectedId, el.sourceId || '', el.targetId || '', relationTodos)
+    : null
   const formatKind: 'node' | 'edge' = isEdgeKind ? 'edge' : 'node'
   const formatStyle = isEdgeKind ? edge?.style : node?.style
   const canFormat =
@@ -448,6 +691,7 @@ export function DetailsPanel({
               className="inline-edit"
               defaultValue={el.name}
               key={el.id + el.name}
+              disabled={!relationUnlocked}
               onBlur={(e) => {
                 const v = e.target.value.trim()
                 if (v && v !== el.name) onRename(el.id, v)
@@ -479,17 +723,30 @@ export function DetailsPanel({
             <dd className="mono">{el.defaultValue || '—'}</dd>
           </>
         )}
-        {el.sourceId && (
+        {(relationEnds?.sourceId || el.sourceId) && (
           <>
             <dt>Source</dt>
-            <dd className="mono">{el.sourceId}</dd>
+            <dd className="mono">{relationEnds?.sourceId || el.sourceId}</dd>
           </>
         )}
-        {el.targetId && (
+        {(relationEnds?.targetId || el.targetId) && (
           <>
             <dt>Target</dt>
-            <dd className="mono">{el.targetId}</dd>
+            <dd className="mono">{relationEnds?.targetId || el.targetId}</dd>
           </>
+        )}
+        {relationEnds && (
+          <RelationEndpoints
+            unlocked={relationUnlocked}
+            onToggleLock={() => setRelationUnlocked((open) => !open)}
+            sourceId={relationEnds.sourceId}
+            targetId={relationEnds.targetId}
+            choices={diagramChoices(project, viewPayload)}
+            onChange={(sourceId, targetId) =>
+              onRetargetRelation?.(selectedId, sourceId, targetId)
+            }
+            onDelete={onDelete ? () => onDelete(selectedId) : undefined}
+          />
         )}
         {node && (
           <>
@@ -521,6 +778,7 @@ export function DetailsPanel({
             value={
               edge?.routing || defaultRelationStyle(el.kind).routing
             }
+            disabled={isRelationDetailKind(el.kind) && !relationUnlocked}
             onChange={(e) =>
               onRoutingChange(selectedId, e.target.value as RoutingType)
             }
@@ -535,6 +793,7 @@ export function DetailsPanel({
               type="button"
               className="autoroute-btn"
               onClick={() => onAutoroute?.(selectedId)}
+              disabled={!relationUnlocked}
               title="Clear waypoints and redraw the orthogonal route"
             >
               Autoroute
@@ -550,7 +809,7 @@ export function DetailsPanel({
                       <input
                         type="checkbox"
                         checked={!!wp.locked}
-                        disabled={!onWaypointsChange}
+                        disabled={!onWaypointsChange || (isRelationDetailKind(el.kind) && !relationUnlocked)}
                         onChange={(e) => {
                           if (!onWaypointsChange || !selectedId) return
                           const next = edge.waypoints.map((w, i) =>
@@ -580,11 +839,18 @@ export function DetailsPanel({
       )}
 
       {canFormat && onStyleChange && (
-        <FormatControls
-          style={formatStyle}
-          isEdge={isEdgeKind}
-          onChange={(next) => onStyleChange(selectedId, next, formatKind)}
-        />
+        <fieldset
+          disabled={isRelationDetailKind(el.kind) && !relationUnlocked}
+          className="plain-fieldset"
+        >
+          <FormatControls
+            style={formatStyle}
+            isEdge={isEdgeKind}
+            onChange={(next) => onStyleChange(selectedId, next, formatKind)}
+            onPaint={onFormatPaint}
+            paintActive={paintModeActive}
+          />
+        </fieldset>
       )}
 
       <FeatureList title="Ports" items={buckets.ports} />

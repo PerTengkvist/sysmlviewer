@@ -1,6 +1,21 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import type { Project, SemanticElement, SysmlFile } from '../../api'
+import { isRelationKind } from '../diagram/relationKinds'
 import { buildFileTree, type FileTreeNode } from './buildFileTree'
+import {
+  applyFolderTreeOrder,
+  buildFolderTree,
+  defaultChildOrder,
+  folderContentsGroupKey,
+  folderSiblingGroupKey,
+  loadViewTreeOrder,
+  orderSiblingIds,
+  packageGroupKey,
+  reorderWithin,
+  saveViewTreeOrder,
+  UNGROUPED_GROUP_KEY,
+  type ViewTreeOrder,
+} from './viewTreeOrder'
 
 export type LeftTab = 'views' | 'files'
 
@@ -20,54 +35,15 @@ type Props = {
   onShowMarkdown: (docPath: string) => void
 }
 
-function sortChildIds(
-  childIds: string[],
-  byId: Record<string, SemanticElement>,
-): string[] {
-  return [...childIds]
-    .filter((cid) => byId[cid])
-    .sort((a, b) => {
-      const ka = byId[a].kind === 'view' ? 0 : 1
-      const kb = byId[b].kind === 'view' ? 0 : 1
-      if (ka !== kb) return ka - kb
-      return a.localeCompare(b)
-    })
-}
-
-function folderFromFileId(fileId: string | null | undefined): string | null {
-  if (!fileId?.includes('/')) return null
-  return fileId.split('/')[0] || null
-}
-
-function groupRootsByFolder(roots: SemanticElement[]): {
-  folders: { name: string; roots: SemanticElement[] }[]
-  ungrouped: SemanticElement[]
-} {
-  const byFolder = new Map<string, SemanticElement[]>()
-  const ungrouped: SemanticElement[] = []
-  for (const el of roots) {
-    const folder = folderFromFileId(el.fileId)
-    if (folder) {
-      const list = byFolder.get(folder) || []
-      list.push(el)
-      byFolder.set(folder, list)
-    } else {
-      ungrouped.push(el)
-    }
-  }
-  const folders = [...byFolder.keys()]
-    .sort((a, b) => a.localeCompare(b))
-    .map((name) => ({ name, roots: byFolder.get(name) || [] }))
-  return { folders, ungrouped }
-}
-
 function ViewTree({
+  projectId,
   semantic,
   selectedId,
   activeViewId,
   onSelectArtifact,
   onSelectView,
 }: {
+  projectId: string | null
   semantic: Record<string, SemanticElement>
   selectedId: string | null
   activeViewId: string | null
@@ -76,16 +52,125 @@ function ViewTree({
 }) {
   const semanticKey = Object.keys(semantic).sort().join('|')
 
-  const { byId, roots, folderGroups } = useMemo(() => {
+  const { byId, roots, folderTree } = useMemo(() => {
     const elements = Object.values(semantic)
     const map = Object.fromEntries(elements.map((e) => [e.id, e]))
     const rootList = elements
-      .filter((e) => !e.parentId || !map[e.parentId])
+      .filter((e) => !isRelationKind(e.kind))
+      .filter((e) => !e.parentId || !map[e.parentId] || isRelationKind(map[e.parentId].kind))
       .sort((a, b) => a.id.localeCompare(b.id))
-    const grouped = groupRootsByFolder(rootList)
-    return { byId: map, roots: rootList, folderGroups: grouped }
+    return { byId: map, roots: rootList, folderTree: buildFolderTree(rootList) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [semanticKey])
+
+  const [order, setOrder] = useState<ViewTreeOrder>(() => loadViewTreeOrder(projectId || ''))
+  const dragRef = useRef<{ groupKey: string; id: string } | null>(null)
+  const [dragging, setDragging] = useState<{ groupKey: string; id: string } | null>(null)
+  const [drop, setDrop] = useState<{
+    groupKey: string
+    id: string
+    position: 'before' | 'after'
+  } | null>(null)
+
+  useEffect(() => {
+    setOrder(loadViewTreeOrder(projectId || ''))
+    dragRef.current = null
+    setDragging(null)
+    setDrop(null)
+  }, [projectId])
+
+  const orderedFolders = useMemo(
+    () => applyFolderTreeOrder(folderTree.folders, order.groups),
+    [folderTree.folders, order.groups],
+  )
+  const ungroupedIds = useMemo(
+    () => orderSiblingIds(folderTree.ungroupedIds, order.groups[UNGROUPED_GROUP_KEY]),
+    [folderTree.ungroupedIds, order.groups],
+  )
+
+  const commitReorder = (
+    groupKey: string,
+    ids: string[],
+    draggedId: string,
+    targetId: string,
+    position: 'before' | 'after',
+  ) => {
+    const nextIds = reorderWithin(ids, draggedId, targetId, position)
+    if (!nextIds || !projectId) return
+    setOrder((prev) => {
+      const next = { groups: { ...prev.groups, [groupKey]: nextIds } }
+      saveViewTreeOrder(projectId, next)
+      return next
+    })
+  }
+
+  const rowReorder = (groupKey: string, id: string, ids: string[]) => ({
+    onDragOver: (event: DragEvent<HTMLDivElement>) => {
+      const current = dragRef.current
+      if (!current) return
+      event.stopPropagation()
+      if (current.groupKey !== groupKey || current.id === id) {
+        setDrop((prev) => (prev ? null : prev))
+        return
+      }
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+      const rect = event.currentTarget.getBoundingClientRect()
+      const position = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+      setDrop((prev) =>
+        prev && prev.groupKey === groupKey && prev.id === id && prev.position === position
+          ? prev
+          : { groupKey, id, position },
+      )
+    },
+    onDrop: (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const raw = event.dataTransfer.getData('text/plain')
+      const splitAt = raw.indexOf('\n')
+      const fromTransfer =
+        splitAt > 0
+          ? { groupKey: raw.slice(0, splitAt), id: raw.slice(splitAt + 1) }
+          : null
+      const current = fromTransfer || dragRef.current
+      dragRef.current = null
+      setDragging(null)
+      setDrop(null)
+      if (!current || current.groupKey !== groupKey) return
+      const rect = event.currentTarget.getBoundingClientRect()
+      const position = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+      commitReorder(groupKey, ids, current.id, id, position)
+    },
+  })
+
+  const grip = (groupKey: string, id: string, enabled: boolean) => {
+    if (!enabled) return <span className="tree-grip spacer" aria-hidden />
+    return (
+      <button
+        type="button"
+        className="tree-grip"
+        draggable
+        title="Drag to reorder"
+        aria-label="Drag to reorder"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+        onDragStart={(event) => {
+          event.stopPropagation()
+          event.dataTransfer.setData('text/plain', `${groupKey}\n${id}`)
+          event.dataTransfer.effectAllowed = 'move'
+          dragRef.current = { groupKey, id }
+          setDragging({ groupKey, id })
+        }}
+        onDragEnd={() => {
+          dragRef.current = null
+          setDragging(null)
+          setDrop(null)
+        }}
+      >
+        ⋮⋮
+      </button>
+    )
+  }
 
   const defaultFolderCollapsed = useMemo(() => new Set<string>(), [])
 
@@ -100,7 +185,7 @@ function ViewTree({
     const walk = (id: string, depth: number) => {
       const el = byId[id]
       if (!el) return
-      const kids = sortChildIds(el.children || [], byId)
+      const kids = defaultChildOrder(el.children || [], byId)
       if (depth >= 1 && kids.length) collapsed.add(id)
       for (const cid of kids) walk(cid, depth + 1)
     }
@@ -132,8 +217,17 @@ function ViewTree({
     })
   }
 
-  const render = (el: SemanticElement, depth: number): ReactNode => {
-    const childIds = sortChildIds(el.children || [], byId)
+  const render = (
+    el: SemanticElement,
+    depth: number,
+    groupKey: string | null,
+    siblingIds: string[],
+  ): ReactNode => {
+    const defaultIds = defaultChildOrder(el.children || [], byId)
+    const childGroup = el.kind === 'package' ? packageGroupKey(el.id) : null
+    const childIds = childGroup
+      ? orderSiblingIds(defaultIds, order.groups[childGroup])
+      : defaultIds
     const hasChildren = childIds.length > 0
     const collapsed = collapsedIds.has(el.id)
     const active =
@@ -141,11 +235,18 @@ function ViewTree({
       activeViewId === el.id ||
       activeViewId === `artifact::${el.id}`
     const isView = el.kind === 'view'
+    const canReorder = Boolean(groupKey) && siblingIds.length > 1
+    const isDragging = dragging?.groupKey === groupKey && dragging.id === el.id
+    const dropHere = drop?.groupKey === groupKey && drop.id === el.id
     return (
       <div key={el.id} className="tree-item" style={{ paddingLeft: depth * 12 }}>
         <div
-          className={`tree-row${isView ? ' is-view' : ' is-other'}${active ? ' active' : ''}`}
+          className={`tree-row${isView ? ' is-view' : ' is-other'}${active ? ' active' : ''}${
+            isDragging ? ' is-dragging' : ''
+          }${dropHere ? ` drop-${drop.position}` : ''}`}
+          {...(groupKey ? rowReorder(groupKey, el.id, siblingIds) : {})}
         >
+          {grip(groupKey || '', el.id, canReorder)}
           {hasChildren ? (
             <button
               type="button"
@@ -178,7 +279,9 @@ function ViewTree({
           </button>
         </div>
         {hasChildren && !collapsed
-          ? childIds.map((cid) => render(byId[cid], depth + 1))
+          ? childIds.map((cid) =>
+              byId[cid] ? render(byId[cid], depth + 1, childGroup, childIds) : null,
+            )
           : null}
       </div>
     )
@@ -188,12 +291,28 @@ function ViewTree({
     return <p className="muted">No definitions yet.</p>
   }
 
-  const renderFolder = (name: string, folderRoots: SemanticElement[]) => {
-    const folderKey = `folder::${name}`
+  const renderFolder = (
+    folder: { name: string; path: string; folders: typeof orderedFolders; elementIds: string[] },
+    depth: number,
+    parentPath: string,
+    siblingPaths: string[],
+  ): ReactNode => {
+    const folderKey = `folder::${folder.path}`
     const collapsed = folderCollapsed.has(folderKey)
+    const groupKey = folderSiblingGroupKey(parentPath)
+    const canReorder = siblingPaths.length > 1
+    const isDragging = dragging?.groupKey === groupKey && dragging.id === folder.path
+    const dropHere = drop?.groupKey === groupKey && drop.id === folder.path
+    const contentsKey = folderContentsGroupKey(folder.path)
     return (
-      <div key={folderKey} className="tree-item">
-        <div className="tree-row is-folder">
+      <div key={folderKey} className="tree-item" style={{ paddingLeft: depth * 12 }}>
+        <div
+          className={`tree-row is-folder${isDragging ? ' is-dragging' : ''}${
+            dropHere ? ` drop-${drop.position}` : ''
+          }`}
+          {...rowReorder(groupKey, folder.path, siblingPaths)}
+        >
+          {grip(groupKey, folder.path, canReorder)}
           <button
             type="button"
             className="tree-expand-btn"
@@ -202,21 +321,37 @@ function ViewTree({
           >
             {collapsed ? '▸' : '▾'}
           </button>
-          <span className="tree-label folder-label">{name}/</span>
+          <span className="tree-label folder-label">{folder.name}/</span>
         </div>
-        {!collapsed
-          ? folderRoots.map((el) => render(el, 1))
-          : null}
+        {!collapsed ? (
+          <>
+            {folder.folders.map((child) =>
+              renderFolder(
+                child,
+                depth + 1,
+                folder.path,
+                folder.folders.map((item) => item.path),
+              ),
+            )}
+            {folder.elementIds.map((id) =>
+              byId[id]
+                ? render(byId[id], depth + 1, contentsKey, folder.elementIds)
+                : null,
+            )}
+          </>
+        ) : null}
       </div>
     )
   }
 
+  const rootFolderPaths = orderedFolders.map((folder) => folder.path)
+
   return (
     <div className="view-tree">
-      {folderGroups.folders.map(({ name, roots: folderRoots }) =>
-        renderFolder(name, folderRoots),
+      {orderedFolders.map((folder) => renderFolder(folder, 0, '', rootFolderPaths))}
+      {ungroupedIds.map((id) =>
+        byId[id] ? render(byId[id], 0, UNGROUPED_GROUP_KEY, ungroupedIds) : null,
       )}
-      {folderGroups.ungrouped.map((el) => render(el, 0))}
     </div>
   )
 }
@@ -386,6 +521,7 @@ export function LeftSidebar({
       {activeTab === 'views' && (
         <div className="sidebar-body">
           <ViewTree
+            projectId={project?.id ?? null}
             semantic={project?.semantic || {}}
             selectedId={selectedArtifactId}
             activeViewId={activeViewId}

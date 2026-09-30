@@ -72,6 +72,11 @@ class RenameBody(BaseModel):
     name: str = Field(min_length=1, max_length=200)
 
 
+class RelationEndsBody(BaseModel):
+    sourceId: str = Field(min_length=1)
+    targetId: str = Field(min_length=1)
+
+
 class FileMetaBody(BaseModel):
     sourcePath: str | None = None
     name: str | None = None
@@ -428,6 +433,36 @@ def create_api_app(
         if not project:
             raise HTTPException(status_code=404, detail="Artifact not found")
         return project.to_dict()
+
+    @app.patch("/projects/{project_id}/relations/{relation_id:path}")
+    def update_relation_ends(
+        project_id: str,
+        relation_id: str,
+        payload: Annotated[RelationEndsBody, Body()],
+    ) -> dict:
+        project = _service().update_relation_ends(
+            project_id,
+            relation_id,
+            payload.sourceId,
+            payload.targetId,
+        )
+        if not project:
+            raise HTTPException(status_code=404, detail="Relation not found")
+        return project.to_dict()
+
+    @app.get("/projects/{project_id}/relation-todos")
+    def list_relation_todos(project_id: str) -> dict:
+        items = _service().list_relation_todos(project_id)
+        if items is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return {"items": items}
+
+    @app.delete("/projects/{project_id}/relation-todos/{todo_id}")
+    def delete_relation_todo(project_id: str, todo_id: int) -> dict:
+        ok = _service().delete_relation_todo(project_id, todo_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Todo not found")
+        return {"ok": True}
 
     @app.patch("/projects/{project_id}/files/item/{file_id:path}")
     def patch_file_meta(

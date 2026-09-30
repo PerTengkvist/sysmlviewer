@@ -14,7 +14,7 @@ type Props = {
   viewMode: ViewMode
   showAttributes: boolean
   selectedConnectionColor: string
-  selectedConnectionLinewidth: number
+  selectedConnectionLinewidthFactor: number
   connectionSeparation: number
   onDiagramReady: (diagramId: string) => void
 }
@@ -29,7 +29,7 @@ export function PrintSheet({
   viewMode,
   showAttributes,
   selectedConnectionColor,
-  selectedConnectionLinewidth,
+  selectedConnectionLinewidthFactor,
   connectionSeparation,
   onDiagramReady,
 }: Props) {
@@ -83,7 +83,9 @@ export function PrintSheet({
                       viewMode={viewMode}
                       showAttributes={showAttributes}
                       selectedConnectionColor={selectedConnectionColor}
-                      selectedConnectionLinewidth={selectedConnectionLinewidth}
+                      selectedConnectionLinewidthFactor={
+                        selectedConnectionLinewidthFactor
+                      }
                       connectionSeparation={connectionSeparation}
                       sheet={sheet}
                       onSelectArtifact={noop}

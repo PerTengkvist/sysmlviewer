@@ -36,6 +36,12 @@ class ArtifactKind(str, Enum):
     TRANSITION = "transition"
     ACTION = "action"
     SUCCESSION = "succession"
+    REQUIREMENT = "requirement"
+    USE_CASE = "useCase"
+    ACTOR = "actor"
+    INCLUDE = "include"
+    INTERFACE = "interface"
+    SATISFY = "satisfy"
 
 
 class RoutingType(str, Enum):
@@ -60,6 +66,9 @@ class ElementStyleMode:
     line_style: str | None = None
     marker_end: str | None = None
     marker_start: str | None = None
+    # None/True = apply backgroundColor to that region; False = use default fill
+    background_header: bool | None = None
+    background_body: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -77,6 +86,10 @@ class ElementStyleMode:
             out["markerEnd"] = self.marker_end
         if self.marker_start is not None:
             out["markerStart"] = self.marker_start
+        if self.background_header is not None:
+            out["backgroundHeader"] = self.background_header
+        if self.background_body is not None:
+            out["backgroundBody"] = self.background_body
         return out
 
     @classmethod
@@ -95,6 +108,8 @@ class ElementStyleMode:
             line_style=data.get("lineStyle"),
             marker_end=data.get("markerEnd"),
             marker_start=data.get("markerStart"),
+            background_header=data.get("backgroundHeader"),
+            background_body=data.get("backgroundBody"),
         )
 
     def merge(self, patch: dict[str, Any]) -> None:
@@ -113,6 +128,10 @@ class ElementStyleMode:
             self.marker_end = patch["markerEnd"]
         if "markerStart" in patch:
             self.marker_start = patch["markerStart"]
+        if "backgroundHeader" in patch:
+            self.background_header = patch["backgroundHeader"]
+        if "backgroundBody" in patch:
+            self.background_body = patch["backgroundBody"]
 
 
 @dataclass
@@ -172,6 +191,10 @@ class SemanticElement:
     is_reference: bool = False
     # Prefix metadata keywords from `#Mount dependency …` (not resolved defs)
     metadata_keywords: list[str] = field(default_factory=list)
+    # Documentation body from `doc /* … */`
+    documentation: str | None = None
+    # Short name from `<'R-01'>` on a declaration
+    short_id: str | None = None
     children: list[str] = field(default_factory=list)
     file_id: str | None = None
 
@@ -189,6 +212,8 @@ class SemanticElement:
             "multiplicity": self.multiplicity,
             "isReference": self.is_reference,
             "metadataKeywords": list(self.metadata_keywords),
+            "documentation": self.documentation,
+            "shortId": self.short_id,
             "children": list(self.children),
             "fileId": self.file_id,
         }
@@ -208,6 +233,8 @@ class SemanticElement:
             multiplicity=data.get("multiplicity"),
             is_reference=bool(data.get("isReference", False)),
             metadata_keywords=list(data.get("metadataKeywords") or []),
+            documentation=data.get("documentation"),
+            short_id=data.get("shortId"),
             children=list(data.get("children") or []),
             file_id=data.get("fileId"),
         )

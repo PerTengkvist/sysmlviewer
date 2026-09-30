@@ -5,6 +5,7 @@ import type { ViewMode } from '../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
 import type { RedrawDirection } from '../../layout/dependencyLayout'
 import { orientEdgeHandles } from '../../layout/dependencyLayout'
+import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import type { ActionNodeData } from './ActionNode'
 
 const COL_W = 200
@@ -59,7 +60,11 @@ export function buildActionFlowGraph(
   view: ViewPayload,
   viewMode: ViewMode,
   flowDir: RedrawDirection = 'LR',
+  highlight: HighlightOpts = {},
 ): { nodes: Node[]; edges: Edge[] } {
+  const selectedConnectionColor = highlight.selectedConnectionColor ?? '#2563eb'
+  const selectedConnectionLinewidthFactor =
+    highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
 
@@ -201,6 +206,10 @@ export function buildActionFlowGraph(
         labelStyle: { fill: stroke.color || undefined, fontSize: 11, fontWeight: 600 },
         labelBgStyle: { fill: 'var(--canvas)', fillOpacity: 0.85 },
         labelBgPadding: [4, 2] as [number, number],
+        data: {
+          selectedColor: selectedConnectionColor,
+          selectedFactor: selectedConnectionLinewidthFactor,
+        },
       } as Edge
     })
     .filter((e): e is Edge => e !== null)

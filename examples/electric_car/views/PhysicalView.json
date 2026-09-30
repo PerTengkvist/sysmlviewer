@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "viewId": "PhysicalArchitecture::PhysicalView",
+  "name": "PhysicalView",
+  "structureNotation": "sysmlv2",
+  "nodes": {},
+  "edges": {
+    "PhysicalArchitecture::VehiclePhysical::gear": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 592.0,
+          "y": 10562.2
+        },
+        {
+          "x": 592.0,
+          "y": 11696.0
+        },
+        {
+          "x": 728.0,
+          "y": 11696.0
+        },
+        {
+          "x": 728.0,
+          "y": 11552.0
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::energyEntertainment": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 952.0,
+          "y": 11552.0
+        },
+        {
+          "x": 952.0,
+          "y": 11696.0
+        },
+        {
+          "x": 384.0,
+          "y": 11696.0
+        },
+        {
+          "x": 384.0,
+          "y": 11232.2
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::charge": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 592.0,
+          "y": 10428.2
+        },
+        {
+          "x": 592.0,
+          "y": 11696.0
+        },
+        {
+          "x": 728.0,
+          "y": 11696.0
+        },
+        {
+          "x": 728.0,
+          "y": 11552.0
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::torque": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 800.0,
+          "y": 10026.2
+        },
+        {
+          "x": 800.0,
+          "y": 11696.0
+        },
+        {
+          "x": 952.0,
+          "y": 11696.0
+        },
+        {
+          "x": 952.0,
+          "y": 11552.0
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::clear": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 384.0,
+          "y": 10026.2
+        },
+        {
+          "x": 384.0,
+          "y": 10964.2
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::energyMotor": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 952.0,
+          "y": 11552.0
+        },
+        {
+          "x": 952.0,
+          "y": 11696.0
+        },
+        {
+          "x": 384.0,
+          "y": 11696.0
+        },
+        {
+          "x": 384.0,
+          "y": 10294.2
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::energyClimate": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 952.0,
+          "y": 11552.0
+        },
+        {
+          "x": 952.0,
+          "y": 11696.0
+        },
+        {
+          "x": 592.0,
+          "y": 11696.0
+        },
+        {
+          "x": 592.0,
+          "y": 10294.2
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::direction": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 972.0,
+          "y": 11552.0
+        },
+        {
+          "x": 972.0,
+          "y": 11696.0
+        },
+        {
+          "x": 816.0,
+          "y": 11696.0
+        },
+        {
+          "x": 816.0,
+          "y": 11380.3
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::steerInput": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 592.0,
+          "y": 10696.2
+        },
+        {
+          "x": 592.0,
+          "y": 11696.0
+        },
+        {
+          "x": 728.0,
+          "y": 11696.0
+        },
+        {
+          "x": 728.0,
+          "y": 11552.0
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::brake": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 800.0,
+          "y": 11366.2
+        },
+        {
+          "x": 800.0,
+          "y": 11696.0
+        },
+        {
+          "x": 592.0,
+          "y": 11696.0
+        },
+        {
+          "x": 592.0,
+          "y": 11352.1
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::energyLamps": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 952.0,
+          "y": 11552.0
+        },
+        {
+          "x": 952.0,
+          "y": 11696.0
+        },
+        {
+          "x": 384.0,
+          "y": 11696.0
+        },
+        {
+          "x": 384.0,
+          "y": 11500.2
+        }
+      ]
+    }
+  },
+  "hierarchicalLevelsOverride": 3
+}

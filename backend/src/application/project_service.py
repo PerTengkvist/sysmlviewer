@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from adapters.persistence.workspace_repo import sanitize_rel_path
+from adapters.persistence.relation_todo_store import RelationTodoStore
 from domain.interface_naming import (
     lint_interface_naming,
     suggest_connection_name,
@@ -26,10 +27,79 @@ from domain.models import (
 from ports import ProjectRepository, SysmlParser
 
 
+def _remap_stale_relation_layouts(before: dict, project: Project) -> bool:
+    """Keep per-view edge geometry when a relation id changes but its ends do not."""
+    from domain.relationships import is_relation_edge
+
+    new_by_ends: dict[tuple[str, str, str], str] = {}
+    for el in project.semantic.values():
+        if not el.source_id or not el.target_id or not is_relation_edge(el.kind):
+            continue
+        new_by_ends.setdefault((el.kind.value, el.source_id, el.target_id), el.id)
+    if not project.view_layouts or not project.view_layouts.by_view:
+        return False
+    changed = False
+    for layout in project.view_layouts.by_view.values():
+        edges = dict(layout.edges)
+        renamed = False
+        for old_id in list(edges):
+            if old_id in project.semantic:
+                continue
+            old = before.get(old_id) or {}
+            new_id = new_by_ends.get(
+                (str(old.get("kind") or ""), str(old.get("sourceId") or ""), str(old.get("targetId") or ""))
+            )
+            if not new_id or new_id == old_id or new_id in edges:
+                continue
+            edges[new_id] = edges.pop(old_id)
+            renamed = True
+        if renamed:
+            layout.edges = edges
+            changed = True
+    return changed
+
+
+def _split_use_edge(relation_id: str) -> tuple[str, str] | None:
+    if not relation_id.startswith("use:") or "->" not in relation_id:
+        return None
+    actor_id, _, use_case_id = relation_id[len("use:") :].partition("->")
+    if not actor_id or not use_case_id:
+        return None
+    return actor_id, use_case_id
+
+
 class ProjectService:
     def __init__(self, repo: ProjectRepository, parser: SysmlParser) -> None:
         self.repo = repo
         self.parser = parser
+
+    def _todo_store(self) -> RelationTodoStore | None:
+        root = getattr(self.repo, "root", None)
+        if root is None:
+            return None
+        return RelationTodoStore(Path(root))
+
+    def list_relation_todos(self, project_id: str) -> list[dict] | None:
+        if not self.repo.get(project_id):
+            return None
+        store = self._todo_store()
+        if not store:
+            return []
+        return store.load()
+
+    def delete_relation_todo(self, project_id: str, todo_id: int) -> bool:
+        if not self.repo.get(project_id):
+            return False
+        store = self._todo_store()
+        if not store:
+            return False
+        return store.delete(todo_id)
+
+    def record_relation_todo(self, entry: dict) -> dict | None:
+        store = self._todo_store()
+        if not store:
+            return None
+        return store.append(entry)
 
     def create_project(self, name: str) -> Project:
         project = Project.create(name=name.strip() or "Untitled")
@@ -55,6 +125,8 @@ class ProjectService:
             after = {k: v.to_dict() for k, v in project.semantic.items()}
             after_warn = {f.id: list(f.warnings) for f in project.files}
             if before != after or before_warn != after_warn:
+                changed = True
+            if _remap_stale_relation_layouts(before, project):
                 changed = True
         if self._migrate_views_if_needed(project):
             changed = True
@@ -458,6 +530,22 @@ class ProjectService:
             waypoints=[],
         )
         self._sync_sysml_file(project, el.file_id)
+        self.record_relation_todo(
+            {
+                "action": "add",
+                "original": "",
+                "filepath": el.file_id or "",
+                "rownumber": 0,
+                "source": source_port_id,
+                "target": target_port_id,
+                "type": "connection",
+                "new_def": (
+                    f"connection {conn_name} connect {source_port_id} "
+                    f"to {target_port_id};"
+                ),
+                "relationId": element_id,
+            }
+        )
         project.updated_at = utc_now()
         return self.repo.save(project)
 
@@ -625,7 +713,28 @@ class ProjectService:
 
     def delete_artifact(self, project_id: str, artifact_id: str) -> Project | None:
         project = self.repo.get(project_id)
-        if not project or artifact_id not in project.semantic:
+        if not project:
+            return None
+        if artifact_id.startswith("use:"):
+            participation = self._use_participation(project, artifact_id)
+            if not participation:
+                return None
+            pair = _split_use_edge(artifact_id)
+            self.record_relation_todo(
+                {
+                    "action": "delete",
+                    "original": "",
+                    "filepath": participation.file_id or "",
+                    "rownumber": getattr(participation, "source_line_start", None) or 0,
+                    "source": pair[0] if pair else "",
+                    "target": pair[1] if pair else "",
+                    "type": "use",
+                    "new_def": "",
+                    "relationId": artifact_id,
+                }
+            )
+            artifact_id = participation.id
+        if artifact_id not in project.semantic:
             return None
         root = project.semantic[artifact_id]
         file_id = root.file_id
@@ -662,9 +771,137 @@ class ProjectService:
                 parent.children = [c for c in parent.children if c != eid]
             project.visualization.nodes.pop(eid, None)
             project.visualization.edges.pop(eid, None)
+            if el and is_relation_edge(el.kind):
+                todo_type = el.kind.value
+                if todo_type not in {
+                    "connection",
+                    "dependency",
+                    "use",
+                    "extend",
+                    "include",
+                    "flow",
+                    "satisfy",
+                    "derive",
+                    "refine",
+                    "allocation",
+                }:
+                    todo_type = "dependency"
+                self.record_relation_todo(
+                    {
+                        "action": "delete",
+                        "original": getattr(el, "source_text", None) or "",
+                        "filepath": el.file_id or "",
+                        "rownumber": getattr(el, "source_line_start", None) or 0,
+                        "source": el.source_id or "",
+                        "target": el.target_id or "",
+                        "type": todo_type,
+                        "new_def": "",
+                        "relationId": eid,
+                    }
+                )
 
         project.views = rebuild_views(project.semantic)
         self._sync_sysml_file(project, file_id)
+        project.updated_at = utc_now()
+        return self.repo.save(project)
+
+    def update_relation_ends(
+        self,
+        project_id: str,
+        relation_id: str,
+        source_id: str,
+        target_id: str,
+    ) -> Project | None:
+        project = self.repo.get(project_id)
+        if not project:
+            return None
+        if source_id not in project.semantic or target_id not in project.semantic:
+            return None
+        if relation_id.startswith("use:"):
+            return self._retarget_use_edge(project, relation_id, source_id, target_id)
+        el = project.semantic.get(relation_id)
+        from domain.relationships import is_relation_edge
+
+        if not el or not is_relation_edge(el.kind):
+            return None
+        el.source_id = source_id
+        el.target_id = target_id
+        self.record_relation_todo(
+            {
+                "action": "change",
+                "original": getattr(el, "source_text", None) or "",
+                "filepath": el.file_id or "",
+                "rownumber": getattr(el, "source_line_start", None) or 0,
+                "source": source_id,
+                "target": target_id,
+                "type": el.kind.value if el.kind.value in {
+                    "connection",
+                    "dependency",
+                    "use",
+                    "extend",
+                    "include",
+                    "flow",
+                    "satisfy",
+                } else "dependency",
+                "new_def": (
+                    f"{el.kind.value} from {source_id} to {target_id};"
+                ),
+                "relationId": relation_id,
+            }
+        )
+        project.updated_at = utc_now()
+        return self.repo.save(project)
+
+    def _use_participation(self, project: Project, relation_id: str):
+        pair = _split_use_edge(relation_id)
+        if not pair:
+            return None
+        actor_id, use_case_id = pair
+        actor = project.semantic.get(actor_id)
+        if not actor:
+            return None
+        for el in project.semantic.values():
+            if (
+                el.kind == ArtifactKind.ACTOR
+                and el.parent_id == use_case_id
+                and el.name == actor.name
+            ):
+                return el
+        return None
+
+    def _retarget_use_edge(
+        self,
+        project: Project,
+        relation_id: str,
+        source_id: str,
+        target_id: str,
+    ) -> Project | None:
+        participation = self._use_participation(project, relation_id)
+        source = project.semantic.get(source_id)
+        target = project.semantic.get(target_id)
+        if not participation or not source or not target:
+            return None
+        old_parent_id = participation.parent_id
+        if old_parent_id and old_parent_id in project.semantic:
+            parent = project.semantic[old_parent_id]
+            parent.children = [cid for cid in parent.children if cid != participation.id]
+        participation.name = source.name
+        participation.parent_id = target.id
+        if participation.id not in project.semantic[target.id].children:
+            project.semantic[target.id].children.append(participation.id)
+        self.record_relation_todo(
+            {
+                "action": "change",
+                "original": "",
+                "filepath": participation.file_id or "",
+                "rownumber": 0,
+                "source": source_id,
+                "target": target_id,
+                "type": "use",
+                "new_def": f"actor {source.name};",
+                "relationId": relation_id,
+            }
+        )
         project.updated_at = utc_now()
         return self.repo.save(project)
 
@@ -749,7 +986,7 @@ class ProjectService:
                 for key, value in node_data.items():
                     if key == "artifactId":
                         continue
-                    if key in ("x", "y", "width", "height"):
+                    if key in ("x", "y", "width", "height", "anchors"):
                         geo[key] = value
                     else:
                         other[key] = value
@@ -779,6 +1016,8 @@ class ProjectService:
                         "sourceOffset",
                         "targetSide",
                         "targetOffset",
+                        "sourceAnchorId",
+                        "targetAnchorId",
                     ):
                         geo_e[key] = value
                     else:
@@ -1134,6 +1373,7 @@ class ProjectService:
             ArtifactKind.SPECIALIZATION,
             ArtifactKind.SUBSETTING,
             ArtifactKind.REDEFINITION,
+            ArtifactKind.SATISFY,
         }
 
         # Drop relations to/from parts outside the depth window (even if nested
@@ -1159,7 +1399,35 @@ class ProjectService:
         }
         nodes = {}
         from domain.merge import DEFAULT_TREE_HEIGHT, DEFAULT_TREE_WIDTH
-        from domain.view_layouts import resolve_view_edge, resolve_view_node
+        from domain.view_layouts import (
+            default_view_local_xy,
+            layout_has_local_geometry,
+            overlay_has_xy,
+            resolve_view_edge,
+            resolve_view_node,
+        )
+
+        # Kinds that are placed as top-level diagram nodes in structure views.
+        # When a view already has local geometry, nodes missing from the overlay
+        # must not fall back to global project coordinates (different space).
+        _VIEW_LOCAL_PLACE_KINDS = {
+            ArtifactKind.PART,
+            ArtifactKind.REQUIREMENT,
+            ArtifactKind.USE_CASE,
+            ArtifactKind.ACTOR,
+            ArtifactKind.INTERFACE,
+        }
+        layout_for_geom = (
+            overlay_layouts.by_view.get(view.id)
+            if overlay_layouts is not None
+            else None
+        )
+        has_local_geometry = layout_has_local_geometry(layout_for_geom)
+        use_local_defaults = has_local_geometry and diagram_mode in {
+            "structure",
+            "whitebox",
+        }
+        pending_local: list[str] = []
 
         for aid in artifact_ids:
             global_node = project.visualization.nodes.get(aid)
@@ -1170,6 +1438,16 @@ class ProjectService:
                 if overlay_layouts is not None
                 else None
             )
+            el = project.semantic.get(aid)
+            if (
+                use_local_defaults
+                and not overlay_has_xy(overlay)
+                and el is not None
+                and el.kind in _VIEW_LOCAL_PLACE_KINDS
+                and aid != root.id
+            ):
+                pending_local.append(aid)
+                continue
             resolved = resolve_view_node(global_node, overlay)
             if diagram_mode == "tree":
                 if overlay is None or overlay.width is None:
@@ -1177,6 +1455,14 @@ class ProjectService:
                 if overlay is None or overlay.height is None:
                     resolved["height"] = DEFAULT_TREE_HEIGHT
             nodes[aid] = resolved
+
+        for index, aid in enumerate(sorted(pending_local)):
+            global_node = project.visualization.nodes[aid]
+            out = global_node.to_dict()
+            x, y = default_view_local_xy(index)
+            out["x"] = x
+            out["y"] = y
+            nodes[aid] = out
 
         # Edges: only relations whose endpoints are both in the depth-limited set.
         # Do not reintroduce hidden-subpart relations via layout overlays.
@@ -1211,6 +1497,12 @@ class ProjectService:
                 for eid in layout.edges:
                     if _viz_synthetic_endpoints(eid):
                         edge_ids.add(eid)
+                        continue
+                    if eid.startswith("use:") and "->" in eid:
+                        body = eid[4:]
+                        src, _, tgt = body.partition("->")
+                        if src in artifact_ids and tgt in artifact_ids:
+                            edge_ids.add(eid)
                         continue
                     el = project.semantic.get(eid)
                     if el is None or el.kind not in structure_edge_kinds:
@@ -1256,6 +1548,10 @@ class ProjectService:
                     out["targetSide"] = edge_overlay.target_side
                 if edge_overlay.target_offset is not None:
                     out["targetOffset"] = edge_overlay.target_offset
+                if edge_overlay.source_anchor_id is not None:
+                    out["sourceAnchorId"] = edge_overlay.source_anchor_id
+                if edge_overlay.target_anchor_id is not None:
+                    out["targetAnchorId"] = edge_overlay.target_anchor_id
                 edges[aid] = out
                 continue
             resolved_edge = resolve_view_edge(global_edge, edge_overlay)

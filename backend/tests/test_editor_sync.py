@@ -118,6 +118,42 @@ package P {
     assert "P::Root::mid::leaf" not in d2
 
 
+def test_collect_depth_includes_requirements_and_use_cases():
+    content = """
+package P {
+  requirement def Safety {
+    attribute Type = "Functional";
+    requirement child;
+  }
+  use case def Login {
+    actor operator;
+    include use case Auth;
+  }
+  use case def Auth;
+  part def Box;
+}
+"""
+    els = SubsetSysmlParser().parse(content, "f1").elements
+    d1 = collect_artifacts_to_depth(els, "P", 1)
+    assert "P::Safety" not in d1
+    assert "P::Login" not in d1
+
+    d2 = collect_artifacts_to_depth(els, "P", 2)
+    assert "P::Safety" in d2
+    assert "P::Login" in d2
+    assert "P::Auth" in d2
+    assert "P::Box" in d2
+    # Type attr under included requirement
+    assert "P::Safety::Type" in d2
+    # Nested requirement needs depth 3
+    assert "P::Safety::child" not in d2
+    # Actor under included use case
+    assert "P::Login::operator" in d2
+
+    d3 = collect_artifacts_to_depth(els, "P", 3)
+    assert "P::Safety::child" in d3
+
+
 def test_editor_crud_updates_semantic_not_sysml_file(tmp_path: Path):
     app = create_app(data_dir=tmp_path)
     client = TestClient(app)

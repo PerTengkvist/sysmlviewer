@@ -77,6 +77,8 @@ EDGE_KINDS = {
     ArtifactKind.MESSAGE,
     ArtifactKind.TRANSITION,
     ArtifactKind.SUCCESSION,
+    ArtifactKind.INCLUDE,
+    ArtifactKind.SATISFY,
 }
 
 DEFAULT_EDGE_STYLE: dict[ArtifactKind, dict[str, str | None]] = {
@@ -120,6 +122,16 @@ DEFAULT_EDGE_STYLE: dict[ArtifactKind, dict[str, str | None]] = {
         "marker_end": "triangle",
         "marker_start": None,
     },
+    ArtifactKind.SATISFY: {
+        "line_style": "dashed",
+        "marker_end": "openArrow",
+        "marker_start": None,
+    },
+    ArtifactKind.INCLUDE: {
+        "line_style": "dashed",
+        "marker_end": "openArrow",
+        "marker_start": None,
+    },
 }
 
 STRUCTURE_EDGE_KINDS = {
@@ -131,6 +143,8 @@ STRUCTURE_EDGE_KINDS = {
     ArtifactKind.SPECIALIZATION,
     ArtifactKind.SUBSETTING,
     ArtifactKind.REDEFINITION,
+    ArtifactKind.INCLUDE,
+    ArtifactKind.SATISFY,
 }
 
 
@@ -155,6 +169,9 @@ NODE_KINDS = {
     ArtifactKind.LIFELINE,
     ArtifactKind.STATE,
     ArtifactKind.ACTION,
+    ArtifactKind.REQUIREMENT,
+    ArtifactKind.USE_CASE,
+    ArtifactKind.ACTOR,
 }
 
 
@@ -261,6 +278,9 @@ def merge_visualization(
             ArtifactKind.STATE,
             ArtifactKind.ACTION,
             ArtifactKind.INTERACTION,
+            ArtifactKind.REQUIREMENT,
+            ArtifactKind.USE_CASE,
+            ArtifactKind.ACTOR,
         }
     ]
     part_index = {e.id: i for i, e in enumerate(part_like)}
@@ -298,6 +318,8 @@ def merge_visualization(
                         ArtifactKind.SPECIALIZATION,
                         ArtifactKind.SUBSETTING,
                         ArtifactKind.REDEFINITION,
+                        ArtifactKind.INCLUDE,
+                        ArtifactKind.SATISFY,
                     }
                     else RoutingType.ANGULAR
                 )

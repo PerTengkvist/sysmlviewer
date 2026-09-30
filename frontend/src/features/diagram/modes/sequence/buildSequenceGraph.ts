@@ -3,20 +3,29 @@ import { MarkerType } from '@xyflow/react'
 import type { ViewPayload } from '../../../api'
 import type { ViewMode } from '../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
+import { lifelineHeaderHeight } from './camelWrap'
 import type { LifelineNodeData } from './LifelineNode'
 
 const COL_GAP = 160
-const HEADER_H = 48
 const MSG_GAP = 56
 const TOP = 40
 const LEFT = 60
 /** Stored x beyond this is treated as merge-index garbage and re-laid out. */
 const MAX_TRUSTED_X = 720
 
+export type HighlightOpts = {
+  selectedConnectionColor?: string
+  selectedConnectionLinewidthFactor?: number
+}
+
 export function buildSequenceGraph(
   view: ViewPayload,
   viewMode: ViewMode,
+  highlight: HighlightOpts = {},
 ): { nodes: Node[]; edges: Edge[] } {
+  const selectedConnectionColor = highlight.selectedConnectionColor ?? '#2563eb'
+  const selectedConnectionLinewidthFactor =
+    highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
   const lifelines = Object.values(semantic)
@@ -28,7 +37,12 @@ export function buildSequenceGraph(
     .sort((a, b) => a.id.localeCompare(b.id))
 
   const lineHeight = Math.max(180, 80 + messages.length * MSG_GAP)
-  const totalH = HEADER_H + lineHeight
+  const headerHeight = lifelines.reduce((tallest, ll) => {
+    const viz = visualization.nodes[ll.id]
+    const width = viz?.width && viz.width >= 80 ? viz.width : 120
+    return Math.max(tallest, lifelineHeaderHeight(ll.name, width))
+  }, 48)
+  const totalH = headerHeight + lineHeight
 
   // If any lifeline was placed with a global merge index (far right), re-layout all.
   const trustStored = lifelines.every((ll) => {
@@ -46,6 +60,7 @@ export function buildSequenceGraph(
       formatStyle: viz?.style,
       viewMode,
       lineHeight,
+      headerHeight,
       messageCount: messages.length,
     }
     return {
@@ -79,7 +94,12 @@ export function buildSequenceGraph(
         targetHandle: `msg-${index}-in`,
         type: 'message',
         label: msg.name,
-        data: { label: msg.name, sequenceIndex: index },
+        data: {
+          label: msg.name,
+          sequenceIndex: index,
+          selectedColor: selectedConnectionColor,
+          selectedFactor: selectedConnectionLinewidthFactor,
+        },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 16,

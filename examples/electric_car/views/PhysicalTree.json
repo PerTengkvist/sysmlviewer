@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "viewId": "PhysicalArchitecture::PhysicalTree",
+  "name": "PhysicalTree",
+  "structureNotation": "sysmlv2",
+  "hierarchicalLevelsOverride": 3,
+  "nodes": {},
+  "edges": {}
+}

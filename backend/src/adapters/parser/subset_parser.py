@@ -1,4 +1,4 @@
-"""Tolerant SysML v2 textual subset parser for package/part/port/connection."""
+"""Tolerant SysML v2 textual subset parser for package/part/port/connection/requirement."""
 
 from __future__ import annotations
 
@@ -12,10 +12,11 @@ from ports import ParseResult
 _TOKEN_RE = re.compile(
     r"""
     (?P<comment>//[^\n]*)|
+    (?P<block_comment>/\*[\s\S]*?\*/)|
     (?P<string>'[^']*'|"[^"]*")|
     (?P<number>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|
     (?P<ident>[A-Za-z_][\w]*)|
-    (?P<punct>:>>|:>|::|[{}:;=,]|\.|~)|
+    (?P<punct>:>>|:>|::|[{}:;=,<\>]|\.|~)|
     (?P<ws>\s+)|
     (?P<other>.)
     """,
@@ -99,6 +100,13 @@ def _strip_quotes(name: str) -> str:
     if len(name) >= 2 and name[0] in "'\"" and name[-1] == name[0]:
         return name[1:-1]
     return name
+
+
+def _block_comment_text(value: str) -> str:
+    """Extract inner text from a `/* … */` token."""
+    if value.startswith("/*") and value.endswith("*/"):
+        return value[2:-2].strip()
+    return value.strip()
 
 
 class SubsetSysmlParser:
@@ -223,6 +231,20 @@ class SubsetSysmlParser:
                 take()
             return "".join(mult_parts).strip() or None
 
+        def read_short_id() -> str | None:
+            """Parse optional short name `<'R-01'>` or `<R-01>` before a declaration name."""
+            if not (peek() and peek().value == "<"):
+                return None
+            take()  # <
+            short: str | None = None
+            if peek() and peek().kind in {"string", "ident"}:
+                tok = take()
+                assert tok is not None
+                short = _strip_quotes(tok.value) if tok.kind == "string" else tok.value
+            if peek() and peek().value == ">":
+                take()
+            return short or None
+
         def read_default_value() -> str | None:
             """Parse optional `= <literal>` after a feature declaration."""
             if not (peek() and peek().value == "="):
@@ -301,13 +323,28 @@ class SubsetSysmlParser:
                 return candidate
             # Dotted path relative to parent: engine.powerIn -> parent::engine::powerIn
             parts = ref.split(".")
-            built = parent
-            for part in parts:
-                built = f"{built}::{part}"
-            if built in state.elements:
-                return built
-            # Also try as sibling under same parent for first segment
-            return built
+            if len(parts) > 1:
+                built = parent
+                for part in parts:
+                    built = f"{built}::{part}"
+                if built in state.elements:
+                    return built
+            # Walk ancestors for a simple-name match (sibling under package, etc.)
+            walk = parent
+            while walk:
+                sibling = f"{walk}::{ref}"
+                if sibling in state.elements:
+                    return sibling
+                el = state.elements.get(walk)
+                walk = el.parent_id if el else None
+            # Prefer package-scoped name when element exists at root of nesting
+            for el in state.elements.values():
+                if el.name == ref and "::" in el.id:
+                    # unique by simple name?
+                    matches = [e.id for e in state.elements.values() if e.name == ref]
+                    if len(matches) == 1:
+                        return matches[0]
+            return f"{parent}::{ref.replace('.', '::')}"
 
         def read_endpoint() -> str | None:
             parts: list[str] = []
@@ -389,8 +426,38 @@ class SubsetSysmlParser:
             line = peek().line if peek() else 0
             take()  # dependency
             dep_name: str | None = None
-            if peek() and peek().value != "from":
-                dep_name = expect_ident()
+            # Forms: `dependency from A to B` or `dependency A to B` or `dependency name from A to B`
+            if peek() and peek().value != "from" and peek().value != "to":
+                # optional name, or source of shorthand `dependency A to B`
+                maybe = expect_ident()
+                if peek() and peek().value == "to":
+                    # shorthand: dependency Source to Target
+                    source_ref = maybe
+                    take()  # to
+                    targets: list[str] = []
+                    while True:
+                        target_ref = read_endpoint()
+                        if target_ref:
+                            targets.append(target_ref)
+                        if peek() and peek().value == ",":
+                            take()
+                            continue
+                        break
+                    if peek() and peek().value == ";":
+                        take()
+                    for idx, target_ref in enumerate(targets):
+                        add_relationship(
+                            ArtifactKind.DEPENDENCY,
+                            source_ref or "",
+                            target_ref,
+                            line,
+                            name=None,
+                            counter_attr="anon_dependency",
+                            default_prefix="dep",
+                            metadata_keywords=metadata_keywords,
+                        )
+                    return
+                dep_name = maybe
             if not (peek() and peek().value == "from"):
                 state.warnings.append(f"line {line}: dependency missing 'from'")
                 skip_until_semicolon_or_brace()
@@ -1334,6 +1401,306 @@ class SubsetSysmlParser:
                     skip_until_semicolon_or_brace()
                 continue
 
+            if tok.kind == "ident" and tok.value == "requirement":
+                line = tok.line
+                take()
+                if peek() and peek().value == "def":
+                    take()
+                short_id = read_short_id()
+                name = expect_ident()
+                if not name:
+                    state.warnings.append(f"line {line}: requirement without name")
+                    skip_until_semicolon_or_brace()
+                    continue
+                type_ref = None
+                # Usage typing `requirement x : SomeDef` (stereotype ignores typeRef)
+                if peek() and peek().value == ":":
+                    take()
+                    if peek() and peek().value == "~":
+                        take()
+                    type_ref = expect_qualified_name()
+                element_id = state.qualify(name)
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.REQUIREMENT,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    short_id=short_id,
+                    file_id=file_id,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                nxt = peek()
+                if nxt and nxt.value == "{":
+                    take()
+                    state.scopes.append(
+                        _Scope(
+                            element_id=element_id,
+                            kind=ArtifactKind.REQUIREMENT,
+                            brace_depth=1,
+                        )
+                    )
+                elif nxt and nxt.value == ";":
+                    take()
+                continue
+
+            if tok.kind == "ident" and tok.value == "doc":
+                line = tok.line
+                take()
+                doc_text: str | None = None
+                if peek() and peek().kind == "block_comment":
+                    bc = take()
+                    assert bc is not None
+                    doc_text = _block_comment_text(bc.value)
+                else:
+                    state.warnings.append(
+                        f"line {line}: doc without /* … */ body"
+                    )
+                    skip_until_semicolon_or_brace()
+                    continue
+                if peek() and peek().value == ";":
+                    take()
+                parent = state.current_parent()
+                if parent and parent in state.elements and doc_text is not None:
+                    state.elements[parent].documentation = doc_text
+                continue
+
+            # use case def / use case
+            if tok.kind == "ident" and tok.value == "use":
+                nxt = peek(1)
+                if nxt and nxt.kind == "ident" and nxt.value == "case":
+                    line = tok.line
+                    take()  # use
+                    take()  # case
+                    if peek() and peek().value == "def":
+                        take()
+                    short_id = read_short_id()
+                    name = expect_ident()
+                    if not name:
+                        state.warnings.append(f"line {line}: use case without name")
+                        skip_until_semicolon_or_brace()
+                        continue
+                    type_ref = None
+                    if peek() and peek().value == ":":
+                        take()
+                        if peek() and peek().value == "~":
+                            take()
+                        type_ref = expect_qualified_name()
+                    element_id = state.qualify(name)
+                    el = SemanticElement(
+                        id=element_id,
+                        kind=ArtifactKind.USE_CASE,
+                        name=name,
+                        parent_id=state.current_parent(),
+                        type_ref=type_ref,
+                        short_id=short_id,
+                        file_id=file_id,
+                    )
+                    state.add_child(el.parent_id, element_id)
+                    state.elements[element_id] = el
+                    brace = peek()
+                    if brace and brace.value == "{":
+                        take()
+                        state.scopes.append(
+                            _Scope(
+                                element_id=element_id,
+                                kind=ArtifactKind.USE_CASE,
+                                brace_depth=1,
+                            )
+                        )
+                    elif brace and brace.value == ";":
+                        take()
+                    continue
+                # bare "use" without "case" — fall through
+
+            if tok.kind == "ident" and tok.value == "actor":
+                line = tok.line
+                take()
+                if peek() and peek().value == "def":
+                    take()
+                name = expect_ident()
+                if not name:
+                    state.warnings.append(f"line {line}: actor without name")
+                    skip_until_semicolon_or_brace()
+                    continue
+                type_ref = None
+                if peek() and peek().value == ":":
+                    take()
+                    type_ref = expect_qualified_name()
+                element_id = state.qualify(name)
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.ACTOR,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    file_id=file_id,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == ";":
+                    take()
+                elif peek() and peek().value == "{":
+                    skip_until_semicolon_or_brace()
+                continue
+
+            if tok.kind == "ident" and tok.value == "include":
+                line = tok.line
+                take()
+                # include use case X;
+                if peek() and peek().value == "use":
+                    take()
+                    if peek() and peek().value == "case":
+                        take()
+                target_ref = expect_qualified_name()
+                if not target_ref:
+                    state.warnings.append(f"line {line}: include without target")
+                    skip_until_semicolon_or_brace()
+                    continue
+                parent = state.current_parent()
+                name = f"include_{target_ref.split('::')[-1]}"
+                element_id = state.qualify(name) if parent else name
+                suffix = 2
+                while element_id in state.elements:
+                    name = f"include_{target_ref.split('::')[-1]}_{suffix}"
+                    element_id = state.qualify(name) if parent else name
+                    suffix += 1
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.INCLUDE,
+                    name=name,
+                    parent_id=parent,
+                    source_id=parent,
+                    target_id=resolve_ref(target_ref),
+                    file_id=file_id,
+                )
+                state.add_child(parent, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == ";":
+                    take()
+                continue
+
+            if tok.kind == "ident" and tok.value == "objective":
+                line = tok.line
+                take()
+                target_ref = expect_qualified_name()
+                if not target_ref:
+                    skip_until_semicolon_or_brace()
+                    continue
+                parent = state.current_parent()
+                name = f"objective_{len([e for e in state.elements.values() if e.kind == ArtifactKind.DEPENDENCY and 'objective' in (e.metadata_keywords or [])]) + 1}"
+                element_id = state.qualify(name) if parent else name
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.DEPENDENCY,
+                    name=name,
+                    parent_id=parent,
+                    source_id=parent,
+                    target_id=resolve_ref(target_ref),
+                    metadata_keywords=["objective"],
+                    file_id=file_id,
+                )
+                state.add_child(parent, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == ";":
+                    take()
+                continue
+
+            if tok.kind == "ident" and tok.value == "subject":
+                line = tok.line
+                take()
+                name = expect_ident() or "subject"
+                type_ref = None
+                if peek() and peek().value == ":":
+                    take()
+                    type_ref = expect_qualified_name()
+                element_id = state.qualify(name)
+                # subject stored as attribute-like part reference for layout
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.PART,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    metadata_keywords=["subject"],
+                    file_id=file_id,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == ";":
+                    take()
+                continue
+
+            if tok.kind == "ident" and tok.value == "interface":
+                line = tok.line
+                take()
+                if peek() and peek().value == "def":
+                    take()
+                name = expect_ident()
+                if not name:
+                    state.warnings.append(f"line {line}: interface without name")
+                    skip_until_semicolon_or_brace()
+                    continue
+                type_ref = None
+                if peek() and peek().value == ":":
+                    take()
+                    type_ref = expect_qualified_name()
+                element_id = state.qualify(name)
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.INTERFACE,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    file_id=file_id,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == "{":
+                    take()
+                    state.scopes.append(
+                        _Scope(
+                            element_id=element_id,
+                            kind=ArtifactKind.INTERFACE,
+                            brace_depth=1,
+                        )
+                    )
+                elif peek() and peek().value == ";":
+                    take()
+                continue
+
+            if tok.kind == "ident" and tok.value == "satisfy":
+                # satisfy R by P;
+                line = tok.line
+                take()
+                req_ref = expect_qualified_name()
+                by_tok = peek()
+                if by_tok and by_tok.value == "by":
+                    take()
+                part_ref = expect_qualified_name()
+                if not req_ref or not part_ref:
+                    state.warnings.append(f"line {line}: satisfy without endpoints")
+                    skip_until_semicolon_or_brace()
+                    continue
+                parent = state.current_parent()
+                name = f"satisfy_{len([e for e in state.elements.values() if e.kind == ArtifactKind.SATISFY]) + 1}"
+                element_id = f"{parent}::{name}" if parent else name
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.SATISFY,
+                    name=name,
+                    parent_id=parent,
+                    source_id=resolve_ref(part_ref),
+                    target_id=resolve_ref(req_ref),
+                    file_id=file_id,
+                )
+                state.add_child(parent, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == ";":
+                    take()
+                continue
+
             def read_import_path() -> str | None:
                 parts: list[str] = []
                 while peek():
@@ -1405,10 +1772,7 @@ class SubsetSysmlParser:
                     "item",
                     "private",
                     "public",
-                    "doc",
                     "alias",
-                    "interface",
-                    "requirement",
                     "occurrence",
                     "calc",
                     "assert",
@@ -1477,6 +1841,8 @@ class SubsetSysmlParser:
             "TreeView",
             "InterconnectionView",
             "AllocationView",
+            "GridView",
+            "UseCaseView",
             "Interaction",
             "start",
             "done",

@@ -1,6 +1,8 @@
 # Logical architecture — four layers
 
-The data center model uses **four layers**. Layers 1–3 live under `logical/`; layer 4 is `physical/`.
+The shipped example project is [`examples/electric_car`](../examples/electric_car). This note describes an earlier data-center layering and is kept as background for [interface naming](interface_naming.md). Those SysML files are no longer in the repository.
+
+The data center model used **four layers**. Layers 1–3 lived under `logical/`; layer 4 was `physical/`.
 
 | Layer | Name | Package / parts | Role |
 |-------|------|-----------------|------|

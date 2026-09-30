@@ -19,6 +19,12 @@ export type ArtifactKind =
   | 'transition'
   | 'action'
   | 'succession'
+  | 'requirement'
+  | 'useCase'
+  | 'actor'
+  | 'include'
+  | 'interface'
+  | 'satisfy'
 export type RoutingType = 'angular' | 'direct' | 'spline'
 export type PortSide = 'left' | 'right' | 'top' | 'bottom'
 export type DiagramMode =
@@ -29,6 +35,8 @@ export type DiagramMode =
   | 'actionFlow'
   | 'tree'
   | 'allocation'
+  | 'requirementTable'
+  | 'useCase'
 
 export interface SemanticElement {
   id: string
@@ -45,6 +53,10 @@ export interface SemanticElement {
   isReference?: boolean | null
   /** Prefix metadata keywords from `#Mount dependency …`. */
   metadataKeywords?: string[] | null
+  /** Documentation body from SysML `doc` block comment. */
+  documentation?: string | null
+  /** Short name from `<'R-01'>` on a declaration. */
+  shortId?: string | null
   children: string[]
   fileId: string | null
 }
@@ -67,6 +79,10 @@ export interface ElementStyleMode {
   lineStyle?: LineStyle | null
   markerEnd?: EdgeMarker | null
   markerStart?: EdgeMarker | null
+  /** When false, header uses default fill. Missing/true = apply backgroundColor. */
+  backgroundHeader?: boolean | null
+  /** When false, body uses default fill. Missing/true = apply backgroundColor. */
+  backgroundBody?: boolean | null
 }
 
 export interface ElementStyle {
@@ -81,6 +97,12 @@ export interface Waypoint {
   locked?: boolean
 }
 
+export interface BoundaryAnchor {
+  id: string
+  side: PortSide
+  offset: number
+}
+
 export interface VisualizationNode {
   artifactId: string
   x: number
@@ -91,6 +113,8 @@ export interface VisualizationNode {
   side: PortSide | null
   offset: number | null
   style?: ElementStyle | null
+  /** Use-case and requirement connection points, stored per view. */
+  anchors?: BoundaryAnchor[] | null
 }
 
 export interface VisualizationEdge {
@@ -103,6 +127,8 @@ export interface VisualizationEdge {
   sourceOffset?: number | null
   targetSide?: PortSide | null
   targetOffset?: number | null
+  sourceAnchorId?: string | null
+  targetAnchorId?: string | null
 }
 
 export interface SysmlFile {
@@ -211,6 +237,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(text || res.statusText)
   }
   return res.json() as Promise<T>
+}
+
+export type RelationTodoItem = {
+  id: number
+  action: 'add' | 'change' | 'delete'
+  original: string
+  filepath: string
+  rownumber: number
+  source: string
+  target: string
+  type: string
+  new_def: string
+  relationId?: string
 }
 
 export const api = {
@@ -371,6 +410,17 @@ export const api = {
     request<Project>(`/projects/${projectId}/semantic/${encodeURIComponent(artifactId)}`, {
       method: 'DELETE',
     }),
+  updateRelationEnds: (
+    projectId: string,
+    relationId: string,
+    sourceId: string,
+    targetId: string,
+  ) =>
+    request<Project>(`/projects/${projectId}/relations/${encodeURIComponent(relationId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceId, targetId }),
+    }),
   renameFile: (
     projectId: string,
     fileId: string,
@@ -397,4 +447,14 @@ export const api = {
     request<{ path: string; content: string }>(
       `/projects/${projectId}/documentation/${docPath.split('/').map(encodeURIComponent).join('/')}`,
     ),
+  listRelationTodos: (projectId: string) =>
+    request<{ items: RelationTodoItem[] }>(
+      `/projects/${projectId}/relation-todos`,
+    ),
+  deleteRelationTodo: (projectId: string, todoId: number) =>
+    request<{ ok: boolean }>(
+      `/projects/${projectId}/relation-todos/${todoId}`,
+      { method: 'DELETE' },
+    ),
 }
+

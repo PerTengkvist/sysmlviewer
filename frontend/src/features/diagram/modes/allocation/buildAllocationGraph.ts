@@ -22,7 +22,7 @@ export type AllocationBuildOpts = {
   showAttributes?: boolean
   portMoveMode?: boolean
   selectedConnectionColor?: string
-  selectedConnectionLinewidth?: number
+  selectedConnectionLinewidthFactor?: number
   onOpenView?: (viewId: string) => void
   onPortMoved?: (portId: string, side: PortSide, offset: number) => void
   onWaypointsChange?: (
@@ -80,8 +80,8 @@ export function buildAllocationGraph(opts: AllocationBuildOpts): {
     viewMode,
     showAttributes = false,
     portMoveMode = false,
-    selectedConnectionColor = '#7c3aed',
-    selectedConnectionLinewidth = 4,
+    selectedConnectionColor = '#2563eb',
+    selectedConnectionLinewidthFactor = 3,
     onOpenView,
     onPortMoved,
     onWaypointsChange,
@@ -180,7 +180,7 @@ export function buildAllocationGraph(opts: AllocationBuildOpts): {
     if (!sourcePart || !targetPart) continue
     const edgeViz = visualization.edges[conn.id]
     const routing = edgeViz?.routing || 'direct'
-    const stroke = edgeStrokeStyle(edgeViz?.style, viewMode, selectedConnectionColor)
+    const stroke = edgeStrokeStyle(edgeViz?.style, viewMode)
     edges.push({
       id: conn.id,
       source: sourcePart,
@@ -200,7 +200,7 @@ export function buildAllocationGraph(opts: AllocationBuildOpts): {
         onSelect: onSelectConnection,
         labelColor: stroke.color,
         selectedColor: selectedConnectionColor,
-        selectedLinewidth: selectedConnectionLinewidth,
+        selectedFactor: selectedConnectionLinewidthFactor,
       },
       style: { strokeWidth: stroke.strokeWidth, stroke: stroke.stroke },
     })

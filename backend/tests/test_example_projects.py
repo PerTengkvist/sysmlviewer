@@ -14,7 +14,7 @@ from adapters.api.app import create_app
 def test_list_example_projects_includes_repo_examples():
     projects = list_example_projects()
     ids = {p["id"] for p in projects}
-    assert "examples/data_center" in ids
+    assert "examples/electric_car" in ids
     assert "examples/diagrams" in ids
     for project in projects:
         folder = Path(project["folder"])
@@ -31,7 +31,7 @@ def test_example_projects_endpoint_without_workspace():
     assert isinstance(body, list)
     assert len(body) >= 2
     names = {p["name"] for p in body}
-    assert "Data Center" in names
+    assert "Electric Car" in names
     assert "Diagrams" in names
 
 

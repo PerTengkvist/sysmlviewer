@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "viewId": "UseCases::VehicleUseCaseView",
+  "name": "VehicleUseCaseView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "UseCases::vehicle": {
+      "x": 752.0,
+      "y": 48.0,
+      "width": 1038.0,
+      "height": 1070.0
+    },
+    "UseCases::Brake": {
+      "x": 870.0,
+      "y": 176.94239721074774,
+      "width": 168.0,
+      "height": 72.0
+    },
+    "UseCases::CleanWindshield::Driver": {
+      "x": -50.198774789737755,
+      "y": 203.50563690594333,
+      "width": 88.0,
+      "height": 108.0
+    },
+    "UseCases::PlayMedia::Passenger": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 88.0,
+      "height": 108.0
+    },
+    "UseCases::Lock": {
+      "x": 409.3467054766734,
+      "y": 707.5060927346459,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.17138152352554098
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "left",
+          "offset": 0.6439560928623881
+        }
+      ]
+    },
+    "UseCases::TurnRight": {
+      "x": 655.0466965026762,
+      "y": 220.43755617848274,
+      "width": 168.0,
+      "height": 72.0
+    },
+    "UseCases::Unlock": {
+      "x": 148.62094439299722,
+      "y": 920.5062399463186,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "left",
+          "offset": 0.29155392116970485
+        }
+      ]
+    },
+    "UseCases::ChangeGear": {
+      "x": 308.20531634829786,
+      "y": 467.6731055200868,
+      "width": 168.0,
+      "height": 72.0
+    },
+    "UseCases::PlayMedia": {
+      "x": 42.16928641223171,
+      "y": 985.3919423046584,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "left",
+          "offset": 0.2973056369357639
+        }
+      ]
+    },
+    "UseCases::Charge": {
+      "x": 338.6438421734031,
+      "y": 783.0587751050941,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "left",
+          "offset": 0.33046131478381496
+        }
+      ]
+    },
+    "UseCases::TurnLeft::Driver": {
+      "x": 224.0,
+      "y": 48.0,
+      "width": 88.0,
+      "height": 108.0
+    },
+    "UseCases::Park": {
+      "x": 404.4898946892888,
+      "y": 565.5777916436516,
+      "width": 168.0,
+      "height": 72.0
+    },
+    "UseCases::CleanWindshield": {
+      "x": 626.2363054433599,
+      "y": 96.05517076112125,
+      "width": 168.0,
+      "height": 72.0
+    },
+    "UseCases::EmergencyStop": {
+      "x": 864.4175535637421,
+      "y": 54.39851923935791,
+      "width": 168.0,
+      "height": 72.0
+    },
+    "UseCases::AdjustClimate": {
+      "x": 253.7124676346666,
+      "y": 858.3530047967243,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "left",
+          "offset": 0.3078695933024089
+        }
+      ]
+    },
+    "UseCases::Drive": {
+      "x": 670.0014962289179,
+      "y": 494.535885501919,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "top",
+          "offset": 0.508664017712451
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "UseCases::Accelerate": {
+      "x": 492.13225584607585,
+      "y": 271.2252065500865,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.7516927758863985
+        }
+      ]
+    },
+    "UseCases::TurnLeft": {
+      "x": 316.83655438560413,
+      "y": 310.03080825311895,
+      "width": 168.0,
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "a-left",
+          "side": "left",
+          "offset": 0.5
+        },
+        {
+          "id": "a-right",
+          "side": "right",
+          "offset": 0.7461338807477443
+        },
+        {
+          "id": "a-top",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "a-bottom",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
+    },
+    "UseCases::PlayMedia::Driver": {
+      "x": 224.0,
+      "y": 48.0,
+      "width": 88.0,
+      "height": 108.0
+    },
+    "UseCases::AdjustClimate::Passenger": {
+      "x": 254.8921161825726,
+      "y": 776.4688796680498,
+      "width": 88.0,
+      "height": 108.0
+    },
+    "UseCases::Charge::Passenger": {
+      "x": 10.0,
+      "y": 786.0,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {
+    "UseCases::Drive::include_TurnRight": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.508664017712451,
+      "targetSide": "bottom",
+      "targetOffset": 0.48567850071100405,
+      "sourceAnchorId": "a-right"
+    },
+    "UseCases::Drive::include_TurnLeft": {
+      "routing": "direct",
+      "sourceSide": "top",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.7461338807477443,
+      "targetAnchorId": "a-right"
+    },
+    "use:UseCases::Charge::Passenger->UseCases::PlayMedia": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.2973056369357639,
+      "targetAnchorId": "a-bottom"
+    },
+    "use:UseCases::Charge::Passenger->UseCases::Unlock": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.29155392116970485,
+      "targetAnchorId": "a-bottom"
+    },
+    "use:UseCases::Charge::Passenger->UseCases::AdjustClimate": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.3078695933024089,
+      "targetAnchorId": "a-bottom"
+    },
+    "use:UseCases::Charge::Passenger->UseCases::Charge": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.33046131478381496,
+      "targetAnchorId": "a-bottom"
+    },
+    "use:UseCases::Charge::Passenger->UseCases::Lock": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.6439560928623881,
+      "targetAnchorId": "a-bottom"
+    },
+    "use:UseCases::PlayMedia::Driver->UseCases::Lock": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.17138152352554098,
+      "targetAnchorId": "a-left"
+    },
+    "UseCases::Drive::include_Accelerate": {
+      "routing": "direct",
+      "targetSide": "bottom",
+      "targetOffset": 0.7516927758863985,
+      "targetAnchorId": "a-bottom"
+    }
+  }
+}

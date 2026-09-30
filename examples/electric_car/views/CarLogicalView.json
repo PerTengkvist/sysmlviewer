@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "viewId": "LogicalArchitecture::CarLogicalView",
+  "name": "CarLogicalView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "LogicalArchitecture::Car": {
+      "x": -223.0,
+      "y": 4534.0,
+      "width": 999.4,
+      "height": 1908.0
+    },
+    "LogicalArchitecture::Car::windows": {
+      "x": 48.0,
+      "y": 1604.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::battery": {
+      "x": 575.4,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::steeringWheel": {
+      "x": 48.0,
+      "y": 1432.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::engine": {
+      "x": 339.4,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::chassis": {
+      "x": 811.4,
+      "y": 56.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::suspension": {
+      "x": 780.908156911684,
+      "y": 409.3886975238838,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::climateSystem": {
+      "x": 48.0,
+      "y": 572.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::chargeInlet": {
+      "x": 48.0,
+      "y": 400.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::lamps": {
+      "x": 48.0,
+      "y": 1088.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::brakePedal": {
+      "x": 48.0,
+      "y": 228.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::body": {
+      "x": 575.4,
+      "y": 228.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::windshield": {
+      "x": 339.4,
+      "y": 400.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::locks": {
+      "x": 48.0,
+      "y": 1260.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::wipers": {
+      "x": 48.0,
+      "y": 1776.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::entertainmentSystem": {
+      "x": 48.0,
+      "y": 744.0,
+      "width": 188.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::wheels": {
+      "x": 339.4,
+      "y": 228.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::acceleratorPedal": {
+      "x": 48.0,
+      "y": 56.0,
+      "width": 164.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::gearStick": {
+      "x": 48.0,
+      "y": 916.0,
+      "width": 140.0,
+      "height": 76.0
+    }
+  },
+  "edges": {
+    "LogicalArchitecture::Car::energyClimate": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 504.4,
+          "y": 4650.99
+        },
+        {
+          "x": 504.4,
+          "y": 4922.0
+        },
+        {
+          "x": -187.0,
+          "y": 4922.0
+        },
+        {
+          "x": -187.0,
+          "y": 5158.06
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::energyEntertainment": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 504.4,
+          "y": 4650.99
+        },
+        {
+          "x": 504.4,
+          "y": 4922.0
+        },
+        {
+          "x": -187.0,
+          "y": 4922.0
+        },
+        {
+          "x": -187.0,
+          "y": 5330.06
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::charge": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": -187.0,
+          "y": 4986.06
+        },
+        {
+          "x": -187.0,
+          "y": 4750.0
+        },
+        {
+          "x": 340.4,
+          "y": 4750.0
+        },
+        {
+          "x": 340.4,
+          "y": 4634.08
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::direction": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": -187.0,
+          "y": 6018.06
+        },
+        {
+          "x": -187.0,
+          "y": 4922.0
+        },
+        {
+          "x": 268.4,
+          "y": 4922.0
+        },
+        {
+          "x": 268.4,
+          "y": 4822.99
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::gear": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": -187.0,
+          "y": 5502.06
+        },
+        {
+          "x": -187.0,
+          "y": 4922.0
+        },
+        {
+          "x": 268.4,
+          "y": 4922.0
+        },
+        {
+          "x": 268.4,
+          "y": 4657.13
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::torque": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": -187.0,
+          "y": 4642.06
+        },
+        {
+          "x": -187.0,
+          "y": 4678.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4678.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4672.483333333334
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::energyLamps": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 504.4,
+          "y": 4650.99
+        },
+        {
+          "x": 504.4,
+          "y": 4922.0
+        },
+        {
+          "x": -187.0,
+          "y": 4922.0
+        },
+        {
+          "x": -187.0,
+          "y": 5674.06
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::brake": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": -187.0,
+          "y": 4814.06
+        },
+        {
+          "x": -187.0,
+          "y": 4850.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4850.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4806.08
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::clear": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": -187.0,
+          "y": 6362.06
+        },
+        {
+          "x": -187.0,
+          "y": 5022.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 5022.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4986.06
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::energyEngine": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 504.4,
+          "y": 4650.99
+        },
+        {
+          "x": 504.4,
+          "y": 4700.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4700.0
+        },
+        {
+          "x": 104.39999999999998,
+          "y": 4646.84
+        }
+      ]
+    },
+    "LogicalArchitecture::Car::dep3": {
+      "sourceSide": "right",
+      "sourceOffset": 0.4490109975851235,
+      "targetSide": "left",
+      "targetOffset": 0.3473274075255102
+    },
+    "LogicalArchitecture::Car::dep4": {
+      "sourceSide": "right",
+      "sourceOffset": 0.27758751124654163,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    }
+  }
+}

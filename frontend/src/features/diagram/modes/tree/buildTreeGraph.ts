@@ -2,6 +2,8 @@ import type { Edge, Node } from '@xyflow/react'
 import type { SemanticElement, ViewPayload } from '../../../api'
 import type { ViewMode } from '../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
+import { isRelationKind } from '../../relationKinds'
+import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import type { TreeNodeData } from './TreeNode'
 
 const NODE_W = 160
@@ -13,7 +15,6 @@ const TOP = 40
 
 const SKIP_KINDS = new Set([
   'port',
-  'connection',
   'attribute',
   'message',
   'transition',
@@ -21,12 +22,20 @@ const SKIP_KINDS = new Set([
   'view',
 ])
 
+function showInTree(kind: string): boolean {
+  return !SKIP_KINDS.has(kind) && !isRelationKind(kind)
+}
+
 export function buildTreeGraph(
   view: ViewPayload,
   viewMode: ViewMode,
   collapsedIds: Set<string>,
   onToggle: (artifactId: string) => void,
+  highlight: HighlightOpts = {},
 ): { nodes: Node[]; edges: Edge[] } {
+  const selectedConnectionColor = highlight.selectedConnectionColor ?? '#2563eb'
+  const selectedConnectionLinewidthFactor =
+    highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
   const root = semantic[rootId]
@@ -37,7 +46,7 @@ export function buildTreeGraph(
     if (!el) return []
     return (el.children || [])
       .map((cid) => semantic[cid])
-      .filter((c): c is SemanticElement => !!c && !SKIP_KINDS.has(c.kind))
+      .filter((c): c is SemanticElement => !!c && showInTree(c.kind))
       .sort((a, b) => a.id.localeCompare(b.id))
   }
 
@@ -73,7 +82,7 @@ export function buildTreeGraph(
         ? false
         : (el.children || []).some((cid) => {
             const c = semantic[cid]
-            return c && !SKIP_KINDS.has(c.kind)
+            return c && showInTree(c.kind)
           })),
       formatStyle: viz?.style,
       viewMode,
@@ -82,7 +91,7 @@ export function buildTreeGraph(
     // Fix hasChildren when collapsed: still show toggle if element has structural children
     data.hasChildren = (el.children || []).some((cid) => {
       const c = semantic[cid]
-      return c && !SKIP_KINDS.has(c.kind)
+      return c && showInTree(c.kind)
     })
 
     return {
@@ -115,6 +124,10 @@ export function buildTreeGraph(
         targetHandle: 'in',
         type: 'smoothstep',
         style: { stroke: stroke.stroke, strokeWidth: 1.5 },
+        data: {
+          selectedColor: selectedConnectionColor,
+          selectedFactor: selectedConnectionLinewidthFactor,
+        },
       })
     }
   }
