@@ -53,6 +53,9 @@ class VisualizationPatch(BaseModel):
     structureNotation: str | None = None
     # Present + null clears per-view override; omit to leave unchanged.
     hierarchicalLevelsOverride: int | None = None
+    # Present replaces the whole list; omit to leave unchanged.
+    viewFilters: list[dict[str, Any]] | None = None
+    layoutRules: list[dict[str, Any]] | None = None
 
 
 class AddConnectionBody(BaseModel):
@@ -69,7 +72,8 @@ class ParentNameBody(BaseModel):
 
 
 class RenameBody(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    metadataKeywords: list[str] | None = None
 
 
 class RelationEndsBody(BaseModel):
@@ -422,7 +426,16 @@ def create_api_app(
         artifact_id: str,
         payload: Annotated[RenameBody, Body()],
     ) -> dict:
-        project = _service().rename_artifact(project_id, artifact_id, payload.name)
+        if payload.name is None and payload.metadataKeywords is None:
+            raise HTTPException(
+                status_code=400, detail="Provide name and/or metadataKeywords"
+            )
+        project = _service().patch_artifact(
+            project_id,
+            artifact_id,
+            name=payload.name,
+            metadata_keywords=payload.metadataKeywords,
+        )
         if not project:
             raise HTTPException(status_code=404, detail="Artifact not found")
         return project.to_dict()

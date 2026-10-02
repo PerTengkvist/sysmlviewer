@@ -699,13 +699,37 @@ class ProjectService:
     def rename_artifact(
         self, project_id: str, artifact_id: str, name: str
     ) -> Project | None:
+        return self.patch_artifact(project_id, artifact_id, name=name)
+
+    def patch_artifact(
+        self,
+        project_id: str,
+        artifact_id: str,
+        *,
+        name: str | None = None,
+        metadata_keywords: list[str] | None = None,
+    ) -> Project | None:
         project = self.repo.get(project_id)
         if not project:
             return None
         el = project.semantic.get(artifact_id)
-        if not el or not name.strip():
+        if not el:
             return None
-        el.name = name.strip()
+        changed = False
+        if name is not None:
+            stripped = name.strip()
+            if not stripped:
+                return None
+            if el.name != stripped:
+                el.name = stripped
+                changed = True
+        if metadata_keywords is not None:
+            cleaned = [kw.strip() for kw in metadata_keywords if kw and kw.strip()]
+            if list(el.metadata_keywords) != cleaned:
+                el.metadata_keywords = cleaned
+                changed = True
+        if not changed and name is None and metadata_keywords is None:
+            return None
         self._sync_sysml_file(project, el.file_id)
         project.views = rebuild_views(project.semantic)
         project.updated_at = utc_now()
@@ -923,6 +947,8 @@ class ProjectService:
         from domain.view_layouts import (
             ViewLayout,
             ViewLayouts,
+            apply_layout_rules,
+            apply_view_filters,
             apply_view_hierarchy_override,
             apply_view_layout_edge_patch,
             apply_view_layout_patch,
@@ -940,6 +966,8 @@ class ProjectService:
         nodes_patch = dict(patch.get("nodes") or {})
         edges_patch = dict(patch.get("edges") or {})
         hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
+        view_filters_patch = "viewFilters" in patch
+        layout_rules_patch = "layoutRules" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -974,6 +1002,20 @@ class ProjectService:
                         override_val = None
                 working = apply_view_hierarchy_override(
                     working, view_id, override_val
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if view_filters_patch:
+                working = apply_view_filters(
+                    working, view_id, patch.get("viewFilters")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if layout_rules_patch:
+                working = apply_layout_rules(
+                    working, view_id, patch.get("layoutRules")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1034,7 +1076,13 @@ class ProjectService:
                     project.view_layouts = working
             edges_patch = other_edge_patch
 
-            if geo_patch or geo_edge_patch or hierarchy_override_patch:
+            if (
+                geo_patch
+                or geo_edge_patch
+                or hierarchy_override_patch
+                or view_filters_patch
+                or layout_rules_patch
+            ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
                     view_name = next(
@@ -1574,6 +1622,12 @@ class ProjectService:
             "diagramMode": diagram_mode,
             "hierarchicalLevels": effective_levels,
             "hierarchicalLevelsOverride": levels_override,
+            "viewFilters": list(layout_for_view.view_filters)
+            if layout_for_view
+            else [],
+            "layoutRules": list(layout_for_view.layout_rules)
+            if layout_for_view
+            else [],
             "semantic": semantic,
             "visualization": {"nodes": nodes, "edges": edges},
             "subdiagrams": subdiagrams,

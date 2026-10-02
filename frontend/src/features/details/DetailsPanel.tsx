@@ -6,6 +6,7 @@ import type {
   RelationTodoItem,
   RoutingType,
   SemanticElement,
+  ViewFilterRow,
   ViewPayload,
 } from '../../api'
 import { STYLE_DEFAULTS } from '../diagram/elementStyle'
@@ -15,6 +16,7 @@ import {
 } from '../diagram/relationshipStyle'
 import type { ViewMode } from '../../settings'
 import { isRelationKind } from '../diagram/relationKinds'
+import { ViewFilterDialog } from '../diagram/ViewFilterDialog'
 
 type Props = {
   project: Project | null
@@ -28,6 +30,7 @@ type Props = {
   editorMode?: boolean
   viewMode?: ViewMode
   onHierarchyOverrideChange?: (override: number | null) => void
+  onViewFiltersChange?: (filters: ViewFilterRow[]) => void
   onRoutingChange: (connectionId: string, routing: RoutingType) => void
   onAutoroute?: (connectionId: string) => void
   onWaypointsChange?: (
@@ -38,6 +41,10 @@ type Props = {
   onFormatPaint?: () => void
   paintModeActive?: boolean
   onRename?: (artifactId: string, name: string) => void
+  onMetadataKeywordsChange?: (
+    artifactId: string,
+    metadataKeywords: string[],
+  ) => void
   onAddPart?: (parentId: string) => void
   onAddPort?: (parentId: string) => void
   onAddAttribute?: (parentId: string) => void
@@ -487,6 +494,7 @@ export function DetailsPanel({
   editorMode,
   viewMode: _viewMode,
   onHierarchyOverrideChange,
+  onViewFiltersChange,
   onRoutingChange,
   onAutoroute,
   onWaypointsChange,
@@ -494,6 +502,7 @@ export function DetailsPanel({
   onFormatPaint,
   paintModeActive,
   onRename,
+  onMetadataKeywordsChange,
   onAddPart,
   onAddPort,
   onAddAttribute,
@@ -501,6 +510,7 @@ export function DetailsPanel({
   onRetargetRelation,
 }: Props) {
   const [relationUnlocked, setRelationUnlocked] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
   useEffect(() => {
     setRelationUnlocked(false)
   }, [selectedId])
@@ -705,6 +715,44 @@ export function DetailsPanel({
         <dd>{el.kind}</dd>
         <dt>Id</dt>
         <dd className="mono">{el.id}</dd>
+        {el.kind === 'dependency' && (
+          <>
+            <dt>Stereotype</dt>
+            <dd>
+              {onMetadataKeywordsChange ? (
+                <input
+                  className="inline-edit"
+                  defaultValue={(el.metadataKeywords || []).join(', ')}
+                  key={el.id + (el.metadataKeywords || []).join(',')}
+                  disabled={!relationUnlocked}
+                  aria-label="Stereotype"
+                  placeholder="e.g. Energy"
+                  onBlur={(e) => {
+                    const next = e.target.value
+                      .split(/[,;]+/)
+                      .map((s) =>
+                        s
+                          .trim()
+                          .replace(/^[«<]+/, '')
+                          .replace(/[»>]+$/, '')
+                          .trim(),
+                      )
+                      .filter(Boolean)
+                    const prev = el.metadataKeywords || []
+                    if (
+                      next.length !== prev.length ||
+                      next.some((kw, i) => kw !== prev[i])
+                    ) {
+                      onMetadataKeywordsChange(el.id, next)
+                    }
+                  }}
+                />
+              ) : (
+                (el.metadataKeywords || []).join(', ') || '—'
+              )}
+            </dd>
+          </>
+        )}
         {el.typeRef && (
           <>
             <dt>Type</dt>
@@ -715,6 +763,27 @@ export function DetailsPanel({
           <>
             <dt>Expose</dt>
             <dd className="mono">{el.exposeRef}</dd>
+          </>
+        )}
+        {el.kind === 'view' && onViewFiltersChange && viewPayload && (
+          <>
+            <dt>View filter</dt>
+            <dd>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(true)}
+                aria-label="view-filter"
+              >
+                view-filter
+              </button>
+              <ViewFilterDialog
+                open={filterOpen}
+                filters={viewPayload.viewFilters || []}
+                semantic={viewPayload.semantic}
+                onChange={onViewFiltersChange}
+                onClose={() => setFilterOpen(false)}
+              />
+            </dd>
           </>
         )}
         {(el.kind === 'attribute' || el.kind === 'port') && (

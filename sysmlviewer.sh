@@ -24,7 +24,7 @@ Usage: $(basename "$0") <start|stop|status> [options]
             --dev               Vite dev server (:$DEV_PORT) + API (:$SERVER_PORT)
             -f, --folder PATH   Open workspace folder
             -p, --project PATH  Open project.json (parent = workspace)
-  stop    Stop processes recorded in running-session.json
+  stop    Stop session in running-session.json and free ports $SERVER_PORT/$DEV_PORT
   status  Show whether a session is running
 EOF
 }
@@ -258,31 +258,64 @@ cmd_start() {
   echo "  logs:    $LOG_DIR/"
 }
 
+# Kill whatever is listening on the given TCP port (orphans / lost session).
+kill_port_listeners() {
+  local port="$1"
+  local pids
+  if ! command -v lsof >/dev/null 2>&1; then
+    return 0
+  fi
+  pids="$(lsof -nP -t -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -z "$pids" ]]; then
+    return 0
+  fi
+  local pid
+  for pid in $pids; do
+    echo "  freeing port $port (pid $pid)"
+    kill_tree "$pid"
+  done
+}
+
 cmd_stop() {
-  if [[ ! -f "$SESSION_FILE" ]]; then
-    echo "no running-session.json — nothing to stop"
-    exit 0
+  local stopped_session=0
+
+  if [[ -f "$SESSION_FILE" ]]; then
+    local mode server_pid backend_pid frontend_pid
+    mode="$(read_session_field mode)"
+    server_pid="$(read_session_field serverPid)"
+    backend_pid="$(read_session_field backendPid)"
+    frontend_pid="$(read_session_field frontendPid)"
+
+    echo "stopping session…"
+    if [[ "$mode" == "dev" || -n "$frontend_pid" ]]; then
+      kill_tree "$frontend_pid"
+    fi
+    if [[ -n "$server_pid" ]]; then
+      kill_tree "$server_pid"
+    fi
+    if [[ -n "$backend_pid" ]]; then
+      kill_tree "$backend_pid"
+    fi
+
+    rm -f "$SESSION_FILE"
+    stopped_session=1
+  else
+    echo "no running-session.json"
   fi
 
-  local mode server_pid backend_pid frontend_pid
-  mode="$(read_session_field mode)"
-  server_pid="$(read_session_field serverPid)"
-  backend_pid="$(read_session_field backendPid)"
-  frontend_pid="$(read_session_field frontendPid)"
+  # Always clear known ports — covers orphans (e.g. agent-started servers,
+  # --reload children after a lost session file).
+  kill_port_listeners "$SERVER_PORT"
+  kill_port_listeners "$DEV_PORT"
 
-  echo "stopping session…"
-  if [[ "$mode" == "dev" || -n "$frontend_pid" ]]; then
-    kill_tree "$frontend_pid"
+  if [[ "$stopped_session" -eq 1 ]]; then
+    echo "stopped"
+  elif port_in_use "$SERVER_PORT" || port_in_use "$DEV_PORT"; then
+    echo "warning: port still in use after stop" >&2
+    exit 1
+  else
+    echo "stopped (ports cleared)"
   fi
-  if [[ -n "$server_pid" ]]; then
-    kill_tree "$server_pid"
-  fi
-  if [[ -n "$backend_pid" ]]; then
-    kill_tree "$backend_pid"
-  fi
-
-  rm -f "$SESSION_FILE"
-  echo "stopped"
 }
 
 cmd_status() {

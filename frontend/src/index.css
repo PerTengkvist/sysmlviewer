@@ -1513,6 +1513,20 @@ body.port-dragging * {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
+/* View Filter: 30% wider than base modal */
+.modal-dialog.modal-view-filter {
+  width: min(676px, 96vw);
+}
+
+/* LayoutWizard: 50% wider than base modal */
+.modal-dialog.modal-layout-wizard {
+  width: min(780px, 96vw);
+}
+
+.modal-dialog.modal-wide {
+  width: min(640px, 96vw);
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1708,6 +1722,26 @@ body.port-dragging * {
   justify-content: flex-end;
   margin-top: 1rem;
   flex-wrap: wrap;
+}
+
+.error-text {
+  color: #b91c1c;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.layout-conflict-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #b91c1c;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
 .modal-dialog-wide {

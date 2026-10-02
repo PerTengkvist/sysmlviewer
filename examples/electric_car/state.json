@@ -10447,8 +10447,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::gearStick": {
         "artifactId": "LogicalArchitecture::Car::gearStick",
@@ -10467,8 +10467,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::acceleratorPedal": {
         "artifactId": "LogicalArchitecture::Car::acceleratorPedal",
@@ -10487,8 +10487,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::brakePedal": {
         "artifactId": "LogicalArchitecture::Car::brakePedal",
@@ -10507,8 +10507,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::climateSystem": {
         "artifactId": "LogicalArchitecture::Car::climateSystem",
@@ -10527,8 +10527,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::entertainmentSystem": {
         "artifactId": "LogicalArchitecture::Car::entertainmentSystem",
@@ -10548,7 +10548,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.685
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::engine": {
         "artifactId": "LogicalArchitecture::Car::engine",
@@ -10567,8 +10567,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "right",
-        "offset": 0.685
+        "side": "left",
+        "offset": 0.7048979591836735
       },
       "LogicalArchitecture::Car::engine::torqueIn": {
         "artifactId": "LogicalArchitecture::Car::engine::torqueIn",
@@ -10578,7 +10578,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.8416666666666668
+        "offset": 0.8482993197278912
       },
       "LogicalArchitecture::Car::engine::energyIn": {
         "artifactId": "LogicalArchitecture::Car::engine::energyIn",
@@ -10588,7 +10588,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.5283333333333333
+        "offset": 0.5614965986394558
       },
       "LogicalArchitecture::Car::battery": {
         "artifactId": "LogicalArchitecture::Car::battery",
@@ -10608,7 +10608,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "right",
-        "offset": 0.8025
+        "offset": 0.7048979591836735
       },
       "LogicalArchitecture::Car::battery::chargeIn": {
         "artifactId": "LogicalArchitecture::Car::battery::chargeIn",
@@ -10618,7 +10618,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.5675
+        "offset": 0.7048979591836735
       },
       "LogicalArchitecture::Car::chargeInlet": {
         "artifactId": "LogicalArchitecture::Car::chargeInlet",
@@ -10637,8 +10637,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::chassis": {
         "artifactId": "LogicalArchitecture::Car::chassis",
@@ -10667,8 +10667,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "right",
-        "offset": 0.8025
+        "side": "left",
+        "offset": 0.5973469387755102
       },
       "LogicalArchitecture::Car::wheels::brakeIn": {
         "artifactId": "LogicalArchitecture::Car::wheels::brakeIn",
@@ -10678,7 +10678,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.5675
+        "offset": 0.8124489795918368
       },
       "LogicalArchitecture::Car::suspension": {
         "artifactId": "LogicalArchitecture::Car::suspension",
@@ -10728,7 +10728,7 @@
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "left",
-        "offset": 0.685
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::wipers": {
         "artifactId": "LogicalArchitecture::Car::wipers",
@@ -10747,8 +10747,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "LogicalArchitecture::Car::locks": {
         "artifactId": "LogicalArchitecture::Car::locks",
@@ -10777,8 +10777,8 @@
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.75
       },
       "Dynamics": {
         "artifactId": "Dynamics",

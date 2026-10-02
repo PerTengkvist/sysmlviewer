@@ -499,6 +499,44 @@ export default function App() {
     [project, activeViewId, loadView, structureNotation],
   )
 
+  const onViewFiltersChange = useCallback(
+    async (filters: import('./api').ViewFilterRow[]) => {
+      if (!project || !activeViewId) return
+      try {
+        await api.patchVisualization(project.id, {
+          viewId: activeViewId,
+          viewFilters: filters,
+          structureNotation,
+        })
+        setViewPayload((prev) =>
+          prev ? { ...prev, viewFilters: filters } : prev,
+        )
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
+  const onLayoutRulesChange = useCallback(
+    async (rules: import('./api').LayoutRuleRow[]) => {
+      if (!project || !activeViewId) return
+      try {
+        await api.patchVisualization(project.id, {
+          viewId: activeViewId,
+          layoutRules: rules,
+          structureNotation,
+        })
+        setViewPayload((prev) =>
+          prev ? { ...prev, layoutRules: rules } : prev,
+        )
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
   const onPortMoved = useCallback(
     async (portId: string, side: PortSide, offset: number) => {
       if (!project) return
@@ -1320,6 +1358,7 @@ export default function App() {
                 }}
                 onOpenView={onOpenView}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
+                onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
                 onRelationEndMoved={(id, end, side, offset, companion) =>
                   void onRelationEndMoved(id, end, side, offset, companion)
@@ -1349,6 +1388,7 @@ export default function App() {
             onHierarchyOverrideChange={(override) =>
               void onHierarchyOverrideChange(override)
             }
+            onViewFiltersChange={(filters) => void onViewFiltersChange(filters)}
             onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
             onAutoroute={(id) => void onAutorouteConnection(id)}
             onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}
@@ -1357,6 +1397,11 @@ export default function App() {
             paintModeActive={!!paintMode}
             onRename={(id, name) =>
               void mutateAndSync(() => api.renameArtifact(project!.id, id, name))
+            }
+            onMetadataKeywordsChange={(id, metadataKeywords) =>
+              void mutateAndSync(() =>
+                api.patchArtifact(project!.id, id, { metadataKeywords }),
+              )
             }
             onAddPart={(parentId) =>
               void mutateAndSync(() => api.addPart(project!.id, { parentId }))

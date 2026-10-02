@@ -21,6 +21,7 @@ import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   DiagramMode,
+  LayoutRuleRow,
   PortSide,
   RoutingType,
   ViewPayload,
@@ -37,6 +38,10 @@ import {
   HighlightedStraightEdge,
 } from './selectableEdge'
 import { applyRelationEndDrag } from './applyRelationEndDrag'
+import { selectionIdForPaneClick } from './canvasSelection'
+import { applyViewFilters } from './viewFilters'
+import { LayoutWizardDialog } from './LayoutWizardDialog'
+import type { LayoutArtefact } from './layoutWizard'
 import { resolveAnchors, type BoundaryAnchor } from './boundaryAnchors'
 import { alignSelection } from './layout/align'
 import {
@@ -264,6 +269,7 @@ type Props = {
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
   ) => void
+  onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   onRelationEndMoved?: (
     artifactId: string,
@@ -307,6 +313,7 @@ export function DiagramCanvas({
   onSelectionFromFlow,
   onOpenView,
   onNodesMoved,
+  onLayoutRulesChange,
   onPortMoved,
   onRelationEndMoved,
   onConnectPorts,
@@ -325,6 +332,7 @@ export function DiagramCanvas({
   )
   const [layoutEpoch, setLayoutEpoch] = useState(0)
   const [flowDir, setFlowDir] = useState<RedrawDirection>('LR')
+  const [layoutWizardOpen, setLayoutWizardOpen] = useState(false)
   /** Temporarily force light styling while exporting an image to the clipboard. */
   const [captureLight, setCaptureLight] = useState(false)
   const [copyState, setCopyState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
@@ -482,10 +490,17 @@ export function DiagramCanvas({
 
   const collapseSig = [...collapsedIds].sort().join(',')
 
+  const filterSig = view?.viewFilters
+    ? JSON.stringify(view.viewFilters)
+    : ''
+  const layoutRulesSig = view?.layoutRules
+    ? JSON.stringify(view.layoutRules)
+    : ''
+
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -526,28 +541,38 @@ export function DiagramCanvas({
     }
 
     let built: { nodes: Node[]; edges: Edge[] }
+    const filtered = applyViewFilters(
+      view.semantic,
+      view.visualization,
+      view.viewFilters || [],
+    )
+    const filteredView: ViewPayload = {
+      ...view,
+      semantic: filtered.semantic,
+      visualization: filtered.visualization,
+    }
     switch (view.diagramMode) {
       case 'sequence':
-        built = buildSequenceGraph(view, renderViewMode, {
+        built = buildSequenceGraph(filteredView, renderViewMode, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
         break
       case 'state':
-        built = buildStateGraph(view, renderViewMode, {
+        built = buildStateGraph(filteredView, renderViewMode, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
         break
       case 'actionFlow':
-        built = buildActionFlowGraph(view, renderViewMode, flowDirRef.current, {
+        built = buildActionFlowGraph(filteredView, renderViewMode, flowDirRef.current, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
         break
       case 'tree':
         built = buildTreeGraph(
-          view,
+          filteredView,
           renderViewMode,
           collapsedIds,
           toggleCollapse,
@@ -559,7 +584,7 @@ export function DiagramCanvas({
         break
       case 'allocation':
         built = buildAllocationGraph({
-          view,
+          view: filteredView,
           viewMode: renderViewMode,
           showAttributes,
           portMoveMode,
@@ -573,7 +598,7 @@ export function DiagramCanvas({
         })
         break
       case 'useCase':
-        built = buildUseCaseGraph(view, renderViewMode, {
+        built = buildUseCaseGraph(filteredView, renderViewMode, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
@@ -583,7 +608,7 @@ export function DiagramCanvas({
         break
       default:
         built = buildStructureGraph({
-          view,
+          view: filteredView,
           onOpenView: stableOpen,
           onPortMoved: stablePort,
           portMoveMode,
@@ -1609,7 +1634,12 @@ export function DiagramCanvas({
   }
 
   if (mode === 'requirementTable') {
-    const rows = buildRequirementRows(view.semantic, reqTableMode)
+    const filteredReq = applyViewFilters(
+      view.semantic,
+      view.visualization,
+      view.viewFilters || [],
+    )
+    const rows = buildRequirementRows(filteredReq.semantic, reqTableMode)
     return (
       <div className="diagram-canvas requirement-table-canvas">
         {!printMode && (
@@ -1709,6 +1739,13 @@ export function DiagramCanvas({
               <>
                 <button
                   type="button"
+                  onClick={() => setLayoutWizardOpen(true)}
+                  title="Set relative placement rules"
+                >
+                  LayoutWizard
+                </button>
+                <button
+                  type="button"
                   onClick={applyAutoLayout}
                   title="Size parts, place ports, space parts, then redraw connections"
                 >
@@ -1792,10 +1829,66 @@ export function DiagramCanvas({
                 <button type="button" onClick={() => applyRedraw('LR')} title="Redraw left-right">
                   Redraw: LR
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setLayoutWizardOpen(true)}
+                  title="Set relative placement rules"
+                >
+                  LayoutWizard
+                </button>
               </>
             )}
           </div>
         </div>
+      )}
+      {view && (
+        <LayoutWizardDialog
+          open={layoutWizardOpen}
+          rules={view.layoutRules || []}
+          semantic={view.semantic}
+          artefacts={nodes
+            .filter((n) => view.semantic[n.id])
+            .map((n): LayoutArtefact => {
+              const el = view.semantic[n.id]
+              return {
+                id: n.id,
+                name: el.name,
+                kind: el.kind,
+                x: n.position.x,
+                y: n.position.y,
+                width: Number(n.style?.width) || n.width || 100,
+                height: Number(n.style?.height) || n.height || 40,
+              }
+            })}
+          onChangeRules={(rules) => onLayoutRulesChange?.(rules)}
+          onApplyPositions={(positions) => {
+            const patch: Record<string, Partial<VisualizationNode>> = {}
+            for (const [id, pos] of Object.entries(positions)) {
+              const cur = nodes.find((n) => n.id === id)
+              if (!cur) continue
+              if (cur.position.x === pos.x && cur.position.y === pos.y) continue
+              patch[id] = { x: pos.x, y: pos.y }
+            }
+            if (Object.keys(patch).length) {
+              setNodes((prev) =>
+                prev.map((n) =>
+                  patch[n.id]
+                    ? {
+                        ...n,
+                        position: {
+                          x: patch[n.id].x ?? n.position.x,
+                          y: patch[n.id].y ?? n.position.y,
+                        },
+                      }
+                    : n,
+                ),
+              )
+              onNodesMoved(patch)
+            }
+            setLayoutWizardOpen(false)
+          }}
+          onClose={() => setLayoutWizardOpen(false)}
+        />
       )}
       {!printMode && portMoveMode && isStructure && (
         <div className="tool-banner" role="status">
@@ -1857,7 +1950,14 @@ export function DiagramCanvas({
                   onSelectArtifact(edge.id, { shift: e.shiftKey })
                 }
           }
-          onPaneClick={printMode ? undefined : () => onSelectArtifact(null)}
+          onPaneClick={
+            printMode
+              ? undefined
+              : () =>
+                  onSelectArtifact(
+                    selectionIdForPaneClick(view?.view.id ?? null),
+                  )
+          }
           onSelectionChange={printMode ? undefined : handleSelectionChange}
           multiSelectionKeyCode="Shift"
           selectionKeyCode="Shift"

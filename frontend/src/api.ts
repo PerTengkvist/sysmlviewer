@@ -212,12 +212,43 @@ export interface SessionPayload {
   project: Project | null
 }
 
+export interface ViewFilterRow {
+  id: string
+  kind: string
+  /** Which property the pattern matches. */
+  matchField?: 'name' | 'stereotype' | 'any'
+  namePattern: string
+  enabled: boolean
+}
+
+export type PlacementRule =
+  | 'bottom'
+  | 'below'
+  | 'rightmost'
+  | 'to the right of'
+  | 'leftmost'
+  | 'to the left of'
+  | 'beside'
+  | 'above'
+  | 'top'
+
+export interface LayoutRuleRow {
+  id: string
+  kind: string
+  namePattern: string
+  placement: PlacementRule | string
+  peerKind: string | null
+  peerNamePattern: string | null
+}
+
 export interface ViewPayload {
   view: ViewDef
   diagramMode?: DiagramMode
   hierarchicalLevels?: number
   /** Per-view override; null/undefined means inherit global Settings. */
   hierarchicalLevelsOverride?: number | null
+  viewFilters?: ViewFilterRow[]
+  layoutRules?: LayoutRuleRow[]
   modeError?: string | null
   semantic: Record<string, SemanticElement>
   visualization: {
@@ -339,6 +370,9 @@ export const api = {
       structureNotation?: 'sysmlv2' | 'arcadia'
       /** null clears per-view override; omit to leave unchanged. */
       hierarchicalLevelsOverride?: number | null
+      /** Replaces the whole list when present. */
+      viewFilters?: ViewFilterRow[]
+      layoutRules?: LayoutRuleRow[]
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {
@@ -405,6 +439,16 @@ export const api = {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
+    }),
+  patchArtifact: (
+    projectId: string,
+    artifactId: string,
+    body: { name?: string; metadataKeywords?: string[] },
+  ) =>
+    request<Project>(`/projects/${projectId}/semantic/${encodeURIComponent(artifactId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     }),
   deleteArtifact: (projectId: string, artifactId: string) =>
     request<Project>(`/projects/${projectId}/semantic/${encodeURIComponent(artifactId)}`, {
