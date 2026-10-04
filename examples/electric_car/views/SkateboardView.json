@@ -11,20 +11,20 @@
       "height": 465.0
     },
     "LogicalArchitecture::Car::skateboard::battery": {
-      "x": 243.51153472974858,
-      "y": 230.56269055753086,
+      "x": 233.77768709233294,
+      "y": 193.71312450160028,
       "width": 150.0,
       "height": 80.0
     },
     "LogicalArchitecture::Car::skateboard::chargeInlet": {
-      "x": 11.530585186086341,
-      "y": 227.14314882867018,
+      "x": 12.22586001733032,
+      "y": 192.37940726647153,
       "width": 150.0,
       "height": 80.0
     },
     "LogicalArchitecture::Car::skateboard::engine": {
-      "x": 541.6663198371449,
-      "y": 109.36390863260361,
+      "x": 544.4474191621208,
+      "y": 65.5615942642333,
       "width": 143.0,
       "height": 120.0
     },
@@ -48,11 +48,11 @@
     },
     "LogicalArchitecture::Car::skateboard::directionIn": {
       "side": "left",
-      "offset": 0.92
+      "offset": 0.950868545954853
     },
     "LogicalArchitecture::Car::skateboard::gearIn": {
       "side": "left",
-      "offset": 0.38
+      "offset": 0.28356480382973537
     },
     "LogicalArchitecture::Car::skateboard::engine::gearIn": {
       "side": "left",
@@ -64,7 +64,7 @@
     },
     "LogicalArchitecture::Car::skateboard::torqueIn": {
       "side": "left",
-      "offset": 0.41123448896636666
+      "offset": 0.3187928788211751
     },
     "LogicalArchitecture::Car::skateboard::engine::torqueIn": {
       "side": "left",
@@ -76,7 +76,7 @@
     },
     "LogicalArchitecture::Car::skateboard::brakeIn": {
       "side": "left",
-      "offset": 0.8958405698845416
+      "offset": 0.9099983719098228
     },
     "LogicalArchitecture::Car::skateboard::battery::chargeIn": {
       "side": "left",
@@ -88,7 +88,11 @@
     },
     "LogicalArchitecture::Car::skateboard::energyOut": {
       "side": "right",
-      "offset": 0.6045024153819532
+      "offset": 0.5333503412783648
+    },
+    "LogicalArchitecture::Car::skateboard::wheels::brakeIn": {
+      "side": "left",
+      "offset": 0.683662857280198
     }
   },
   "edges": {
@@ -172,8 +176,8 @@
         }
       ],
       "labelOffset": {
-        "x": -10.436906387924182,
-        "y": 34.317197065713444
+        "x": 88.50124528155504,
+        "y": 2.532816792087587
       }
     },
     "LogicalArchitecture::Car::skateboard::gearDelegate": {
@@ -216,11 +220,11 @@
     },
     "LogicalArchitecture::Car::skateboard::dep6": {
       "labelOffset": {
-        "x": 49.7472123399852,
-        "y": -4.936257174652326
+        "x": 16.919919819493373,
+        "y": -24.816771880534674
       },
       "sourceSide": "left",
-      "sourceOffset": 0.054011936828985085,
+      "sourceOffset": 0.13815283648189278,
       "targetSide": "right",
       "targetOffset": 0.5662121965431162
     },
@@ -234,12 +238,8 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 472.428320525539,
-          "y": 70.5454389601441
-        },
-        {
-          "x": 472.428320525539,
-          "y": 91.39919789460009
+          "x": 442.43752916866634,
+          "y": 27.42201896664367
         }
       ],
       "labelOffset": {
@@ -252,6 +252,25 @@
       "targetOffset": 0.8670146959592747
     },
     "LogicalArchitecture::Car::skateboard::dep3": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 645.6946359009548,
+          "y": 164.74830384791176
+        },
+        {
+          "x": 385.8546791446867,
+          "y": 164.74830384791176
+        },
+        {
+          "x": 385.8546791446867,
+          "y": 231.74817452244457
+        }
+      ],
+      "labelOffset": {
+        "x": 56.11764140851011,
+        "y": -0.5907120148264084
+      },
       "sourceSide": "bottom",
       "sourceOffset": 0.14502593538586325,
       "targetSide": "right",
@@ -259,13 +278,13 @@
     },
     "LogicalArchitecture::Car::skateboard::dep4": {
       "sourceSide": "bottom",
-      "sourceOffset": 0.11447348131405913,
-      "targetSide": "right",
-      "targetOffset": 0.28203937818443947
+      "sourceOffset": 0.05,
+      "targetSide": "top",
+      "targetOffset": 0.9354891630666496
     },
     "LogicalArchitecture::Car::skateboard::dep5": {
       "sourceSide": "left",
-      "sourceOffset": 0.7014571348896201,
+      "sourceOffset": 0.7276018170833083,
       "targetSide": "right",
       "targetOffset": 0.714214513058705
     }

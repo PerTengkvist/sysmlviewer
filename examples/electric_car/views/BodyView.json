@@ -11,14 +11,14 @@
       "height": 421.0
     },
     "LogicalArchitecture::Car::body::bodyShell": {
-      "x": 32.699840029065456,
-      "y": 170.20063988373823,
+      "x": 249.62261154545888,
+      "y": 144.4224335192252,
       "width": 150.0,
       "height": 80.0
     },
     "LogicalArchitecture::Car::body::door": {
-      "x": 222.5639478197774,
-      "y": 51.263048523412834,
+      "x": 16.975891996142707,
+      "y": 55.03546896700007,
       "width": 150.0,
       "height": 80.0
     },
@@ -29,8 +29,8 @@
       "height": 80.0
     },
     "LogicalArchitecture::Car::body::window": {
-      "x": 34.15987202325235,
-      "y": 52.367120767979756,
+      "x": 18.441453508305415,
+      "y": 168.05468103798938,
       "width": 150.0,
       "height": 80.0
     },
@@ -41,10 +41,14 @@
       "height": 80.0
     },
     "LogicalArchitecture::Car::body::lamps": {
-      "x": 473.429370864543,
-      "y": 327.04989625213983,
+      "x": 155.28858012201647,
+      "y": 288.0682183350714,
       "width": 150.0,
       "height": 80.0
+    },
+    "LogicalArchitecture::Car::body::energyIn": {
+      "side": "left",
+      "offset": 0.818440093465999
     }
   },
   "edges": {
@@ -90,8 +94,8 @@
         }
       ],
       "labelOffset": {
-        "x": -142.9990356798457,
-        "y": 0.19527483124397804
+        "x": 14.064311089869193,
+        "y": -0.16885627631967282
       }
     },
     "LogicalArchitecture::Car::body::dep12": {
@@ -123,10 +127,31 @@
       "targetOffset": 0.5835618240833707
     },
     "LogicalArchitecture::Car::body::dep11": {
-      "sourceSide": "left",
-      "sourceOffset": 0.5,
-      "targetSide": "right",
-      "targetOffset": 0.8666963991552997
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 383.6311852097396,
+          "y": 400.101445633292
+        }
+      ],
+      "labelOffset": {
+        "x": 2.1625105472516566,
+        "y": -65.54948921166829
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.6563325860237583,
+      "targetSide": "bottom",
+      "targetOffset": 0.4983843636442246
+    },
+    "LogicalArchitecture::Car::body::dep7": {
+      "labelOffset": {
+        "x": -5.006561897299946,
+        "y": -17.37744846914174
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.38398916436963615,
+      "targetSide": "left",
+      "targetOffset": 0.6773660559674959
     }
   }
 }

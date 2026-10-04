@@ -1434,6 +1434,9 @@ export default function App() {
                 api.updateRelationEnds(project!.id, id, sourceId, targetId),
               )
             }}
+            onPositionChange={(id, x, y) =>
+              void onNodesMoved({ [id]: { x, y } })
+            }
             onEditLockChange={(id, locked) => {
               if (!viewPayload) return
               const patch = lockTargets(

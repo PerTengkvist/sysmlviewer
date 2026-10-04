@@ -60,7 +60,13 @@ import {
   type Pt,
 } from './edgeRouting'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
-import { buildStructureGraph, orientRelationBoundaryHandles, applyRelationHandlesToNodes } from './modes/structure/buildStructureGraph'
+import {
+  absoluteNodeOrigin,
+  applyRelationHandlesToNodes,
+  buildStructureGraph,
+  orientRelationBoundaryHandles,
+} from './modes/structure/buildStructureGraph'
+import { relativePositionFromFlow } from './nestedPartPosition'
 import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
 import { LifelineNode } from './modes/sequence/LifelineNode'
 import { MessageEdge } from './modes/sequence/MessageEdge'
@@ -1224,16 +1230,15 @@ export function DiagramCanvas({
 
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, node, allNodes) => {
-      const patch: Record<string, Partial<VisualizationNode>> = {}
-      for (const n of allNodes) {
-        const { width, height } = nodeExtentSize(n)
-        patch[n.id] = {
-          artifactId: n.id,
-          x: n.position.x,
-          y: n.position.y,
+      const { width, height } = nodeExtentSize(node)
+      const patch: Record<string, Partial<VisualizationNode>> = {
+        [node.id]: {
+          artifactId: node.id,
+          x: node.position.x,
+          y: node.position.y,
           width,
           height,
-        }
+        },
       }
 
       let edgePatch: Record<string, Partial<VisualizationEdge>> | undefined
@@ -2174,28 +2179,34 @@ export function DiagramCanvas({
           open={layoutWizardOpen}
           rules={view.layoutRules || []}
           semantic={view.semantic}
-          artefacts={nodes
-            .filter((n) => view.semantic[n.id])
-            .map((n): LayoutArtefact => {
-              const el = view.semantic[n.id]
-              return {
-                id: n.id,
-                name: el.name,
-                kind: el.kind,
-                x: n.position.x,
-                y: n.position.y,
-                width: Number(n.style?.width) || n.width || 100,
-                height: Number(n.style?.height) || n.height || 40,
-              }
-            })}
+          artefacts={(() => {
+            const byId = new Map(nodes.map((n) => [n.id, n]))
+            return nodes
+              .filter((n) => view.semantic[n.id])
+              .map((n): LayoutArtefact => {
+                const el = view.semantic[n.id]
+                const origin = absoluteNodeOrigin(n, byId)
+                return {
+                  id: n.id,
+                  name: el.name,
+                  kind: el.kind,
+                  x: origin.x,
+                  y: origin.y,
+                  width: Number(n.style?.width) || n.width || 100,
+                  height: Number(n.style?.height) || n.height || 40,
+                }
+              })
+          })()}
           onChangeRules={(rules) => onLayoutRulesChange?.(rules)}
           onApplyPositions={(positions) => {
+            const byId = new Map(nodes.map((n) => [n.id, n]))
             const patch: Record<string, Partial<VisualizationNode>> = {}
             for (const [id, pos] of Object.entries(positions)) {
               const cur = nodes.find((n) => n.id === id)
               if (!cur) continue
-              if (cur.position.x === pos.x && cur.position.y === pos.y) continue
-              patch[id] = { x: pos.x, y: pos.y }
+              const rel = relativePositionFromFlow(cur, pos, byId)
+              if (cur.position.x === rel.x && cur.position.y === rel.y) continue
+              patch[id] = { x: rel.x, y: rel.y }
             }
             if (Object.keys(patch).length) {
               setNodes((prev) =>

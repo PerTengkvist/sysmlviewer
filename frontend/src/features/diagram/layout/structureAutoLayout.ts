@@ -242,7 +242,12 @@ function placeParts(
   sizes: Map<string, { width: number; height: number }>,
 ): Map<string, { x: number; y: number }> {
   const boundary = nodes.find(isBoundary)
-  const children = nodes.filter((n) => !isBoundary(n) && (n.type === 'part' || !n.type))
+  const children = nodes.filter(
+    (n) =>
+      !isBoundary(n) &&
+      (n.type === 'part' || !n.type) &&
+      (boundary ? n.parentId === boundary.id : !n.parentId),
+  )
   const positions = new Map<string, { x: number; y: number }>()
 
   const childIds = children.map((n) => n.id)

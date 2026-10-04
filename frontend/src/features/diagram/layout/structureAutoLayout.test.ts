@@ -139,4 +139,21 @@ describe('autoLayoutStructure', () => {
     expect(result.nodes['a::out']?.side).toBeTruthy()
     expect(result.nodes['b::in']?.side).toBeTruthy()
   })
+
+  it('does not reposition nested parts inside an ECU container', () => {
+    const nodes = [
+      part('root', { isBoundary: true, w: 800, h: 600 }),
+      part('ecu', { parentId: 'root', label: 'ECU', x: 40, y: 80 }),
+      part('sw', {
+        parentId: 'ecu',
+        label: 'controlSw',
+        x: 12,
+        y: 36,
+      }),
+    ]
+    const result = autoLayoutStructure(nodes, [])
+    expect(result.nodes['sw']?.x).toBeUndefined()
+    expect(result.nodes['sw']?.y).toBeUndefined()
+    expect(result.nodes['ecu']?.x).toBeDefined()
+  })
 })

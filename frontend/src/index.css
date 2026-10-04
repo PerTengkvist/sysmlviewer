@@ -1667,6 +1667,15 @@ body.port-dragging * {
   color: var(--ink);
 }
 
+.position-inputs {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.position-inputs .inline-edit {
+  width: 5rem;
+}
+
 .editor-actions {
   display: flex;
   flex-wrap: wrap;

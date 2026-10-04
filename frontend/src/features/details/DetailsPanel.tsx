@@ -52,6 +52,7 @@ type Props = {
   onDelete?: (artifactId: string) => void
   onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
   onEditLockChange?: (artifactId: string, locked: boolean) => void
+  onPositionChange?: (artifactId: string, x: number, y: number) => void
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -519,6 +520,7 @@ export function DetailsPanel({
   onDelete,
   onRetargetRelation,
   onEditLockChange,
+  onPositionChange,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const unlocked = elementUnlocked(viewVisualization, selectedId)
@@ -850,7 +852,46 @@ export function DetailsPanel({
           <>
             <dt>Position</dt>
             <dd>
-              {Math.round(node.x)}, {Math.round(node.y)}
+              {el.kind === 'part' && onPositionChange ? (
+                <span className="position-inputs">
+                  <input
+                    type="number"
+                    className="inline-edit"
+                    defaultValue={Math.round(node.x)}
+                    key={`${el.id}-x-${node.x}`}
+                    disabled={!unlocked}
+                    aria-label="X position"
+                    onBlur={(e) => {
+                      const x = Number(e.target.value)
+                      const y = node.y
+                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (Math.round(x) !== Math.round(node.x)) {
+                        onPositionChange(el.id, x, y)
+                      }
+                    }}
+                  />
+                  <input
+                    type="number"
+                    className="inline-edit"
+                    defaultValue={Math.round(node.y)}
+                    key={`${el.id}-y-${node.y}`}
+                    disabled={!unlocked}
+                    aria-label="Y position"
+                    onBlur={(e) => {
+                      const y = Number(e.target.value)
+                      const x = node.x
+                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (Math.round(y) !== Math.round(node.y)) {
+                        onPositionChange(el.id, x, y)
+                      }
+                    }}
+                  />
+                </span>
+              ) : (
+                <>
+                  {Math.round(node.x)}, {Math.round(node.y)}
+                </>
+              )}
             </dd>
             <dt>Size</dt>
             <dd title="Select the part in the diagram and drag the corner handles to resize">

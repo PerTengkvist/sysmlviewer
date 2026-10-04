@@ -423,6 +423,10 @@
       "editLocked": true
     },
     "UseCases::Lock::Passenger": {
+      "x": 450.8905095881476,
+      "y": 892.6144852627888,
+      "width": 200.0,
+      "height": 120.0,
       "editLocked": true
     },
     "UseCases::Park::Driver": {
@@ -438,6 +442,10 @@
       "editLocked": true
     },
     "UseCases::Charge::Driver": {
+      "x": 450.6771685902791,
+      "y": 229.84345578836658,
+      "width": 200.0,
+      "height": 120.0,
       "editLocked": true
     },
     "UseCases::ElectricCar": {

@@ -12965,7 +12965,7 @@
       "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw",
         "x": 360.0,
-        "y": 9800.0,
+        "y": 980.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -13004,8 +13004,8 @@
       },
       "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut",
-        "x": 0.0,
-        "y": 0.0,
+        "x": 650.0,
+        "y": 250.0,
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
