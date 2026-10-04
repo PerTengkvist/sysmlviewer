@@ -84,6 +84,10 @@ def layout_document(
     }
     if layout.hierarchical_levels_override is not None:
         doc["hierarchicalLevelsOverride"] = layout.hierarchical_levels_override
+    if layout.view_filters:
+        doc["viewFilters"] = list(layout.view_filters)
+    if layout.layout_rules:
+        doc["layoutRules"] = list(layout.layout_rules)
     return doc
 
 
@@ -191,6 +195,8 @@ def read_all(
                 "hierarchicalLevelsOverride": doc.get(
                     "hierarchicalLevelsOverride"
                 ),
+                "viewFilters": doc.get("viewFilters") or [],
+                "layoutRules": doc.get("layoutRules") or [],
             }
         )
     return ViewLayouts(by_view=by_view)

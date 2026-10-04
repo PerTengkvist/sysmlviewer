@@ -1,4 +1,9 @@
 import type { PortSide, VisualizationNode } from '../../../api'
+import {
+  bodyOffsetMin,
+  clampPortOffset,
+  PORT_BODY_OFFSET_MAX,
+} from './portPlacement'
 
 export type AlignAxis = 'horizontal' | 'vertical'
 
@@ -20,8 +25,156 @@ export type AlignResult = {
   skipped: string[]
 }
 
+export type PartBox = {
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type ConnectionPortEnd = {
+  id: string
+  side: PortSide
+  offset: number
+}
+
+export type AlignConnectionResult = {
+  /** Port side/offset patches keyed by port id. */
+  patch: Record<string, Partial<VisualizationNode>>
+  possible: boolean
+}
+
+/** Align H → sameX (vertical line). Align V → sameY (horizontal line). */
+export type ConnectionAlignMode = 'sameX' | 'sameY'
+
+/** Which connection end is the fixed reference (first / source by default). */
+export type ConnectionAlignAnchor = 'src' | 'tgt'
+
 function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n))
+}
+
+/** Left/right port body band in absolute Y for a part. */
+function lrBodyYRange(part: PartBox): [number, number] {
+  const lo = part.y + bodyOffsetMin(part.height) * part.height
+  const hi = part.y + PORT_BODY_OFFSET_MAX * part.height
+  return [lo, hi]
+}
+
+/** Top/bottom port inset band in absolute X for a part. */
+function tbBodyXRange(part: PartBox): [number, number] {
+  const lo = part.x + 0.08 * part.width
+  const hi = part.x + 0.92 * part.width
+  return [lo, hi]
+}
+
+/** Absolute point of a port on its parent part. */
+export function portAbsPoint(
+  part: PartBox,
+  port: ConnectionPortEnd,
+): { x: number; y: number } {
+  const { side, offset } = port
+  if (side === 'left') {
+    return { x: part.x, y: part.y + offset * part.height }
+  }
+  if (side === 'right') {
+    return { x: part.x + part.width, y: part.y + offset * part.height }
+  }
+  if (side === 'top') {
+    return { x: part.x + offset * part.width, y: part.y }
+  }
+  return { x: part.x + offset * part.width, y: part.y + part.height }
+}
+
+/**
+ * True when the non-anchor port can be placed to match the anchor on the
+ * given mode (same absolute X or Y), without moving the anchor.
+ */
+export function canAlignDirectConnection(
+  mode: ConnectionAlignMode,
+  srcPart: PartBox,
+  tgtPart: PartBox,
+  srcPort: ConnectionPortEnd,
+  tgtPort: ConnectionPortEnd,
+  anchor: ConnectionAlignAnchor = 'src',
+): boolean {
+  return alignDirectConnection(
+    mode,
+    srcPart,
+    tgtPart,
+    srcPort,
+    tgtPort,
+    anchor,
+  ).possible
+}
+
+/**
+ * Align the two port ends of a direct connection.
+ * The anchor end (default: source / first) never moves; the other end moves
+ * to share the anchor's absolute X (sameX / Align H) or Y (sameY / Align V).
+ */
+export function alignDirectConnection(
+  mode: ConnectionAlignMode,
+  srcPart: PartBox,
+  tgtPart: PartBox,
+  srcPort: ConnectionPortEnd,
+  tgtPort: ConnectionPortEnd,
+  anchor: ConnectionAlignAnchor = 'src',
+): AlignConnectionResult {
+  const anchorPart = anchor === 'src' ? srcPart : tgtPart
+  const movePart = anchor === 'src' ? tgtPart : srcPart
+  const movePort = anchor === 'src' ? tgtPort : srcPort
+  const anchorPort = anchor === 'src' ? srcPort : tgtPort
+  const abs = portAbsPoint(anchorPart, anchorPort)
+
+  if (mode === 'sameY') {
+    const [lo, hi] = lrBodyYRange(movePart)
+    if (abs.y < lo - 1e-6 || abs.y > hi + 1e-6) {
+      return { patch: {}, possible: false }
+    }
+    const moveCx = movePart.x + movePart.width / 2
+    const anchorCx = anchorPart.x + anchorPart.width / 2
+    const moveSide: PortSide = moveCx <= anchorCx ? 'right' : 'left'
+    const offset = clampPortOffset(
+      (abs.y - movePart.y) / Math.max(movePart.height, 1),
+      moveSide,
+      movePart.height,
+    )
+    return {
+      possible: true,
+      patch: {
+        [movePort.id]: {
+          artifactId: movePort.id,
+          side: moveSide,
+          offset,
+        },
+      },
+    }
+  }
+
+  const [lo, hi] = tbBodyXRange(movePart)
+  if (abs.x < lo - 1e-6 || abs.x > hi + 1e-6) {
+    return { patch: {}, possible: false }
+  }
+  const moveCy = movePart.y + movePart.height / 2
+  const anchorCy = anchorPart.y + anchorPart.height / 2
+  const moveSide: PortSide = moveCy <= anchorCy ? 'bottom' : 'top'
+  const offset = clampPortOffset(
+    (abs.x - movePart.x) / Math.max(movePart.width, 1),
+    moveSide,
+    movePart.height,
+  )
+  return {
+    possible: true,
+    patch: {
+      [movePort.id]: {
+        artifactId: movePort.id,
+        side: moveSide,
+        offset,
+      },
+    },
+  }
 }
 
 function absCenter(n: AlignableNode): { cx: number; cy: number } {

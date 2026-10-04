@@ -113,6 +113,136 @@ def test_patch_with_view_id_style_goes_global(tmp_path: Path):
     assert "style" not in overlay
 
 
+DUAL_PORT_SYSML = """\
+package DualPort {
+  part def Box {
+    port p1;
+  }
+
+  view def BoxTree : TreeView {
+    expose Box;
+  }
+
+  view def BoxView : GeneralView {
+    expose Box;
+  }
+}
+"""
+
+
+def _setup_dual_port(tmp_path: Path) -> tuple[TestClient, str, str, str, str, str]:
+    client, project_id = _client(tmp_path)
+    add_content_file(client, project_id, tmp_path, "dual_port.sysml", DUAL_PORT_SYSML)
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    views = {v["name"]: v["id"] for v in project["views"]}
+    assert "BoxTree" in views and "BoxView" in views
+    port_id = "DualPort::Box::p1"
+    assert port_id in project["visualization"]["nodes"]
+    # Seed both view files so we can assert the other file stays untouched.
+    client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": views["BoxView"],
+            "nodes": {"DualPort::Box": {"x": 10, "y": 10, "width": 200, "height": 100}},
+        },
+    )
+    client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": views["BoxTree"],
+            "nodes": {"DualPort::Box": {"x": 20, "y": 20, "width": 80, "height": 40}},
+        },
+    )
+    return (
+        client,
+        project_id,
+        views["BoxTree"],
+        views["BoxView"],
+        "DualPort::Box",
+        port_id,
+    )
+
+
+def test_port_side_patch_with_view_id_is_view_local(tmp_path: Path):
+    client, project_id, tree_id, general_id, _part_id, port_id = _setup_dual_port(
+        tmp_path
+    )
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    global_side = project["visualization"]["nodes"][port_id]["side"]
+    global_offset = project["visualization"]["nodes"][port_id]["offset"]
+    assert global_side is not None
+
+    tree_path = tmp_path / "views" / "BoxTree.json"
+    tree_before = tree_path.read_text(encoding="utf-8")
+    tree_mtime = tree_path.stat().st_mtime_ns
+
+    patched = client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": general_id,
+            "nodes": {port_id: {"side": "top", "offset": 0.2}},
+        },
+    ).json()
+    assert patched["visualization"]["nodes"][port_id]["side"] == global_side
+    assert patched["visualization"]["nodes"][port_id]["offset"] == global_offset
+    assert patched["viewLayouts"][general_id]["nodes"][port_id]["side"] == "top"
+    assert patched["viewLayouts"][general_id]["nodes"][port_id]["offset"] == 0.2
+
+    general = client.get(api_url(f"/projects/{project_id}/views/{general_id}")).json()
+    assert general["visualization"]["nodes"][port_id]["side"] == "top"
+    assert general["visualization"]["nodes"][port_id]["offset"] == 0.2
+
+    tree = client.get(api_url(f"/projects/{project_id}/views/{tree_id}")).json()
+    assert tree["visualization"]["nodes"][port_id]["side"] == global_side
+    assert tree["visualization"]["nodes"][port_id]["offset"] == global_offset
+
+    assert tree_path.read_text(encoding="utf-8") == tree_before
+    assert tree_path.stat().st_mtime_ns == tree_mtime
+
+
+def test_port_side_patch_without_view_id_stays_global(tmp_path: Path):
+    client, project_id, _tree_id, _general_id, _part_id, port_id = _setup_dual_port(
+        tmp_path
+    )
+    patched = client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={"nodes": {port_id: {"side": "bottom", "offset": 0.7}}},
+    ).json()
+    assert patched["visualization"]["nodes"][port_id]["side"] == "bottom"
+    assert patched["visualization"]["nodes"][port_id]["offset"] == 0.7
+
+
+def test_mixed_geometry_and_port_patch_stays_in_one_view(tmp_path: Path):
+    client, project_id, tree_id, general_id, part_id, port_id = _setup_dual_port(
+        tmp_path
+    )
+    project = client.get(api_url(f"/projects/{project_id}")).json()
+    global_side = project["visualization"]["nodes"][port_id]["side"]
+    global_offset = project["visualization"]["nodes"][port_id]["offset"]
+
+    patched = client.patch(
+        api_url(f"/projects/{project_id}/visualization"),
+        json={
+            "viewId": general_id,
+            "nodes": {
+                part_id: {"x": 50, "y": 60, "width": 220, "height": 140},
+                port_id: {"side": "right", "offset": 0.33},
+            },
+        },
+    ).json()
+    overlay = patched["viewLayouts"][general_id]["nodes"]
+    assert overlay[part_id]["x"] == 50.0
+    assert overlay[part_id]["width"] == 220.0
+    assert overlay[port_id]["side"] == "right"
+    assert overlay[port_id]["offset"] == 0.33
+    assert patched["visualization"]["nodes"][port_id]["side"] == global_side
+    assert patched["visualization"]["nodes"][port_id]["offset"] == global_offset
+
+    tree = client.get(api_url(f"/projects/{project_id}/views/{tree_id}")).json()
+    assert tree["visualization"]["nodes"][port_id]["side"] == global_side
+    assert tree["visualization"]["nodes"][part_id]["x"] == 20.0
+
+
 DUAL_CONN_SYSML = """\
 package Conn {
   part def Box {

@@ -6,13 +6,18 @@ import {
   findNodeIdForPort,
   pathCrossesObstaclesMid,
   polylineHitsRect,
+  edgePortEndpoints,
+  partObstacleRects,
   redrawStructureConnections,
   resolveObstacleAwareWaypoints,
   routeOrthogonal,
   syncInternalEdgeBounds,
   type Rect,
+  type RoutedConnection,
 } from './connectionRouting'
 import { resolveRoutePoints, type Pt } from '../edgeRouting'
+import { closestParallelGap } from './connectionSeparation'
+import { EDGE_LABEL_TEXT_HEIGHT_PX } from '../../../settings'
 
 describe('pathCrossesObstaclesMid', () => {
   const box: Rect = { minX: 40, minY: 20, maxX: 80, maxY: 80 }
@@ -80,6 +85,105 @@ describe('resolveObstacleAwareWaypoints', () => {
   })
 })
 
+
+function fullPath(nodes: Node[], edge: Edge, routed: RoutedConnection[]): Pt[] {
+  const ends = edgePortEndpoints(nodes, edge)
+  if (!ends) return []
+  const corners = routed.find((r) => r.id === edge.id)?.waypoints || []
+  return resolveRoutePoints(ends.sx, ends.sy, ends.tx, ends.ty, corners)
+}
+
+function assertSeparated(
+  nodes: Node[],
+  edges: Edge[],
+  routed: RoutedConnection[],
+  separation: number,
+) {
+  const obstacles = partObstacleRects(nodes)
+  const paths = edges.map((edge) => fullPath(nodes, edge, routed))
+  for (const path of paths) {
+    for (const rect of obstacles) {
+      expect(polylineHitsRect(path, rect)).toBe(false)
+    }
+  }
+  expect(paths[0].map((p) => `${p.x},${p.y}`).join('|')).not.toBe(
+    paths[1].map((p) => `${p.x},${p.y}`).join('|'),
+  )
+  for (let i = 0; i < paths.length; i++) {
+    for (let j = i + 1; j < paths.length; j++) {
+      const gap = closestParallelGap(paths[i], paths[j])
+      if (gap === null) continue
+      expect(gap).toBeGreaterThanOrEqual(separation)
+    }
+  }
+}
+
+/** Two or three angular nets forced through one narrow corridor between bars. */
+function narrowChannelLayout(count: 2 | 3): { nodes: Node[]; edges: Edge[] } {
+  const parent = partNode({
+    id: 'Root',
+    x: 0,
+    y: 0,
+    w: 520,
+    h: 420,
+    isBoundary: true,
+  })
+  const height = count === 2 ? 24 : 48
+  const offsets = count === 2 ? [0.25, 0.75] : [0.2, 0.5, 0.8]
+  const a = partNode({
+    id: 'A',
+    x: 20,
+    y: 146,
+    w: 100,
+    h: height,
+    parentId: 'Root',
+    ports: offsets.map((offset, i) => ({
+      id: `A::p${i}`,
+      name: `p${i}`,
+      side: 'right' as const,
+      offset,
+    })),
+  })
+  const b = partNode({
+    id: 'B',
+    x: 360,
+    y: 146,
+    w: 100,
+    h: height,
+    parentId: 'Root',
+    ports: offsets.map((offset, i) => ({
+      id: `B::p${i}`,
+      name: `p${i}`,
+      side: 'left' as const,
+      offset,
+    })),
+  })
+  const top = partNode({
+    id: 'Top',
+    x: 140,
+    y: 40,
+    w: 200,
+    h: 110,
+    parentId: 'Root',
+  })
+  const bottom = partNode({
+    id: 'Bottom',
+    x: 140,
+    y: 166,
+    w: 200,
+    h: 120,
+    parentId: 'Root',
+  })
+  const edges: Edge[] = offsets.map((_, i) => ({
+    id: `e${i}`,
+    source: 'A',
+    target: 'B',
+    sourceHandle: `A::p${i}`,
+    targetHandle: `target:B::p${i}`,
+    data: { routing: 'angular', waypoints: [] },
+  }))
+  return { nodes: [parent, a, b, top, bottom], edges }
+}
 
 function isOrtho(pts: { x: number; y: number }[]): boolean {
   for (let i = 1; i < pts.length; i++) {
@@ -603,6 +707,91 @@ describe('boundaryFlowBounds / syncInternalEdgeBounds', () => {
       maxX: 510,
       maxY: 380,
     })
+  })
+
+  it('unrelated parallel routes stay at least a label height apart', () => {
+    const layout = narrowChannelLayout(2)
+    const routed = redrawStructureConnections(layout.nodes, layout.edges, undefined, undefined, {
+      separation: EDGE_LABEL_TEXT_HEIGHT_PX,
+    })
+    expect(routed).toHaveLength(2)
+    assertSeparated(layout.nodes, layout.edges, routed, EDGE_LABEL_TEXT_HEIGHT_PX)
+  })
+
+  it('three unrelated nets each keep a label-height lane', () => {
+    const layout = narrowChannelLayout(3)
+    const routed = redrawStructureConnections(layout.nodes, layout.edges, undefined, undefined, {
+      separation: EDGE_LABEL_TEXT_HEIGHT_PX,
+    })
+    expect(routed).toHaveLength(3)
+    assertSeparated(layout.nodes, layout.edges, routed, EDGE_LABEL_TEXT_HEIGHT_PX)
+  })
+
+  it('shared port may stay coincident', () => {
+    const parent = partNode({
+      id: 'Root',
+      x: 0,
+      y: 0,
+      w: 400,
+      h: 240,
+      isBoundary: true,
+    })
+    const a = partNode({
+      id: 'A',
+      x: 30,
+      y: 80,
+      w: 80,
+      h: 80,
+      parentId: 'Root',
+      ports: [{ id: 'A::out', name: 'out', side: 'right', offset: 0.5 }],
+    })
+    const b = partNode({
+      id: 'B',
+      x: 260,
+      y: 40,
+      w: 80,
+      h: 50,
+      parentId: 'Root',
+      ports: [{ id: 'B::in', name: 'in', side: 'left', offset: 0.5 }],
+    })
+    const c = partNode({
+      id: 'C',
+      x: 260,
+      y: 140,
+      w: 80,
+      h: 50,
+      parentId: 'Root',
+      ports: [{ id: 'C::in', name: 'in', side: 'left', offset: 0.5 }],
+    })
+    const edges: Edge[] = [
+      {
+        id: 'e1',
+        source: 'A',
+        target: 'B',
+        sourceHandle: 'A::out',
+        targetHandle: 'target:B::in',
+        data: { routing: 'angular', waypoints: [] },
+      },
+      {
+        id: 'e2',
+        source: 'A',
+        target: 'C',
+        sourceHandle: 'A::out',
+        targetHandle: 'target:C::in',
+        data: { routing: 'angular', waypoints: [] },
+      },
+    ]
+    const nodes = [parent, a, b, c]
+    const routed = redrawStructureConnections(nodes, edges, undefined, undefined, {
+      separation: EDGE_LABEL_TEXT_HEIGHT_PX,
+    })
+    expect(routed.map((r) => r.id).sort()).toEqual(['e1', 'e2'])
+    for (const edge of edges) {
+      const hit = partObstacleRects(nodes).some((rect) =>
+        polylineHitsRect(fullPath(nodes, edge, routed), rect),
+      )
+      expect(hit).toBe(false)
+    }
   })
 
   it('finds the owning part for a port id', () => {

@@ -162,28 +162,28 @@ package Requirements {
   #refine dependency from ChargeAway to ChargeTime;
   #refine dependency from ParkAndLeave to LockIndication, Immobilizer;
 
-  satisfy VehicleLength by LogicalArchitecture::Car::body;
-  satisfy VehicleWidth by LogicalArchitecture::Car::body;
-  satisfy VehicleHeight by LogicalArchitecture::Car::body;
-  satisfy PassengerCapacity by LogicalArchitecture::Car::body;
-  satisfy CargoVolume by LogicalArchitecture::Car::body;
-  satisfy Range by LogicalArchitecture::Car::battery;
-  satisfy Acceleration by LogicalArchitecture::Car::engine;
-  satisfy TopSpeed by LogicalArchitecture::Car::engine;
-  satisfy ChargeTime by LogicalArchitecture::Car::battery;
-  satisfy ChargeTime by LogicalArchitecture::Car::chargeInlet;
-  satisfy PropulsionModes by LogicalArchitecture::Car::gearStick;
-  satisfy CrashProtection by LogicalArchitecture::Car::body;
-  satisfy PedestrianProtection by LogicalArchitecture::Car::body;
-  satisfy OccupantRestraint by LogicalArchitecture::Car::body;
-  satisfy BrakingDistance by LogicalArchitecture::Car::brakePedal;
-  satisfy BrakingDistance by LogicalArchitecture::Car::wheels;
-  satisfy DirectionalControl by LogicalArchitecture::Car::steeringWheel;
-  satisfy ForwardVisibility by LogicalArchitecture::Car::windshield;
-  satisfy ForwardVisibility by LogicalArchitecture::Car::wipers;
-  satisfy AccessControl by LogicalArchitecture::Car::locks;
-  satisfy Immobilizer by LogicalArchitecture::Car::locks;
-  satisfy LockIndication by LogicalArchitecture::Car::locks;
+  satisfy VehicleLength by LogicalArchitecture::Car::body::bodyShell;
+  satisfy VehicleWidth by LogicalArchitecture::Car::body::bodyShell;
+  satisfy VehicleHeight by LogicalArchitecture::Car::body::bodyShell;
+  satisfy PassengerCapacity by LogicalArchitecture::Car::body::bodyShell;
+  satisfy CargoVolume by LogicalArchitecture::Car::body::bodyShell;
+  satisfy Range by LogicalArchitecture::Car::skateboard::battery;
+  satisfy Acceleration by LogicalArchitecture::Car::skateboard::engine;
+  satisfy TopSpeed by LogicalArchitecture::Car::skateboard::engine;
+  satisfy ChargeTime by LogicalArchitecture::Car::skateboard::battery;
+  satisfy ChargeTime by LogicalArchitecture::Car::skateboard::chargeInlet;
+  satisfy PropulsionModes by LogicalArchitecture::Car::driverControls::gearStick;
+  satisfy CrashProtection by LogicalArchitecture::Car::body::bodyShell;
+  satisfy PedestrianProtection by LogicalArchitecture::Car::body::bodyShell;
+  satisfy OccupantRestraint by LogicalArchitecture::Car::body::bodyShell;
+  satisfy BrakingDistance by LogicalArchitecture::Car::driverControls::brakePedal;
+  satisfy BrakingDistance by LogicalArchitecture::Car::skateboard::wheels;
+  satisfy DirectionalControl by LogicalArchitecture::Car::driverControls::steeringWheel;
+  satisfy ForwardVisibility by LogicalArchitecture::Car::body::windshield;
+  satisfy ForwardVisibility by LogicalArchitecture::Car::body::wipers;
+  satisfy AccessControl by LogicalArchitecture::Car::body::door;
+  satisfy Immobilizer by LogicalArchitecture::Car::body::door;
+  satisfy LockIndication by LogicalArchitecture::Car::body::door;
 
   view def RequirementsGraphView : GeneralView {
     doc /* Requirement graph. Group requirements, leaf requirements and user stories, with «refine» dependencies. */

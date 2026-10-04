@@ -30,6 +30,7 @@ import {
   hasSavedPortPlacement,
   packBodyOffsets,
 } from '../../layout/portPlacement'
+import { resolveNestedPartPosition } from '../../nestedPartPosition'
 
 function nodeBox(
   node: Node,
@@ -214,6 +215,7 @@ function buildPorts(
   el: SemanticElement,
   semantic: Record<string, SemanticElement>,
   visualization: ViewPayload['visualization'],
+  isBoundary = false,
 ) {
   const partH = Number(visualization.nodes[el.id]?.height) || 120
   const portEls = (el.children || [])
@@ -239,7 +241,7 @@ function buildPorts(
       id: port.id,
       name: port.name,
       side,
-      offset: clampPortOffset(Number(pv!.offset), side, partH),
+      offset: clampPortOffset(Number(pv!.offset), side, partH, { isBoundary }),
     }
   })
 }
@@ -376,7 +378,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     multiplicity: el.multiplicity,
     isReference: !!el.isReference,
     metadataKeywords: el.metadataKeywords || [],
-    ports: buildPorts(el, semantic, visualization).map((p) => ({
+    ports: buildPorts(el, semantic, visualization, isBoundary).map((p) => ({
       ...p,
       style: visualization.nodes[p.id]?.style,
     })),
@@ -587,14 +589,14 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         const row = Math.floor(index / kcols)
         const defaultX = padX + col * (defaults.fallbackW + gapX)
         const defaultY = padY + row * (defaults.fallbackH + gapY)
-        const useStored =
-          viz &&
-          Number.isFinite(viz.x) &&
-          Number.isFinite(viz.y) &&
-          viz.x >= 0 &&
-          viz.y >= 0 &&
-          viz.x < parentW - 40 &&
-          viz.y < parentH - 40
+        const stored = resolveNestedPartPosition(
+          viz,
+          parentW,
+          parentH,
+          visualization.nodes[parentId],
+          defaultX,
+          defaultY,
+        )
 
         const isContainer = grandKids.length > 0
         const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
@@ -613,10 +615,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
           type: 'part',
           parentId,
           extent: 'parent',
-          position: {
-            x: useStored ? viz.x : defaultX,
-            y: useStored ? viz.y : defaultY,
-          },
+          position: stored,
           style: {
             width: box.width,
             height: box.height,
@@ -732,14 +731,14 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         const row = Math.floor(index / kcols)
         const defaultX = padX + col * (defaults.fallbackW + gapX)
         const defaultY = padY + row * (defaults.fallbackH + gapY)
-        const useStored =
-          viz &&
-          Number.isFinite(viz.x) &&
-          Number.isFinite(viz.y) &&
-          viz.x >= 0 &&
-          viz.y >= 0 &&
-          viz.x < parentW - 40 &&
-          viz.y < parentH - 40
+        const stored = resolveNestedPartPosition(
+          viz,
+          parentW,
+          parentH,
+          visualization.nodes[parentId],
+          defaultX,
+          defaultY,
+        )
         const isContainer = grandKids.length > 0
         const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
           isBoundary: isContainer,
@@ -757,10 +756,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
           type: 'part',
           parentId,
           extent: 'parent',
-          position: {
-            x: useStored ? viz.x : defaultX,
-            y: useStored ? viz.y : defaultY,
-          },
+          position: stored,
           style: {
             width: box.width,
             height: box.height,

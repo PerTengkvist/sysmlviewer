@@ -13,6 +13,20 @@ describe('nearestBorderAnchor', () => {
     expect(a.side).toBe('right')
     expect(a.offset).toBeCloseTo(0.5, 5)
   })
+
+  it('clamps L/R offset to 0.05–0.95 by default', () => {
+    expect(nearestBorderAnchor(0, 0, 100, 80).offset).toBe(0.05)
+    expect(nearestBorderAnchor(0, 80, 100, 80).offset).toBe(0.95)
+  })
+
+  it('clamps L/R offset to 0.02–0.98 on a boundary', () => {
+    expect(nearestBorderAnchor(0, 0, 100, 80, { isBoundary: true }).offset).toBe(
+      0.02,
+    )
+    expect(nearestBorderAnchor(0, 80, 100, 80, { isBoundary: true }).offset).toBe(
+      0.98,
+    )
+  })
 })
 
 describe('pointerInsideNodeBox', () => {

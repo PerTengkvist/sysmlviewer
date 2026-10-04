@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { DEFAULT_SETTINGS, loadSettings } from './settings'
+import { DEFAULT_SETTINGS, EDGE_LABEL_TEXT_HEIGHT_PX, loadSettings } from './settings'
 
 const store = new Map<string, string>()
 
@@ -17,6 +17,13 @@ beforeEach(() => {
         store.delete(k)
       },
     },
+  })
+})
+
+describe('connection separation', () => {
+  it('default connection separation equals edge label text height', () => {
+    expect(EDGE_LABEL_TEXT_HEIGHT_PX).toBe(11)
+    expect(DEFAULT_SETTINGS.connectionSeparation).toBe(EDGE_LABEL_TEXT_HEIGHT_PX)
   })
 })
 

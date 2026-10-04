@@ -699,13 +699,37 @@ class ProjectService:
     def rename_artifact(
         self, project_id: str, artifact_id: str, name: str
     ) -> Project | None:
+        return self.patch_artifact(project_id, artifact_id, name=name)
+
+    def patch_artifact(
+        self,
+        project_id: str,
+        artifact_id: str,
+        *,
+        name: str | None = None,
+        metadata_keywords: list[str] | None = None,
+    ) -> Project | None:
         project = self.repo.get(project_id)
         if not project:
             return None
         el = project.semantic.get(artifact_id)
-        if not el or not name.strip():
+        if not el:
             return None
-        el.name = name.strip()
+        changed = False
+        if name is not None:
+            stripped = name.strip()
+            if not stripped:
+                return None
+            if el.name != stripped:
+                el.name = stripped
+                changed = True
+        if metadata_keywords is not None:
+            cleaned = [kw.strip() for kw in metadata_keywords if kw and kw.strip()]
+            if list(el.metadata_keywords) != cleaned:
+                el.metadata_keywords = cleaned
+                changed = True
+        if not changed and name is None and metadata_keywords is None:
+            return None
         self._sync_sysml_file(project, el.file_id)
         project.views = rebuild_views(project.semantic)
         project.updated_at = utc_now()
@@ -923,6 +947,8 @@ class ProjectService:
         from domain.view_layouts import (
             ViewLayout,
             ViewLayouts,
+            apply_layout_rules,
+            apply_view_filters,
             apply_view_hierarchy_override,
             apply_view_layout_edge_patch,
             apply_view_layout_patch,
@@ -940,6 +966,8 @@ class ProjectService:
         nodes_patch = dict(patch.get("nodes") or {})
         edges_patch = dict(patch.get("edges") or {})
         hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
+        view_filters_patch = "viewFilters" in patch
+        layout_rules_patch = "layoutRules" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -978,6 +1006,20 @@ class ProjectService:
                 if notation != "arcadia":
                     project.view_layouts = working
 
+            if view_filters_patch:
+                working = apply_view_filters(
+                    working, view_id, patch.get("viewFilters")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if layout_rules_patch:
+                working = apply_layout_rules(
+                    working, view_id, patch.get("layoutRules")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
             geo_patch: dict[str, dict] = {}
             other_patch: dict[str, dict] = {}
             for artifact_id, node_data in nodes_patch.items():
@@ -986,7 +1028,16 @@ class ProjectService:
                 for key, value in node_data.items():
                     if key == "artifactId":
                         continue
-                    if key in ("x", "y", "width", "height", "anchors"):
+                    if key in (
+                        "x",
+                        "y",
+                        "width",
+                        "height",
+                        "side",
+                        "offset",
+                        "anchors",
+                        "editLocked",
+                    ):
                         geo[key] = value
                     else:
                         other[key] = value
@@ -1018,6 +1069,7 @@ class ProjectService:
                         "targetOffset",
                         "sourceAnchorId",
                         "targetAnchorId",
+                        "editLocked",
                     ):
                         geo_e[key] = value
                     else:
@@ -1034,7 +1086,13 @@ class ProjectService:
                     project.view_layouts = working
             edges_patch = other_edge_patch
 
-            if geo_patch or geo_edge_patch or hierarchy_override_patch:
+            if (
+                geo_patch
+                or geo_edge_patch
+                or hierarchy_override_patch
+                or view_filters_patch
+                or layout_rules_patch
+            ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
                     view_name = next(
@@ -1074,6 +1132,8 @@ class ProjectService:
                     if existing.style is None:
                         existing.style = ElementStyle()
                     existing.style.merge(node_data["style"])
+                if "editLocked" in node_data:
+                    existing.edit_locked = bool(node_data["editLocked"])
             else:
                 project.visualization.nodes[artifact_id] = VisualizationNode.from_dict(
                     {"artifactId": artifact_id, **node_data}
@@ -1104,6 +1164,8 @@ class ProjectService:
                     if existing.style is None:
                         existing.style = ElementStyle()
                     existing.style.merge(edge_data["style"])
+                if "editLocked" in edge_data:
+                    existing.edit_locked = bool(edge_data["editLocked"])
             else:
                 project.visualization.edges[artifact_id] = VisualizationEdge.from_dict(
                     {"artifactId": artifact_id, **edge_data}
@@ -1405,6 +1467,7 @@ class ProjectService:
             overlay_has_xy,
             resolve_view_edge,
             resolve_view_node,
+            stamp_edit_lock,
         )
 
         # Kinds that are placed as top-level diagram nodes in structure views.
@@ -1462,6 +1525,13 @@ class ProjectService:
             x, y = default_view_local_xy(index)
             out["x"] = x
             out["y"] = y
+            pending_overlay = (
+                overlay_layouts.get_node(view.id, aid)
+                if overlay_layouts is not None
+                else None
+            )
+            if pending_overlay is not None:
+                stamp_edit_lock(out, pending_overlay.edit_locked)
             nodes[aid] = out
 
         # Edges: only relations whose endpoints are both in the depth-limited set.
@@ -1552,6 +1622,7 @@ class ProjectService:
                     out["sourceAnchorId"] = edge_overlay.source_anchor_id
                 if edge_overlay.target_anchor_id is not None:
                     out["targetAnchorId"] = edge_overlay.target_anchor_id
+                stamp_edit_lock(out, edge_overlay.edit_locked)
                 edges[aid] = out
                 continue
             resolved_edge = resolve_view_edge(global_edge, edge_overlay)
@@ -1574,6 +1645,12 @@ class ProjectService:
             "diagramMode": diagram_mode,
             "hierarchicalLevels": effective_levels,
             "hierarchicalLevelsOverride": levels_override,
+            "viewFilters": list(layout_for_view.view_filters)
+            if layout_for_view
+            else [],
+            "layoutRules": list(layout_for_view.layout_rules)
+            if layout_for_view
+            else [],
             "semantic": semantic,
             "visualization": {"nodes": nodes, "edges": edges},
             "subdiagrams": subdiagrams,

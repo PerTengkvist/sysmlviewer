@@ -251,6 +251,7 @@ class VisualizationNode:
     side: PortSide | None = None
     offset: float | None = None
     style: ElementStyle | None = None
+    edit_locked: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -263,6 +264,8 @@ class VisualizationNode:
             "side": self.side.value if self.side else None,
             "offset": self.offset,
         }
+        if self.edit_locked:
+            out["editLocked"] = True
         if self.style is not None:
             style = self.style.to_dict()
             if style:
@@ -282,6 +285,7 @@ class VisualizationNode:
             side=PortSide(side) if side else None,
             offset=data.get("offset"),
             style=ElementStyle.from_dict(data.get("style")),
+            edit_locked=bool(data.get("editLocked", False)),
         )
 
 
@@ -318,6 +322,7 @@ class VisualizationEdge:
     source_offset: float | None = None
     target_side: PortSide | None = None
     target_offset: float | None = None
+    edit_locked: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -329,6 +334,8 @@ class VisualizationEdge:
                 "y": self.label_offset_y,
             },
         }
+        if self.edit_locked:
+            out["editLocked"] = True
         if self.style is not None:
             style = self.style.to_dict()
             if style:
@@ -367,6 +374,7 @@ class VisualizationEdge:
                 if data.get("targetOffset") is not None
                 else None
             ),
+            edit_locked=bool(data.get("editLocked", False)),
         )
 
 

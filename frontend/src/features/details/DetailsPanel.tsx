@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type {
   ElementStyle,
   ElementStyleMode,
@@ -6,6 +6,7 @@ import type {
   RelationTodoItem,
   RoutingType,
   SemanticElement,
+  ViewFilterRow,
   ViewPayload,
 } from '../../api'
 import { STYLE_DEFAULTS } from '../diagram/elementStyle'
@@ -15,6 +16,8 @@ import {
 } from '../diagram/relationshipStyle'
 import type { ViewMode } from '../../settings'
 import { isRelationKind } from '../diagram/relationKinds'
+import { isEditLocked } from '../diagram/editLock'
+import { ViewFilterDialog } from '../diagram/ViewFilterDialog'
 
 type Props = {
   project: Project | null
@@ -28,6 +31,7 @@ type Props = {
   editorMode?: boolean
   viewMode?: ViewMode
   onHierarchyOverrideChange?: (override: number | null) => void
+  onViewFiltersChange?: (filters: ViewFilterRow[]) => void
   onRoutingChange: (connectionId: string, routing: RoutingType) => void
   onAutoroute?: (connectionId: string) => void
   onWaypointsChange?: (
@@ -38,11 +42,17 @@ type Props = {
   onFormatPaint?: () => void
   paintModeActive?: boolean
   onRename?: (artifactId: string, name: string) => void
+  onMetadataKeywordsChange?: (
+    artifactId: string,
+    metadataKeywords: string[],
+  ) => void
   onAddPart?: (parentId: string) => void
   onAddPort?: (parentId: string) => void
   onAddAttribute?: (parentId: string) => void
   onDelete?: (artifactId: string) => void
   onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
+  onEditLockChange?: (artifactId: string, locked: boolean) => void
+  onPositionChange?: (artifactId: string, x: number, y: number) => void
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -178,6 +188,14 @@ function parseUseEdge(id: string | null): { sourceId: string; targetId: string }
 
 function isRelationDetailKind(kind: string): boolean {
   return isRelationKind(kind) || kind === 'message' || kind === 'transition' || kind === 'succession'
+}
+
+function elementUnlocked(
+  viz: ViewPayload['visualization'] | undefined,
+  id: string | null,
+): boolean {
+  if (!viz || !id) return true
+  return !isEditLocked(viz.nodes[id]) && !isEditLocked(viz.edges[id])
 }
 
 function findPartDefByName(
@@ -487,6 +505,7 @@ export function DetailsPanel({
   editorMode,
   viewMode: _viewMode,
   onHierarchyOverrideChange,
+  onViewFiltersChange,
   onRoutingChange,
   onAutoroute,
   onWaypointsChange,
@@ -494,16 +513,21 @@ export function DetailsPanel({
   onFormatPaint,
   paintModeActive,
   onRename,
+  onMetadataKeywordsChange,
   onAddPart,
   onAddPort,
   onAddAttribute,
   onDelete,
   onRetargetRelation,
+  onEditLockChange,
+  onPositionChange,
 }: Props) {
-  const [relationUnlocked, setRelationUnlocked] = useState(false)
-  useEffect(() => {
-    setRelationUnlocked(false)
-  }, [selectedId])
+  const [filterOpen, setFilterOpen] = useState(false)
+  const unlocked = elementUnlocked(viewVisualization, selectedId)
+  const toggleEditLock = () => {
+    if (!selectedId || !onEditLockChange) return
+    onEditLockChange(selectedId, unlocked)
+  }
 
   const hierarchyBlock =
     viewPayload && onHierarchyOverrideChange ? (
@@ -564,14 +588,14 @@ export function DetailsPanel({
           <dd>
             <button
               type="button"
-              className={`relation-lock${relationUnlocked ? ' is-open' : ''}`}
-              aria-pressed={relationUnlocked}
+              className={`relation-lock${unlocked ? ' is-open' : ''}`}
+              aria-pressed={unlocked}
               aria-label={
-                relationUnlocked ? 'Lock relation details' : 'Unlock relation details'
+                unlocked ? 'Lock relation details' : 'Unlock relation details'
               }
-              onClick={() => setRelationUnlocked((open) => !open)}
+              onClick={toggleEditLock}
             >
-              {relationUnlocked ? '🔓' : '🔒'}
+              {unlocked ? '🔓' : '🔒'}
             </button>
           </dd>
         </dl>
@@ -580,7 +604,7 @@ export function DetailsPanel({
           <select
             id="routing"
             value={edge?.routing || 'direct'}
-            disabled={!relationUnlocked}
+            disabled={!unlocked}
             onChange={(e) =>
               onRoutingChange(selectedId, e.target.value as RoutingType)
             }
@@ -594,7 +618,7 @@ export function DetailsPanel({
               type="button"
               className="autoroute-btn"
               onClick={() => onAutoroute?.(selectedId)}
-              disabled={!relationUnlocked}
+              disabled={!unlocked}
               title="Clear waypoints and redraw the orthogonal route"
             >
               Autoroute
@@ -629,8 +653,8 @@ export function DetailsPanel({
             <dt>Target</dt>
             <dd className="mono">{ends.targetId}</dd>
             <RelationEndpoints
-              unlocked={relationUnlocked}
-              onToggleLock={() => setRelationUnlocked((open) => !open)}
+              unlocked={unlocked}
+              onToggleLock={toggleEditLock}
               sourceId={ends.sourceId}
               targetId={ends.targetId}
               choices={diagramChoices(project, viewPayload)}
@@ -691,7 +715,7 @@ export function DetailsPanel({
               className="inline-edit"
               defaultValue={el.name}
               key={el.id + el.name}
-              disabled={!relationUnlocked}
+              disabled={!unlocked}
               onBlur={(e) => {
                 const v = e.target.value.trim()
                 if (v && v !== el.name) onRename(el.id, v)
@@ -705,6 +729,61 @@ export function DetailsPanel({
         <dd>{el.kind}</dd>
         <dt>Id</dt>
         <dd className="mono">{el.id}</dd>
+        {!relationEnds && (
+          <>
+            <dt>Edit</dt>
+            <dd>
+              <button
+                type="button"
+                className={`relation-lock${unlocked ? ' is-open' : ''}`}
+                aria-pressed={unlocked}
+                aria-label={unlocked ? 'Lock details' : 'Unlock to edit'}
+                title={unlocked ? 'Lock' : 'Unlock to edit'}
+                onClick={toggleEditLock}
+              >
+                {unlocked ? '🔓' : '🔒'}
+              </button>
+            </dd>
+          </>
+        )}
+        {el.kind === 'dependency' && (
+          <>
+            <dt>Stereotype</dt>
+            <dd>
+              {onMetadataKeywordsChange ? (
+                <input
+                  className="inline-edit"
+                  defaultValue={(el.metadataKeywords || []).join(', ')}
+                  key={el.id + (el.metadataKeywords || []).join(',')}
+                  disabled={!unlocked}
+                  aria-label="Stereotype"
+                  placeholder="e.g. Energy"
+                  onBlur={(e) => {
+                    const next = e.target.value
+                      .split(/[,;]+/)
+                      .map((s) =>
+                        s
+                          .trim()
+                          .replace(/^[«<]+/, '')
+                          .replace(/[»>]+$/, '')
+                          .trim(),
+                      )
+                      .filter(Boolean)
+                    const prev = el.metadataKeywords || []
+                    if (
+                      next.length !== prev.length ||
+                      next.some((kw, i) => kw !== prev[i])
+                    ) {
+                      onMetadataKeywordsChange(el.id, next)
+                    }
+                  }}
+                />
+              ) : (
+                (el.metadataKeywords || []).join(', ') || '—'
+              )}
+            </dd>
+          </>
+        )}
         {el.typeRef && (
           <>
             <dt>Type</dt>
@@ -715,6 +794,27 @@ export function DetailsPanel({
           <>
             <dt>Expose</dt>
             <dd className="mono">{el.exposeRef}</dd>
+          </>
+        )}
+        {el.kind === 'view' && onViewFiltersChange && viewPayload && (
+          <>
+            <dt>View filter</dt>
+            <dd>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(true)}
+                aria-label="view-filter"
+              >
+                view-filter
+              </button>
+              <ViewFilterDialog
+                open={filterOpen}
+                filters={viewPayload.viewFilters || []}
+                semantic={viewPayload.semantic}
+                onChange={onViewFiltersChange}
+                onClose={() => setFilterOpen(false)}
+              />
+            </dd>
           </>
         )}
         {(el.kind === 'attribute' || el.kind === 'port') && (
@@ -737,8 +837,8 @@ export function DetailsPanel({
         )}
         {relationEnds && (
           <RelationEndpoints
-            unlocked={relationUnlocked}
-            onToggleLock={() => setRelationUnlocked((open) => !open)}
+            unlocked={unlocked}
+            onToggleLock={toggleEditLock}
             sourceId={relationEnds.sourceId}
             targetId={relationEnds.targetId}
             choices={diagramChoices(project, viewPayload)}
@@ -752,7 +852,46 @@ export function DetailsPanel({
           <>
             <dt>Position</dt>
             <dd>
-              {Math.round(node.x)}, {Math.round(node.y)}
+              {el.kind === 'part' && onPositionChange ? (
+                <span className="position-inputs">
+                  <input
+                    type="number"
+                    className="inline-edit"
+                    defaultValue={Math.round(node.x)}
+                    key={`${el.id}-x-${node.x}`}
+                    disabled={!unlocked}
+                    aria-label="X position"
+                    onBlur={(e) => {
+                      const x = Number(e.target.value)
+                      const y = node.y
+                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (Math.round(x) !== Math.round(node.x)) {
+                        onPositionChange(el.id, x, y)
+                      }
+                    }}
+                  />
+                  <input
+                    type="number"
+                    className="inline-edit"
+                    defaultValue={Math.round(node.y)}
+                    key={`${el.id}-y-${node.y}`}
+                    disabled={!unlocked}
+                    aria-label="Y position"
+                    onBlur={(e) => {
+                      const y = Number(e.target.value)
+                      const x = node.x
+                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (Math.round(y) !== Math.round(node.y)) {
+                        onPositionChange(el.id, x, y)
+                      }
+                    }}
+                  />
+                </span>
+              ) : (
+                <>
+                  {Math.round(node.x)}, {Math.round(node.y)}
+                </>
+              )}
             </dd>
             <dt>Size</dt>
             <dd title="Select the part in the diagram and drag the corner handles to resize">
@@ -778,7 +917,7 @@ export function DetailsPanel({
             value={
               edge?.routing || defaultRelationStyle(el.kind).routing
             }
-            disabled={isRelationDetailKind(el.kind) && !relationUnlocked}
+            disabled={!unlocked}
             onChange={(e) =>
               onRoutingChange(selectedId, e.target.value as RoutingType)
             }
@@ -793,7 +932,7 @@ export function DetailsPanel({
               type="button"
               className="autoroute-btn"
               onClick={() => onAutoroute?.(selectedId)}
-              disabled={!relationUnlocked}
+              disabled={!unlocked}
               title="Clear waypoints and redraw the orthogonal route"
             >
               Autoroute
@@ -809,7 +948,7 @@ export function DetailsPanel({
                       <input
                         type="checkbox"
                         checked={!!wp.locked}
-                        disabled={!onWaypointsChange || (isRelationDetailKind(el.kind) && !relationUnlocked)}
+                        disabled={!onWaypointsChange || !unlocked}
                         onChange={(e) => {
                           if (!onWaypointsChange || !selectedId) return
                           const next = edge.waypoints.map((w, i) =>
@@ -840,7 +979,7 @@ export function DetailsPanel({
 
       {canFormat && onStyleChange && (
         <fieldset
-          disabled={isRelationDetailKind(el.kind) && !relationUnlocked}
+          disabled={!unlocked}
           className="plain-fieldset"
         >
           <FormatControls
@@ -860,23 +999,33 @@ export function DetailsPanel({
 
       {editorMode && el.kind === 'part' && (
         <div className="editor-actions">
-          <button type="button" onClick={() => onAddPart?.(el.id)}>
+          <button type="button" disabled={!unlocked} onClick={() => onAddPart?.(el.id)}>
             + Part
           </button>
-          <button type="button" onClick={() => onAddPort?.(el.id)}>
+          <button type="button" disabled={!unlocked} onClick={() => onAddPort?.(el.id)}>
             + Port
           </button>
-          <button type="button" onClick={() => onAddAttribute?.(el.id)}>
+          <button type="button" disabled={!unlocked} onClick={() => onAddAttribute?.(el.id)}>
             + Attribute
           </button>
-          <button type="button" className="danger" onClick={() => onDelete?.(el.id)}>
+          <button
+            type="button"
+            className="danger"
+            disabled={!unlocked}
+            onClick={() => onDelete?.(el.id)}
+          >
             Delete part
           </button>
         </div>
       )}
       {editorMode && el.kind === 'port' && (
         <div className="editor-actions">
-          <button type="button" className="danger" onClick={() => onDelete?.(el.id)}>
+          <button
+            type="button"
+            className="danger"
+            disabled={!unlocked}
+            onClick={() => onDelete?.(el.id)}
+          >
             Delete port
           </button>
         </div>

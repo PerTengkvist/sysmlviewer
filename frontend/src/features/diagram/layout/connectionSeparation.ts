@@ -27,6 +27,40 @@ function nearlyEq(a: number, b: number, eps = EPS): boolean {
   return Math.abs(a - b) < eps
 }
 
+/**
+ * Smallest centerline gap between overlapping parallel segments.
+ * A touch only at an endpoint does not count. Null when no run overlaps.
+ */
+export function closestParallelGap(a: Pt[], b: Pt[]): number | null {
+  let best: number | null = null
+  const segs = (pts: Pt[], axis: 'x' | 'y') => {
+    const out: { coord: number; lo: number; hi: number }[] = []
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p = pts[i]
+      const q = pts[i + 1]
+      const o = segmentOrient(p, q)
+      if (axis === 'x' && o === 'v') {
+        out.push({ coord: p.x, lo: Math.min(p.y, q.y), hi: Math.max(p.y, q.y) })
+      } else if (axis === 'y' && o === 'h') {
+        out.push({ coord: p.y, lo: Math.min(p.x, q.x), hi: Math.max(p.x, q.x) })
+      }
+    }
+    return out
+  }
+  for (const axis of ['x', 'y'] as const) {
+    for (const left of segs(a, axis)) {
+      for (const right of segs(b, axis)) {
+        const overlap =
+          Math.min(left.hi, right.hi) - Math.max(left.lo, right.lo)
+        if (overlap <= 1) continue
+        const gap = Math.abs(left.coord - right.coord)
+        if (best === null || gap < best) best = gap
+      }
+    }
+  }
+  return best
+}
+
 export function sharePort(a: PortRef, b: PortRef): boolean {
   const ap = new Set([a.sourcePort, a.targetPort])
   return ap.has(b.sourcePort) || ap.has(b.targetPort)

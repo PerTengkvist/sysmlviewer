@@ -18,16 +18,17 @@ import {
   type OnNodesChange,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   DiagramMode,
+  LayoutRuleRow,
   PortSide,
   RoutingType,
   ViewPayload,
   VisualizationEdge,
   VisualizationNode,
 } from '../../api'
-import type { ViewMode } from '../../settings'
+import { EDGE_LABEL_TEXT_HEIGHT_PX, type ViewMode } from '../../settings'
 import type { ProjectSheet } from '../sheet/sheet'
 import { paperSizeMm } from '../sheet/sheet'
 import { PartNode, type PartNodeData } from './PartNode'
@@ -37,8 +38,21 @@ import {
   HighlightedStraightEdge,
 } from './selectableEdge'
 import { applyRelationEndDrag } from './applyRelationEndDrag'
+import { selectionIdForPaneClick } from './canvasSelection'
+import { edgeStackZIndex } from './edgeEditZIndex'
+import { applyViewFilters } from './viewFilters'
+import { LayoutWizardDialog } from './LayoutWizardDialog'
+import type { LayoutArtefact } from './layoutWizard'
 import { resolveAnchors, type BoundaryAnchor } from './boundaryAnchors'
-import { alignSelection } from './layout/align'
+import {
+  alignDirectConnection,
+  alignSelection,
+  canAlignDirectConnection,
+  type ConnectionAlignMode,
+  type PartBox,
+} from './layout/align'
+import { bulkOp, type BulkCommand } from './bulkOps'
+import { isEditLocked, lockTargets } from './editLock'
 import {
   translateFlowBounds,
   translatePoints,
@@ -46,7 +60,13 @@ import {
   type Pt,
 } from './edgeRouting'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
-import { buildStructureGraph, orientRelationBoundaryHandles, applyRelationHandlesToNodes } from './modes/structure/buildStructureGraph'
+import {
+  absoluteNodeOrigin,
+  applyRelationHandlesToNodes,
+  buildStructureGraph,
+  orientRelationBoundaryHandles,
+} from './modes/structure/buildStructureGraph'
+import { relativePositionFromFlow } from './nestedPartPosition'
 import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
 import { LifelineNode } from './modes/sequence/LifelineNode'
 import { MessageEdge } from './modes/sequence/MessageEdge'
@@ -214,6 +234,83 @@ function portIdFromHandle(handleId: string | null | undefined): string | null {
   return handleId.startsWith('target:') ? handleId.slice('target:'.length) : handleId
 }
 
+/** Port id for alignable connection ends (not relation boundary handles). */
+function alignablePortId(handleId: string | null | undefined): string | null {
+  const id = portIdFromHandle(handleId)
+  if (!id || id.startsWith('rel-')) return null
+  return id
+}
+
+function absolutePartBox(node: Node, byId: Map<string, Node>): PartBox {
+  let x = node.position.x
+  let y = node.position.y
+  let parentId = node.parentId
+  while (parentId) {
+    const parent = byId.get(parentId)
+    if (!parent) break
+    x += parent.position.x
+    y += parent.position.y
+    parentId = parent.parentId
+  }
+  const size = nodeExtentSize(node)
+  return {
+    id: node.id,
+    x,
+    y,
+    width: size.width ?? 100,
+    height: size.height ?? 40,
+  }
+}
+
+type DirectConnectionAlignTarget = {
+  srcPart: PartBox
+  tgtPart: PartBox
+  srcPort: { id: string; side: PortSide; offset: number }
+  tgtPort: { id: string; side: PortSide; offset: number }
+}
+
+function resolveDirectConnectionAlignTarget(
+  edge: Edge,
+  flowNodes: Node[],
+): DirectConnectionAlignTarget | null {
+  const data = (edge.data || {}) as SysmlEdgeData
+  if ((data.routing || 'angular') !== 'direct') return null
+  const srcPortId = alignablePortId(edge.sourceHandle)
+  const tgtPortId = alignablePortId(edge.targetHandle)
+  if (!srcPortId || !tgtPortId) return null
+  const byId = new Map(flowNodes.map((n) => [n.id, n]))
+  const srcNode = byId.get(edge.source)
+  const tgtNode = byId.get(edge.target)
+  if (!srcNode || !tgtNode) return null
+  const srcPorts = ((srcNode.data as PartNodeData | undefined)?.ports || []) as {
+    id: string
+    side: PortSide
+    offset: number
+  }[]
+  const tgtPorts = ((tgtNode.data as PartNodeData | undefined)?.ports || []) as {
+    id: string
+    side: PortSide
+    offset: number
+  }[]
+  const srcPort = srcPorts.find((p) => p.id === srcPortId)
+  const tgtPort = tgtPorts.find((p) => p.id === tgtPortId)
+  if (!srcPort || !tgtPort) return null
+  return {
+    srcPart: absolutePartBox(srcNode, byId),
+    tgtPart: absolutePartBox(tgtNode, byId),
+    srcPort: {
+      id: srcPort.id,
+      side: srcPort.side || 'right',
+      offset: srcPort.offset ?? 0.5,
+    },
+    tgtPort: {
+      id: tgtPort.id,
+      side: tgtPort.side || 'left',
+      offset: tgtPort.offset ?? 0.5,
+    },
+  }
+}
+
 /** Skip auto-route on view open when saved connection geometry exists. */
 function viewHasSavedConnectionLayout(
   edges: Record<string, VisualizationEdge>,
@@ -236,6 +333,99 @@ function nodeExtentSize(n: Node): { width?: number; height?: number } {
   const height =
     readPx(n.style?.height) ?? readPx(n.height) ?? readPx(n.measured?.height)
   return { width, height }
+}
+
+function DiagramEditToolbar({
+  view,
+  selectedIds,
+  onNodesMoved,
+  children,
+}: {
+  view: ViewPayload
+  selectedIds: string[]
+  onNodesMoved: Props['onNodesMoved']
+  children?: ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const viz = view.visualization
+  const applyLock = (locked: boolean, ids: string[]) => {
+    const patch = lockTargets(ids, viz.nodes, viz.edges, locked)
+    if (!Object.keys(patch.nodes).length && !Object.keys(patch.edges).length) return
+    onNodesMoved(
+      patch.nodes,
+      Object.keys(patch.edges).length ? patch.edges : undefined,
+    )
+  }
+  const allIds = [...Object.keys(viz.nodes), ...Object.keys(viz.edges)]
+  const edgeSelected = selectedIds.some((id) =>
+    Object.prototype.hasOwnProperty.call(viz.edges, id),
+  )
+  const runBulk = (command: BulkCommand) => {
+    setOpen(false)
+    const patch = bulkOp(command, selectedIds, viz.nodes, viz.edges)
+    if (!Object.keys(patch.nodes).length && !Object.keys(patch.edges).length) return
+    onNodesMoved(
+      patch.nodes,
+      Object.keys(patch.edges).length ? patch.edges : undefined,
+    )
+  }
+  return (
+    <>
+      <button
+        type="button"
+        title="Lock every artifact and connection in this diagram"
+        onClick={() => applyLock(true, allIds)}
+      >
+        Lock all
+      </button>
+      <button
+        type="button"
+        title="Unlock every artifact and connection in this diagram"
+        onClick={() => applyLock(false, allIds)}
+      >
+        Unlock all
+      </button>
+      <div className="bulk-ops">
+        <button
+          type="button"
+          disabled={!selectedIds.length}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          title="Run one command on the selection"
+          onClick={() => setOpen((value) => !value)}
+        >
+          Bulk
+        </button>
+        {open && selectedIds.length > 0 && (
+          <div className="bulk-ops-menu" role="menu">
+            <button type="button" role="menuitem" onClick={() => runBulk('lock')}>
+              Lock
+            </button>
+            <button type="button" role="menuitem" onClick={() => runBulk('unlock')}>
+              Unlock
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!edgeSelected}
+              onClick={() => runBulk('direct')}
+            >
+              Direct
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!edgeSelected}
+              onClick={() => runBulk('angular')}
+            >
+              Angular
+            </button>
+          </div>
+        )}
+      </div>
+      {children}
+    </>
+  )
 }
 
 type Props = {
@@ -264,6 +454,7 @@ type Props = {
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
   ) => void
+  onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   onRelationEndMoved?: (
     artifactId: string,
@@ -297,7 +488,7 @@ export function DiagramCanvas({
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidthFactor = 3,
-  connectionSeparation = 5,
+  connectionSeparation = EDGE_LABEL_TEXT_HEIGHT_PX,
   selectedIds = [],
   relationTodos = [],
   pendingChangeColor = '#dc2626',
@@ -307,6 +498,7 @@ export function DiagramCanvas({
   onSelectionFromFlow,
   onOpenView,
   onNodesMoved,
+  onLayoutRulesChange,
   onPortMoved,
   onRelationEndMoved,
   onConnectPorts,
@@ -325,6 +517,7 @@ export function DiagramCanvas({
   )
   const [layoutEpoch, setLayoutEpoch] = useState(0)
   const [flowDir, setFlowDir] = useState<RedrawDirection>('LR')
+  const [layoutWizardOpen, setLayoutWizardOpen] = useState(false)
   /** Temporarily force light styling while exporting an image to the clipboard. */
   const [captureLight, setCaptureLight] = useState(false)
   const [copyState, setCopyState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
@@ -480,12 +673,32 @@ export function DiagramCanvas({
         .join('|')
     : ''
 
+  const lockSig = view
+    ? [
+        ...Object.entries(view.visualization.nodes).map(
+          ([id, n]) => `n${id}:${n.editLocked ? 1 : 0}`,
+        ),
+        ...Object.entries(view.visualization.edges).map(
+          ([id, e]) => `e${id}:${e.editLocked ? 1 : 0}`,
+        ),
+      ]
+        .sort()
+        .join('|')
+    : ''
+
   const collapseSig = [...collapsedIds].sort().join(',')
+
+  const filterSig = view?.viewFilters
+    ? JSON.stringify(view.viewFilters)
+    : ''
+  const layoutRulesSig = view?.layoutRules
+    ? JSON.stringify(view.layoutRules)
+    : ''
 
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -526,28 +739,38 @@ export function DiagramCanvas({
     }
 
     let built: { nodes: Node[]; edges: Edge[] }
+    const filtered = applyViewFilters(
+      view.semantic,
+      view.visualization,
+      view.viewFilters || [],
+    )
+    const filteredView: ViewPayload = {
+      ...view,
+      semantic: filtered.semantic,
+      visualization: filtered.visualization,
+    }
     switch (view.diagramMode) {
       case 'sequence':
-        built = buildSequenceGraph(view, renderViewMode, {
+        built = buildSequenceGraph(filteredView, renderViewMode, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
         break
       case 'state':
-        built = buildStateGraph(view, renderViewMode, {
+        built = buildStateGraph(filteredView, renderViewMode, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
         break
       case 'actionFlow':
-        built = buildActionFlowGraph(view, renderViewMode, flowDirRef.current, {
+        built = buildActionFlowGraph(filteredView, renderViewMode, flowDirRef.current, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
         break
       case 'tree':
         built = buildTreeGraph(
-          view,
+          filteredView,
           renderViewMode,
           collapsedIds,
           toggleCollapse,
@@ -559,7 +782,7 @@ export function DiagramCanvas({
         break
       case 'allocation':
         built = buildAllocationGraph({
-          view,
+          view: filteredView,
           viewMode: renderViewMode,
           showAttributes,
           portMoveMode,
@@ -573,7 +796,7 @@ export function DiagramCanvas({
         })
         break
       case 'useCase':
-        built = buildUseCaseGraph(view, renderViewMode, {
+        built = buildUseCaseGraph(filteredView, renderViewMode, {
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
         })
@@ -583,7 +806,7 @@ export function DiagramCanvas({
         break
       default:
         built = buildStructureGraph({
-          view,
+          view: filteredView,
           onOpenView: stableOpen,
           onPortMoved: stablePort,
           portMoveMode,
@@ -612,9 +835,10 @@ export function DiagramCanvas({
     setNodes(
       geometry.nodes.map((node) => ({
         ...node,
-        draggable: !portMoveMode,
+        draggable: !portMoveMode && !isEditLocked(view.visualization.nodes[node.id]),
         data: {
           ...(node.data as PartNodeData),
+          editLocked: isEditLocked(view.visualization.nodes[node.id]),
           portMoveMode,
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
@@ -664,6 +888,7 @@ export function DiagramCanvas({
         data: {
           ...(edge.data as object),
           altHeld: portMoveMode,
+          editLocked: isEditLocked(view.visualization.edges[edge.id]),
           selectedColor: selectedConnectionColor,
           selectedFactor: selectedConnectionLinewidthFactor,
           onSelect: (artifactId: string) => onSelectArtifactRef.current(artifactId),
@@ -787,21 +1012,31 @@ export function DiagramCanvas({
   }, [routingSig, syncRelationGeometry])
 
   // App selection (line click, name click, tree) drives the thick highlight.
+  // While Option is held, the selected edge also stacks above other edges.
   useEffect(() => {
     const wanted = new Set(selectedIds)
-    const sync = <T extends { id: string; selected?: boolean }>(items: T[]): T[] => {
+    setNodes((current) => {
       let changed = false
-      const next = items.map((item) => {
+      const next = current.map((item) => {
         const selected = wanted.has(item.id)
         if (!!item.selected === selected) return item
         changed = true
         return { ...item, selected }
       })
-      return changed ? next : items
-    }
-    setNodes((current) => sync(current))
-    setEdges((current) => sync(current))
-  }, [selectedIds])
+      return changed ? next : current
+    })
+    setEdges((current) => {
+      let changed = false
+      const next = current.map((item) => {
+        const selected = wanted.has(item.id)
+        const zIndex = edgeStackZIndex(portMoveMode, selected)
+        if (!!item.selected === selected && item.zIndex === zIndex) return item
+        changed = true
+        return { ...item, selected, zIndex }
+      })
+      return changed ? next : current
+    })
+  }, [selectedIds, portMoveMode])
 
   // Sync waypoints into edges without resetting part/port layout.
   useEffect(() => {
@@ -827,13 +1062,15 @@ export function DiagramCanvas({
 
   useEffect(() => {
     if (!syncRelationGeometry) return
+    const v = viewRef.current
     setNodes((current) => {
-      if (!current.length) return current
+      if (!current.length || !v) return current
       return current.map((node) => ({
         ...node,
-        draggable: !portMoveMode,
+        draggable: !portMoveMode && !isEditLocked(v.visualization.nodes[node.id]),
         data: {
           ...(node.data as PartNodeData),
+          editLocked: isEditLocked(v.visualization.nodes[node.id]),
           portMoveMode,
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
@@ -858,9 +1095,11 @@ export function DiagramCanvas({
     setEdges((current) =>
       current.map((edge) => ({
         ...edge,
+        zIndex: edgeStackZIndex(portMoveMode, !!edge.selected),
         data: {
           ...(edge.data as object),
           altHeld: portMoveMode,
+          editLocked: isEditLocked(v?.visualization.edges[edge.id]),
           selectedColor: selectedConnectionColor,
           selectedFactor: selectedConnectionLinewidthFactor,
           onSelect: (artifactId: string) => onSelectArtifactRef.current(artifactId),
@@ -885,7 +1124,7 @@ export function DiagramCanvas({
         },
       })),
     )
-  }, [portMoveMode, syncRelationGeometry])
+  }, [portMoveMode, syncRelationGeometry, lockSig])
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -991,16 +1230,15 @@ export function DiagramCanvas({
 
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, node, allNodes) => {
-      const patch: Record<string, Partial<VisualizationNode>> = {}
-      for (const n of allNodes) {
-        const { width, height } = nodeExtentSize(n)
-        patch[n.id] = {
-          artifactId: n.id,
-          x: n.position.x,
-          y: n.position.y,
+      const { width, height } = nodeExtentSize(node)
+      const patch: Record<string, Partial<VisualizationNode>> = {
+        [node.id]: {
+          artifactId: node.id,
+          x: node.position.x,
+          y: node.position.y,
           width,
           height,
-        }
+        },
       }
 
       let edgePatch: Record<string, Partial<VisualizationEdge>> | undefined
@@ -1556,6 +1794,78 @@ export function DiagramCanvas({
     setLayoutEpoch((n) => n + 1)
   }, [nodes, edges, connectionSeparation])
 
+  const selectedDirectAlign = useMemo(() => {
+    if (selectedIds.length !== 1) return null
+    const edge = edges.find((e) => e.id === selectedIds[0])
+    if (!edge) return null
+    return resolveDirectConnectionAlignTarget(edge, nodes)
+  }, [selectedIds, edges, nodes])
+
+  const applyDirectConnectionAlign = useCallback(
+    (mode: ConnectionAlignMode) => {
+      if (!selectedDirectAlign) return
+      // Source (first / from) port is always the fixed reference.
+      const { patch } = alignDirectConnection(
+        mode,
+        selectedDirectAlign.srcPart,
+        selectedDirectAlign.tgtPart,
+        selectedDirectAlign.srcPort,
+        selectedDirectAlign.tgtPort,
+        'src',
+      )
+      if (!Object.keys(patch).length) return
+      let nextNodes: Node[] = []
+      setNodes((current) => {
+        nextNodes = current.map((node) => {
+          const data = node.data as PartNodeData | undefined
+          if (!data?.ports?.length) return node
+          let changed = false
+          const ports = data.ports.map((p) => {
+            const pp = patch[p.id]
+            if (!pp) return p
+            changed = true
+            return {
+              ...p,
+              side: (pp.side as PortSide) || p.side,
+              offset: pp.offset ?? p.offset,
+            }
+          })
+          return changed ? { ...node, data: { ...data, ports } } : node
+        })
+        return nextNodes
+      })
+      onNodesMoved(patch)
+      // Force edge path refresh after handles move (direct line uses RF ends).
+      const edgeId = selectedIds[0]
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const nodesForRoute =
+            nodesRef.current.length > 0 ? nodesRef.current : nextNodes
+          setEdges((current) =>
+            current.map((edge) => {
+              if (edge.id !== edgeId) return edge
+              const data = (edge.data || {}) as SysmlEdgeData
+              return {
+                ...edge,
+                data: { ...data },
+              }
+            }),
+          )
+          // Angular edges need full reroute; direct just needs handle sync above.
+          const edge = edgesRef.current.find((e) => e.id === edgeId)
+          if (
+            edge &&
+            ((edge.data || {}) as SysmlEdgeData).routing === 'angular'
+          ) {
+            applyRedrawConnectionsRef.current(nodesForRoute, [edge])
+          }
+        })
+      })
+      setLayoutEpoch((n) => n + 1)
+    },
+    [selectedDirectAlign, selectedIds, onNodesMoved],
+  )
+
   const handleSelectionChange = useCallback(
     ({
       nodes: selNodes,
@@ -1609,7 +1919,12 @@ export function DiagramCanvas({
   }
 
   if (mode === 'requirementTable') {
-    const rows = buildRequirementRows(view.semantic, reqTableMode)
+    const filteredReq = applyViewFilters(
+      view.semantic,
+      view.visualization,
+      view.viewFilters || [],
+    )
+    const rows = buildRequirementRows(filteredReq.semantic, reqTableMode)
     return (
       <div className="diagram-canvas requirement-table-canvas">
         {!printMode && (
@@ -1619,6 +1934,11 @@ export function DiagramCanvas({
               {DIAGRAM_MODE_LABELS.requirementTable}
             </span>
             <div className="redraw-actions">
+              <DiagramEditToolbar
+                view={view}
+                selectedIds={selectedIds}
+                onNodesMoved={onNodesMoved}
+              />
               <button
                 type="button"
                 className={reqTableMode === 'flat' ? 'active' : ''}
@@ -1691,6 +2011,11 @@ export function DiagramCanvas({
           <strong className="diagram-view-name">{view.view.name}</strong>
           <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
           <div className="redraw-actions">
+            <DiagramEditToolbar
+              view={view}
+              selectedIds={selectedIds}
+              onNodesMoved={onNodesMoved}
+            />
             <button
               type="button"
               onClick={onCopyImage}
@@ -1709,6 +2034,13 @@ export function DiagramCanvas({
               <>
                 <button
                   type="button"
+                  onClick={() => setLayoutWizardOpen(true)}
+                  title="Set relative placement rules"
+                >
+                  LayoutWizard
+                </button>
+                <button
+                  type="button"
                   onClick={applyAutoLayout}
                   title="Size parts, place ports, space parts, then redraw connections"
                 >
@@ -1721,12 +2053,31 @@ export function DiagramCanvas({
                 >
                   Redraw: Connections
                 </button>
-                {selectedIds.length >= 2 ? (
+                {selectedIds.length >= 2 || selectedDirectAlign ? (
                   <>
                     <button
                       type="button"
-                      title="Align selected to first selected (horizontal = same Y)"
+                      title={
+                        selectedDirectAlign
+                          ? 'Align target port to source port X (vertical line)'
+                          : 'Align selected to first selected (horizontal = same Y)'
+                      }
+                      disabled={
+                        !!selectedDirectAlign &&
+                        !canAlignDirectConnection(
+                          'sameX',
+                          selectedDirectAlign.srcPart,
+                          selectedDirectAlign.tgtPart,
+                          selectedDirectAlign.srcPort,
+                          selectedDirectAlign.tgtPort,
+                          'src',
+                        )
+                      }
                       onClick={() => {
+                        if (selectedDirectAlign) {
+                          applyDirectConnectionAlign('sameX')
+                          return
+                        }
                         const items = nodes.map((n) => ({
                           id: n.id,
                           x: n.position.x,
@@ -1754,8 +2105,27 @@ export function DiagramCanvas({
                     </button>
                     <button
                       type="button"
-                      title="Align selected to first selected (vertical = same X)"
+                      title={
+                        selectedDirectAlign
+                          ? 'Align target port to source port Y (horizontal line)'
+                          : 'Align selected to first selected (vertical = same X)'
+                      }
+                      disabled={
+                        !!selectedDirectAlign &&
+                        !canAlignDirectConnection(
+                          'sameY',
+                          selectedDirectAlign.srcPart,
+                          selectedDirectAlign.tgtPart,
+                          selectedDirectAlign.srcPort,
+                          selectedDirectAlign.tgtPort,
+                          'src',
+                        )
+                      }
                       onClick={() => {
+                        if (selectedDirectAlign) {
+                          applyDirectConnectionAlign('sameY')
+                          return
+                        }
                         const items = nodes.map((n) => ({
                           id: n.id,
                           x: n.position.x,
@@ -1792,10 +2162,72 @@ export function DiagramCanvas({
                 <button type="button" onClick={() => applyRedraw('LR')} title="Redraw left-right">
                   Redraw: LR
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setLayoutWizardOpen(true)}
+                  title="Set relative placement rules"
+                >
+                  LayoutWizard
+                </button>
               </>
             )}
           </div>
         </div>
+      )}
+      {view && (
+        <LayoutWizardDialog
+          open={layoutWizardOpen}
+          rules={view.layoutRules || []}
+          semantic={view.semantic}
+          artefacts={(() => {
+            const byId = new Map(nodes.map((n) => [n.id, n]))
+            return nodes
+              .filter((n) => view.semantic[n.id])
+              .map((n): LayoutArtefact => {
+                const el = view.semantic[n.id]
+                const origin = absoluteNodeOrigin(n, byId)
+                return {
+                  id: n.id,
+                  name: el.name,
+                  kind: el.kind,
+                  x: origin.x,
+                  y: origin.y,
+                  width: Number(n.style?.width) || n.width || 100,
+                  height: Number(n.style?.height) || n.height || 40,
+                }
+              })
+          })()}
+          onChangeRules={(rules) => onLayoutRulesChange?.(rules)}
+          onApplyPositions={(positions) => {
+            const byId = new Map(nodes.map((n) => [n.id, n]))
+            const patch: Record<string, Partial<VisualizationNode>> = {}
+            for (const [id, pos] of Object.entries(positions)) {
+              const cur = nodes.find((n) => n.id === id)
+              if (!cur) continue
+              const rel = relativePositionFromFlow(cur, pos, byId)
+              if (cur.position.x === rel.x && cur.position.y === rel.y) continue
+              patch[id] = { x: rel.x, y: rel.y }
+            }
+            if (Object.keys(patch).length) {
+              setNodes((prev) =>
+                prev.map((n) =>
+                  patch[n.id]
+                    ? {
+                        ...n,
+                        position: {
+                          x: patch[n.id].x ?? n.position.x,
+                          y: patch[n.id].y ?? n.position.y,
+                        },
+                      }
+                    : n,
+                ),
+              )
+              onNodesMoved(patch)
+            }
+            setLayoutWizardOpen(false)
+          }}
+          onClose={() => setLayoutWizardOpen(false)}
+        />
       )}
       {!printMode && portMoveMode && isStructure && (
         <div className="tool-banner" role="status">
@@ -1857,7 +2289,14 @@ export function DiagramCanvas({
                   onSelectArtifact(edge.id, { shift: e.shiftKey })
                 }
           }
-          onPaneClick={printMode ? undefined : () => onSelectArtifact(null)}
+          onPaneClick={
+            printMode
+              ? undefined
+              : () =>
+                  onSelectArtifact(
+                    selectionIdForPaneClick(view?.view.id ?? null),
+                  )
+          }
           onSelectionChange={printMode ? undefined : handleSelectionChange}
           multiSelectionKeyCode="Shift"
           selectionKeyCode="Shift"

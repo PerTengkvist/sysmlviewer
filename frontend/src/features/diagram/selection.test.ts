@@ -25,7 +25,7 @@ describe('nextSelection', () => {
     expect(selectionAnchor(r.selectedIds)).toBe('b')
   })
 
-  it('pane click clears selection', () => {
+  it('null clickedId clears selection', () => {
     const r = nextSelection(['a', 'b'], null, { shift: false })
     expect(r.selectedIds).toEqual([])
     expect(r.primaryId).toBeNull()

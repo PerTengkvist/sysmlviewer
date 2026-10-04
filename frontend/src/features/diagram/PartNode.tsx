@@ -4,6 +4,7 @@ import {
   Position,
   useNodeId,
   useUpdateNodeInternals,
+  useViewport,
   type NodeProps,
 } from '@xyflow/react'
 import {
@@ -19,7 +20,14 @@ import type { PortSide, ElementStyle } from '../../api'
 import type { ViewMode } from '../../settings'
 import { nodeInlineStyles, resolveModeStyle } from './elementStyle'
 import { portLabelStyle as computePortLabelStyle } from './edgeRouting'
-import { clampPortOffset } from './layout/portPlacement'
+import {
+  clampPortOffset,
+  flowSizeFromScreenRect,
+  PORT_BODY_OFFSET_MAX,
+  PORT_BOUNDARY_OFFSET_MAX,
+  PORT_BOUNDARY_OFFSET_MIN,
+  PORT_TB_INSET,
+} from './layout/portPlacement'
 
 export type PartPort = {
   id: string
@@ -51,6 +59,8 @@ export type PartNodeData = {
   showAttributes?: boolean
   attributeNames?: string[]
   formatStyle?: ElementStyle | null
+  /** Diagram edit lock — no resize or port move. */
+  editLocked?: boolean
   viewMode?: ViewMode
   onOpenView?: (viewId: string) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
@@ -88,8 +98,20 @@ function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
 }
 
-function offsetStyle(side: PortSide, offset: number): CSSProperties {
-  const pct = `${clamp(offset, 0.05, 0.95) * 100}%`
+function offsetStyle(
+  side: PortSide,
+  offset: number,
+  isBoundary = false,
+): CSSProperties {
+  const lo =
+    isBoundary && (side === 'left' || side === 'right')
+      ? PORT_BOUNDARY_OFFSET_MIN
+      : PORT_TB_INSET
+  const hi =
+    isBoundary && (side === 'left' || side === 'right')
+      ? PORT_BOUNDARY_OFFSET_MAX
+      : PORT_BODY_OFFSET_MAX
+  const pct = `${clamp(offset, lo, hi) * 100}%`
   if (side === 'left' || side === 'right') {
     return { top: pct }
   }
@@ -122,6 +144,7 @@ export function nearestBorderAnchor(
   py: number,
   width: number,
   height: number,
+  opts?: { isBoundary?: boolean },
 ): { side: PortSide; offset: number } {
   if (width <= 0 || height <= 0) {
     return { side: 'right', offset: 0.5 }
@@ -136,16 +159,22 @@ export function nearestBorderAnchor(
   const distRight = width - x
   const min = Math.min(distTop, distBottom, distLeft, distRight)
 
+  const lrLo = opts?.isBoundary ? PORT_BOUNDARY_OFFSET_MIN : PORT_TB_INSET
+  const lrHi = opts?.isBoundary ? PORT_BOUNDARY_OFFSET_MAX : PORT_BODY_OFFSET_MAX
+
   if (min === distLeft) {
-    return { side: 'left', offset: clamp(y / height, 0.05, 0.95) }
+    return { side: 'left', offset: clamp(y / height, lrLo, lrHi) }
   }
   if (min === distRight) {
-    return { side: 'right', offset: clamp(y / height, 0.05, 0.95) }
+    return { side: 'right', offset: clamp(y / height, lrLo, lrHi) }
   }
   if (min === distTop) {
-    return { side: 'top', offset: clamp(x / width, 0.05, 0.95) }
+    return { side: 'top', offset: clamp(x / width, PORT_TB_INSET, PORT_BODY_OFFSET_MAX) }
   }
-  return { side: 'bottom', offset: clamp(x / width, 0.05, 0.95) }
+  return {
+    side: 'bottom',
+    offset: clamp(x / width, PORT_TB_INSET, PORT_BODY_OFFSET_MAX),
+  }
 }
 
 /** True when pointer is inside the node box (not merely clamped onto it). */
@@ -173,6 +202,7 @@ export function PartNode({ data, selected }: NodeProps) {
   const draggingPortId = useRef<string | null>(null)
   const nodeId = useNodeId()
   const updateNodeInternals = useUpdateNodeInternals()
+  const { zoom } = useViewport()
   const keyword = partStereotypeKeyword(d)
   const typeTag = d.typeRef ? typeShortTag(d.typeRef) : null
   const moveMode = !!d.portMoveMode
@@ -183,21 +213,30 @@ export function PartNode({ data, selected }: NodeProps) {
     }
   }, [d.ports])
 
+  // Keep React Flow handle bounds in sync when ports move (drag or Align).
+  const portSig = (localPorts ?? [])
+    .map((p) => `${p.id}:${p.side}:${p.offset}`)
+    .join('|')
   useEffect(() => {
     if (nodeId) updateNodeInternals(nodeId)
-  }, [d.relationHandles, nodeId, updateNodeInternals, moveMode])
+  }, [portSig, d.relationHandles, nodeId, updateNodeInternals, moveMode])
 
   const updatePortFromPointer = useCallback((portId: string, clientX: number, clientY: number) => {
     const el = rootRef.current
     if (!el) return null
     const rect = el.getBoundingClientRect()
+    const flow = flowSizeFromScreenRect(rect.width, rect.height, zoom)
+    const isBoundary = !!d.isBoundary
     const anchor = nearestBorderAnchor(
       clientX - rect.left,
       clientY - rect.top,
       rect.width,
       rect.height,
+      { isBoundary },
     )
-    const offset = clampPortOffset(anchor.offset, anchor.side, rect.height)
+    const offset = clampPortOffset(anchor.offset, anchor.side, flow.height, {
+      isBoundary,
+    })
     const clamped = { side: anchor.side, offset }
     setLocalPorts((prev) =>
       prev.map((p) =>
@@ -205,7 +244,7 @@ export function PartNode({ data, selected }: NodeProps) {
       ),
     )
     return clamped
-  }, [])
+  }, [d.isBoundary, zoom])
 
   const endPortDrag = useCallback(
     (portId: string, clientX: number, clientY: number) => {
@@ -225,7 +264,7 @@ export function PartNode({ data, selected }: NodeProps) {
     e: ReactMouseEvent | ReactPointerEvent,
   ) => {
     // Option (macOS) / Alt — move port along parent border
-    if (!e.altKey && !moveMode) {
+    if (d.editLocked || (!e.altKey && !moveMode)) {
       return
     }
 
@@ -270,7 +309,7 @@ export function PartNode({ data, selected }: NodeProps) {
       <NodeResizer
         minWidth={d.isBoundary ? 280 : 120}
         minHeight={d.isBoundary ? 160 : 72}
-        isVisible={!!selected && !moveMode}
+        isVisible={!!selected && !moveMode && !d.editLocked}
         lineClassName="part-resize-line"
         handleClassName="part-resize-handle"
       />
@@ -366,7 +405,7 @@ export function PartNode({ data, selected }: NodeProps) {
           type="source"
           position={sideToPosition(port.side)}
           style={{
-            ...offsetStyle(port.side, port.offset),
+            ...offsetStyle(port.side, port.offset, !!d.isBoundary),
             zIndex: 5,
             cursor: moveMode ? 'move' : 'crosshair',
             ...(bg ? { background: bg } : {}),
@@ -395,7 +434,7 @@ export function PartNode({ data, selected }: NodeProps) {
           type="target"
           position={sideToPosition(port.side)}
           style={{
-            ...offsetStyle(port.side, port.offset),
+            ...offsetStyle(port.side, port.offset, !!d.isBoundary),
             // Edge endpoint only — connection uses source handles (Loose mode)
             opacity: 0,
             pointerEvents: 'none',

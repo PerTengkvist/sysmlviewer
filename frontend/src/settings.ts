@@ -1,3 +1,6 @@
+/** Matches `.edge-label { font-size: 11px }`. Parallel wires keep at least this gap. */
+export const EDGE_LABEL_TEXT_HEIGHT_PX = 11
+
 export type AppMode = 'viewer' | 'editor'
 export type ViewMode = 'light' | 'dark'
 
@@ -43,7 +46,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   selectedConnectionLinewidthFactor: 3,
   pendingChangeColor: '#dc2626',
   pendingAddColor: '#16a34a',
-  connectionSeparation: 5,
+  connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
 }

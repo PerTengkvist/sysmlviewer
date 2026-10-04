@@ -61,6 +61,63 @@ def test_resolve_view_node_overlay_wins_geometry_keeps_global_style():
     assert out["style"]["light"]["backgroundColor"] == "#abc"
 
 
+def test_view_node_layout_roundtrip_side_offset():
+    layout = ViewNodeLayout(side="right", offset=0.25)
+    assert layout.to_dict() == {"side": "right", "offset": 0.25}
+    restored = ViewNodeLayout.from_dict(layout.to_dict())
+    assert restored.side == "right"
+    assert restored.offset == 0.25
+    assert ViewNodeLayout().to_dict() == {}
+
+
+def test_apply_view_layout_patch_stores_side_offset():
+    layouts = ViewLayouts()
+    layouts = apply_view_layout_patch(
+        layouts,
+        "View::A",
+        {
+            "Pkg::Port": {
+                "side": "top",
+                "offset": 0.2,
+                "style": {"light": {"backgroundColor": "#f00"}},
+            }
+        },
+    )
+    node = layouts.by_view["View::A"].nodes["Pkg::Port"]
+    assert node.side == "top"
+    assert node.offset == 0.2
+    assert node.to_dict().get("style") is None
+
+    layouts = apply_view_layout_patch(
+        layouts,
+        "View::A",
+        {"Pkg::Port": {"x": 12}},
+    )
+    node = layouts.by_view["View::A"].nodes["Pkg::Port"]
+    assert node.x == 12.0
+    assert node.side == "top"
+    assert node.offset == 0.2
+
+
+def test_resolve_view_node_overlay_side_wins():
+    g = _global_node()
+    overlay = ViewNodeLayout(side="bottom", offset=0.2)
+    out = resolve_view_node(g, overlay=overlay)
+    assert out["side"] == "bottom"
+    assert out["offset"] == 0.2
+    assert out["style"]["light"]["backgroundColor"] == "#abc"
+
+
+def test_resolve_view_node_partial_overlay_keeps_global_side():
+    g = _global_node()
+    overlay = ViewNodeLayout(x=40.0, y=50.0)
+    out = resolve_view_node(g, overlay=overlay)
+    assert out["x"] == 40.0
+    assert out["y"] == 50.0
+    assert out["side"] == "left"
+    assert out["offset"] == 0.4
+
+
 def test_apply_view_layout_patch_creates_and_updates_geometry_only():
     layouts = ViewLayouts()
     layouts = apply_view_layout_patch(

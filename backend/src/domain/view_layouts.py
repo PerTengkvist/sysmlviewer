@@ -46,7 +46,10 @@ class ViewNodeLayout:
     y: float | None = None
     width: float | None = None
     height: float | None = None
+    side: str | None = None
+    offset: float | None = None
     anchors: list[dict[str, Any]] | None = None
+    edit_locked: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -58,8 +61,14 @@ class ViewNodeLayout:
             out["width"] = self.width
         if self.height is not None:
             out["height"] = self.height
+        if self.side is not None:
+            out["side"] = self.side
+        if self.offset is not None:
+            out["offset"] = self.offset
         if self.anchors is not None:
             out["anchors"] = list(self.anchors)
+        if self.edit_locked:
+            out["editLocked"] = True
         return out
 
     @classmethod
@@ -71,18 +80,26 @@ class ViewNodeLayout:
             y=float(data["y"]) if data.get("y") is not None else None,
             width=float(data["width"]) if data.get("width") is not None else None,
             height=float(data["height"]) if data.get("height") is not None else None,
+            side=str(data["side"]) if data.get("side") else None,
+            offset=(
+                float(data["offset"]) if data.get("offset") is not None else None
+            ),
             anchors=parse_boundary_anchors(data.get("anchors"))
             if "anchors" in data
             else None,
+            edit_locked=bool(data["editLocked"]) if "editLocked" in data else None,
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewNodeLayout:
-        """Apply geometry fields from a patch; ignore style/side/offset."""
+        """Apply geometry fields from a patch; ignore style."""
         x = self.x
         y = self.y
         width = self.width
         height = self.height
+        side = self.side
+        offset = self.offset
         anchors = self.anchors
+        edit_locked = self.edit_locked
         if "x" in patch and patch["x"] is not None:
             x = float(patch["x"])
         if "y" in patch and patch["y"] is not None:
@@ -91,10 +108,23 @@ class ViewNodeLayout:
             width = float(patch["width"])
         if "height" in patch and patch["height"] is not None:
             height = float(patch["height"])
+        if "side" in patch and patch["side"]:
+            side = str(patch["side"])
+        if "offset" in patch and patch["offset"] is not None:
+            offset = float(patch["offset"])
         if "anchors" in patch:
             anchors = parse_boundary_anchors(patch.get("anchors"))
+        if "editLocked" in patch:
+            edit_locked = bool(patch["editLocked"])
         return ViewNodeLayout(
-            x=x, y=y, width=width, height=height, anchors=anchors
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            side=side,
+            offset=offset,
+            anchors=anchors,
+            edit_locked=edit_locked,
         )
 
 
@@ -112,6 +142,7 @@ class ViewEdgeLayout:
     target_offset: float | None = None
     source_anchor_id: str | None = None
     target_anchor_id: str | None = None
+    edit_locked: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -136,6 +167,8 @@ class ViewEdgeLayout:
             out["sourceAnchorId"] = self.source_anchor_id
         if self.target_anchor_id is not None:
             out["targetAnchorId"] = self.target_anchor_id
+        if self.edit_locked:
+            out["editLocked"] = True
         return out
 
     @classmethod
@@ -167,6 +200,7 @@ class ViewEdgeLayout:
             ),
             source_anchor_id=data.get("sourceAnchorId") or None,
             target_anchor_id=data.get("targetAnchorId") or None,
+            edit_locked=bool(data["editLocked"]) if "editLocked" in data else None,
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewEdgeLayout:
@@ -180,6 +214,7 @@ class ViewEdgeLayout:
         target_offset = self.target_offset
         source_anchor_id = self.source_anchor_id
         target_anchor_id = self.target_anchor_id
+        edit_locked = self.edit_locked
         if "routing" in patch and patch["routing"]:
             routing = str(patch["routing"])
         if "waypoints" in patch:
@@ -200,6 +235,8 @@ class ViewEdgeLayout:
             source_anchor_id = str(patch["sourceAnchorId"])
         if "targetAnchorId" in patch and patch["targetAnchorId"]:
             target_anchor_id = str(patch["targetAnchorId"])
+        if "editLocked" in patch:
+            edit_locked = bool(patch["editLocked"])
         return ViewEdgeLayout(
             routing=routing,
             waypoints=waypoints,
@@ -211,6 +248,7 @@ class ViewEdgeLayout:
             target_offset=target_offset,
             source_anchor_id=source_anchor_id,
             target_anchor_id=target_anchor_id,
+            edit_locked=edit_locked,
         )
 
 
@@ -220,6 +258,8 @@ class ViewLayout:
     edges: dict[str, ViewEdgeLayout] = field(default_factory=dict)
     # None → inherit global Settings hierarchical levels for this view
     hierarchical_levels_override: int | None = None
+    view_filters: list[dict[str, Any]] = field(default_factory=list)
+    layout_rules: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
@@ -227,6 +267,10 @@ class ViewLayout:
             out["edges"] = {k: v.to_dict() for k, v in self.edges.items()}
         if self.hierarchical_levels_override is not None:
             out["hierarchicalLevelsOverride"] = self.hierarchical_levels_override
+        if self.view_filters:
+            out["viewFilters"] = list(self.view_filters)
+        if self.layout_rules:
+            out["layoutRules"] = list(self.layout_rules)
         return out
 
     @classmethod
@@ -248,11 +292,70 @@ class ViewLayout:
                 override = max(1, int(raw_override))
             except (TypeError, ValueError):
                 override = None
+        filters = _normalize_view_filters(data.get("viewFilters"))
+        rules = _normalize_layout_rules(data.get("layoutRules"))
         return cls(
             nodes=nodes,
             edges=edges,
             hierarchical_levels_override=override,
+            view_filters=filters,
+            layout_rules=rules,
         )
+
+
+def _normalize_view_filters(raw: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        row_id = str(item.get("id") or "").strip()
+        kind = str(item.get("kind") or "").strip()
+        if not row_id or not kind:
+            continue
+        match_field = str(item.get("matchField") or "name").strip().lower()
+        if match_field not in ("name", "stereotype", "any"):
+            match_field = "name"
+        out.append(
+            {
+                "id": row_id,
+                "kind": kind,
+                "matchField": match_field,
+                "namePattern": str(
+                    item.get("namePattern") or item.get("pattern") or "*"
+                ),
+                "enabled": bool(item.get("enabled")),
+            }
+        )
+    return out
+
+
+def _normalize_layout_rules(raw: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        row_id = str(item.get("id") or "").strip()
+        kind = str(item.get("kind") or "").strip()
+        placement = str(item.get("placement") or "").strip()
+        if not row_id or not kind or not placement:
+            continue
+        peer_kind = item.get("peerKind")
+        peer_name = item.get("peerNamePattern")
+        out.append(
+            {
+                "id": row_id,
+                "kind": kind,
+                "namePattern": str(item.get("namePattern") or "*"),
+                "placement": placement,
+                "peerKind": str(peer_kind) if peer_kind else None,
+                "peerNamePattern": str(peer_name) if peer_name else None,
+            }
+        )
+    return out
 
 
 @dataclass
@@ -304,8 +407,13 @@ def resolve_view_node(
         out["width"] = overlay.width
     if overlay.height is not None:
         out["height"] = overlay.height
+    if overlay.side is not None:
+        out["side"] = overlay.side
+    if overlay.offset is not None:
+        out["offset"] = overlay.offset
     if overlay.anchors is not None:
         out["anchors"] = list(overlay.anchors)
+    stamp_edit_lock(out, overlay.edit_locked)
     return out
 
 
@@ -358,7 +466,46 @@ def resolve_view_edge(
         out["sourceAnchorId"] = overlay.source_anchor_id
     if overlay.target_anchor_id is not None:
         out["targetAnchorId"] = overlay.target_anchor_id
+    stamp_edit_lock(out, overlay.edit_locked)
     return out
+
+
+def stamp_edit_lock(out: dict[str, Any], locked: bool | None) -> None:
+    """Overlay wins. True sets the flag; False clears a global lock; None leaves it."""
+    if locked is True:
+        out["editLocked"] = True
+    elif locked is False:
+        out.pop("editLocked", None)
+
+
+def _copy_view_layout(
+    view_layout: ViewLayout,
+    *,
+    nodes: dict[str, ViewNodeLayout] | None = None,
+    edges: dict[str, ViewEdgeLayout] | None = None,
+    hierarchical_levels_override: int | None | object = ...,
+    view_filters: list[dict[str, Any]] | None = None,
+    layout_rules: list[dict[str, Any]] | None = None,
+) -> ViewLayout:
+    """Rebuild ViewLayout while preserving fields not explicitly overridden."""
+    override = view_layout.hierarchical_levels_override
+    if hierarchical_levels_override is not ...:
+        override = hierarchical_levels_override  # type: ignore[assignment]
+    return ViewLayout(
+        nodes=nodes if nodes is not None else dict(view_layout.nodes),
+        edges=edges if edges is not None else dict(view_layout.edges),
+        hierarchical_levels_override=override,
+        view_filters=(
+            list(view_filters)
+            if view_filters is not None
+            else list(view_layout.view_filters)
+        ),
+        layout_rules=(
+            list(layout_rules)
+            if layout_rules is not None
+            else list(view_layout.layout_rules)
+        ),
+    )
 
 
 def apply_view_layout_patch(
@@ -373,11 +520,7 @@ def apply_view_layout_patch(
     for artifact_id, patch in nodes_patch.items():
         existing = nodes.get(artifact_id) or ViewNodeLayout()
         nodes[artifact_id] = existing.merge_patch(patch)
-    by_view[view_id] = ViewLayout(
-        nodes=nodes,
-        edges=dict(view_layout.edges),
-        hierarchical_levels_override=view_layout.hierarchical_levels_override,
-    )
+    by_view[view_id] = _copy_view_layout(view_layout, nodes=nodes)
     return ViewLayouts(by_view=by_view)
 
 
@@ -389,16 +532,11 @@ def apply_view_layout_edge_patch(
     """Upsert routing/waypoints/labelOffset into viewLayouts[viewId]."""
     by_view = dict(layouts.by_view)
     view_layout = by_view.get(view_id) or ViewLayout()
-    nodes = dict(view_layout.nodes)
     edges = dict(view_layout.edges)
     for artifact_id, patch in edges_patch.items():
         existing = edges.get(artifact_id) or ViewEdgeLayout()
         edges[artifact_id] = existing.merge_patch(patch)
-    by_view[view_id] = ViewLayout(
-        nodes=nodes,
-        edges=edges,
-        hierarchical_levels_override=view_layout.hierarchical_levels_override,
-    )
+    by_view[view_id] = _copy_view_layout(view_layout, edges=edges)
     return ViewLayouts(by_view=by_view)
 
 
@@ -411,9 +549,37 @@ def apply_view_hierarchy_override(
     by_view = dict(layouts.by_view)
     view_layout = by_view.get(view_id) or ViewLayout()
     levels = max(1, int(override)) if override is not None else None
-    by_view[view_id] = ViewLayout(
-        nodes=dict(view_layout.nodes),
-        edges=dict(view_layout.edges),
-        hierarchical_levels_override=levels,
+    by_view[view_id] = _copy_view_layout(
+        view_layout, hierarchical_levels_override=levels
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_view_filters(
+    layouts: ViewLayouts,
+    view_id: str,
+    filters: list[dict[str, Any]] | None,
+) -> ViewLayouts:
+    """Replace per-view viewFilters list (None or [] clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        view_filters=_normalize_view_filters(filters or []),
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_layout_rules(
+    layouts: ViewLayouts,
+    view_id: str,
+    rules: list[dict[str, Any]] | None,
+) -> ViewLayouts:
+    """Replace per-view layoutRules list (None or [] clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        layout_rules=_normalize_layout_rules(rules or []),
     )
     return ViewLayouts(by_view=by_view)

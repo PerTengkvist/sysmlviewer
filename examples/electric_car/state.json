@@ -1465,7 +1465,7 @@
       "name": "satisfy_1",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::VehicleLength",
       "exposeRef": null,
       "defaultValue": null,
@@ -1483,7 +1483,7 @@
       "name": "satisfy_2",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::VehicleWidth",
       "exposeRef": null,
       "defaultValue": null,
@@ -1501,7 +1501,7 @@
       "name": "satisfy_3",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::VehicleHeight",
       "exposeRef": null,
       "defaultValue": null,
@@ -1519,7 +1519,7 @@
       "name": "satisfy_4",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::PassengerCapacity",
       "exposeRef": null,
       "defaultValue": null,
@@ -1537,7 +1537,7 @@
       "name": "satisfy_5",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::CargoVolume",
       "exposeRef": null,
       "defaultValue": null,
@@ -1555,7 +1555,7 @@
       "name": "satisfy_6",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery",
+      "sourceId": "LogicalArchitecture::Car::skateboard::battery",
       "targetId": "Requirements::Range",
       "exposeRef": null,
       "defaultValue": null,
@@ -1573,7 +1573,7 @@
       "name": "satisfy_7",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::engine",
+      "sourceId": "LogicalArchitecture::Car::skateboard::engine",
       "targetId": "Requirements::Acceleration",
       "exposeRef": null,
       "defaultValue": null,
@@ -1591,7 +1591,7 @@
       "name": "satisfy_8",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::engine",
+      "sourceId": "LogicalArchitecture::Car::skateboard::engine",
       "targetId": "Requirements::TopSpeed",
       "exposeRef": null,
       "defaultValue": null,
@@ -1609,7 +1609,7 @@
       "name": "satisfy_9",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery",
+      "sourceId": "LogicalArchitecture::Car::skateboard::battery",
       "targetId": "Requirements::ChargeTime",
       "exposeRef": null,
       "defaultValue": null,
@@ -1627,7 +1627,7 @@
       "name": "satisfy_10",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::chargeInlet",
+      "sourceId": "LogicalArchitecture::Car::skateboard::chargeInlet",
       "targetId": "Requirements::ChargeTime",
       "exposeRef": null,
       "defaultValue": null,
@@ -1645,7 +1645,7 @@
       "name": "satisfy_11",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::gearStick",
+      "sourceId": "LogicalArchitecture::Car::driverControls::gearStick",
       "targetId": "Requirements::PropulsionModes",
       "exposeRef": null,
       "defaultValue": null,
@@ -1663,7 +1663,7 @@
       "name": "satisfy_12",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::CrashProtection",
       "exposeRef": null,
       "defaultValue": null,
@@ -1681,7 +1681,7 @@
       "name": "satisfy_13",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::PedestrianProtection",
       "exposeRef": null,
       "defaultValue": null,
@@ -1699,7 +1699,7 @@
       "name": "satisfy_14",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
+      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
       "targetId": "Requirements::OccupantRestraint",
       "exposeRef": null,
       "defaultValue": null,
@@ -1717,7 +1717,7 @@
       "name": "satisfy_15",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::brakePedal",
+      "sourceId": "LogicalArchitecture::Car::driverControls::brakePedal",
       "targetId": "Requirements::BrakingDistance",
       "exposeRef": null,
       "defaultValue": null,
@@ -1735,7 +1735,7 @@
       "name": "satisfy_16",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::wheels",
+      "sourceId": "LogicalArchitecture::Car::skateboard::wheels",
       "targetId": "Requirements::BrakingDistance",
       "exposeRef": null,
       "defaultValue": null,
@@ -1753,7 +1753,7 @@
       "name": "satisfy_17",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::steeringWheel",
+      "sourceId": "LogicalArchitecture::Car::driverControls::steeringWheel",
       "targetId": "Requirements::DirectionalControl",
       "exposeRef": null,
       "defaultValue": null,
@@ -1771,7 +1771,7 @@
       "name": "satisfy_18",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::windshield",
+      "sourceId": "LogicalArchitecture::Car::body::windshield",
       "targetId": "Requirements::ForwardVisibility",
       "exposeRef": null,
       "defaultValue": null,
@@ -1789,7 +1789,7 @@
       "name": "satisfy_19",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::wipers",
+      "sourceId": "LogicalArchitecture::Car::body::wipers",
       "targetId": "Requirements::ForwardVisibility",
       "exposeRef": null,
       "defaultValue": null,
@@ -1807,7 +1807,7 @@
       "name": "satisfy_20",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::locks",
+      "sourceId": "LogicalArchitecture::Car::body::door",
       "targetId": "Requirements::AccessControl",
       "exposeRef": null,
       "defaultValue": null,
@@ -1825,7 +1825,7 @@
       "name": "satisfy_21",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::locks",
+      "sourceId": "LogicalArchitecture::Car::body::door",
       "targetId": "Requirements::Immobilizer",
       "exposeRef": null,
       "defaultValue": null,
@@ -1843,7 +1843,7 @@
       "name": "satisfy_22",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::locks",
+      "sourceId": "LogicalArchitecture::Car::body::door",
       "targetId": "Requirements::LockIndication",
       "exposeRef": null,
       "defaultValue": null,
@@ -3452,7 +3452,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Logical architecture of the electric car. Car is the assembly. Parts are logical, not yet software, electronics or metal. Dependencies show what is mounted on what, what commands what, and what supplies energy. Interfaces name the contracts. Each contract has a provider port (Out) and a consumer port (In), joined by a connection. The physical architecture realizes these parts with «implements».",
+      "documentation": "Logical architecture of the electric car. Car is the assembly. Parts are logical, not yet software, electronics or metal. Dependencies show what is mounted on what, what commands what, and what supplies energy. Interfaces name the contracts. Each contract has a provider port (Out) and a consumer port (In), joined by a connection. Ports are delegated through assembly boundaries so the same interface can be wired at every level. The physical architecture realizes these parts with «implements».",
       "shortId": null,
       "children": [
         "LogicalArchitecture::DirectionCommand",
@@ -3464,7 +3464,12 @@
         "LogicalArchitecture::WindshieldClear",
         "LogicalArchitecture::Car",
         "LogicalArchitecture::CarLogicalView",
-        "LogicalArchitecture::CarLogicalTree"
+        "LogicalArchitecture::CarLogicalTree",
+        "LogicalArchitecture::DriverControlsView",
+        "LogicalArchitecture::MotionActuationView",
+        "LogicalArchitecture::SkateboardView",
+        "LogicalArchitecture::BodyView",
+        "LogicalArchitecture::CabinComfortView"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
@@ -3607,64 +3612,36 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Logical electric car: driver controls, traction, energy, body and cabin systems.",
+      "documentation": "Logical electric car: driver controls, motion actuation, skateboard platform, body and cabin comfort.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::steeringWheel",
-        "LogicalArchitecture::Car::gearStick",
-        "LogicalArchitecture::Car::acceleratorPedal",
-        "LogicalArchitecture::Car::brakePedal",
-        "LogicalArchitecture::Car::climateSystem",
-        "LogicalArchitecture::Car::entertainmentSystem",
-        "LogicalArchitecture::Car::engine",
-        "LogicalArchitecture::Car::battery",
-        "LogicalArchitecture::Car::chargeInlet",
-        "LogicalArchitecture::Car::chassis",
-        "LogicalArchitecture::Car::wheels",
-        "LogicalArchitecture::Car::suspension",
-        "LogicalArchitecture::Car::windows",
+        "LogicalArchitecture::Car::driverControls",
+        "LogicalArchitecture::Car::motionActuation",
+        "LogicalArchitecture::Car::skateboard",
         "LogicalArchitecture::Car::body",
-        "LogicalArchitecture::Car::windshield",
-        "LogicalArchitecture::Car::wipers",
-        "LogicalArchitecture::Car::locks",
-        "LogicalArchitecture::Car::lamps",
-        "LogicalArchitecture::Car::dep1",
-        "LogicalArchitecture::Car::dep2",
-        "LogicalArchitecture::Car::dep3",
-        "LogicalArchitecture::Car::dep4",
-        "LogicalArchitecture::Car::dep5",
-        "LogicalArchitecture::Car::dep6",
-        "LogicalArchitecture::Car::dep7",
-        "LogicalArchitecture::Car::dep8",
-        "LogicalArchitecture::Car::dep9",
-        "LogicalArchitecture::Car::dep10",
-        "LogicalArchitecture::Car::dep11",
-        "LogicalArchitecture::Car::dep12",
+        "LogicalArchitecture::Car::cabinComfort",
         "LogicalArchitecture::Car::dep13",
         "LogicalArchitecture::Car::dep14",
         "LogicalArchitecture::Car::dep15",
         "LogicalArchitecture::Car::dep16",
         "LogicalArchitecture::Car::dep17",
-        "LogicalArchitecture::Car::dep18",
-        "LogicalArchitecture::Car::dep19",
-        "LogicalArchitecture::Car::dep20",
-        "LogicalArchitecture::Car::direction",
-        "LogicalArchitecture::Car::gear",
-        "LogicalArchitecture::Car::torque",
-        "LogicalArchitecture::Car::brake",
-        "LogicalArchitecture::Car::energyEngine",
-        "LogicalArchitecture::Car::energyClimate",
-        "LogicalArchitecture::Car::energyEntertainment",
-        "LogicalArchitecture::Car::energyLamps",
-        "LogicalArchitecture::Car::charge",
-        "LogicalArchitecture::Car::clear"
+        "LogicalArchitecture::Car::directionCommand",
+        "LogicalArchitecture::Car::gearCommand",
+        "LogicalArchitecture::Car::torqueCommand",
+        "LogicalArchitecture::Car::brakeCommand",
+        "LogicalArchitecture::Car::directionActuate",
+        "LogicalArchitecture::Car::gearActuate",
+        "LogicalArchitecture::Car::torqueActuate",
+        "LogicalArchitecture::Car::brakeActuate",
+        "LogicalArchitecture::Car::energyCabin",
+        "LogicalArchitecture::Car::energyBody"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::steeringWheel": {
-      "id": "LogicalArchitecture::Car::steeringWheel",
+    "LogicalArchitecture::Car::driverControls": {
+      "id": "LogicalArchitecture::Car::driverControls",
       "kind": "part",
-      "name": "steeringWheel",
+      "name": "driverControls",
       "parentId": "LogicalArchitecture::Car",
       "typeRef": null,
       "sourceId": null,
@@ -3674,18 +3651,29 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Driver control for direction. Provides DirectionCommand to the road wheels.",
+      "documentation": "Driver input controls for direction, propulsion mode, torque and braking.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::steeringWheel::directionOut"
+        "LogicalArchitecture::Car::driverControls::directionOut",
+        "LogicalArchitecture::Car::driverControls::gearOut",
+        "LogicalArchitecture::Car::driverControls::torqueOut",
+        "LogicalArchitecture::Car::driverControls::brakeOut",
+        "LogicalArchitecture::Car::driverControls::steeringWheel",
+        "LogicalArchitecture::Car::driverControls::gearStick",
+        "LogicalArchitecture::Car::driverControls::acceleratorPedal",
+        "LogicalArchitecture::Car::driverControls::brakePedal",
+        "LogicalArchitecture::Car::driverControls::directionDelegate",
+        "LogicalArchitecture::Car::driverControls::gearDelegate",
+        "LogicalArchitecture::Car::driverControls::torqueDelegate",
+        "LogicalArchitecture::Car::driverControls::brakeDelegate"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::steeringWheel::directionOut": {
-      "id": "LogicalArchitecture::Car::steeringWheel::directionOut",
+    "LogicalArchitecture::Car::driverControls::directionOut": {
+      "id": "LogicalArchitecture::Car::driverControls::directionOut",
       "kind": "port",
       "name": "directionOut",
-      "parentId": "LogicalArchitecture::Car::steeringWheel",
+      "parentId": "LogicalArchitecture::Car::driverControls",
       "typeRef": "DirectionCommand",
       "sourceId": null,
       "targetId": null,
@@ -3699,31 +3687,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::gearStick": {
-      "id": "LogicalArchitecture::Car::gearStick",
-      "kind": "part",
-      "name": "gearStick",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Driver control for park, reverse, neutral and drive. Provides GearCommand to the motor.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::gearStick::gearOut"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::gearStick::gearOut": {
-      "id": "LogicalArchitecture::Car::gearStick::gearOut",
+    "LogicalArchitecture::Car::driverControls::gearOut": {
+      "id": "LogicalArchitecture::Car::driverControls::gearOut",
       "kind": "port",
       "name": "gearOut",
-      "parentId": "LogicalArchitecture::Car::gearStick",
+      "parentId": "LogicalArchitecture::Car::driverControls",
       "typeRef": "GearCommand",
       "sourceId": null,
       "targetId": null,
@@ -3737,31 +3705,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::acceleratorPedal": {
-      "id": "LogicalArchitecture::Car::acceleratorPedal",
-      "kind": "part",
-      "name": "acceleratorPedal",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Driver control for requested traction torque. Provides TorqueRequest to the motor.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::acceleratorPedal::torqueOut"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::acceleratorPedal::torqueOut": {
-      "id": "LogicalArchitecture::Car::acceleratorPedal::torqueOut",
+    "LogicalArchitecture::Car::driverControls::torqueOut": {
+      "id": "LogicalArchitecture::Car::driverControls::torqueOut",
       "kind": "port",
       "name": "torqueOut",
-      "parentId": "LogicalArchitecture::Car::acceleratorPedal",
+      "parentId": "LogicalArchitecture::Car::driverControls",
       "typeRef": "TorqueRequest",
       "sourceId": null,
       "targetId": null,
@@ -3775,31 +3723,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::brakePedal": {
-      "id": "LogicalArchitecture::Car::brakePedal",
-      "kind": "part",
-      "name": "brakePedal",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Driver control for deceleration. Provides BrakeRequest to the wheels.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::brakePedal::brakeOut"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::brakePedal::brakeOut": {
-      "id": "LogicalArchitecture::Car::brakePedal::brakeOut",
+    "LogicalArchitecture::Car::driverControls::brakeOut": {
+      "id": "LogicalArchitecture::Car::driverControls::brakeOut",
       "kind": "port",
       "name": "brakeOut",
-      "parentId": "LogicalArchitecture::Car::brakePedal",
+      "parentId": "LogicalArchitecture::Car::driverControls",
       "typeRef": "BrakeRequest",
       "sourceId": null,
       "targetId": null,
@@ -3813,11 +3741,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::climateSystem": {
-      "id": "LogicalArchitecture::Car::climateSystem",
+    "LogicalArchitecture::Car::driverControls::steeringWheel": {
+      "id": "LogicalArchitecture::Car::driverControls::steeringWheel",
       "kind": "part",
-      "name": "climateSystem",
-      "parentId": "LogicalArchitecture::Car",
+      "name": "steeringWheel",
+      "parentId": "LogicalArchitecture::Car::driverControls",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -3826,19 +3754,19 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Logical heating, ventilation and cooling of the cabin. Consumes EnergySupply from the battery.",
+      "documentation": "Driver control for direction. Provides DirectionCommand.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::climateSystem::energyIn"
+        "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::climateSystem::energyIn": {
-      "id": "LogicalArchitecture::Car::climateSystem::energyIn",
+    "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut": {
+      "id": "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut",
       "kind": "port",
-      "name": "energyIn",
-      "parentId": "LogicalArchitecture::Car::climateSystem",
-      "typeRef": "EnergySupply",
+      "name": "directionOut",
+      "parentId": "LogicalArchitecture::Car::driverControls::steeringWheel",
+      "typeRef": "DirectionCommand",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -3851,11 +3779,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::entertainmentSystem": {
-      "id": "LogicalArchitecture::Car::entertainmentSystem",
+    "LogicalArchitecture::Car::driverControls::gearStick": {
+      "id": "LogicalArchitecture::Car::driverControls::gearStick",
       "kind": "part",
-      "name": "entertainmentSystem",
-      "parentId": "LogicalArchitecture::Car",
+      "name": "gearStick",
+      "parentId": "LogicalArchitecture::Car::driverControls",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -3864,77 +3792,18 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Logical cabin audio and video. Consumes EnergySupply from the battery.",
+      "documentation": "Driver control for park, reverse, neutral and drive. Provides GearCommand.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::entertainmentSystem::energyIn"
+        "LogicalArchitecture::Car::driverControls::gearStick::gearOut"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::entertainmentSystem::energyIn": {
-      "id": "LogicalArchitecture::Car::entertainmentSystem::energyIn",
+    "LogicalArchitecture::Car::driverControls::gearStick::gearOut": {
+      "id": "LogicalArchitecture::Car::driverControls::gearStick::gearOut",
       "kind": "port",
-      "name": "energyIn",
-      "parentId": "LogicalArchitecture::Car::entertainmentSystem",
-      "typeRef": "EnergySupply",
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::engine": {
-      "id": "LogicalArchitecture::Car::engine",
-      "kind": "part",
-      "name": "engine",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Electric traction motor, nominally 150 kW. Consumes GearCommand, TorqueRequest and EnergySupply.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::engine::powerKW",
-        "LogicalArchitecture::Car::engine::gearIn",
-        "LogicalArchitecture::Car::engine::torqueIn",
-        "LogicalArchitecture::Car::engine::energyIn"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::engine::powerKW": {
-      "id": "LogicalArchitecture::Car::engine::powerKW",
-      "kind": "attribute",
-      "name": "powerKW",
-      "parentId": "LogicalArchitecture::Car::engine",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": "150",
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::engine::gearIn": {
-      "id": "LogicalArchitecture::Car::engine::gearIn",
-      "kind": "port",
-      "name": "gearIn",
-      "parentId": "LogicalArchitecture::Car::engine",
+      "name": "gearOut",
+      "parentId": "LogicalArchitecture::Car::driverControls::gearStick",
       "typeRef": "GearCommand",
       "sourceId": null,
       "targetId": null,
@@ -3948,11 +3817,31 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::engine::torqueIn": {
-      "id": "LogicalArchitecture::Car::engine::torqueIn",
+    "LogicalArchitecture::Car::driverControls::acceleratorPedal": {
+      "id": "LogicalArchitecture::Car::driverControls::acceleratorPedal",
+      "kind": "part",
+      "name": "acceleratorPedal",
+      "parentId": "LogicalArchitecture::Car::driverControls",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Driver control for requested traction torque. Provides TorqueRequest.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut": {
+      "id": "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut",
       "kind": "port",
-      "name": "torqueIn",
-      "parentId": "LogicalArchitecture::Car::engine",
+      "name": "torqueOut",
+      "parentId": "LogicalArchitecture::Car::driverControls::acceleratorPedal",
       "typeRef": "TorqueRequest",
       "sourceId": null,
       "targetId": null,
@@ -3966,11 +3855,771 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::engine::energyIn": {
-      "id": "LogicalArchitecture::Car::engine::energyIn",
+    "LogicalArchitecture::Car::driverControls::brakePedal": {
+      "id": "LogicalArchitecture::Car::driverControls::brakePedal",
+      "kind": "part",
+      "name": "brakePedal",
+      "parentId": "LogicalArchitecture::Car::driverControls",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Driver control for deceleration. Provides BrakeRequest.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut": {
+      "id": "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut",
       "kind": "port",
-      "name": "energyIn",
-      "parentId": "LogicalArchitecture::Car::engine",
+      "name": "brakeOut",
+      "parentId": "LogicalArchitecture::Car::driverControls::brakePedal",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::driverControls::directionDelegate": {
+      "id": "LogicalArchitecture::Car::driverControls::directionDelegate",
+      "kind": "connection",
+      "name": "directionDelegate",
+      "parentId": "LogicalArchitecture::Car::driverControls",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut",
+      "targetId": "LogicalArchitecture::Car::driverControls::directionOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::driverControls::gearDelegate": {
+      "id": "LogicalArchitecture::Car::driverControls::gearDelegate",
+      "kind": "connection",
+      "name": "gearDelegate",
+      "parentId": "LogicalArchitecture::Car::driverControls",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::gearStick::gearOut",
+      "targetId": "LogicalArchitecture::Car::driverControls::gearOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::driverControls::torqueDelegate": {
+      "id": "LogicalArchitecture::Car::driverControls::torqueDelegate",
+      "kind": "connection",
+      "name": "torqueDelegate",
+      "parentId": "LogicalArchitecture::Car::driverControls",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut",
+      "targetId": "LogicalArchitecture::Car::driverControls::torqueOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::driverControls::brakeDelegate": {
+      "id": "LogicalArchitecture::Car::driverControls::brakeDelegate",
+      "kind": "connection",
+      "name": "brakeDelegate",
+      "parentId": "LogicalArchitecture::Car::driverControls",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut",
+      "targetId": "LogicalArchitecture::Car::driverControls::brakeOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation": {
+      "id": "LogicalArchitecture::Car::motionActuation",
+      "kind": "part",
+      "name": "motionActuation",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Actuators that convert driver commands into wheel and powertrain control.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::motionActuation::directionIn",
+        "LogicalArchitecture::Car::motionActuation::directionOut",
+        "LogicalArchitecture::Car::motionActuation::gearIn",
+        "LogicalArchitecture::Car::motionActuation::gearOut",
+        "LogicalArchitecture::Car::motionActuation::torqueIn",
+        "LogicalArchitecture::Car::motionActuation::torqueOut",
+        "LogicalArchitecture::Car::motionActuation::brakeIn",
+        "LogicalArchitecture::Car::motionActuation::brakeOut",
+        "LogicalArchitecture::Car::motionActuation::steeringServo",
+        "LogicalArchitecture::Car::motionActuation::powertrainControl",
+        "LogicalArchitecture::Car::motionActuation::brakeSystem",
+        "LogicalArchitecture::Car::motionActuation::directionInDelegate",
+        "LogicalArchitecture::Car::motionActuation::directionOutDelegate",
+        "LogicalArchitecture::Car::motionActuation::gearInDelegate",
+        "LogicalArchitecture::Car::motionActuation::gearOutDelegate",
+        "LogicalArchitecture::Car::motionActuation::torqueInDelegate",
+        "LogicalArchitecture::Car::motionActuation::torqueOutDelegate",
+        "LogicalArchitecture::Car::motionActuation::brakeInDelegate",
+        "LogicalArchitecture::Car::motionActuation::brakeOutDelegate"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::directionIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::directionIn",
+      "kind": "port",
+      "name": "directionIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::directionOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::directionOut",
+      "kind": "port",
+      "name": "directionOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::gearIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::gearIn",
+      "kind": "port",
+      "name": "gearIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::gearOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::gearOut",
+      "kind": "port",
+      "name": "gearOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::torqueIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::torqueIn",
+      "kind": "port",
+      "name": "torqueIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::torqueOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::torqueOut",
+      "kind": "port",
+      "name": "torqueOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeIn",
+      "kind": "port",
+      "name": "brakeIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeOut",
+      "kind": "port",
+      "name": "brakeOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::steeringServo": {
+      "id": "LogicalArchitecture::Car::motionActuation::steeringServo",
+      "kind": "part",
+      "name": "steeringServo",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Steering actuator. Consumes DirectionCommand from the driver and provides it to the wheels.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::motionActuation::steeringServo::directionIn",
+        "LogicalArchitecture::Car::motionActuation::steeringServo::directionOut"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::steeringServo::directionIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::steeringServo::directionIn",
+      "kind": "port",
+      "name": "directionIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation::steeringServo",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::steeringServo::directionOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::steeringServo::directionOut",
+      "kind": "port",
+      "name": "directionOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation::steeringServo",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::powertrainControl": {
+      "id": "LogicalArchitecture::Car::motionActuation::powertrainControl",
+      "kind": "part",
+      "name": "powertrainControl",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Powertrain actuator. Consumes GearCommand and TorqueRequest and provides them to the motor.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::motionActuation::powertrainControl::gearIn",
+        "LogicalArchitecture::Car::motionActuation::powertrainControl::gearOut",
+        "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueIn",
+        "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueOut"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::powertrainControl::gearIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::powertrainControl::gearIn",
+      "kind": "port",
+      "name": "gearIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation::powertrainControl",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::powertrainControl::gearOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::powertrainControl::gearOut",
+      "kind": "port",
+      "name": "gearOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation::powertrainControl",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueIn",
+      "kind": "port",
+      "name": "torqueIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation::powertrainControl",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueOut",
+      "kind": "port",
+      "name": "torqueOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation::powertrainControl",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeSystem": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeSystem",
+      "kind": "part",
+      "name": "brakeSystem",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Brake actuator. Consumes BrakeRequest from the driver and provides it to the wheels.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeIn",
+        "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeOut"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeIn": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeIn",
+      "kind": "port",
+      "name": "brakeIn",
+      "parentId": "LogicalArchitecture::Car::motionActuation::brakeSystem",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeOut": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeOut",
+      "kind": "port",
+      "name": "brakeOut",
+      "parentId": "LogicalArchitecture::Car::motionActuation::brakeSystem",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::directionInDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::directionInDelegate",
+      "kind": "connection",
+      "name": "directionInDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::directionIn",
+      "targetId": "LogicalArchitecture::Car::motionActuation::steeringServo::directionIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::directionOutDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::directionOutDelegate",
+      "kind": "connection",
+      "name": "directionOutDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::steeringServo::directionOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::directionOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::gearInDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::gearInDelegate",
+      "kind": "connection",
+      "name": "gearInDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::gearIn",
+      "targetId": "LogicalArchitecture::Car::motionActuation::powertrainControl::gearIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::gearOutDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::gearOutDelegate",
+      "kind": "connection",
+      "name": "gearOutDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::powertrainControl::gearOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::gearOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::torqueInDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::torqueInDelegate",
+      "kind": "connection",
+      "name": "torqueInDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::torqueIn",
+      "targetId": "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::torqueOutDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::torqueOutDelegate",
+      "kind": "connection",
+      "name": "torqueOutDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::torqueOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeInDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeInDelegate",
+      "kind": "connection",
+      "name": "brakeInDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::brakeIn",
+      "targetId": "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeOutDelegate": {
+      "id": "LogicalArchitecture::Car::motionActuation::brakeOutDelegate",
+      "kind": "connection",
+      "name": "brakeOutDelegate",
+      "parentId": "LogicalArchitecture::Car::motionActuation",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::brakeOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard": {
+      "id": "LogicalArchitecture::Car::skateboard",
+      "kind": "part",
+      "name": "skateboard",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "EV platform: battery, charge inlet, traction motor, chassis, suspension and wheels.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::skateboard::directionIn",
+        "LogicalArchitecture::Car::skateboard::gearIn",
+        "LogicalArchitecture::Car::skateboard::torqueIn",
+        "LogicalArchitecture::Car::skateboard::brakeIn",
+        "LogicalArchitecture::Car::skateboard::energyOut",
+        "LogicalArchitecture::Car::skateboard::battery",
+        "LogicalArchitecture::Car::skateboard::chargeInlet",
+        "LogicalArchitecture::Car::skateboard::engine",
+        "LogicalArchitecture::Car::skateboard::chassis",
+        "LogicalArchitecture::Car::skateboard::suspension",
+        "LogicalArchitecture::Car::skateboard::wheels",
+        "LogicalArchitecture::Car::skateboard::dep1",
+        "LogicalArchitecture::Car::skateboard::dep2",
+        "LogicalArchitecture::Car::skateboard::dep3",
+        "LogicalArchitecture::Car::skateboard::dep4",
+        "LogicalArchitecture::Car::skateboard::dep5",
+        "LogicalArchitecture::Car::skateboard::dep6",
+        "LogicalArchitecture::Car::skateboard::directionDelegate",
+        "LogicalArchitecture::Car::skateboard::gearDelegate",
+        "LogicalArchitecture::Car::skateboard::torqueDelegate",
+        "LogicalArchitecture::Car::skateboard::brakeDelegate",
+        "LogicalArchitecture::Car::skateboard::energyEngine",
+        "LogicalArchitecture::Car::skateboard::energyOutDelegate",
+        "LogicalArchitecture::Car::skateboard::charge"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::directionIn": {
+      "id": "LogicalArchitecture::Car::skateboard::directionIn",
+      "kind": "port",
+      "name": "directionIn",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::gearIn": {
+      "id": "LogicalArchitecture::Car::skateboard::gearIn",
+      "kind": "port",
+      "name": "gearIn",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::torqueIn": {
+      "id": "LogicalArchitecture::Car::skateboard::torqueIn",
+      "kind": "port",
+      "name": "torqueIn",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::brakeIn": {
+      "id": "LogicalArchitecture::Car::skateboard::brakeIn",
+      "kind": "port",
+      "name": "brakeIn",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::energyOut": {
+      "id": "LogicalArchitecture::Car::skateboard::energyOut",
+      "kind": "port",
+      "name": "energyOut",
+      "parentId": "LogicalArchitecture::Car::skateboard",
       "typeRef": "EnergySupply",
       "sourceId": null,
       "targetId": null,
@@ -3984,11 +4633,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::battery": {
-      "id": "LogicalArchitecture::Car::battery",
+    "LogicalArchitecture::Car::skateboard::battery": {
+      "id": "LogicalArchitecture::Car::skateboard::battery",
       "kind": "part",
       "name": "battery",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::skateboard",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -4000,17 +4649,17 @@
       "documentation": "Traction battery, nominally 60 kWh. Provides EnergySupply and consumes ChargeFeed.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::battery::capacityKWh",
-        "LogicalArchitecture::Car::battery::energyOut",
-        "LogicalArchitecture::Car::battery::chargeIn"
+        "LogicalArchitecture::Car::skateboard::battery::capacityKWh",
+        "LogicalArchitecture::Car::skateboard::battery::energyOut",
+        "LogicalArchitecture::Car::skateboard::battery::chargeIn"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::battery::capacityKWh": {
-      "id": "LogicalArchitecture::Car::battery::capacityKWh",
+    "LogicalArchitecture::Car::skateboard::battery::capacityKWh": {
+      "id": "LogicalArchitecture::Car::skateboard::battery::capacityKWh",
       "kind": "attribute",
       "name": "capacityKWh",
-      "parentId": "LogicalArchitecture::Car::battery",
+      "parentId": "LogicalArchitecture::Car::skateboard::battery",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -4024,11 +4673,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::battery::energyOut": {
-      "id": "LogicalArchitecture::Car::battery::energyOut",
+    "LogicalArchitecture::Car::skateboard::battery::energyOut": {
+      "id": "LogicalArchitecture::Car::skateboard::battery::energyOut",
       "kind": "port",
       "name": "energyOut",
-      "parentId": "LogicalArchitecture::Car::battery",
+      "parentId": "LogicalArchitecture::Car::skateboard::battery",
       "typeRef": "EnergySupply",
       "sourceId": null,
       "targetId": null,
@@ -4042,11 +4691,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::battery::chargeIn": {
-      "id": "LogicalArchitecture::Car::battery::chargeIn",
+    "LogicalArchitecture::Car::skateboard::battery::chargeIn": {
+      "id": "LogicalArchitecture::Car::skateboard::battery::chargeIn",
       "kind": "port",
       "name": "chargeIn",
-      "parentId": "LogicalArchitecture::Car::battery",
+      "parentId": "LogicalArchitecture::Car::skateboard::battery",
       "typeRef": "ChargeFeed",
       "sourceId": null,
       "targetId": null,
@@ -4060,11 +4709,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::chargeInlet": {
-      "id": "LogicalArchitecture::Car::chargeInlet",
+    "LogicalArchitecture::Car::skateboard::chargeInlet": {
+      "id": "LogicalArchitecture::Car::skateboard::chargeInlet",
       "kind": "part",
       "name": "chargeInlet",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::skateboard",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -4076,15 +4725,15 @@
       "documentation": "Inlet where a home or DC charger connects. Provides ChargeFeed to the battery.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::chargeInlet::chargeOut"
+        "LogicalArchitecture::Car::skateboard::chargeInlet::chargeOut"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::chargeInlet::chargeOut": {
-      "id": "LogicalArchitecture::Car::chargeInlet::chargeOut",
+    "LogicalArchitecture::Car::skateboard::chargeInlet::chargeOut": {
+      "id": "LogicalArchitecture::Car::skateboard::chargeInlet::chargeOut",
       "kind": "port",
       "name": "chargeOut",
-      "parentId": "LogicalArchitecture::Car::chargeInlet",
+      "parentId": "LogicalArchitecture::Car::skateboard::chargeInlet",
       "typeRef": "ChargeFeed",
       "sourceId": null,
       "targetId": null,
@@ -4098,11 +4747,106 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::chassis": {
-      "id": "LogicalArchitecture::Car::chassis",
+    "LogicalArchitecture::Car::skateboard::engine": {
+      "id": "LogicalArchitecture::Car::skateboard::engine",
+      "kind": "part",
+      "name": "engine",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Electric traction motor, nominally 150 kW. Consumes GearCommand, TorqueRequest and EnergySupply.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::skateboard::engine::powerKW",
+        "LogicalArchitecture::Car::skateboard::engine::gearIn",
+        "LogicalArchitecture::Car::skateboard::engine::torqueIn",
+        "LogicalArchitecture::Car::skateboard::engine::energyIn"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::engine::powerKW": {
+      "id": "LogicalArchitecture::Car::skateboard::engine::powerKW",
+      "kind": "attribute",
+      "name": "powerKW",
+      "parentId": "LogicalArchitecture::Car::skateboard::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": "150",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::engine::gearIn": {
+      "id": "LogicalArchitecture::Car::skateboard::engine::gearIn",
+      "kind": "port",
+      "name": "gearIn",
+      "parentId": "LogicalArchitecture::Car::skateboard::engine",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::engine::torqueIn": {
+      "id": "LogicalArchitecture::Car::skateboard::engine::torqueIn",
+      "kind": "port",
+      "name": "torqueIn",
+      "parentId": "LogicalArchitecture::Car::skateboard::engine",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::engine::energyIn": {
+      "id": "LogicalArchitecture::Car::skateboard::engine::energyIn",
+      "kind": "port",
+      "name": "energyIn",
+      "parentId": "LogicalArchitecture::Car::skateboard::engine",
+      "typeRef": "EnergySupply",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::chassis": {
+      "id": "LogicalArchitecture::Car::skateboard::chassis",
       "kind": "part",
       "name": "chassis",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::skateboard",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -4116,68 +4860,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::wheels": {
-      "id": "LogicalArchitecture::Car::wheels",
-      "kind": "part",
-      "name": "wheels",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Road wheels that accelerate, brake and steer the car. Consume DirectionCommand and BrakeRequest.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::wheels::directionIn",
-        "LogicalArchitecture::Car::wheels::brakeIn"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::wheels::directionIn": {
-      "id": "LogicalArchitecture::Car::wheels::directionIn",
-      "kind": "port",
-      "name": "directionIn",
-      "parentId": "LogicalArchitecture::Car::wheels",
-      "typeRef": "DirectionCommand",
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::wheels::brakeIn": {
-      "id": "LogicalArchitecture::Car::wheels::brakeIn",
-      "kind": "port",
-      "name": "brakeIn",
-      "parentId": "LogicalArchitecture::Car::wheels",
-      "typeRef": "BrakeRequest",
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::suspension": {
-      "id": "LogicalArchitecture::Car::suspension",
+    "LogicalArchitecture::Car::skateboard::suspension": {
+      "id": "LogicalArchitecture::Car::skateboard::suspension",
       "kind": "part",
       "name": "suspension",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::skateboard",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -4191,11 +4878,11 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::windows": {
-      "id": "LogicalArchitecture::Car::windows",
+    "LogicalArchitecture::Car::skateboard::wheels": {
+      "id": "LogicalArchitecture::Car::skateboard::wheels",
       "kind": "part",
-      "name": "windows",
-      "parentId": "LogicalArchitecture::Car",
+      "name": "wheels",
+      "parentId": "LogicalArchitecture::Car::skateboard",
       "typeRef": null,
       "sourceId": null,
       "targetId": null,
@@ -4204,7 +4891,292 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Side and rear glazing in the body shell.",
+      "documentation": "Road wheels that accelerate, brake and steer the car. Consume DirectionCommand and BrakeRequest.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::skateboard::wheels::directionIn",
+        "LogicalArchitecture::Car::skateboard::wheels::brakeIn"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::wheels::directionIn": {
+      "id": "LogicalArchitecture::Car::skateboard::wheels::directionIn",
+      "kind": "port",
+      "name": "directionIn",
+      "parentId": "LogicalArchitecture::Car::skateboard::wheels",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::wheels::brakeIn": {
+      "id": "LogicalArchitecture::Car::skateboard::wheels::brakeIn",
+      "kind": "port",
+      "name": "brakeIn",
+      "parentId": "LogicalArchitecture::Car::skateboard::wheels",
+      "typeRef": "BrakeRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::dep1": {
+      "id": "LogicalArchitecture::Car::skateboard::dep1",
+      "kind": "dependency",
+      "name": "dep1",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::engine",
+      "targetId": "LogicalArchitecture::Car::skateboard::battery",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Energy"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::dep2": {
+      "id": "LogicalArchitecture::Car::skateboard::dep2",
+      "kind": "dependency",
+      "name": "dep2",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::chargeInlet",
+      "targetId": "LogicalArchitecture::Car::skateboard::battery",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Energy"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::dep3": {
+      "id": "LogicalArchitecture::Car::skateboard::dep3",
+      "kind": "dependency",
+      "name": "dep3",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::engine",
+      "targetId": "LogicalArchitecture::Car::skateboard::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Mount"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::dep4": {
+      "id": "LogicalArchitecture::Car::skateboard::dep4",
+      "kind": "dependency",
+      "name": "dep4",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::battery",
+      "targetId": "LogicalArchitecture::Car::skateboard::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Mount"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::dep5": {
+      "id": "LogicalArchitecture::Car::skateboard::dep5",
+      "kind": "dependency",
+      "name": "dep5",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::suspension",
+      "targetId": "LogicalArchitecture::Car::skateboard::chassis",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Mount"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::dep6": {
+      "id": "LogicalArchitecture::Car::skateboard::dep6",
+      "kind": "dependency",
+      "name": "dep6",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::wheels",
+      "targetId": "LogicalArchitecture::Car::skateboard::suspension",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Support"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::directionDelegate": {
+      "id": "LogicalArchitecture::Car::skateboard::directionDelegate",
+      "kind": "connection",
+      "name": "directionDelegate",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::directionIn",
+      "targetId": "LogicalArchitecture::Car::skateboard::wheels::directionIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::gearDelegate": {
+      "id": "LogicalArchitecture::Car::skateboard::gearDelegate",
+      "kind": "connection",
+      "name": "gearDelegate",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::gearIn",
+      "targetId": "LogicalArchitecture::Car::skateboard::engine::gearIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::torqueDelegate": {
+      "id": "LogicalArchitecture::Car::skateboard::torqueDelegate",
+      "kind": "connection",
+      "name": "torqueDelegate",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::torqueIn",
+      "targetId": "LogicalArchitecture::Car::skateboard::engine::torqueIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::brakeDelegate": {
+      "id": "LogicalArchitecture::Car::skateboard::brakeDelegate",
+      "kind": "connection",
+      "name": "brakeDelegate",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::brakeIn",
+      "targetId": "LogicalArchitecture::Car::skateboard::wheels::brakeIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::energyEngine": {
+      "id": "LogicalArchitecture::Car::skateboard::energyEngine",
+      "kind": "connection",
+      "name": "energyEngine",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::battery::energyOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::engine::energyIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::energyOutDelegate": {
+      "id": "LogicalArchitecture::Car::skateboard::energyOutDelegate",
+      "kind": "connection",
+      "name": "energyOutDelegate",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::battery::energyOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::energyOut",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::skateboard::charge": {
+      "id": "LogicalArchitecture::Car::skateboard::charge",
+      "kind": "connection",
+      "name": "charge",
+      "parentId": "LogicalArchitecture::Car::skateboard",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::chargeInlet::chargeOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::battery::chargeIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
@@ -4222,130 +5194,32 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Body shell (kaross). Sets length, width, height, seating and cargo volume, and forms the occupant cell.",
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::windshield": {
-      "id": "LogicalArchitecture::Car::windshield",
-      "kind": "part",
-      "name": "windshield",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Front glass. Consumes WindshieldClear from the wipers.",
+      "documentation": "Body assembly: shell, door, glazing, wipers and lamps.",
       "shortId": null,
       "children": [
-        "LogicalArchitecture::Car::windshield::clearIn"
+        "LogicalArchitecture::Car::body::energyIn",
+        "LogicalArchitecture::Car::body::bodyShell",
+        "LogicalArchitecture::Car::body::door",
+        "LogicalArchitecture::Car::body::windshield",
+        "LogicalArchitecture::Car::body::window",
+        "LogicalArchitecture::Car::body::wipers",
+        "LogicalArchitecture::Car::body::lamps",
+        "LogicalArchitecture::Car::body::dep7",
+        "LogicalArchitecture::Car::body::dep8",
+        "LogicalArchitecture::Car::body::dep9",
+        "LogicalArchitecture::Car::body::dep10",
+        "LogicalArchitecture::Car::body::dep11",
+        "LogicalArchitecture::Car::body::dep12",
+        "LogicalArchitecture::Car::body::energyDelegate",
+        "LogicalArchitecture::Car::body::clear"
       ],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::windshield::clearIn": {
-      "id": "LogicalArchitecture::Car::windshield::clearIn",
-      "kind": "port",
-      "name": "clearIn",
-      "parentId": "LogicalArchitecture::Car::windshield",
-      "typeRef": "WindshieldClear",
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::wipers": {
-      "id": "LogicalArchitecture::Car::wipers",
-      "kind": "part",
-      "name": "wipers",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Wiper and washer mechanism on the body. Provides WindshieldClear to the windshield.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::wipers::clearOut"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::wipers::clearOut": {
-      "id": "LogicalArchitecture::Car::wipers::clearOut",
-      "kind": "port",
-      "name": "clearOut",
-      "parentId": "LogicalArchitecture::Car::wipers",
-      "typeRef": "WindshieldClear",
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::locks": {
-      "id": "LogicalArchitecture::Car::locks",
-      "kind": "part",
-      "name": "locks",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Door locks. Enforce access control, the immobilizer interlock and lock confirmation.",
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::lamps": {
-      "id": "LogicalArchitecture::Car::lamps",
-      "kind": "part",
-      "name": "lamps",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Headlamps, tail lamps and direction indicators. Consume EnergySupply from the battery.",
-      "shortId": null,
-      "children": [
-        "LogicalArchitecture::Car::lamps::energyIn"
-      ],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::lamps::energyIn": {
-      "id": "LogicalArchitecture::Car::lamps::energyIn",
+    "LogicalArchitecture::Car::body::energyIn": {
+      "id": "LogicalArchitecture::Car::body::energyIn",
       "kind": "port",
       "name": "energyIn",
-      "parentId": "LogicalArchitecture::Car::lamps",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": "EnergySupply",
       "sourceId": null,
       "targetId": null,
@@ -4359,194 +5233,242 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep1": {
-      "id": "LogicalArchitecture::Car::dep1",
-      "kind": "dependency",
-      "name": "dep1",
-      "parentId": "LogicalArchitecture::Car",
+    "LogicalArchitecture::Car::body::bodyShell": {
+      "id": "LogicalArchitecture::Car::body::bodyShell",
+      "kind": "part",
+      "name": "bodyShell",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::steeringWheel",
-      "targetId": "LogicalArchitecture::Car::wheels",
+      "sourceId": null,
+      "targetId": null,
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
-      "metadataKeywords": [
-        "Command"
+      "metadataKeywords": [],
+      "documentation": "Body shell (kaross). Sets length, width, height, seating and cargo volume, and forms the occupant cell.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::body::door": {
+      "id": "LogicalArchitecture::Car::body::door",
+      "kind": "part",
+      "name": "door",
+      "parentId": "LogicalArchitecture::Car::body",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Door with locks. Enforce access control, the immobilizer interlock and lock confirmation.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::body::windshield": {
+      "id": "LogicalArchitecture::Car::body::windshield",
+      "kind": "part",
+      "name": "windshield",
+      "parentId": "LogicalArchitecture::Car::body",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Front glass. Consumes WindshieldClear from the wipers.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::body::windshield::clearIn"
       ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::body::windshield::clearIn": {
+      "id": "LogicalArchitecture::Car::body::windshield::clearIn",
+      "kind": "port",
+      "name": "clearIn",
+      "parentId": "LogicalArchitecture::Car::body::windshield",
+      "typeRef": "WindshieldClear",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
       "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep2": {
-      "id": "LogicalArchitecture::Car::dep2",
-      "kind": "dependency",
-      "name": "dep2",
-      "parentId": "LogicalArchitecture::Car",
+    "LogicalArchitecture::Car::body::window": {
+      "id": "LogicalArchitecture::Car::body::window",
+      "kind": "part",
+      "name": "window",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::gearStick",
-      "targetId": "LogicalArchitecture::Car::engine",
+      "sourceId": null,
+      "targetId": null,
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
-      "metadataKeywords": [
-        "Command"
+      "metadataKeywords": [],
+      "documentation": "Side and rear glazing in the body shell.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::body::wipers": {
+      "id": "LogicalArchitecture::Car::body::wipers",
+      "kind": "part",
+      "name": "wipers",
+      "parentId": "LogicalArchitecture::Car::body",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Wiper and washer mechanism on the body. Provides WindshieldClear to the windshield.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::body::wipers::clearOut"
       ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::body::wipers::clearOut": {
+      "id": "LogicalArchitecture::Car::body::wipers::clearOut",
+      "kind": "port",
+      "name": "clearOut",
+      "parentId": "LogicalArchitecture::Car::body::wipers",
+      "typeRef": "WindshieldClear",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
       "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep3": {
-      "id": "LogicalArchitecture::Car::dep3",
-      "kind": "dependency",
-      "name": "dep3",
-      "parentId": "LogicalArchitecture::Car",
+    "LogicalArchitecture::Car::body::lamps": {
+      "id": "LogicalArchitecture::Car::body::lamps",
+      "kind": "part",
+      "name": "lamps",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::acceleratorPedal",
-      "targetId": "LogicalArchitecture::Car::engine",
+      "sourceId": null,
+      "targetId": null,
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
-      "metadataKeywords": [
-        "Command"
+      "metadataKeywords": [],
+      "documentation": "Headlamps, tail lamps and direction indicators. Consume EnergySupply from the battery.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::body::lamps::energyIn"
       ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::body::lamps::energyIn": {
+      "id": "LogicalArchitecture::Car::body::lamps::energyIn",
+      "kind": "port",
+      "name": "energyIn",
+      "parentId": "LogicalArchitecture::Car::body::lamps",
+      "typeRef": "EnergySupply",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
       "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep4": {
-      "id": "LogicalArchitecture::Car::dep4",
-      "kind": "dependency",
-      "name": "dep4",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::brakePedal",
-      "targetId": "LogicalArchitecture::Car::wheels",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Command"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep5": {
-      "id": "LogicalArchitecture::Car::dep5",
-      "kind": "dependency",
-      "name": "dep5",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::engine",
-      "targetId": "LogicalArchitecture::Car::battery",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Energy"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep6": {
-      "id": "LogicalArchitecture::Car::dep6",
-      "kind": "dependency",
-      "name": "dep6",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::climateSystem",
-      "targetId": "LogicalArchitecture::Car::battery",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Energy"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep7": {
-      "id": "LogicalArchitecture::Car::dep7",
+    "LogicalArchitecture::Car::body::dep7": {
+      "id": "LogicalArchitecture::Car::body::dep7",
       "kind": "dependency",
       "name": "dep7",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::entertainmentSystem",
-      "targetId": "LogicalArchitecture::Car::battery",
+      "sourceId": "LogicalArchitecture::Car::body::window",
+      "targetId": "LogicalArchitecture::Car::body::bodyShell",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [
-        "Energy"
+        "Mount"
       ],
       "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep8": {
-      "id": "LogicalArchitecture::Car::dep8",
+    "LogicalArchitecture::Car::body::dep8": {
+      "id": "LogicalArchitecture::Car::body::dep8",
       "kind": "dependency",
       "name": "dep8",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::lamps",
-      "targetId": "LogicalArchitecture::Car::battery",
+      "sourceId": "LogicalArchitecture::Car::body::windshield",
+      "targetId": "LogicalArchitecture::Car::body::bodyShell",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [
-        "Energy"
+        "Mount"
       ],
       "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep9": {
-      "id": "LogicalArchitecture::Car::dep9",
+    "LogicalArchitecture::Car::body::dep9": {
+      "id": "LogicalArchitecture::Car::body::dep9",
       "kind": "dependency",
       "name": "dep9",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::chargeInlet",
-      "targetId": "LogicalArchitecture::Car::battery",
+      "sourceId": "LogicalArchitecture::Car::body::wipers",
+      "targetId": "LogicalArchitecture::Car::body::bodyShell",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [
-        "Energy"
+        "Mount"
       ],
       "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep10": {
-      "id": "LogicalArchitecture::Car::dep10",
+    "LogicalArchitecture::Car::body::dep10": {
+      "id": "LogicalArchitecture::Car::body::dep10",
       "kind": "dependency",
       "name": "dep10",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::engine",
-      "targetId": "LogicalArchitecture::Car::chassis",
+      "sourceId": "LogicalArchitecture::Car::body::door",
+      "targetId": "LogicalArchitecture::Car::body::bodyShell",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
@@ -4559,14 +5481,14 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep11": {
-      "id": "LogicalArchitecture::Car::dep11",
+    "LogicalArchitecture::Car::body::dep11": {
+      "id": "LogicalArchitecture::Car::body::dep11",
       "kind": "dependency",
       "name": "dep11",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery",
-      "targetId": "LogicalArchitecture::Car::chassis",
+      "sourceId": "LogicalArchitecture::Car::body::lamps",
+      "targetId": "LogicalArchitecture::Car::body::bodyShell",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
@@ -4579,174 +5501,14 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::dep12": {
-      "id": "LogicalArchitecture::Car::dep12",
+    "LogicalArchitecture::Car::body::dep12": {
+      "id": "LogicalArchitecture::Car::body::dep12",
       "kind": "dependency",
       "name": "dep12",
-      "parentId": "LogicalArchitecture::Car",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::suspension",
-      "targetId": "LogicalArchitecture::Car::chassis",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep13": {
-      "id": "LogicalArchitecture::Car::dep13",
-      "kind": "dependency",
-      "name": "dep13",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body",
-      "targetId": "LogicalArchitecture::Car::chassis",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep14": {
-      "id": "LogicalArchitecture::Car::dep14",
-      "kind": "dependency",
-      "name": "dep14",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::wheels",
-      "targetId": "LogicalArchitecture::Car::suspension",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Support"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep15": {
-      "id": "LogicalArchitecture::Car::dep15",
-      "kind": "dependency",
-      "name": "dep15",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::windows",
-      "targetId": "LogicalArchitecture::Car::body",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep16": {
-      "id": "LogicalArchitecture::Car::dep16",
-      "kind": "dependency",
-      "name": "dep16",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::windshield",
-      "targetId": "LogicalArchitecture::Car::body",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep17": {
-      "id": "LogicalArchitecture::Car::dep17",
-      "kind": "dependency",
-      "name": "dep17",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::wipers",
-      "targetId": "LogicalArchitecture::Car::body",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep18": {
-      "id": "LogicalArchitecture::Car::dep18",
-      "kind": "dependency",
-      "name": "dep18",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::locks",
-      "targetId": "LogicalArchitecture::Car::body",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep19": {
-      "id": "LogicalArchitecture::Car::dep19",
-      "kind": "dependency",
-      "name": "dep19",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::lamps",
-      "targetId": "LogicalArchitecture::Car::body",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [
-        "Mount"
-      ],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::dep20": {
-      "id": "LogicalArchitecture::Car::dep20",
-      "kind": "dependency",
-      "name": "dep20",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::wipers",
-      "targetId": "LogicalArchitecture::Car::windshield",
+      "sourceId": "LogicalArchitecture::Car::body::wipers",
+      "targetId": "LogicalArchitecture::Car::body::windshield",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
@@ -4759,14 +5521,14 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::direction": {
-      "id": "LogicalArchitecture::Car::direction",
+    "LogicalArchitecture::Car::body::energyDelegate": {
+      "id": "LogicalArchitecture::Car::body::energyDelegate",
       "kind": "connection",
-      "name": "direction",
-      "parentId": "LogicalArchitecture::Car",
+      "name": "energyDelegate",
+      "parentId": "LogicalArchitecture::Car::body",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::steeringWheel::directionOut",
-      "targetId": "LogicalArchitecture::Car::wheels::directionIn",
+      "sourceId": "LogicalArchitecture::Car::body::energyIn",
+      "targetId": "LogicalArchitecture::Car::body::lamps::energyIn",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
@@ -4777,158 +5539,448 @@
       "children": [],
       "fileId": "logical_architecture/car.sysml"
     },
-    "LogicalArchitecture::Car::gear": {
-      "id": "LogicalArchitecture::Car::gear",
-      "kind": "connection",
-      "name": "gear",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::gearStick::gearOut",
-      "targetId": "LogicalArchitecture::Car::engine::gearIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::torque": {
-      "id": "LogicalArchitecture::Car::torque",
-      "kind": "connection",
-      "name": "torque",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::acceleratorPedal::torqueOut",
-      "targetId": "LogicalArchitecture::Car::engine::torqueIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::brake": {
-      "id": "LogicalArchitecture::Car::brake",
-      "kind": "connection",
-      "name": "brake",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::brakePedal::brakeOut",
-      "targetId": "LogicalArchitecture::Car::wheels::brakeIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::energyEngine": {
-      "id": "LogicalArchitecture::Car::energyEngine",
-      "kind": "connection",
-      "name": "energyEngine",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery::energyOut",
-      "targetId": "LogicalArchitecture::Car::engine::energyIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::energyClimate": {
-      "id": "LogicalArchitecture::Car::energyClimate",
-      "kind": "connection",
-      "name": "energyClimate",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery::energyOut",
-      "targetId": "LogicalArchitecture::Car::climateSystem::energyIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::energyEntertainment": {
-      "id": "LogicalArchitecture::Car::energyEntertainment",
-      "kind": "connection",
-      "name": "energyEntertainment",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery::energyOut",
-      "targetId": "LogicalArchitecture::Car::entertainmentSystem::energyIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::energyLamps": {
-      "id": "LogicalArchitecture::Car::energyLamps",
-      "kind": "connection",
-      "name": "energyLamps",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::battery::energyOut",
-      "targetId": "LogicalArchitecture::Car::lamps::energyIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::charge": {
-      "id": "LogicalArchitecture::Car::charge",
-      "kind": "connection",
-      "name": "charge",
-      "parentId": "LogicalArchitecture::Car",
-      "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::chargeInlet::chargeOut",
-      "targetId": "LogicalArchitecture::Car::battery::chargeIn",
-      "exposeRef": null,
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "logical_architecture/car.sysml"
-    },
-    "LogicalArchitecture::Car::clear": {
-      "id": "LogicalArchitecture::Car::clear",
+    "LogicalArchitecture::Car::body::clear": {
+      "id": "LogicalArchitecture::Car::body::clear",
       "kind": "connection",
       "name": "clear",
+      "parentId": "LogicalArchitecture::Car::body",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::body::wipers::clearOut",
+      "targetId": "LogicalArchitecture::Car::body::windshield::clearIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort": {
+      "id": "LogicalArchitecture::Car::cabinComfort",
+      "kind": "part",
+      "name": "cabinComfort",
       "parentId": "LogicalArchitecture::Car",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::wipers::clearOut",
-      "targetId": "LogicalArchitecture::Car::windshield::clearIn",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Cabin climate and entertainment systems.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::cabinComfort::energyIn",
+        "LogicalArchitecture::Car::cabinComfort::climateSystem",
+        "LogicalArchitecture::Car::cabinComfort::entertainmentSystem",
+        "LogicalArchitecture::Car::cabinComfort::energyClimate",
+        "LogicalArchitecture::Car::cabinComfort::energyEntertainment"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::energyIn": {
+      "id": "LogicalArchitecture::Car::cabinComfort::energyIn",
+      "kind": "port",
+      "name": "energyIn",
+      "parentId": "LogicalArchitecture::Car::cabinComfort",
+      "typeRef": "EnergySupply",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::climateSystem": {
+      "id": "LogicalArchitecture::Car::cabinComfort::climateSystem",
+      "kind": "part",
+      "name": "climateSystem",
+      "parentId": "LogicalArchitecture::Car::cabinComfort",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Logical heating, ventilation and cooling of the cabin. Consumes EnergySupply from the battery.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::cabinComfort::climateSystem::energyIn"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::climateSystem::energyIn": {
+      "id": "LogicalArchitecture::Car::cabinComfort::climateSystem::energyIn",
+      "kind": "port",
+      "name": "energyIn",
+      "parentId": "LogicalArchitecture::Car::cabinComfort::climateSystem",
+      "typeRef": "EnergySupply",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::entertainmentSystem": {
+      "id": "LogicalArchitecture::Car::cabinComfort::entertainmentSystem",
+      "kind": "part",
+      "name": "entertainmentSystem",
+      "parentId": "LogicalArchitecture::Car::cabinComfort",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Logical cabin audio and video. Consumes EnergySupply from the battery.",
+      "shortId": null,
+      "children": [
+        "LogicalArchitecture::Car::cabinComfort::entertainmentSystem::energyIn"
+      ],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::entertainmentSystem::energyIn": {
+      "id": "LogicalArchitecture::Car::cabinComfort::entertainmentSystem::energyIn",
+      "kind": "port",
+      "name": "energyIn",
+      "parentId": "LogicalArchitecture::Car::cabinComfort::entertainmentSystem",
+      "typeRef": "EnergySupply",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::energyClimate": {
+      "id": "LogicalArchitecture::Car::cabinComfort::energyClimate",
+      "kind": "connection",
+      "name": "energyClimate",
+      "parentId": "LogicalArchitecture::Car::cabinComfort",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::cabinComfort::energyIn",
+      "targetId": "LogicalArchitecture::Car::cabinComfort::climateSystem::energyIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::cabinComfort::energyEntertainment": {
+      "id": "LogicalArchitecture::Car::cabinComfort::energyEntertainment",
+      "kind": "connection",
+      "name": "energyEntertainment",
+      "parentId": "LogicalArchitecture::Car::cabinComfort",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::cabinComfort::energyIn",
+      "targetId": "LogicalArchitecture::Car::cabinComfort::entertainmentSystem::energyIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::dep13": {
+      "id": "LogicalArchitecture::Car::dep13",
+      "kind": "dependency",
+      "name": "dep13",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls",
+      "targetId": "LogicalArchitecture::Car::motionActuation",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Command"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::dep14": {
+      "id": "LogicalArchitecture::Car::dep14",
+      "kind": "dependency",
+      "name": "dep14",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation",
+      "targetId": "LogicalArchitecture::Car::skateboard",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Command"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::dep15": {
+      "id": "LogicalArchitecture::Car::dep15",
+      "kind": "dependency",
+      "name": "dep15",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::cabinComfort",
+      "targetId": "LogicalArchitecture::Car::skateboard",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Energy"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::dep16": {
+      "id": "LogicalArchitecture::Car::dep16",
+      "kind": "dependency",
+      "name": "dep16",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::body",
+      "targetId": "LogicalArchitecture::Car::skateboard",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Energy"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::dep17": {
+      "id": "LogicalArchitecture::Car::dep17",
+      "kind": "dependency",
+      "name": "dep17",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::body",
+      "targetId": "LogicalArchitecture::Car::skateboard",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "Mount"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::directionCommand": {
+      "id": "LogicalArchitecture::Car::directionCommand",
+      "kind": "connection",
+      "name": "directionCommand",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::directionOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::directionIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::gearCommand": {
+      "id": "LogicalArchitecture::Car::gearCommand",
+      "kind": "connection",
+      "name": "gearCommand",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::gearOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::gearIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::torqueCommand": {
+      "id": "LogicalArchitecture::Car::torqueCommand",
+      "kind": "connection",
+      "name": "torqueCommand",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::torqueOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::torqueIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::brakeCommand": {
+      "id": "LogicalArchitecture::Car::brakeCommand",
+      "kind": "connection",
+      "name": "brakeCommand",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::driverControls::brakeOut",
+      "targetId": "LogicalArchitecture::Car::motionActuation::brakeIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::directionActuate": {
+      "id": "LogicalArchitecture::Car::directionActuate",
+      "kind": "connection",
+      "name": "directionActuate",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::directionOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::directionIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::gearActuate": {
+      "id": "LogicalArchitecture::Car::gearActuate",
+      "kind": "connection",
+      "name": "gearActuate",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::gearOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::gearIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::torqueActuate": {
+      "id": "LogicalArchitecture::Car::torqueActuate",
+      "kind": "connection",
+      "name": "torqueActuate",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::torqueOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::torqueIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::brakeActuate": {
+      "id": "LogicalArchitecture::Car::brakeActuate",
+      "kind": "connection",
+      "name": "brakeActuate",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::motionActuation::brakeOut",
+      "targetId": "LogicalArchitecture::Car::skateboard::brakeIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::energyCabin": {
+      "id": "LogicalArchitecture::Car::energyCabin",
+      "kind": "connection",
+      "name": "energyCabin",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::energyOut",
+      "targetId": "LogicalArchitecture::Car::cabinComfort::energyIn",
+      "exposeRef": null,
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::Car::energyBody": {
+      "id": "LogicalArchitecture::Car::energyBody",
+      "kind": "connection",
+      "name": "energyBody",
+      "parentId": "LogicalArchitecture::Car",
+      "typeRef": null,
+      "sourceId": "LogicalArchitecture::Car::skateboard::energyOut",
+      "targetId": "LogicalArchitecture::Car::body::energyIn",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
@@ -4952,7 +6004,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Logical whitebox of Car. Nested parts, provider and consumer ports, the connections between them, and «Command», «Energy», «Mount», «Support» and «Clear» dependencies.",
+      "documentation": "Logical whitebox of Car. Nested assemblies, provider and consumer ports, the connections between them, and «Command», «Energy», «Mount», «Support» and «Clear» dependencies.",
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
@@ -4971,6 +6023,96 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "Containment tree of the logical car.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::DriverControlsView": {
+      "id": "LogicalArchitecture::DriverControlsView",
+      "kind": "view",
+      "name": "DriverControlsView",
+      "parentId": "LogicalArchitecture",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "LogicalArchitecture::Car::driverControls",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Whitebox of driverControls: steering, gear, accelerator and brake inputs with delegated command ports.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::MotionActuationView": {
+      "id": "LogicalArchitecture::MotionActuationView",
+      "kind": "view",
+      "name": "MotionActuationView",
+      "parentId": "LogicalArchitecture",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "LogicalArchitecture::Car::motionActuation",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Whitebox of motionActuation: steering servo, powertrain control and brake system.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::SkateboardView": {
+      "id": "LogicalArchitecture::SkateboardView",
+      "kind": "view",
+      "name": "SkateboardView",
+      "parentId": "LogicalArchitecture",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "LogicalArchitecture::Car::skateboard",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Whitebox of the skateboard platform: battery, charge inlet, engine, chassis, suspension and wheels.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::BodyView": {
+      "id": "LogicalArchitecture::BodyView",
+      "kind": "view",
+      "name": "BodyView",
+      "parentId": "LogicalArchitecture",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "LogicalArchitecture::Car::body",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Whitebox of the body assembly: shell, door, glazing, wipers and lamps.",
+      "shortId": null,
+      "children": [],
+      "fileId": "logical_architecture/car.sysml"
+    },
+    "LogicalArchitecture::CabinComfortView": {
+      "id": "LogicalArchitecture::CabinComfortView",
+      "kind": "view",
+      "name": "CabinComfortView",
+      "parentId": "LogicalArchitecture",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "LogicalArchitecture::Car::cabinComfort",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Whitebox of cabinComfort: climate and entertainment systems.",
       "shortId": null,
       "children": [],
       "fileId": "logical_architecture/car.sysml"
@@ -7515,7 +8657,7 @@
         "PhysicalArchitecture::VehiclePhysical::body",
         "PhysicalArchitecture::VehiclePhysical::windshield",
         "PhysicalArchitecture::VehiclePhysical::wipers",
-        "PhysicalArchitecture::VehiclePhysical::locks",
+        "PhysicalArchitecture::VehiclePhysical::door",
         "PhysicalArchitecture::VehiclePhysical::lamps",
         "PhysicalArchitecture::VehiclePhysical::chargeInlet",
         "PhysicalArchitecture::VehiclePhysical::dep1",
@@ -8753,10 +9895,10 @@
       "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
-    "PhysicalArchitecture::VehiclePhysical::locks": {
-      "id": "PhysicalArchitecture::VehiclePhysical::locks",
+    "PhysicalArchitecture::VehiclePhysical::door": {
+      "id": "PhysicalArchitecture::VehiclePhysical::door",
       "kind": "part",
-      "name": "locks",
+      "name": "door",
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": null,
@@ -8768,7 +9910,7 @@
       "metadataKeywords": [
         "Logical"
       ],
-      "documentation": "Logical locks, from the logical architecture.",
+      "documentation": "Logical door, from the logical architecture.",
       "shortId": null,
       "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
@@ -9360,7 +10502,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::doorLockAsm",
-      "targetId": "PhysicalArchitecture::VehiclePhysical::locks",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::door",
       "exposeRef": null,
       "defaultValue": null,
       "multiplicity": null,
@@ -10430,169 +11572,99 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::steeringWheel": {
-        "artifactId": "LogicalArchitecture::Car::steeringWheel",
-        "x": 360.0,
-        "y": 4580.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::steeringWheel::directionOut": {
-        "artifactId": "LogicalArchitecture::Car::steeringWheel::directionOut",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::gearStick": {
-        "artifactId": "LogicalArchitecture::Car::gearStick",
-        "x": 640.0,
-        "y": 4580.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::gearStick::gearOut": {
-        "artifactId": "LogicalArchitecture::Car::gearStick::gearOut",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::acceleratorPedal": {
-        "artifactId": "LogicalArchitecture::Car::acceleratorPedal",
+      "LogicalArchitecture::Car::driverControls": {
+        "artifactId": "LogicalArchitecture::Car::driverControls",
         "x": 80.0,
         "y": 4760.0,
         "width": 200.0,
-        "height": 120.0,
+        "height": 150.0,
         "symbolRef": "default-part",
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::acceleratorPedal::torqueOut": {
-        "artifactId": "LogicalArchitecture::Car::acceleratorPedal::torqueOut",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::brakePedal": {
-        "artifactId": "LogicalArchitecture::Car::brakePedal",
-        "x": 360.0,
-        "y": 4760.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::brakePedal::brakeOut": {
-        "artifactId": "LogicalArchitecture::Car::brakePedal::brakeOut",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::climateSystem": {
-        "artifactId": "LogicalArchitecture::Car::climateSystem",
-        "x": 640.0,
-        "y": 4760.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::climateSystem::energyIn": {
-        "artifactId": "LogicalArchitecture::Car::climateSystem::energyIn",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::entertainmentSystem": {
-        "artifactId": "LogicalArchitecture::Car::entertainmentSystem",
-        "x": 80.0,
-        "y": 4940.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::entertainmentSystem::energyIn": {
-        "artifactId": "LogicalArchitecture::Car::entertainmentSystem::energyIn",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::engine": {
-        "artifactId": "LogicalArchitecture::Car::engine",
-        "x": 360.0,
-        "y": 4940.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::engine::gearIn": {
-        "artifactId": "LogicalArchitecture::Car::engine::gearIn",
+      "LogicalArchitecture::Car::driverControls::directionOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::directionOut",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
         "side": "right",
-        "offset": 0.685
+        "offset": 0.38
       },
-      "LogicalArchitecture::Car::engine::torqueIn": {
-        "artifactId": "LogicalArchitecture::Car::engine::torqueIn",
+      "LogicalArchitecture::Car::driverControls::gearOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::gearOut",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.8416666666666668
+        "side": "right",
+        "offset": 0.5348050253313545
       },
-      "LogicalArchitecture::Car::engine::energyIn": {
-        "artifactId": "LogicalArchitecture::Car::engine::energyIn",
+      "LogicalArchitecture::Car::driverControls::torqueOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::torqueOut",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.5283333333333333
+        "side": "right",
+        "offset": 0.6997210992272658
       },
-      "LogicalArchitecture::Car::battery": {
-        "artifactId": "LogicalArchitecture::Car::battery",
+      "LogicalArchitecture::Car::driverControls::brakeOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::brakeOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.9134921746109448
+      },
+      "LogicalArchitecture::Car::driverControls::steeringWheel": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::steeringWheel",
+        "x": 360.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7960677392175312
+      },
+      "LogicalArchitecture::Car::driverControls::gearStick": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::gearStick",
         "x": 640.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::driverControls::gearStick::gearOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::gearStick::gearOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7137277822829854
+      },
+      "LogicalArchitecture::Car::driverControls::acceleratorPedal": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::acceleratorPedal",
+        "x": 80.0,
         "y": 4940.0,
         "width": 200.0,
         "height": 120.0,
@@ -10600,8 +11672,148 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::battery::energyOut": {
-        "artifactId": "LogicalArchitecture::Car::battery::energyOut",
+      "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8039763008435362
+      },
+      "LogicalArchitecture::Car::driverControls::brakePedal": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::brakePedal",
+        "x": 360.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.776425872442348
+      },
+      "LogicalArchitecture::Car::motionActuation": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation",
+        "x": 640.0,
+        "y": 4940.0,
+        "width": 215.60000000000002,
+        "height": 238.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::motionActuation::directionIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::directionIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5746231865451278
+      },
+      "LogicalArchitecture::Car::motionActuation::directionOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::directionOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.38
+      },
+      "LogicalArchitecture::Car::motionActuation::gearIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::gearIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.39451277442547183
+      },
+      "LogicalArchitecture::Car::motionActuation::gearOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::gearOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5298299810332883
+      },
+      "LogicalArchitecture::Car::motionActuation::torqueIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::torqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.727002182565156
+      },
+      "LogicalArchitecture::Car::motionActuation::torqueOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::torqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7020250088019171
+      },
+      "LogicalArchitecture::Car::motionActuation::brakeIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.8945821029657209
+      },
+      "LogicalArchitecture::Car::motionActuation::brakeOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.875166352445381
+      },
+      "LogicalArchitecture::Car::motionActuation::steeringServo": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::steeringServo",
+        "x": 80.0,
+        "y": 5120.0,
+        "width": 215.60000000000002,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::motionActuation::steeringServo::directionIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::steeringServo::directionIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.783158272360179
+      },
+      "LogicalArchitecture::Car::motionActuation::steeringServo::directionOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::steeringServo::directionOut",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
@@ -10610,38 +11822,8 @@
         "side": "right",
         "offset": 0.8025
       },
-      "LogicalArchitecture::Car::battery::chargeIn": {
-        "artifactId": "LogicalArchitecture::Car::battery::chargeIn",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.5675
-      },
-      "LogicalArchitecture::Car::chargeInlet": {
-        "artifactId": "LogicalArchitecture::Car::chargeInlet",
-        "x": 80.0,
-        "y": 5120.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::chargeInlet::chargeOut": {
-        "artifactId": "LogicalArchitecture::Car::chargeInlet::chargeOut",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::chassis": {
-        "artifactId": "LogicalArchitecture::Car::chassis",
+      "LogicalArchitecture::Car::motionActuation::powertrainControl": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::powertrainControl",
         "x": 360.0,
         "y": 5120.0,
         "width": 200.0,
@@ -10650,8 +11832,48 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::wheels": {
-        "artifactId": "LogicalArchitecture::Car::wheels",
+      "LogicalArchitecture::Car::motionActuation::powertrainControl::gearIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::powertrainControl::gearIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.50875
+      },
+      "LogicalArchitecture::Car::motionActuation::powertrainControl::gearOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::powertrainControl::gearOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5886344275806454
+      },
+      "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.74375
+      },
+      "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::powertrainControl::torqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8612500000000001
+      },
+      "LogicalArchitecture::Car::motionActuation::brakeSystem": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeSystem",
         "x": 640.0,
         "y": 5120.0,
         "width": 200.0,
@@ -10660,8 +11882,98 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::wheels::directionIn": {
-        "artifactId": "LogicalArchitecture::Car::wheels::directionIn",
+      "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeIn": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.615478037380799
+      },
+      "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeOut": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeSystem::brakeOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.625604663571142
+      },
+      "LogicalArchitecture::Car::skateboard": {
+        "artifactId": "LogicalArchitecture::Car::skateboard",
+        "x": 80.0,
+        "y": 5300.0,
+        "width": 200.0,
+        "height": 172.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::skateboard::directionIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::directionIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.38
+      },
+      "LogicalArchitecture::Car::skateboard::gearIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::gearIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.518790244725422
+      },
+      "LogicalArchitecture::Car::skateboard::torqueIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::torqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6940440149590874
+      },
+      "LogicalArchitecture::Car::skateboard::brakeIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::brakeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.8658673177681342
+      },
+      "LogicalArchitecture::Car::skateboard::energyOut": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::energyOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.5092243078044683
+      },
+      "LogicalArchitecture::Car::skateboard::battery": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::battery",
+        "x": 360.0,
+        "y": 5300.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::skateboard::battery::energyOut": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::battery::energyOut",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
@@ -10670,8 +11982,8 @@
         "side": "right",
         "offset": 0.8025
       },
-      "LogicalArchitecture::Car::wheels::brakeIn": {
-        "artifactId": "LogicalArchitecture::Car::wheels::brakeIn",
+      "LogicalArchitecture::Car::skateboard::battery::chargeIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::battery::chargeIn",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
@@ -10680,9 +11992,9 @@
         "side": "left",
         "offset": 0.5675
       },
-      "LogicalArchitecture::Car::suspension": {
-        "artifactId": "LogicalArchitecture::Car::suspension",
-        "x": 80.0,
+      "LogicalArchitecture::Car::skateboard::chargeInlet": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::chargeInlet",
+        "x": 640.0,
         "y": 5300.0,
         "width": 200.0,
         "height": 120.0,
@@ -10690,15 +12002,105 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::windows": {
-        "artifactId": "LogicalArchitecture::Car::windows",
+      "LogicalArchitecture::Car::skateboard::chargeInlet::chargeOut": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::chargeInlet::chargeOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.6831044950717265
+      },
+      "LogicalArchitecture::Car::skateboard::engine": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::engine",
+        "x": 80.0,
+        "y": 5480.0,
+        "width": 200.0,
+        "height": 128.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::skateboard::engine::gearIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::engine::gearIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.92
+      },
+      "LogicalArchitecture::Car::skateboard::engine::torqueIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::engine::torqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.8038574463787372
+      },
+      "LogicalArchitecture::Car::skateboard::engine::energyIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::engine::energyIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5650825118181096
+      },
+      "LogicalArchitecture::Car::skateboard::chassis": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::chassis",
         "x": 360.0,
-        "y": 5300.0,
+        "y": 5480.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
         "side": null,
         "offset": null
+      },
+      "LogicalArchitecture::Car::skateboard::suspension": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::suspension",
+        "x": 640.0,
+        "y": 5480.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::skateboard::wheels": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::wheels",
+        "x": 80.0,
+        "y": 5660.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::skateboard::wheels::directionIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::wheels::directionIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.8845706097918599
+      },
+      "LogicalArchitecture::Car::skateboard::wheels::brakeIn": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::wheels::brakeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6085448046064269
       },
       "LogicalArchitecture::Car::body": {
         "artifactId": "LogicalArchitecture::Car::body",
@@ -10710,59 +12112,19 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::windshield": {
-        "artifactId": "LogicalArchitecture::Car::windshield",
-        "x": 80.0,
-        "y": 5480.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::windshield::clearIn": {
-        "artifactId": "LogicalArchitecture::Car::windshield::clearIn",
+      "LogicalArchitecture::Car::body::energyIn": {
+        "artifactId": "LogicalArchitecture::Car::body::energyIn",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
+        "side": "right",
+        "offset": 0.7252264841942945
       },
-      "LogicalArchitecture::Car::wipers": {
-        "artifactId": "LogicalArchitecture::Car::wipers",
-        "x": 360.0,
-        "y": 5480.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::wipers::clearOut": {
-        "artifactId": "LogicalArchitecture::Car::wipers::clearOut",
-        "x": 0.0,
-        "y": 0.0,
-        "width": 12.0,
-        "height": 12.0,
-        "symbolRef": "default-port",
-        "side": "left",
-        "offset": 0.685
-      },
-      "LogicalArchitecture::Car::locks": {
-        "artifactId": "LogicalArchitecture::Car::locks",
+      "LogicalArchitecture::Car::body::bodyShell": {
+        "artifactId": "LogicalArchitecture::Car::body::bodyShell",
         "x": 640.0,
-        "y": 5480.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "LogicalArchitecture::Car::lamps": {
-        "artifactId": "LogicalArchitecture::Car::lamps",
-        "x": 80.0,
         "y": 5660.0,
         "width": 200.0,
         "height": 120.0,
@@ -10770,8 +12132,138 @@
         "side": null,
         "offset": null
       },
-      "LogicalArchitecture::Car::lamps::energyIn": {
-        "artifactId": "LogicalArchitecture::Car::lamps::energyIn",
+      "LogicalArchitecture::Car::body::door": {
+        "artifactId": "LogicalArchitecture::Car::body::door",
+        "x": 80.0,
+        "y": 5840.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::body::windshield": {
+        "artifactId": "LogicalArchitecture::Car::body::windshield",
+        "x": 360.0,
+        "y": 5840.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::body::windshield::clearIn": {
+        "artifactId": "LogicalArchitecture::Car::body::windshield::clearIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7712384937493896
+      },
+      "LogicalArchitecture::Car::body::window": {
+        "artifactId": "LogicalArchitecture::Car::body::window",
+        "x": 640.0,
+        "y": 5840.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::body::wipers": {
+        "artifactId": "LogicalArchitecture::Car::body::wipers",
+        "x": 80.0,
+        "y": 6020.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::body::wipers::clearOut": {
+        "artifactId": "LogicalArchitecture::Car::body::wipers::clearOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7406852262258992
+      },
+      "LogicalArchitecture::Car::body::lamps": {
+        "artifactId": "LogicalArchitecture::Car::body::lamps",
+        "x": 360.0,
+        "y": 6020.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::body::lamps::energyIn": {
+        "artifactId": "LogicalArchitecture::Car::body::lamps::energyIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.6917568068891591
+      },
+      "LogicalArchitecture::Car::cabinComfort": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort",
+        "x": 640.0,
+        "y": 6020.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::cabinComfort::energyIn": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::energyIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.7466823274468831
+      },
+      "LogicalArchitecture::Car::cabinComfort::climateSystem": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::climateSystem",
+        "x": 80.0,
+        "y": 6200.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::cabinComfort::climateSystem::energyIn": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::climateSystem::energyIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.685
+      },
+      "LogicalArchitecture::Car::cabinComfort::entertainmentSystem": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::entertainmentSystem",
+        "x": 360.0,
+        "y": 6200.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::Car::cabinComfort::entertainmentSystem::energyIn": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::entertainmentSystem::energyIn",
         "x": 0.0,
         "y": 0.0,
         "width": 12.0,
@@ -11473,7 +12965,7 @@
       "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw",
         "x": 360.0,
-        "y": 9800.0,
+        "y": 980.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -11512,8 +13004,8 @@
       },
       "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut",
-        "x": 0.0,
-        "y": 0.0,
+        "x": 650.0,
+        "y": 250.0,
         "width": 12.0,
         "height": 12.0,
         "symbolRef": "default-port",
@@ -12070,10 +13562,10 @@
         "side": null,
         "offset": null
       },
-      "PhysicalArchitecture::VehiclePhysical::locks": {
-        "artifactId": "PhysicalArchitecture::VehiclePhysical::locks",
-        "x": 80.0,
-        "y": 12320.0,
+      "PhysicalArchitecture::VehiclePhysical::door": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::door",
+        "x": 360.0,
+        "y": 12860.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -13641,8 +15133,212 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep1": {
-        "artifactId": "LogicalArchitecture::Car::dep1",
+      "LogicalArchitecture::Car::driverControls::directionDelegate": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::directionDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::driverControls::gearDelegate": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::gearDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::driverControls::torqueDelegate": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::torqueDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::driverControls::brakeDelegate": {
+        "artifactId": "LogicalArchitecture::Car::driverControls::brakeDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::directionInDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::directionInDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::directionOutDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::directionOutDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::gearInDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::gearInDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::gearOutDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::gearOutDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::torqueInDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::torqueInDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::torqueOutDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::torqueOutDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::brakeInDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeInDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::motionActuation::brakeOutDelegate": {
+        "artifactId": "LogicalArchitecture::Car::motionActuation::brakeOutDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::dep1": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::dep1",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13660,8 +15356,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep2": {
-        "artifactId": "LogicalArchitecture::Car::dep2",
+      "LogicalArchitecture::Car::skateboard::dep2": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::dep2",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13679,8 +15375,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep3": {
-        "artifactId": "LogicalArchitecture::Car::dep3",
+      "LogicalArchitecture::Car::skateboard::dep3": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::dep3",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13698,8 +15394,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep4": {
-        "artifactId": "LogicalArchitecture::Car::dep4",
+      "LogicalArchitecture::Car::skateboard::dep4": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::dep4",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13717,8 +15413,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep5": {
-        "artifactId": "LogicalArchitecture::Car::dep5",
+      "LogicalArchitecture::Car::skateboard::dep5": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::dep5",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13736,8 +15432,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep6": {
-        "artifactId": "LogicalArchitecture::Car::dep6",
+      "LogicalArchitecture::Car::skateboard::dep6": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::dep6",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13755,8 +15451,127 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep7": {
-        "artifactId": "LogicalArchitecture::Car::dep7",
+      "LogicalArchitecture::Car::skateboard::directionDelegate": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::directionDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::gearDelegate": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::gearDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::torqueDelegate": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::torqueDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::brakeDelegate": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::brakeDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::energyEngine": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::energyEngine",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::energyOutDelegate": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::energyOutDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::skateboard::charge": {
+        "artifactId": "LogicalArchitecture::Car::skateboard::charge",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::body::dep7": {
+        "artifactId": "LogicalArchitecture::Car::body::dep7",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13774,8 +15589,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep8": {
-        "artifactId": "LogicalArchitecture::Car::dep8",
+      "LogicalArchitecture::Car::body::dep8": {
+        "artifactId": "LogicalArchitecture::Car::body::dep8",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13793,8 +15608,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep9": {
-        "artifactId": "LogicalArchitecture::Car::dep9",
+      "LogicalArchitecture::Car::body::dep9": {
+        "artifactId": "LogicalArchitecture::Car::body::dep9",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13812,8 +15627,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep10": {
-        "artifactId": "LogicalArchitecture::Car::dep10",
+      "LogicalArchitecture::Car::body::dep10": {
+        "artifactId": "LogicalArchitecture::Car::body::dep10",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13831,8 +15646,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep11": {
-        "artifactId": "LogicalArchitecture::Car::dep11",
+      "LogicalArchitecture::Car::body::dep11": {
+        "artifactId": "LogicalArchitecture::Car::body::dep11",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13850,8 +15665,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep12": {
-        "artifactId": "LogicalArchitecture::Car::dep12",
+      "LogicalArchitecture::Car::body::dep12": {
+        "artifactId": "LogicalArchitecture::Car::body::dep12",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13866,6 +15681,74 @@
           "dark": {
             "lineStyle": "dashed",
             "markerEnd": "openArrow"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::body::energyDelegate": {
+        "artifactId": "LogicalArchitecture::Car::body::energyDelegate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::body::clear": {
+        "artifactId": "LogicalArchitecture::Car::body::clear",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::cabinComfort::energyClimate": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::energyClimate",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "LogicalArchitecture::Car::cabinComfort::energyEntertainment": {
+        "artifactId": "LogicalArchitecture::Car::cabinComfort::energyEntertainment",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
           }
         }
       },
@@ -13964,65 +15847,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::dep18": {
-        "artifactId": "LogicalArchitecture::Car::dep18",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "openArrow"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "openArrow"
-          }
-        }
-      },
-      "LogicalArchitecture::Car::dep19": {
-        "artifactId": "LogicalArchitecture::Car::dep19",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "openArrow"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "openArrow"
-          }
-        }
-      },
-      "LogicalArchitecture::Car::dep20": {
-        "artifactId": "LogicalArchitecture::Car::dep20",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "openArrow"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "openArrow"
-          }
-        }
-      },
-      "LogicalArchitecture::Car::direction": {
-        "artifactId": "LogicalArchitecture::Car::direction",
+      "LogicalArchitecture::Car::directionCommand": {
+        "artifactId": "LogicalArchitecture::Car::directionCommand",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14038,8 +15864,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::gear": {
-        "artifactId": "LogicalArchitecture::Car::gear",
+      "LogicalArchitecture::Car::gearCommand": {
+        "artifactId": "LogicalArchitecture::Car::gearCommand",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14055,8 +15881,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::torque": {
-        "artifactId": "LogicalArchitecture::Car::torque",
+      "LogicalArchitecture::Car::torqueCommand": {
+        "artifactId": "LogicalArchitecture::Car::torqueCommand",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14072,8 +15898,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::brake": {
-        "artifactId": "LogicalArchitecture::Car::brake",
+      "LogicalArchitecture::Car::brakeCommand": {
+        "artifactId": "LogicalArchitecture::Car::brakeCommand",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14089,8 +15915,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::energyEngine": {
-        "artifactId": "LogicalArchitecture::Car::energyEngine",
+      "LogicalArchitecture::Car::directionActuate": {
+        "artifactId": "LogicalArchitecture::Car::directionActuate",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14106,8 +15932,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::energyClimate": {
-        "artifactId": "LogicalArchitecture::Car::energyClimate",
+      "LogicalArchitecture::Car::gearActuate": {
+        "artifactId": "LogicalArchitecture::Car::gearActuate",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14123,8 +15949,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::energyEntertainment": {
-        "artifactId": "LogicalArchitecture::Car::energyEntertainment",
+      "LogicalArchitecture::Car::torqueActuate": {
+        "artifactId": "LogicalArchitecture::Car::torqueActuate",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14140,8 +15966,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::energyLamps": {
-        "artifactId": "LogicalArchitecture::Car::energyLamps",
+      "LogicalArchitecture::Car::brakeActuate": {
+        "artifactId": "LogicalArchitecture::Car::brakeActuate",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14157,8 +15983,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::charge": {
-        "artifactId": "LogicalArchitecture::Car::charge",
+      "LogicalArchitecture::Car::energyCabin": {
+        "artifactId": "LogicalArchitecture::Car::energyCabin",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -14174,8 +16000,8 @@
           }
         }
       },
-      "LogicalArchitecture::Car::clear": {
-        "artifactId": "LogicalArchitecture::Car::clear",
+      "LogicalArchitecture::Car::energyBody": {
+        "artifactId": "LogicalArchitecture::Car::energyBody",
         "routing": "angular",
         "waypoints": [],
         "labelOffset": {
@@ -15446,6 +17272,20 @@
       "typeRef": "GeneralView"
     },
     {
+      "id": "LogicalArchitecture::BodyView",
+      "name": "BodyView",
+      "rootArtifactId": "LogicalArchitecture::Car::body",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "LogicalArchitecture::CabinComfortView",
+      "name": "CabinComfortView",
+      "rootArtifactId": "LogicalArchitecture::Car::cabinComfort",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
       "id": "LogicalArchitecture::CarLogicalTree",
       "name": "CarLogicalTree",
       "rootArtifactId": "LogicalArchitecture::Car",
@@ -15456,6 +17296,27 @@
       "id": "LogicalArchitecture::CarLogicalView",
       "name": "CarLogicalView",
       "rootArtifactId": "LogicalArchitecture::Car",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "LogicalArchitecture::DriverControlsView",
+      "name": "DriverControlsView",
+      "rootArtifactId": "LogicalArchitecture::Car::driverControls",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "LogicalArchitecture::MotionActuationView",
+      "name": "MotionActuationView",
+      "rootArtifactId": "LogicalArchitecture::Car::motionActuation",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "LogicalArchitecture::SkateboardView",
+      "name": "SkateboardView",
+      "rootArtifactId": "LogicalArchitecture::Car::skateboard",
       "parentViewId": null,
       "typeRef": "GeneralView"
     },

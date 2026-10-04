@@ -567,17 +567,22 @@ input {
   z-index: 8;
   top: 10px;
   left: 12px;
+  right: 12px;
+  max-width: calc(100% - 24px);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   pointer-events: none;
 }
 
 .diagram-canvas-header .redraw-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   pointer-events: auto;
-  margin-left: 8px;
+  margin-left: 0;
+  max-width: 100%;
 }
 
 .view-hierarchy-control {
@@ -604,6 +609,31 @@ input {
 .view-hierarchy-control .settings-note {
   margin: 8px 0 0;
   font-size: 0.75rem;
+}
+
+.diagram-canvas-header .bulk-ops {
+  position: relative;
+}
+
+.diagram-canvas-header .bulk-ops-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  min-width: 8rem;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: var(--panel);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.diagram-canvas-header .redraw-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .diagram-canvas-header .redraw-actions button {
@@ -1513,6 +1543,20 @@ body.port-dragging * {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
 }
 
+/* View Filter: 30% wider than base modal */
+.modal-dialog.modal-view-filter {
+  width: min(676px, 96vw);
+}
+
+/* LayoutWizard: 50% wider than base modal */
+.modal-dialog.modal-layout-wizard {
+  width: min(780px, 96vw);
+}
+
+.modal-dialog.modal-wide {
+  width: min(640px, 96vw);
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1623,6 +1667,15 @@ body.port-dragging * {
   color: var(--ink);
 }
 
+.position-inputs {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.position-inputs .inline-edit {
+  width: 5rem;
+}
+
 .editor-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1708,6 +1761,26 @@ body.port-dragging * {
   justify-content: flex-end;
   margin-top: 1rem;
   flex-wrap: wrap;
+}
+
+.error-text {
+  color: #b91c1c;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.layout-conflict-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #b91c1c;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
 .modal-dialog-wide {

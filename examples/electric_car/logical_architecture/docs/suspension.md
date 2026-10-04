@@ -13,3 +13,4 @@ Part of `Car`.
 
 - `CarLogicalView`
 - `CarLogicalTree`
+- `SkateboardView`
