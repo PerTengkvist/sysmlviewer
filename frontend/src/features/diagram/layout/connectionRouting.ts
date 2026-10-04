@@ -2,10 +2,14 @@ import type { Edge, Node } from '@xyflow/react'
 import { resolveRoutePoints, simplifyOrtho, type FlowBounds, type PortSide, type Pt } from '../edgeRouting'
 import type { PartNodeData, PartPort } from '../PartNode'
 import {
+  closestParallelGap,
   computeJumpers,
   cornersFromFull,
   separateUnrelatedRoutes,
+  sharePort,
+  type RoutedPoly,
 } from './connectionSeparation'
+import { EDGE_LABEL_TEXT_HEIGHT_PX } from '../../../settings'
 
 export type Rect = {
   minX: number
@@ -830,7 +834,7 @@ export function redrawStructureConnections(
     if (poly) staticRoutes.push(poly)
   }
 
-  const separation = options?.separation ?? 5
+  const separation = options?.separation ?? EDGE_LABEL_TEXT_HEIGHT_PX
 
   let separated = separateUnrelatedRoutes(
     [
@@ -916,6 +920,10 @@ export function redrawStructureConnections(
     ])
   }
 
+  // Obstacle repair can drop lane offsets. Re-route later nets around the
+  // tracks already taken so unrelated wires stay a label-height apart.
+  separated = assignFreeLanes(separated, drafts, separation, bounds)
+
   const jumpsById = computeJumpers(separated)
 
   const contextAngularIds = new Set(
@@ -932,6 +940,127 @@ export function redrawStructureConnections(
         jumps: jumpsById.get(r.id) || [],
       }
     })
+}
+
+function tooClose(points: Pt[], others: RoutedPoly[], separation: number): boolean {
+  return others.some((other) => {
+    const gap = closestParallelGap(points, other.points)
+    return gap !== null && gap < separation - 0.01
+  })
+}
+
+function hitsAny(points: Pt[], obstacles: Rect[]): boolean {
+  return obstacles.some((rect) => polylineHitsRect(points, rect))
+}
+
+/**
+ * Slide a crowded net onto a free horizontal or vertical lane.
+ * A one-cell nudge often lands inside a part; this walks the diagram and
+ * keeps the first clear lane that stays a full `separation` from other nets.
+ */
+function laneBypass(
+  start: Pt,
+  srcStub: Pt,
+  tgtStub: Pt,
+  end: Pt,
+  obstacles: Rect[],
+  others: RoutedPoly[],
+  separation: number,
+  bounds: Rect,
+): Pt[] | null {
+  let best: Pt[] | null = null
+  let bestLen = Infinity
+  const consider = (path: Pt[]) => {
+    const simplified = simplifyOrtho(path)
+    if (hitsAny(simplified, obstacles)) return
+    if (tooClose(simplified, others, separation)) return
+    const len = simplified.reduce((sum, p, i) => {
+      if (i === 0) return 0
+      const q = simplified[i - 1]
+      return sum + Math.abs(p.x - q.x) + Math.abs(p.y - q.y)
+    }, 0)
+    if (len < bestLen) {
+      best = simplified
+      bestLen = len
+    }
+  }
+  const shifts = [-2, -1, 0, 1, 2].map((k) => k * separation)
+  for (let y = bounds.minY + separation; y <= bounds.maxY - separation; y += separation) {
+    for (const ox of shifts) {
+      for (const tx of shifts) {
+        const x1 = srcStub.x + ox
+        const x2 = tgtStub.x + tx
+        consider([
+          start,
+          { x: x1, y: start.y },
+          { x: x1, y },
+          { x: x2, y },
+          { x: x2, y: end.y },
+          end,
+        ])
+      }
+    }
+  }
+  for (let x = bounds.minX + separation; x <= bounds.maxX - separation; x += separation) {
+    for (const oy of shifts) {
+      for (const ty of shifts) {
+        const y1 = srcStub.y + oy
+        const y2 = tgtStub.y + ty
+        consider([
+          start,
+          { x: start.x, y: y1 },
+          { x, y: y1 },
+          { x, y: y2 },
+          { x: end.x, y: y2 },
+          end,
+        ])
+      }
+    }
+  }
+  return best
+}
+
+function assignFreeLanes(
+  routes: RoutedPoly[],
+  drafts: {
+    id: string
+    points: Pt[]
+    locked: Pt[]
+    obstacles: Rect[]
+  }[],
+  separation: number,
+  bounds: Rect,
+): RoutedPoly[] {
+  if (separation <= 0 || routes.length < 2) return routes
+  const accepted: RoutedPoly[] = []
+  const ordered = [...routes].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+  for (const route of ordered) {
+    const draft = drafts.find((d) => d.id === route.id)
+    let points = route.points
+    if (draft && !draft.locked.length) {
+      const others = accepted.filter((other) => !sharePort(other, route))
+      if (tooClose(points, others, separation)) {
+        const start = draft.points[0]
+        const end = draft.points[draft.points.length - 1]
+        const srcStub = draft.points.length > 2 ? draft.points[1] : start
+        const tgtStub =
+          draft.points.length > 2 ? draft.points[draft.points.length - 2] : end
+        const next = laneBypass(
+          start,
+          srcStub,
+          tgtStub,
+          end,
+          draft.obstacles,
+          others,
+          separation,
+          bounds,
+        )
+        if (next) points = next
+      }
+    }
+    accepted.push({ ...route, points })
+  }
+  return accepted
 }
 
 /** Route start→end, forcing locked via-points to stay (in order). */

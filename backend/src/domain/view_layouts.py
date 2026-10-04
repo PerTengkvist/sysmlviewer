@@ -46,7 +46,10 @@ class ViewNodeLayout:
     y: float | None = None
     width: float | None = None
     height: float | None = None
+    side: str | None = None
+    offset: float | None = None
     anchors: list[dict[str, Any]] | None = None
+    edit_locked: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -58,8 +61,14 @@ class ViewNodeLayout:
             out["width"] = self.width
         if self.height is not None:
             out["height"] = self.height
+        if self.side is not None:
+            out["side"] = self.side
+        if self.offset is not None:
+            out["offset"] = self.offset
         if self.anchors is not None:
             out["anchors"] = list(self.anchors)
+        if self.edit_locked:
+            out["editLocked"] = True
         return out
 
     @classmethod
@@ -71,18 +80,26 @@ class ViewNodeLayout:
             y=float(data["y"]) if data.get("y") is not None else None,
             width=float(data["width"]) if data.get("width") is not None else None,
             height=float(data["height"]) if data.get("height") is not None else None,
+            side=str(data["side"]) if data.get("side") else None,
+            offset=(
+                float(data["offset"]) if data.get("offset") is not None else None
+            ),
             anchors=parse_boundary_anchors(data.get("anchors"))
             if "anchors" in data
             else None,
+            edit_locked=bool(data["editLocked"]) if "editLocked" in data else None,
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewNodeLayout:
-        """Apply geometry fields from a patch; ignore style/side/offset."""
+        """Apply geometry fields from a patch; ignore style."""
         x = self.x
         y = self.y
         width = self.width
         height = self.height
+        side = self.side
+        offset = self.offset
         anchors = self.anchors
+        edit_locked = self.edit_locked
         if "x" in patch and patch["x"] is not None:
             x = float(patch["x"])
         if "y" in patch and patch["y"] is not None:
@@ -91,10 +108,23 @@ class ViewNodeLayout:
             width = float(patch["width"])
         if "height" in patch and patch["height"] is not None:
             height = float(patch["height"])
+        if "side" in patch and patch["side"]:
+            side = str(patch["side"])
+        if "offset" in patch and patch["offset"] is not None:
+            offset = float(patch["offset"])
         if "anchors" in patch:
             anchors = parse_boundary_anchors(patch.get("anchors"))
+        if "editLocked" in patch:
+            edit_locked = bool(patch["editLocked"])
         return ViewNodeLayout(
-            x=x, y=y, width=width, height=height, anchors=anchors
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            side=side,
+            offset=offset,
+            anchors=anchors,
+            edit_locked=edit_locked,
         )
 
 
@@ -112,6 +142,7 @@ class ViewEdgeLayout:
     target_offset: float | None = None
     source_anchor_id: str | None = None
     target_anchor_id: str | None = None
+    edit_locked: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -136,6 +167,8 @@ class ViewEdgeLayout:
             out["sourceAnchorId"] = self.source_anchor_id
         if self.target_anchor_id is not None:
             out["targetAnchorId"] = self.target_anchor_id
+        if self.edit_locked:
+            out["editLocked"] = True
         return out
 
     @classmethod
@@ -167,6 +200,7 @@ class ViewEdgeLayout:
             ),
             source_anchor_id=data.get("sourceAnchorId") or None,
             target_anchor_id=data.get("targetAnchorId") or None,
+            edit_locked=bool(data["editLocked"]) if "editLocked" in data else None,
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewEdgeLayout:
@@ -180,6 +214,7 @@ class ViewEdgeLayout:
         target_offset = self.target_offset
         source_anchor_id = self.source_anchor_id
         target_anchor_id = self.target_anchor_id
+        edit_locked = self.edit_locked
         if "routing" in patch and patch["routing"]:
             routing = str(patch["routing"])
         if "waypoints" in patch:
@@ -200,6 +235,8 @@ class ViewEdgeLayout:
             source_anchor_id = str(patch["sourceAnchorId"])
         if "targetAnchorId" in patch and patch["targetAnchorId"]:
             target_anchor_id = str(patch["targetAnchorId"])
+        if "editLocked" in patch:
+            edit_locked = bool(patch["editLocked"])
         return ViewEdgeLayout(
             routing=routing,
             waypoints=waypoints,
@@ -211,6 +248,7 @@ class ViewEdgeLayout:
             target_offset=target_offset,
             source_anchor_id=source_anchor_id,
             target_anchor_id=target_anchor_id,
+            edit_locked=edit_locked,
         )
 
 
@@ -369,8 +407,13 @@ def resolve_view_node(
         out["width"] = overlay.width
     if overlay.height is not None:
         out["height"] = overlay.height
+    if overlay.side is not None:
+        out["side"] = overlay.side
+    if overlay.offset is not None:
+        out["offset"] = overlay.offset
     if overlay.anchors is not None:
         out["anchors"] = list(overlay.anchors)
+    stamp_edit_lock(out, overlay.edit_locked)
     return out
 
 
@@ -423,7 +466,16 @@ def resolve_view_edge(
         out["sourceAnchorId"] = overlay.source_anchor_id
     if overlay.target_anchor_id is not None:
         out["targetAnchorId"] = overlay.target_anchor_id
+    stamp_edit_lock(out, overlay.edit_locked)
     return out
+
+
+def stamp_edit_lock(out: dict[str, Any], locked: bool | None) -> None:
+    """Overlay wins. True sets the flag; False clears a global lock; None leaves it."""
+    if locked is True:
+        out["editLocked"] = True
+    elif locked is False:
+        out.pop("editLocked", None)
 
 
 def _copy_view_layout(

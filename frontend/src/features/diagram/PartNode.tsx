@@ -51,6 +51,8 @@ export type PartNodeData = {
   showAttributes?: boolean
   attributeNames?: string[]
   formatStyle?: ElementStyle | null
+  /** Diagram edit lock — no resize or port move. */
+  editLocked?: boolean
   viewMode?: ViewMode
   onOpenView?: (viewId: string) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
@@ -183,9 +185,13 @@ export function PartNode({ data, selected }: NodeProps) {
     }
   }, [d.ports])
 
+  // Keep React Flow handle bounds in sync when ports move (drag or Align).
+  const portSig = (localPorts ?? [])
+    .map((p) => `${p.id}:${p.side}:${p.offset}`)
+    .join('|')
   useEffect(() => {
     if (nodeId) updateNodeInternals(nodeId)
-  }, [d.relationHandles, nodeId, updateNodeInternals, moveMode])
+  }, [portSig, d.relationHandles, nodeId, updateNodeInternals, moveMode])
 
   const updatePortFromPointer = useCallback((portId: string, clientX: number, clientY: number) => {
     const el = rootRef.current
@@ -225,7 +231,7 @@ export function PartNode({ data, selected }: NodeProps) {
     e: ReactMouseEvent | ReactPointerEvent,
   ) => {
     // Option (macOS) / Alt — move port along parent border
-    if (!e.altKey && !moveMode) {
+    if (d.editLocked || (!e.altKey && !moveMode)) {
       return
     }
 
@@ -270,7 +276,7 @@ export function PartNode({ data, selected }: NodeProps) {
       <NodeResizer
         minWidth={d.isBoundary ? 280 : 120}
         minHeight={d.isBoundary ? 160 : 72}
-        isVisible={!!selected && !moveMode}
+        isVisible={!!selected && !moveMode && !d.editLocked}
         lineClassName="part-resize-line"
         handleClassName="part-resize-handle"
       />

@@ -2,7 +2,7 @@
   "id": "8f3c2a10-6b4e-4d77-9c21-a1b2c3d4e5f6",
   "projektnamn": "Electric Car",
   "created": "2026-09-30T15:48:34.009766+00:00",
-  "updated": "2026-10-02T07:14:21.647730+00:00",
+  "updated": "2026-10-04T12:26:13.819354+00:00",
   "sysmlfiles": [
     "requirements/requirements.sysml",
     "functions/functions.sysml",

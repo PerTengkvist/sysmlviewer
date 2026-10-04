@@ -115,6 +115,8 @@ export interface VisualizationNode {
   style?: ElementStyle | null
   /** Use-case and requirement connection points, stored per view. */
   anchors?: BoundaryAnchor[] | null
+  /** When true, the artifact cannot be moved or edited in this diagram. */
+  editLocked?: boolean
 }
 
 export interface VisualizationEdge {
@@ -129,6 +131,8 @@ export interface VisualizationEdge {
   targetOffset?: number | null
   sourceAnchorId?: string | null
   targetAnchorId?: string | null
+  /** When true, the connection cannot be edited in this diagram. */
+  editLocked?: boolean
 }
 
 export interface SysmlFile {

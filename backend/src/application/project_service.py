@@ -1028,7 +1028,16 @@ class ProjectService:
                 for key, value in node_data.items():
                     if key == "artifactId":
                         continue
-                    if key in ("x", "y", "width", "height", "anchors"):
+                    if key in (
+                        "x",
+                        "y",
+                        "width",
+                        "height",
+                        "side",
+                        "offset",
+                        "anchors",
+                        "editLocked",
+                    ):
                         geo[key] = value
                     else:
                         other[key] = value
@@ -1060,6 +1069,7 @@ class ProjectService:
                         "targetOffset",
                         "sourceAnchorId",
                         "targetAnchorId",
+                        "editLocked",
                     ):
                         geo_e[key] = value
                     else:
@@ -1122,6 +1132,8 @@ class ProjectService:
                     if existing.style is None:
                         existing.style = ElementStyle()
                     existing.style.merge(node_data["style"])
+                if "editLocked" in node_data:
+                    existing.edit_locked = bool(node_data["editLocked"])
             else:
                 project.visualization.nodes[artifact_id] = VisualizationNode.from_dict(
                     {"artifactId": artifact_id, **node_data}
@@ -1152,6 +1164,8 @@ class ProjectService:
                     if existing.style is None:
                         existing.style = ElementStyle()
                     existing.style.merge(edge_data["style"])
+                if "editLocked" in edge_data:
+                    existing.edit_locked = bool(edge_data["editLocked"])
             else:
                 project.visualization.edges[artifact_id] = VisualizationEdge.from_dict(
                     {"artifactId": artifact_id, **edge_data}
@@ -1453,6 +1467,7 @@ class ProjectService:
             overlay_has_xy,
             resolve_view_edge,
             resolve_view_node,
+            stamp_edit_lock,
         )
 
         # Kinds that are placed as top-level diagram nodes in structure views.
@@ -1510,6 +1525,13 @@ class ProjectService:
             x, y = default_view_local_xy(index)
             out["x"] = x
             out["y"] = y
+            pending_overlay = (
+                overlay_layouts.get_node(view.id, aid)
+                if overlay_layouts is not None
+                else None
+            )
+            if pending_overlay is not None:
+                stamp_edit_lock(out, pending_overlay.edit_locked)
             nodes[aid] = out
 
         # Edges: only relations whose endpoints are both in the depth-limited set.
@@ -1600,6 +1622,7 @@ class ProjectService:
                     out["sourceAnchorId"] = edge_overlay.source_anchor_id
                 if edge_overlay.target_anchor_id is not None:
                     out["targetAnchorId"] = edge_overlay.target_anchor_id
+                stamp_edit_lock(out, edge_overlay.edit_locked)
                 edges[aid] = out
                 continue
             resolved_edge = resolve_view_edge(global_edge, edge_overlay)

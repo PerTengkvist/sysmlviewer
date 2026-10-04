@@ -17,8 +17,8 @@
       "height": 40.0
     },
     "LogicalArchitecture::Car::body": {
-      "x": 419.0940111476554,
-      "y": 317.6287376310189,
+      "x": 899.5241705691517,
+      "y": 4.455703563592749,
       "width": 160.0,
       "height": 40.0
     },
@@ -233,8 +233,158 @@
       "height": 40.0
     },
     "LogicalArchitecture::Car": {
-      "x": -253.072940388649,
-      "y": -6.967265971562252,
+      "x": -274.5599174321751,
+      "y": -141.42344652508348,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body::bodyShell": {
+      "x": 1226.8113113908882,
+      "y": 10.151428598414242,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body::door": {
+      "x": 1226.8113113908882,
+      "y": 90.15142859841423,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body::lamps": {
+      "x": 1226.8113113908882,
+      "y": 170.1514285984142,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body::window": {
+      "x": 1226.8113113908882,
+      "y": 250.1514285984142,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body::windshield": {
+      "x": 1226.8113113908882,
+      "y": 330.15142859841427,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::body::wipers": {
+      "x": 1226.8113113908882,
+      "y": 410.15142859841427,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::cabinComfort::climateSystem": {
+      "x": 1694.00976215628,
+      "y": -138.60372098985874,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::cabinComfort::entertainmentSystem": {
+      "x": 1694.00976215628,
+      "y": -58.60372098985874,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::cabinComfort": {
+      "x": 1340.2272222558513,
+      "y": -140.2075821295245,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::driverControls::acceleratorPedal": {
+      "x": 847.9548652957193,
+      "y": 259.0989952963546,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::driverControls::brakePedal": {
+      "x": 847.9548652957193,
+      "y": 339.0989952963546,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::driverControls::gearStick": {
+      "x": 847.9548652957193,
+      "y": 419.0989952963546,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::driverControls::steeringWheel": {
+      "x": 847.9548652957193,
+      "y": 499.0989952963546,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::driverControls": {
+      "x": 488.55037632957794,
+      "y": 257.4604101264928,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::motionActuation::brakeSystem": {
+      "x": 617.8356795521973,
+      "y": 597.2782856783195,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::motionActuation::powertrainControl": {
+      "x": 617.8356795521973,
+      "y": 677.2782856783194,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::motionActuation::steeringServo": {
+      "x": 617.8356795521973,
+      "y": 757.2782856783194,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::motionActuation": {
+      "x": 351.93196522088715,
+      "y": 594.6406438590575,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard::battery": {
+      "x": 338.09863306879924,
+      "y": 822.5552832318249,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard::chargeInlet": {
+      "x": 338.09863306879924,
+      "y": 902.5552832318249,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard::chassis": {
+      "x": 338.09863306879924,
+      "y": 982.5552832318249,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard::engine": {
+      "x": 338.09863306879924,
+      "y": 1062.555283231825,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard::suspension": {
+      "x": 338.09863306879924,
+      "y": 1142.555283231825,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard::wheels": {
+      "x": 338.09863306879924,
+      "y": 1222.555283231825,
+      "width": 160.0,
+      "height": 40.0
+    },
+    "LogicalArchitecture::Car::skateboard": {
+      "x": -1.8510315147682377,
+      "y": 821.9621588410357,
       "width": 160.0,
       "height": 40.0
     }

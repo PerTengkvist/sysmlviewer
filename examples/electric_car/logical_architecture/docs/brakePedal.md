@@ -13,6 +13,7 @@ Part of `Car`.
 
 - `CarLogicalView`
 - `CarLogicalTree`
+- `DriverControlsView`
 
 ## Interfaces
 

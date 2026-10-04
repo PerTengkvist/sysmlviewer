@@ -196,8 +196,8 @@ package PhysicalArchitecture {
     #Logical ref part wipers {
       doc /* Logical wipers, from the logical architecture. */
     }
-    #Logical ref part locks {
-      doc /* Logical locks, from the logical architecture. */
+    #Logical ref part door {
+      doc /* Logical door, from the logical architecture. */
     }
     #Logical ref part lamps {
       doc /* Logical lamps, from the logical architecture. */
@@ -231,7 +231,7 @@ package PhysicalArchitecture {
     #implements dependency from bodyShell to body;
     #implements dependency from windshieldGlass to windshield;
     #implements dependency from wiperAsm to wipers;
-    #implements dependency from doorLockAsm to locks;
+    #implements dependency from doorLockAsm to door;
     #implements dependency from lampUnits to lamps;
     #implements dependency from chargeInletMech to chargeInlet;
 

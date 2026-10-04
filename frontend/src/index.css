@@ -567,17 +567,22 @@ input {
   z-index: 8;
   top: 10px;
   left: 12px;
+  right: 12px;
+  max-width: calc(100% - 24px);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   pointer-events: none;
 }
 
 .diagram-canvas-header .redraw-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   pointer-events: auto;
-  margin-left: 8px;
+  margin-left: 0;
+  max-width: 100%;
 }
 
 .view-hierarchy-control {
@@ -604,6 +609,31 @@ input {
 .view-hierarchy-control .settings-note {
   margin: 8px 0 0;
   font-size: 0.75rem;
+}
+
+.diagram-canvas-header .bulk-ops {
+  position: relative;
+}
+
+.diagram-canvas-header .bulk-ops-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  min-width: 8rem;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: var(--panel);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.diagram-canvas-header .redraw-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .diagram-canvas-header .redraw-actions button {

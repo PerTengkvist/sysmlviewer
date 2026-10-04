@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "viewId": "LogicalArchitecture::DriverControlsView",
+  "name": "DriverControlsView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "LogicalArchitecture::Car::driverControls": {
+      "x": 74.04571578417114,
+      "y": 91.31314001007479,
+      "width": 509.0,
+      "height": 458.0
+    },
+    "LogicalArchitecture::Car::driverControls::steeringWheel": {
+      "x": 43.28160714058748,
+      "y": 110.74154350199427,
+      "width": 160.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::driverControls::gearStick": {
+      "x": 239.58982695521337,
+      "y": 188.13227159611358,
+      "width": 160.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::driverControls::acceleratorPedal": {
+      "x": 42.33587102858644,
+      "y": 254.73958149199746,
+      "width": 160.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::driverControls::brakePedal": {
+      "x": 222.9033448734583,
+      "y": 357.40264100249584,
+      "width": 160.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::driverControls::steeringWheel::directionOut": {},
+    "LogicalArchitecture::Car::driverControls::directionOut": {
+      "side": "right",
+      "offset": 0.38
+    },
+    "LogicalArchitecture::Car::driverControls::gearStick::gearOut": {},
+    "LogicalArchitecture::Car::driverControls::brakePedal::brakeOut": {},
+    "LogicalArchitecture::Car::driverControls::brakeOut": {},
+    "LogicalArchitecture::Car::driverControls::gearOut": {},
+    "LogicalArchitecture::Car::driverControls::acceleratorPedal::torqueOut": {},
+    "LogicalArchitecture::Car::driverControls::torqueOut": {}
+  },
+  "edges": {
+    "LogicalArchitecture::Car::driverControls::brakeDelegate": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 507.5874347151017,
+          "y": 510.0248846817611
+        },
+        {
+          "x": 507.5874347151017,
+          "y": 447.3131400100748
+        },
+        {
+          "x": 582.0457157841711,
+          "y": 447.3131400100748
+        },
+        {
+          "x": 582.0457157841711,
+          "y": 420.1703228700149
+        }
+      ],
+      "labelOffset": {
+        "x": -8.952564575222539,
+        "y": 0.039864514845362464
+      }
+    },
+    "LogicalArchitecture::Car::driverControls::directionDelegate": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 582.0457157841711,
+          "y": 214.36692213198364
+        },
+        {
+          "x": 582.0457157841711,
+          "y": 228.1131400100748
+        }
+      ],
+      "labelOffset": {
+        "x": -44.71875,
+        "y": -28.693359375
+      }
+    },
+    "LogicalArchitecture::Car::driverControls::gearDelegate": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 582.0457157841711,
+          "y": 306.18596316274903
+        },
+        {
+          "x": 582.0457157841711,
+          "y": 303.8521885170601
+        }
+      ],
+      "labelOffset": {
+        "x": -4.4853515625,
+        "y": 2.0126953125
+      }
+    },
+    "LogicalArchitecture::Car::driverControls::torqueDelegate": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 582.0457157841711,
+          "y": 413.9832293926803
+        },
+        {
+          "x": 582.0457157841711,
+          "y": 341.82632188074865
+        }
+      ]
+    }
+  }
+}

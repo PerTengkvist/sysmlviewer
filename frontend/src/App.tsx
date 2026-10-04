@@ -12,6 +12,7 @@ import {
   type VisualizationNode,
 } from './api'
 import { DiagramCanvas } from './features/diagram/DiagramCanvas'
+import { lockTargets } from './features/diagram/editLock'
 import { nextSelection, selectionFromFlow } from './features/diagram/selection'
 import { RightSidebar } from './features/details/RightSidebar'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
@@ -463,6 +464,10 @@ export default function App() {
                 targetOffset: patch.targetOffset ?? existing?.targetOffset,
                 sourceAnchorId: patch.sourceAnchorId ?? existing?.sourceAnchorId,
                 targetAnchorId: patch.targetAnchorId ?? existing?.targetAnchorId,
+                editLocked:
+                  patch.editLocked !== undefined
+                    ? patch.editLocked
+                    : existing?.editLocked,
               }
             }
           }
@@ -541,8 +546,11 @@ export default function App() {
     async (portId: string, side: PortSide, offset: number) => {
       if (!project) return
       try {
+        const viewId = viewPayload?.view.id
         const patched = await api.patchVisualization(project.id, {
           nodes: { [portId]: { artifactId: portId, side, offset } },
+          ...(viewId ? { viewId } : {}),
+          structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
@@ -573,7 +581,7 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project],
+    [project, viewPayload?.view.id, structureNotation],
   )
 
   const onRelationEndMoved = useCallback(
@@ -647,6 +655,7 @@ export default function App() {
                   targetOffset: existing?.targetOffset,
                   sourceAnchorId: existing?.sourceAnchorId,
                   targetAnchorId: existing?.targetAnchorId,
+                  editLocked: existing?.editLocked,
                   ...patch,
                 },
               },
@@ -702,6 +711,7 @@ export default function App() {
                   targetOffset: existing?.targetOffset,
                   sourceAnchorId: existing?.sourceAnchorId,
                   targetAnchorId: existing?.targetAnchorId,
+                  editLocked: existing?.editLocked,
                 },
               },
             },
@@ -746,6 +756,7 @@ export default function App() {
                   targetOffset: existing?.targetOffset,
                   sourceAnchorId: existing?.sourceAnchorId,
                   targetAnchorId: existing?.targetAnchorId,
+                  editLocked: existing?.editLocked,
                 },
               },
             },
@@ -790,6 +801,7 @@ export default function App() {
                   targetOffset: existing?.targetOffset,
                   sourceAnchorId: existing?.sourceAnchorId,
                   targetAnchorId: existing?.targetAnchorId,
+                  editLocked: existing?.editLocked,
                 },
               },
             },
@@ -834,6 +846,7 @@ export default function App() {
                   targetOffset: existing?.targetOffset,
                   sourceAnchorId: existing?.sourceAnchorId,
                   targetAnchorId: existing?.targetAnchorId,
+                  editLocked: existing?.editLocked,
                 },
                 },
               },
@@ -1420,6 +1433,16 @@ export default function App() {
               void mutateAndSync(() =>
                 api.updateRelationEnds(project!.id, id, sourceId, targetId),
               )
+            }}
+            onEditLockChange={(id, locked) => {
+              if (!viewPayload) return
+              const patch = lockTargets(
+                [id],
+                viewPayload.visualization.nodes,
+                viewPayload.visualization.edges,
+                locked,
+              )
+              void onNodesMoved(patch.nodes, patch.edges)
             }}
           />
         }

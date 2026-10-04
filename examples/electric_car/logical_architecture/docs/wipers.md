@@ -14,6 +14,7 @@ Part of `Car`.
 
 - `CarLogicalView`
 - `CarLogicalTree`
+- `BodyView`
 
 ## Interfaces
 

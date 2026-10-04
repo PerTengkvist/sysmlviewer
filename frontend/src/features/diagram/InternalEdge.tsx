@@ -25,6 +25,8 @@ import {
 import { boundaryFlowBounds } from './layout/connectionRouting'
 import { nearestBorderAnchor, pointerInsideNodeBox } from './PartNode'
 import { absoluteNodeOrigin } from './modes/structure/buildStructureGraph'
+import { edgeEditOverlayZIndex } from './edgeEditZIndex'
+import { shouldShowLabelLeader } from './edgeLabelLeader'
 import { selectedEdgeStyle } from './selectedEdgeStyle'
 
 export type SysmlEdgeData = {
@@ -34,6 +36,8 @@ export type SysmlEdgeData = {
   jumps?: PathJump[]
   labelOffset?: { x: number; y: number } | null
   altHeld?: boolean
+  /** Diagram edit lock — ignore segment, label, and endpoint drags. */
+  editLocked?: boolean
   /** Absolute flow rect of parent whitebox; clamps routing when set. */
   parentBounds?: FlowBounds
   /** Edge lives inside a whitebox parent (waypoints track parent moves). */
@@ -96,7 +100,7 @@ export function SysmlEdge({
 }: EdgeProps) {
   const d = (data || {}) as SysmlEdgeData
   const routing = d.routing || 'angular'
-  const altHeld = !!d.altHeld
+  const altHeld = !!d.altHeld && !d.editLocked
   const { screenToFlowPosition, getNode, getNodes } = useReactFlow()
   const strokeStyle = useMemo(() => {
     if (selected && d.selectedLinewidth != null) {
@@ -395,7 +399,7 @@ export function SysmlEdge({
                   transform: `translate(-50%, -50%) translate(${x}px,${y}px)`,
                   pointerEvents: 'all',
                   cursor: 'move',
-                  zIndex: 1003,
+                  zIndex: edgeEditOverlayZIndex(!!selected, 'relationEnd'),
                 }}
                 title="Option-drag along part boundary"
                 onPointerDown={(e) => {
@@ -477,14 +481,14 @@ export function SysmlEdge({
       {label != null && label !== '' && (
         <EdgeLabelRenderer>
           <>
-            {Math.hypot(labelOff.x, labelOff.y) > 0.5 && (
+            {shouldShowLabelLeader(altHeld, labelOff) && (
               <svg
                 className="edge-label-leader"
                 style={{
                   position: 'absolute',
                   overflow: 'visible',
                   pointerEvents: 'none',
-                  zIndex: 1000,
+                  zIndex: edgeEditOverlayZIndex(!!selected, 'leader'),
                   left: 0,
                   top: 0,
                 }}
@@ -511,7 +515,7 @@ export function SysmlEdge({
                 transform: `translate(-50%, -50%) translate(${labelX + labelOff.x}px,${labelY + labelOff.y}px)`,
                 pointerEvents: 'all',
                 cursor: altHeld ? 'grab' : 'pointer',
-                zIndex: 1002,
+                zIndex: edgeEditOverlayZIndex(!!selected, 'label'),
                 ...(d.labelColor && !selected ? { color: d.labelColor } : {}),
               }}
               onPointerDown={(e) => {
@@ -538,7 +542,7 @@ export function SysmlEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'all',
               cursor: 'move',
-              zIndex: 1001,
+              zIndex: edgeEditOverlayZIndex(!!selected, 'waypoint'),
             }}
             title="Drag to move connection name; click to select"
             onPointerDown={(e) => {
@@ -561,7 +565,7 @@ export function SysmlEdge({
                 transform: `translate(-50%, -50%) translate(${seg.mid.x}px,${seg.mid.y}px)`,
                 pointerEvents: 'all',
                 cursor: seg.orient === 'v' ? 'ew-resize' : 'ns-resize',
-                zIndex: 1000,
+                zIndex: edgeEditOverlayZIndex(!!selected, 'segment'),
               }}
               onPointerDown={(e) => onSegPointerDown(seg.index, e)}
               title={
@@ -583,7 +587,7 @@ export function SysmlEdge({
                 transform: `translate(-50%, -50%) translate(${wp.x}px,${wp.y}px)`,
                 pointerEvents: 'all',
                 cursor: 'move',
-                zIndex: 1001,
+                zIndex: edgeEditOverlayZIndex(!!selected, 'waypoint'),
               }}
               onPointerDown={(e) => onWpPointerDown(index, e)}
               title="Drag to move connection point"

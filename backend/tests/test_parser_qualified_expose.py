@@ -57,6 +57,42 @@ def test_qualified_expose_resolves_nested_parts():
     assert views["FD1View"].root_artifact_id != views["FD2View"].root_artifact_id
 
 
+def test_car_subpart_expose_resolves_under_assembly():
+    """Electric Car-style views expose nested assemblies under Car."""
+    content = """
+package LogicalArchitecture {
+  part def Car {
+    part driverControls { part steeringWheel; }
+    part skateboard { part battery; }
+  }
+
+  view def DriverControlsView : GeneralView {
+    expose Car::driverControls;
+  }
+
+  view def SkateboardView : GeneralView {
+    expose Car::skateboard;
+  }
+}
+"""
+    result = SubsetSysmlParser().parse(content, "car")
+    assert (
+        result.elements["LogicalArchitecture::DriverControlsView"].expose_ref
+        == "LogicalArchitecture::Car::driverControls"
+    )
+    assert (
+        result.elements["LogicalArchitecture::SkateboardView"].expose_ref
+        == "LogicalArchitecture::Car::skateboard"
+    )
+    views = {v.name: v for v in rebuild_views(result.elements)}
+    assert views["DriverControlsView"].root_artifact_id == (
+        "LogicalArchitecture::Car::driverControls"
+    )
+    assert views["SkateboardView"].root_artifact_id == (
+        "LogicalArchitecture::Car::skateboard"
+    )
+
+
 def test_forward_qualified_dependency_endpoints_not_double_prefixed():
     """Qualified refs before their declarations must stay Package::Name, not Package::Package::Name."""
     from domain.models import ArtifactKind

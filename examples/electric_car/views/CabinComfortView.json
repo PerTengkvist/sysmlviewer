@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "viewId": "LogicalArchitecture::CabinComfortView",
+  "name": "CabinComfortView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "LogicalArchitecture::Car::cabinComfort": {
+      "x": 80.0,
+      "y": 80.0,
+      "width": 480.0,
+      "height": 280.0
+    },
+    "LogicalArchitecture::Car::cabinComfort::climateSystem": {
+      "x": 48.653926771743784,
+      "y": 58.25538509549057,
+      "width": 180.0,
+      "height": 90.0
+    },
+    "LogicalArchitecture::Car::cabinComfort::entertainmentSystem": {
+      "x": 274.107367435572,
+      "y": 60.72793560170308,
+      "width": 180.0,
+      "height": 90.0
+    }
+  },
+  "edges": {
+    "LogicalArchitecture::Car::cabinComfort::energyClimate": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 116.65392677174378,
+          "y": 266.55787609236245
+        },
+        {
+          "x": 116.65392677174378,
+          "y": 199.90538509549057
+        }
+      ],
+      "labelOffset": {
+        "x": 5.483556835555262,
+        "y": 39.58012490022992
+      }
+    },
+    "LogicalArchitecture::Car::cabinComfort::energyEntertainment": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 342.107367435572,
+          "y": 266.55787609236245
+        },
+        {
+          "x": 342.107367435572,
+          "y": 202.3779356017031
+        }
+      ],
+      "labelOffset": {
+        "x": 18.19642638165766,
+        "y": 36.54135066969431
+      }
+    }
+  }
+}

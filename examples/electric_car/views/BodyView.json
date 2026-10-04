@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "viewId": "LogicalArchitecture::BodyView",
+  "name": "BodyView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "LogicalArchitecture::Car::body": {
+      "x": 60.0,
+      "y": 60.0,
+      "width": 652.0,
+      "height": 421.0
+    },
+    "LogicalArchitecture::Car::body::bodyShell": {
+      "x": 32.699840029065456,
+      "y": 170.20063988373823,
+      "width": 150.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::body::door": {
+      "x": 222.5639478197774,
+      "y": 51.263048523412834,
+      "width": 150.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::body::windshield": {
+      "x": 454.63709005842566,
+      "y": 58.700820939438024,
+      "width": 150.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::body::window": {
+      "x": 34.15987202325235,
+      "y": 52.367120767979756,
+      "width": 150.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::body::wipers": {
+      "x": 456.8602788904949,
+      "y": 212.1323912712407,
+      "width": 150.0,
+      "height": 80.0
+    },
+    "LogicalArchitecture::Car::body::lamps": {
+      "x": 473.429370864543,
+      "y": 327.04989625213983,
+      "width": 150.0,
+      "height": 80.0
+    }
+  },
+  "edges": {
+    "LogicalArchitecture::Car::body::clear": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 690.0,
+          "y": 244.6577818962407
+        },
+        {
+          "x": 690.0,
+          "y": 94.98428906095364
+        },
+        {
+          "x": 684.1663626037225,
+          "y": 94.98428906095364
+        }
+      ],
+      "labelOffset": {
+        "x": -19.038285561903763,
+        "y": 45.82200312758944
+      }
+    },
+    "LogicalArchitecture::Car::body::energyDelegate": {
+      "routing": "direct",
+      "waypoints": [
+        {
+          "x": 70.0,
+          "y": 370.99664350524796
+        },
+        {
+          "x": 70.0,
+          "y": 372.4867405978785
+        },
+        {
+          "x": 93.8715250572565,
+          "y": 369.9314937168515
+        },
+        {
+          "x": 525.4773617730369,
+          "y": 374.14031215341186
+        }
+      ],
+      "labelOffset": {
+        "x": -142.9990356798457,
+        "y": 0.19527483124397804
+      }
+    },
+    "LogicalArchitecture::Car::body::dep12": {
+      "sourceSide": "top",
+      "sourceOffset": 0.47736580314678956,
+      "targetSide": "bottom",
+      "targetOffset": 0.48492785961875523
+    },
+    "LogicalArchitecture::Car::body::dep8": {
+      "sourceSide": "left",
+      "sourceOffset": 0.8628428873681664,
+      "targetSide": "right",
+      "targetOffset": 0.24748129748249603
+    },
+    "LogicalArchitecture::Car::body::dep10": {
+      "labelOffset": {
+        "x": 3.2940343004588613,
+        "y": 15.549074592914636
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.8949783795608193
+    },
+    "LogicalArchitecture::Car::body::dep9": {
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5835618240833707
+    },
+    "LogicalArchitecture::Car::body::dep11": {
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.8666963991552997
+    }
+  }
+}
