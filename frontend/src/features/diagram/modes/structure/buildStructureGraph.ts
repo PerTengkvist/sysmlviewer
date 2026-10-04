@@ -214,6 +214,7 @@ function buildPorts(
   el: SemanticElement,
   semantic: Record<string, SemanticElement>,
   visualization: ViewPayload['visualization'],
+  isBoundary = false,
 ) {
   const partH = Number(visualization.nodes[el.id]?.height) || 120
   const portEls = (el.children || [])
@@ -239,7 +240,7 @@ function buildPorts(
       id: port.id,
       name: port.name,
       side,
-      offset: clampPortOffset(Number(pv!.offset), side, partH),
+      offset: clampPortOffset(Number(pv!.offset), side, partH, { isBoundary }),
     }
   })
 }
@@ -376,7 +377,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     multiplicity: el.multiplicity,
     isReference: !!el.isReference,
     metadataKeywords: el.metadataKeywords || [],
-    ports: buildPorts(el, semantic, visualization).map((p) => ({
+    ports: buildPorts(el, semantic, visualization, isBoundary).map((p) => ({
       ...p,
       style: visualization.nodes[p.id]?.style,
     })),

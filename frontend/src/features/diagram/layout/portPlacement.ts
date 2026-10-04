@@ -7,15 +7,35 @@ import type { PortSide } from '../../../api'
 /** Approximate header height (stereotypes + title + padding). */
 export const PART_HEADER_PX = 48
 
-export const PORT_BODY_OFFSET_MAX = 0.92
+export const PORT_BODY_OFFSET_MAX = 0.95
+export const PORT_BODY_OFFSET_MIN_FLOOR = 0.05
+export const PORT_BODY_OFFSET_MIN_CEIL = 0.45
+export const PORT_BOUNDARY_OFFSET_MIN = 0.02
+export const PORT_BOUNDARY_OFFSET_MAX = 0.98
+export const PORT_TB_INSET = 0.05
+
+export type ClampPortOpts = {
+  isBoundary?: boolean
+}
 
 export function bodyOffsetMin(partHeight: number): number {
   const h = Math.max(partHeight, PART_HEADER_PX + 24)
-  return Math.min(0.58, Math.max(0.38, PART_HEADER_PX / h))
+  const raw = PART_HEADER_PX / h
+  return Math.min(PORT_BODY_OFFSET_MIN_CEIL, Math.max(PORT_BODY_OFFSET_MIN_FLOOR, raw))
 }
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n))
+}
+
+/** Convert zoomed screen box size to flow coordinates. */
+export function flowSizeFromScreenRect(
+  screenW: number,
+  screenH: number,
+  zoom: number,
+): { width: number; height: number } {
+  const z = zoom === 0 || !Number.isFinite(zoom) ? 1 : zoom
+  return { width: screenW / z, height: screenH / z }
 }
 
 /** Evenly pack `count` ports along the body band of a vertical edge. */
@@ -37,9 +57,13 @@ export function clampPortOffset(
   offset: number,
   side: PortSide,
   partHeight = 120,
+  opts?: ClampPortOpts,
 ): number {
   if (side === 'top' || side === 'bottom') {
-    return clamp(offset, 0.08, 0.92)
+    return clamp(offset, PORT_TB_INSET, PORT_BODY_OFFSET_MAX)
+  }
+  if (opts?.isBoundary) {
+    return clamp(offset, PORT_BOUNDARY_OFFSET_MIN, PORT_BOUNDARY_OFFSET_MAX)
   }
   return clamp(offset, bodyOffsetMin(partHeight), PORT_BODY_OFFSET_MAX)
 }
