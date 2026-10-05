@@ -1,4 +1,9 @@
 import type { SemanticElement } from '../../../../api'
+import type { RequirementDisplaySettings } from '../../../../settings'
+import {
+  DEFAULT_REQUIREMENT_DISPLAY,
+  resolveRequirementBody,
+} from '../../requirementDisplay'
 import {
   requirementStereotype,
   requirementTypeAttr,
@@ -68,6 +73,7 @@ function toRow(
   repeated: boolean,
   parents: Map<string, string[]>,
   sat: Map<string, string[]>,
+  display: RequirementDisplaySettings,
 ): RequirementRow {
   const typeAttr = requirementTypeAttr(el, semantic)
   return {
@@ -75,7 +81,7 @@ function toRow(
     shortId: el.shortId || '',
     name: el.name,
     stereotype: requirementStereotype({ typeAttr }),
-    text: el.documentation || '',
+    text: resolveRequirementBody(el, semantic, display),
     derivedFrom: parents.get(el.id) || [],
     satisfiedBy: sat.get(el.id) || [],
     fileId: el.fileId,
@@ -87,6 +93,7 @@ function toRow(
 export function buildRequirementRows(
   semantic: Record<string, SemanticElement>,
   mode: RequirementTableMode,
+  requirementDisplay: RequirementDisplaySettings = DEFAULT_REQUIREMENT_DISPLAY,
 ): RequirementRow[] {
   const reqs = Object.values(semantic)
     .filter(isRequirement)
@@ -95,7 +102,9 @@ export function buildRequirementRows(
   const sat = satisfiedByMap(semantic)
 
   if (mode === 'flat') {
-    return reqs.map((el) => toRow(el, semantic, 0, false, parents, sat))
+    return reqs.map((el) =>
+      toRow(el, semantic, 0, false, parents, sat, requirementDisplay),
+    )
   }
 
   const rows: RequirementRow[] = []
@@ -112,7 +121,9 @@ export function buildRequirementRows(
     if (!el || !isRequirement(el)) return
     const repeated = emitted.has(id)
     if (seenInPath.has(id)) return // cycle
-    rows.push(toRow(el, semantic, depth, repeated, parents, sat))
+    rows.push(
+      toRow(el, semantic, depth, repeated, parents, sat, requirementDisplay),
+    )
     emitted.add(id)
     seenInPath.add(id)
     const children = reqs

@@ -434,6 +434,7 @@ type Props = {
   viewMode?: ViewMode
   showAttributes?: boolean
   structureNotation?: import('../../settings').StructureNotation
+  requirementDisplay?: import('../../settings').RequirementDisplaySettings
   sheet?: ProjectSheet
   selectedConnectionColor?: string
   selectedConnectionLinewidthFactor?: number
@@ -485,6 +486,7 @@ export function DiagramCanvas({
   viewMode = 'light',
   showAttributes = false,
   structureNotation = 'sysmlv2',
+  requirementDisplay,
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidthFactor = 3,
@@ -697,8 +699,11 @@ export function DiagramCanvas({
 
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
+  const reqDisplaySig = requirementDisplay
+    ? JSON.stringify(requirementDisplay)
+    : ''
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -819,6 +824,7 @@ export function DiagramCanvas({
           onLabelOffsetChange: stableLabel,
           onSelectConnection: (id: string) => onSelectArtifactRef.current(id),
           onRelationEndMoved: stableRelEnd,
+          requirementDisplay,
         })
     }
     const visibleIds = new Set(built.nodes.map((n) => n.id))
@@ -1924,7 +1930,11 @@ export function DiagramCanvas({
       view.visualization,
       view.viewFilters || [],
     )
-    const rows = buildRequirementRows(filteredReq.semantic, reqTableMode)
+    const rows = buildRequirementRows(
+      filteredReq.semantic,
+      reqTableMode,
+      requirementDisplay,
+    )
     return (
       <div className="diagram-canvas requirement-table-canvas">
         {!printMode && (

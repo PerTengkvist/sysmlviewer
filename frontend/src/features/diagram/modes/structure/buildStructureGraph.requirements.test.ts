@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_REQUIREMENT_DISPLAY } from '../../requirementDisplay'
 import { buildStructureGraph } from './buildStructureGraph'
 import type { ViewPayload } from '../../../../api'
 
@@ -32,7 +33,7 @@ function fixture(): ViewPayload {
         typeRef: null,
         sourceId: null,
         targetId: null,
-        children: ['P::R1::Type'],
+        children: ['P::R1::Type', 'P::R1::summary'],
         fileId: 'f',
         shortId: 'R-01',
         documentation: 'Be safe',
@@ -48,6 +49,18 @@ function fixture(): ViewPayload {
         children: [],
         fileId: 'f',
         defaultValue: '"UserStory"',
+      },
+      'P::R1::summary': {
+        id: 'P::R1::summary',
+        kind: 'attribute',
+        name: 'summary',
+        parentId: 'P::R1',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f',
+        defaultValue: '"Short summary"',
       },
       'P::Box': {
         id: 'P::Box',
@@ -94,7 +107,21 @@ function fixture(): ViewPayload {
         fileId: 'f',
       },
     },
-    visualization: { nodes: {}, edges: {} },
+    visualization: {
+      nodes: {
+        'P::R1': {
+          artifactId: 'P::R1',
+          x: 10,
+          y: 20,
+          width: 220,
+          height: 140,
+          style: {
+            light: { backgroundColor: '#ffeeee' },
+          },
+        },
+      },
+      edges: {},
+    },
     subdiagrams: [],
     menus: {},
   }
@@ -120,7 +147,54 @@ describe('buildStructureGraph requirements mix', () => {
     expect(edges.some((e) => e.id === 'P::sat1')).toBe(true)
     const reqData = nodes.find((n) => n.id === 'P::R1')?.data as {
       typeAttr?: string
+      headerText?: string
+      bodyText?: string
     }
     expect(reqData.typeAttr).toContain('UserStory')
+    expect(reqData.headerText).toBe('R-01 Safety')
+    expect(reqData.bodyText).toBe('Be safe')
+  })
+
+  it('keeps requirement outer style transparent so fill stays on the node', () => {
+    const { nodes } = buildStructureGraph({
+      view: fixture(),
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+    })
+    const req = nodes.find((n) => n.id === 'P::R1')
+    expect(req?.style).toMatchObject({
+      width: 220,
+      height: 140,
+      background: 'transparent',
+      border: 'none',
+    })
+    const data = req?.data as { formatStyle?: { light?: { backgroundColor?: string } } }
+    expect(data.formatStyle?.light?.backgroundColor).toBe('#ffeeee')
+  })
+
+  it('resolves bodyText from attribute when configured', () => {
+    const { nodes } = buildStructureGraph({
+      view: fixture(),
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+      requirementDisplay: {
+        ...DEFAULT_REQUIREMENT_DISPLAY,
+        body: { kind: 'attribute', name: 'summary' },
+      },
+    })
+    const reqData = nodes.find((n) => n.id === 'P::R1')?.data as {
+      bodyText?: string
+    }
+    expect(reqData.bodyText).toBe('Short summary')
   })
 })

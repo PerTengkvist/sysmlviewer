@@ -9,9 +9,15 @@ type DetailsProps = ComponentProps<typeof DetailsPanel>
 type Props = DetailsProps & {
   layout: Pick<AppSettings, 'rightPanelSizes'>
   onLayoutChange: (sizes: [number, number]) => void
+  requirementDisplay?: AppSettings['requirementDisplay']
 }
 
-export function RightSidebar({ layout, onLayoutChange, ...detailsProps }: Props) {
+export function RightSidebar({
+  layout,
+  onLayoutChange,
+  requirementDisplay,
+  ...detailsProps
+}: Props) {
   const [detailsSize, docsSize] = layout.rightPanelSizes
 
   return (
@@ -40,6 +46,7 @@ export function RightSidebar({ layout, onLayoutChange, ...detailsProps }: Props)
           <DocumentationPanel
             project={detailsProps.project}
             selectedId={detailsProps.selectedId}
+            requirementDisplay={requirementDisplay}
           />
         </Panel>
       </Group>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../../../api'
+import { DEFAULT_REQUIREMENT_DISPLAY } from '../../requirementDisplay'
 import { buildRequirementRows } from './buildRequirementRows'
 
 function req(
@@ -64,6 +65,35 @@ describe('buildRequirementRows', () => {
     expect(rows.every((r) => r.depth === 0)).toBe(true)
     expect(rows[0].stereotype).toBe('user story')
     expect(rows[0].satisfiedBy).toEqual(['P::Box'])
+    expect(rows[0].text).toBe('Top text')
+  })
+
+  it('uses body attribute from requirementDisplay when configured', () => {
+    const withSummary = {
+      ...semantic,
+      'P::R1': {
+        ...semantic['P::R1'],
+        documentation: null,
+        children: ['P::R1::R2', 'P::R1::Type', 'P::R1::summary'],
+      },
+      'P::R1::summary': {
+        id: 'P::R1::summary',
+        kind: 'attribute' as const,
+        name: 'summary',
+        parentId: 'P::R1',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [] as string[],
+        fileId: 'f',
+        defaultValue: '"From summary"',
+      },
+    }
+    const rows = buildRequirementRows(withSummary, 'flat', {
+      ...DEFAULT_REQUIREMENT_DISPLAY,
+      body: { kind: 'attribute', name: 'summary' },
+    })
+    expect(rows.find((r) => r.id === 'P::R1')?.text).toBe('From summary')
   })
 
   it('hierarchical indents children', () => {

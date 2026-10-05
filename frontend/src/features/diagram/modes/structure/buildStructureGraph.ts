@@ -8,8 +8,18 @@ import type {
   VisualizationEdge,
   ElementStyle,
 } from '../../../../api'
-import type { ViewMode, StructureNotation } from '../../../../settings'
+import type {
+  RequirementDisplaySettings,
+  StructureNotation,
+  ViewMode,
+} from '../../../../settings'
+import {
+  DEFAULT_REQUIREMENT_DISPLAY,
+  resolveRequirementBody,
+  resolveRequirementHeader,
+} from '../../requirementDisplay'
 import { edgeStrokeStyle, nodeInlineStyle, reactFlowMarker } from '../../elementStyle'
+import { requirementTypeAttr } from '../../requirementStereotype'
 import {
   mergedEdgeVisual,
   STRUCTURE_EDGE_KINDS,
@@ -272,6 +282,7 @@ export type StructureBuildOpts = {
     offset: number,
     persist?: boolean,
   ) => void
+  requirementDisplay?: RequirementDisplaySettings
 }
 
 export function buildStructureGraph(opts: StructureBuildOpts): {
@@ -292,6 +303,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     onLabelOffsetChange,
     onSelectConnection,
     onRelationEndMoved,
+    requirementDisplay = DEFAULT_REQUIREMENT_DISPLAY,
   } = opts
   const arcadia = structureNotation === 'arcadia'
   const { semantic, visualization, menus } = view
@@ -403,6 +415,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
   const partDepth = new Map<string, number>()
   const STRUCTURE_NODE_KINDS = new Set([
     'part',
+    'package',
     'requirement',
     'useCase',
     'interface',
@@ -418,10 +431,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       for (const cid of el.children || []) {
         const child = semantic[cid]
         if (!child) continue
-        if (
-          STRUCTURE_NODE_KINDS.has(child.kind) ||
-          child.kind === 'package'
-        ) {
+        if (STRUCTURE_NODE_KINDS.has(child.kind)) {
           walk(cid, depth + 1)
         }
       }
@@ -636,12 +646,12 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     const topLevel = Object.values(semantic)
       .filter(
         (el) =>
+          el.id !== rootId &&
           STRUCTURE_NODE_KINDS.has(el.kind) &&
           partDepth.has(el.id) &&
           (el.parentId === rootId ||
             !el.parentId ||
-            !partDepth.has(el.parentId) ||
-            semantic[el.parentId!]?.kind === 'package'),
+            !partDepth.has(el.parentId!)),
       )
       .map((el) => el.id)
 
@@ -667,16 +677,18 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
               label: el.name,
               artifactId: id,
               shortId: el.shortId,
+              headerText: resolveRequirementHeader(
+                el,
+                semantic,
+                requirementDisplay,
+              ),
+              bodyText: resolveRequirementBody(
+                el,
+                semantic,
+                requirementDisplay,
+              ),
               documentation: el.documentation,
-              typeAttr: (() => {
-                for (const cid of el.children || []) {
-                  const c = semantic[cid]
-                  if (c?.kind === 'attribute' && c.name === 'Type') {
-                    return c.defaultValue
-                  }
-                }
-                return null
-              })(),
+              typeAttr: requirementTypeAttr(el, semantic),
               formatStyle: formatFor(id),
               viewMode,
               anchors: resolveAnchors(viz?.anchors),
@@ -697,6 +709,20 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         defaults.fallbackW,
         isContainer ? defaults.fallbackH : 120,
       )
+      const style =
+        nodeType === 'requirement'
+          ? {
+              width: box.width,
+              height: box.height,
+              background: 'transparent',
+              border: 'none',
+            }
+          : {
+              width: box.width,
+              height: box.height,
+              ...(isContainer ? { background: 'transparent' } : {}),
+              ...childStyle,
+            }
       builtNodes.push({
         id,
         type: nodeType,
@@ -704,12 +730,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
           x: viz?.x ?? 80 + (index % 2) * 320,
           y: viz?.y ?? 80 + Math.floor(index / 2) * 180,
         },
-        style: {
-          width: box.width,
-          height: box.height,
-          ...(isContainer ? { background: 'transparent' } : {}),
-          ...childStyle,
-        },
+        style,
         data,
       })
     })
@@ -743,26 +764,71 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
           isBoundary: isContainer,
         })
-        const data = partData(id, el, isContainer)
+        const nodeType =
+          el.kind === 'requirement'
+            ? 'requirement'
+            : el.kind === 'useCase'
+              ? 'useCase'
+              : 'part'
+        const data =
+          nodeType === 'requirement'
+            ? {
+                label: el.name,
+                artifactId: id,
+                shortId: el.shortId,
+                headerText: resolveRequirementHeader(
+                  el,
+                  semantic,
+                  requirementDisplay,
+                ),
+                bodyText: resolveRequirementBody(
+                  el,
+                  semantic,
+                  requirementDisplay,
+                ),
+                documentation: el.documentation,
+                typeAttr: requirementTypeAttr(el, semantic),
+                formatStyle: formatFor(id),
+                viewMode,
+                anchors: resolveAnchors(viz?.anchors),
+              }
+            : nodeType === 'useCase'
+              ? {
+                  label: el.name,
+                  artifactId: id,
+                  formatStyle: formatFor(id),
+                  viewMode,
+                  anchors: resolveAnchors(viz?.anchors),
+                }
+              : partData(id, el, isContainer)
         const box = sizedPartBox(
           id,
           el,
-          data.ports,
+          nodeType === 'part' ? (data as ReturnType<typeof partData>).ports : [],
           defaults.fallbackW,
           defaults.fallbackH,
         )
+        const style =
+          nodeType === 'requirement'
+            ? {
+                width: box.width,
+                height: box.height,
+                background: 'transparent',
+                border: 'none',
+              }
+            : {
+                width: box.width,
+                height: box.height,
+                ...(isContainer ? { background: 'transparent' } : {}),
+                ...childStyle,
+              }
         builtNodes.push({
           id,
-          type: 'part',
+          type: nodeType,
           parentId,
           extent: 'parent',
           position: stored,
-          style: {
-            width: box.width,
-            height: box.height,
-            ...(isContainer ? { background: 'transparent' } : {}),
-            ...childStyle,
-          },
+          style,
           zIndex: z,
           data,
         })

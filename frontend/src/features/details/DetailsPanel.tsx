@@ -694,6 +694,8 @@ export function DetailsPanel({
   const canFormat =
     el.kind === 'part' ||
     el.kind === 'package' ||
+    el.kind === 'requirement' ||
+    el.kind === 'useCase' ||
     el.kind === 'port' ||
     el.kind === 'connection' ||
     el.kind === 'lifeline' ||
