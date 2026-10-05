@@ -1,5 +1,9 @@
 import { memo, useEffect, useRef } from 'react'
-import { type NodeProps, useUpdateNodeInternals } from '@xyflow/react'
+import {
+  NodeResizer,
+  type NodeProps,
+  useUpdateNodeInternals,
+} from '@xyflow/react'
 import type { ElementStyle, PortSide } from '../../../../api'
 import type { ViewMode } from '../../../../settings'
 import { BoundaryHandles } from '../../BoundaryHandles'
@@ -12,11 +16,17 @@ export type RequirementNodeData = {
   label: string
   artifactId: string
   shortId?: string | null
+  /** Resolved header line from settings (e.g. "R-01 Safety"). */
+  headerText?: string
+  /** Resolved body text from settings (doc or attribute). */
+  bodyText?: string
   documentation?: string | null
   typeAttr?: string | null
   formatStyle?: ElementStyle | null
   viewMode?: ViewMode
   anchors?: BoundaryAnchor[]
+  editLocked?: boolean
+  portMoveMode?: boolean
   onAnchorDrag?: (
     anchorId: string,
     side: PortSide,
@@ -26,7 +36,7 @@ export type RequirementNodeData = {
   onAddAnchor?: (side: PortSide, offset: number) => void
 }
 
-function RequirementNodeInner({ id, data, selected }: NodeProps) {
+function RequirementNodeInner({ id, data, selected, width, height }: NodeProps) {
   const d = data as unknown as RequirementNodeData
   const rootRef = useRef<HTMLDivElement>(null)
   const updateNodeInternals = useUpdateNodeInternals()
@@ -34,10 +44,14 @@ function RequirementNodeInner({ id, data, selected }: NodeProps) {
   const anchorSig = anchors.map((a) => `${a.id}:${a.side}:${a.offset}`).join('|')
   const stereo = requirementStereotype({ typeAttr: d.typeAttr })
   const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light')
+  const headerText =
+    d.headerText ??
+    [d.shortId, d.label].filter(Boolean).join(' ')
+  const bodyText = d.bodyText ?? d.documentation ?? ''
 
   useEffect(() => {
     updateNodeInternals(id)
-  }, [anchorSig, id, updateNodeInternals])
+  }, [anchorSig, id, updateNodeInternals, width, height])
 
   return (
     <div
@@ -67,6 +81,13 @@ function RequirementNodeInner({ id, data, selected }: NodeProps) {
         d.onAddAnchor(hit.side, hit.offset)
       }}
     >
+      <NodeResizer
+        minWidth={160}
+        minHeight={72}
+        isVisible={!!selected && !d.portMoveMode && !d.editLocked}
+        lineClassName="part-resize-line"
+        handleClassName="part-resize-handle"
+      />
       <BoundaryHandles
         boxRef={rootRef}
         anchors={anchors}
@@ -75,13 +96,10 @@ function RequirementNodeInner({ id, data, selected }: NodeProps) {
       />
       <div className="requirement-header" style={regions.header}>
         <div className="stereotype">«{stereo}»</div>
-        <div className="requirement-title">
-          {d.shortId ? <span className="req-id">{d.shortId}</span> : null}
-          {d.label}
-        </div>
+        <div className="requirement-title">{headerText}</div>
       </div>
       <div className="requirement-body" style={regions.body}>
-        {d.documentation || ''}
+        {bodyText}
       </div>
     </div>
   )

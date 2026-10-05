@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { DEFAULT_REQUIREMENT_DISPLAY } from './features/diagram/requirementDisplay'
 import { DEFAULT_SETTINGS, EDGE_LABEL_TEXT_HEIGHT_PX, loadSettings } from './settings'
 
 const store = new Map<string, string>()
@@ -60,5 +61,37 @@ describe('settings selected connection highlight', () => {
       JSON.stringify({ selectedConnectionLinewidthFactor: 2.5 }),
     )
     expect(loadSettings().selectedConnectionLinewidthFactor).toBe(2.5)
+  })
+})
+
+describe('settings requirementDisplay', () => {
+  it('defaults to shortId+name header, doc body, description panel attr', () => {
+    expect(DEFAULT_SETTINGS.requirementDisplay).toEqual(
+      DEFAULT_REQUIREMENT_DISPLAY,
+    )
+    expect(loadSettings().requirementDisplay).toEqual(DEFAULT_REQUIREMENT_DISPLAY)
+  })
+
+  it('normalizes persisted requirementDisplay', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({
+        requirementDisplay: {
+          headerSlots: [{ kind: 'sysml', field: 'name' }, { kind: 'none' }],
+          body: { kind: 'attribute', name: 'summary' },
+          documentationPanelAttribute: null,
+        },
+      }),
+    )
+    const s = loadSettings()
+    expect(s.requirementDisplay.headerSlots).toEqual([
+      { kind: 'sysml', field: 'name' },
+      { kind: 'none' },
+    ])
+    expect(s.requirementDisplay.body).toEqual({
+      kind: 'attribute',
+      name: 'summary',
+    })
+    expect(s.requirementDisplay.documentationPanelAttribute).toBeNull()
   })
 })

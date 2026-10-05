@@ -1,3 +1,9 @@
+import {
+  DEFAULT_REQUIREMENT_DISPLAY,
+  normalizeRequirementDisplay,
+  type RequirementDisplaySettings,
+} from './features/diagram/requirementDisplay'
+
 /** Matches `.edge-label { font-size: 11px }`. Parallel wires keep at least this gap. */
 export const EDGE_LABEL_TEXT_HEIGHT_PX = 11
 
@@ -5,6 +11,8 @@ export type AppMode = 'viewer' | 'editor'
 export type ViewMode = 'light' | 'dark'
 
 export type StructureNotation = 'sysmlv2' | 'arcadia'
+
+export type { RequirementDisplaySettings }
 
 export type AppSettings = {
   mode: AppMode
@@ -15,6 +23,8 @@ export type AppSettings = {
     /** GeneralView structure presentation. */
     structureNotation: StructureNotation
   }
+  /** How requirement nodes show header, body, and doc-panel fallback. */
+  requirementDisplay: RequirementDisplaySettings
   /** Selected connection highlight color. */
   selectedConnectionColor: string
   /** Multiplier applied to the edge's own stroke width when selected. */
@@ -34,6 +44,18 @@ export type AppSettings = {
   rightPanelSizes: [number, number]
 }
 
+function cloneRequirementDisplay(): RequirementDisplaySettings {
+  return {
+    headerSlots: [
+      { ...DEFAULT_REQUIREMENT_DISPLAY.headerSlots[0] },
+      { ...DEFAULT_REQUIREMENT_DISPLAY.headerSlots[1] },
+    ],
+    body: { ...DEFAULT_REQUIREMENT_DISPLAY.body },
+    documentationPanelAttribute:
+      DEFAULT_REQUIREMENT_DISPLAY.documentationPanelAttribute,
+  }
+}
+
 export const DEFAULT_SETTINGS: AppSettings = {
   mode: 'viewer',
   viewMode: 'light',
@@ -42,6 +64,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     hierarchicalLevels: 2,
     structureNotation: 'sysmlv2',
   },
+  requirementDisplay: cloneRequirementDisplay(),
   selectedConnectionColor: '#2563eb',
   selectedConnectionLinewidthFactor: 3,
   pendingChangeColor: '#dc2626',
@@ -60,6 +83,7 @@ export function loadSettings(): AppSettings {
       return {
         ...DEFAULT_SETTINGS,
         showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
+        requirementDisplay: cloneRequirementDisplay(),
       }
     const parsed = JSON.parse(raw) as Partial<AppSettings> & {
       selectedConnectionLinewidth?: number
@@ -78,6 +102,7 @@ export function loadSettings(): AppSettings {
             ? 'arcadia'
             : 'sysmlv2',
       },
+      requirementDisplay: normalizeRequirementDisplay(parsed.requirementDisplay),
       selectedConnectionColor:
         typeof parsed.selectedConnectionColor === 'string' &&
         parsed.selectedConnectionColor
@@ -116,6 +141,7 @@ export function loadSettings(): AppSettings {
     return {
       ...DEFAULT_SETTINGS,
       showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
+      requirementDisplay: cloneRequirementDisplay(),
     }
   }
 }

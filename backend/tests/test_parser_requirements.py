@@ -68,6 +68,23 @@ def test_requirement_doc_sets_documentation():
     assert not any("doc" in w and "ignored" in w for w in result.warnings)
 
 
+def test_requirement_doc_and_description_attribute_coexist():
+    content = """
+    package P {
+      requirement def Safety {
+        attribute description = "From attribute";
+        doc /* From doc block */
+      }
+    }
+    """
+    result = _parse(content)
+    el = result.elements["P::Safety"]
+    assert el.documentation == "From doc block"
+    attr = result.elements["P::Safety::description"]
+    assert attr.kind == ArtifactKind.ATTRIBUTE
+    assert attr.default_value == '"From attribute"'
+
+
 def test_requirement_short_id():
     content = """
     package P {

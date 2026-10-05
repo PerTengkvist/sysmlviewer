@@ -1,10 +1,33 @@
-import type { AppSettings } from '../settings'
+import type {
+  AppSettings,
+  RequirementDisplaySettings,
+} from '../settings'
+import type { RequirementSlotSource } from '../diagram/requirementDisplay'
 
 type Props = {
   open: boolean
   settings: AppSettings
   onChange: (next: AppSettings) => void
   onClose: () => void
+}
+
+type SlotChoice = 'none' | 'shortId' | 'name' | 'attribute'
+
+function slotChoice(slot: RequirementSlotSource): SlotChoice {
+  if (slot.kind === 'none') return 'none'
+  if (slot.kind === 'attribute') return 'attribute'
+  return slot.field
+}
+
+function slotFromChoice(
+  choice: SlotChoice,
+  attrName: string,
+): RequirementSlotSource {
+  if (choice === 'none') return { kind: 'none' }
+  if (choice === 'attribute') {
+    return { kind: 'attribute', name: attrName.trim() || 'Type' }
+  }
+  return { kind: 'sysml', field: choice }
 }
 
 export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
@@ -21,6 +44,34 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
       ...settings,
       showDiagramDetails: { ...settings.showDiagramDetails, ...partial },
     })
+  }
+
+  const req = settings.requirementDisplay
+  const patchReq = (partial: Partial<RequirementDisplaySettings>) => {
+    onChange({
+      ...settings,
+      requirementDisplay: { ...req, ...partial },
+    })
+  }
+
+  const setHeaderSlot = (index: 0 | 1, choice: SlotChoice) => {
+    const prev = req.headerSlots[index]
+    const attrName = prev.kind === 'attribute' ? prev.name : ''
+    const next: [RequirementSlotSource, RequirementSlotSource] = [
+      req.headerSlots[0],
+      req.headerSlots[1],
+    ]
+    next[index] = slotFromChoice(choice, attrName)
+    patchReq({ headerSlots: next })
+  }
+
+  const setHeaderAttrName = (index: 0 | 1, name: string) => {
+    const next: [RequirementSlotSource, RequirementSlotSource] = [
+      req.headerSlots[0],
+      req.headerSlots[1],
+    ]
+    next[index] = { kind: 'attribute', name }
+    patchReq({ headerSlots: next })
   }
 
   return (
@@ -99,6 +150,99 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
                   Arcadia / SysML v1 aggregation notation
                 </option>
               </select>
+            </label>
+          </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Requirement objects</legend>
+            <p className="muted settings-note">
+              Default header is ReqID + name; body shows the SysML{" "}
+              <code>doc</code> block. Choose attributes instead when needed.
+            </p>
+            {([0, 1] as const).map((index) => {
+              const slot = req.headerSlots[index]
+              const choice = slotChoice(slot)
+              return (
+                <div key={index}>
+                  <label className="settings-row">
+                    <span>Header slot {index + 1}</span>
+                    <select
+                      value={choice}
+                      aria-label={`Header slot ${index + 1}`}
+                      onChange={(e) =>
+                        setHeaderSlot(index, e.target.value as SlotChoice)
+                      }
+                    >
+                      <option value="shortId">ReqID (shortId)</option>
+                      <option value="name">Name</option>
+                      <option value="attribute">Attribute…</option>
+                      <option value="none">None</option>
+                    </select>
+                  </label>
+                  {choice === 'attribute' ? (
+                    <label className="settings-row">
+                      <span>Attribute name</span>
+                      <input
+                        type="text"
+                        value={slot.kind === 'attribute' ? slot.name : ''}
+                        aria-label={`Header slot ${index + 1} attribute`}
+                        onChange={(e) =>
+                          setHeaderAttrName(index, e.target.value)
+                        }
+                      />
+                    </label>
+                  ) : null}
+                </div>
+              )
+            })}
+            <label className="settings-row">
+              <span>Body</span>
+              <select
+                value={req.body.kind === 'doc' ? 'doc' : 'attribute'}
+                aria-label="Requirement body source"
+                onChange={(e) => {
+                  if (e.target.value === 'doc') {
+                    patchReq({ body: { kind: 'doc' } })
+                  } else {
+                    const name =
+                      req.body.kind === 'attribute' ? req.body.name : 'summary'
+                    patchReq({ body: { kind: 'attribute', name } })
+                  }
+                }}
+              >
+                <option value="doc">doc (SysML)</option>
+                <option value="attribute">Attribute…</option>
+              </select>
+            </label>
+            {req.body.kind === 'attribute' ? (
+              <label className="settings-row">
+                <span>Body attribute</span>
+                <input
+                  type="text"
+                  value={req.body.name}
+                  aria-label="Body attribute name"
+                  onChange={(e) =>
+                    patchReq({
+                      body: { kind: 'attribute', name: e.target.value },
+                    })
+                  }
+                />
+              </label>
+            ) : null}
+            <label className="settings-row">
+              <span>Doc panel attribute (no .md)</span>
+              <input
+                type="text"
+                value={req.documentationPanelAttribute ?? ''}
+                placeholder="description"
+                aria-label="Documentation panel attribute"
+                title="Shown in Documentation when no markdown file exists. Leave empty to disable."
+                onChange={(e) => {
+                  const t = e.target.value.trim()
+                  patchReq({
+                    documentationPanelAttribute: t || null,
+                  })
+                }}
+              />
             </label>
           </fieldset>
           <fieldset className="settings-fieldset">

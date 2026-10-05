@@ -1333,6 +1333,7 @@ export default function App() {
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
+                requirementDisplay={settings.requirementDisplay}
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidthFactor={
                   settings.selectedConnectionLinewidthFactor
@@ -1388,6 +1389,7 @@ export default function App() {
           <RightSidebar
             layout={settings}
             onLayoutChange={updateRightLayout}
+            requirementDisplay={settings.requirementDisplay}
             project={project}
             viewVisualization={viewPayload?.visualization}
             viewPayload={viewPayload}
