@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { api, type Project } from '../../api'
 import type { RequirementDisplaySettings } from '../../settings'
 import {
@@ -8,6 +7,10 @@ import {
   resolveRequirementDocPanel,
 } from '../diagram/requirementDisplay'
 import { docPathForArtifact } from '../docs/docPath'
+import {
+  documentationRemarkPlugins,
+  interpretDocNewlines,
+} from './docText'
 
 type Props = {
   project: Project | null
@@ -103,14 +106,18 @@ export function DocumentationPanel({
       ) : content ? (
         <div className="markdown-body">
           {docPath ? <div className="doc-path muted">{docPath}</div> : null}
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={documentationRemarkPlugins}>
+            {interpretDocNewlines(content)}
+          </ReactMarkdown>
         </div>
       ) : attrFallback ? (
         <div className="markdown-body">
           <div className="doc-path muted">
             Attribute: {requirementDisplay.documentationPanelAttribute}
           </div>
-          <pre className="requirement-doc-attr">{attrFallback}</pre>
+          <pre className="requirement-doc-attr">
+            {interpretDocNewlines(attrFallback)}
+          </pre>
         </div>
       ) : error ? (
         <p className="muted">{error}</p>
