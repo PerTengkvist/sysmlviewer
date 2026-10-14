@@ -16,6 +16,7 @@ import {
   UNGROUPED_GROUP_KEY,
   type ViewTreeOrder,
 } from './viewTreeOrder'
+import { viewTreeNameParts } from './viewTreeLabel'
 
 export type LeftTab = 'views' | 'files'
 
@@ -272,7 +273,14 @@ function ViewTree({
             }}
             title={el.id}
           >
-            <span className="artifact-kind">{el.kind}</span> {el.name}
+            <span className="artifact-kind">{el.kind}</span>{' '}
+            <span className="tree-name">
+              {viewTreeNameParts(el.name).map((part, index) => (
+                <span key={`${part}-${index}`} className="tree-name-part">
+                  {part}
+                </span>
+              ))}
+            </span>
             {isView && el.typeRef ? (
               <span className="view-type-ref">«{el.typeRef}»</span>
             ) : null}

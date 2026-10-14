@@ -41,6 +41,15 @@ class SessionBrowseBody(BaseModel):
     kind: str = Field(pattern="^(folder|file)$")
 
 
+class ViewHistoryRecordBody(BaseModel):
+    sessionId: str = Field(min_length=1, max_length=128)
+    viewId: str = Field(min_length=1)
+
+
+class ViewHistorySessionBody(BaseModel):
+    sessionId: str = Field(min_length=1, max_length=128)
+
+
 class SaveProjectBody(BaseModel):
     name: str | None = None
     visualization: dict[str, Any] | None = None
@@ -184,6 +193,40 @@ def create_api_app(
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/tutorials")
+    def get_tutorials() -> list[dict]:
+        from adapters.api.tutorials import list_tutorials
+
+        return list_tutorials()
+
+    @app.get("/tutorials/{tutorial_id}")
+    def get_tutorial(tutorial_id: str) -> dict:
+        from adapters.api.tutorials import read_tutorial
+
+        try:
+            content = read_tutorial(tutorial_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Tutorial not found") from exc
+        return {"id": tutorial_id, "content": content}
+
+    @app.get("/icons/{icon_name}.svg")
+    def get_icon(icon_name: str):
+        from fastapi.responses import FileResponse
+
+        from domain.icon_library import resolve_icon_library
+
+        _, lib_path = resolve_icon_library()
+        # Prevent path traversal
+        safe = Path(icon_name).name
+        file_path = (lib_path / f"{safe}.svg").resolve()
+        if not str(file_path).startswith(str(lib_path.resolve())):
+            raise HTTPException(status_code=404, detail="Icon not found")
+        if not file_path.is_file():
+            raise HTTPException(status_code=404, detail="Icon not found")
+        return FileResponse(file_path, media_type="image/svg+xml")
+
     @app.get("/session")
     def get_session() -> dict:
         return _session_payload()
@@ -244,6 +287,49 @@ def create_api_app(
                 detail=f"Native file dialog failed: {exc}",
             ) from exc
         return {"path": path}
+
+    def _history_store():
+        from adapters.persistence.view_history_store import ViewHistoryStore
+
+        root = session["workspace_root"]
+        if root is None:
+            raise HTTPException(status_code=400, detail="No workspace open")
+        return ViewHistoryStore(Path(root))
+
+    @app.get("/session/view-history/{session_id}")
+    def get_view_history(session_id: str) -> dict:
+        from domain.view_history import ViewHistory
+
+        try:
+            store = _history_store()
+            history = store.load(session_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return history.to_dict() if isinstance(history, ViewHistory) else history
+
+    @app.post("/session/view-history/record")
+    def record_view_history(payload: Annotated[ViewHistoryRecordBody, Body()]) -> dict:
+        from domain.view_history import record_view
+
+        try:
+            store = _history_store()
+            history = record_view(store.load(payload.sessionId), payload.viewId)
+            store.save(payload.sessionId, history)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return history.to_dict()
+
+    @app.post("/session/view-history/back")
+    def back_view_history(payload: Annotated[ViewHistorySessionBody, Body()]) -> dict:
+        from domain.view_history import go_back
+
+        try:
+            store = _history_store()
+            history, target = go_back(store.load(payload.sessionId))
+            store.save(payload.sessionId, history)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {**history.to_dict(), "viewId": target}
 
     @app.post("/projects")
     def create_project(payload: Annotated[CreateProjectBody, Body()]) -> dict:

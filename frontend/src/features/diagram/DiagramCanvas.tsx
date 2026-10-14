@@ -46,11 +46,14 @@ import type { LayoutArtefact } from './layoutWizard'
 import { resolveAnchors, type BoundaryAnchor } from './boundaryAnchors'
 import {
   alignDirectConnection,
-  alignSelection,
   canAlignDirectConnection,
   type ConnectionAlignMode,
   type PartBox,
 } from './layout/align'
+import {
+  alignFlowSelection,
+  applyAlignPatchToFlowNodes,
+} from './layout/alignFlowSelection'
 import { bulkOp, type BulkCommand } from './bulkOps'
 import { isEditLocked, lockTargets } from './editLock'
 import {
@@ -450,7 +453,12 @@ type Props = {
     opts?: { shift?: boolean },
   ) => void
   onSelectionFromFlow?: (ids: string[]) => void
-  onOpenView: (viewId: string) => void
+  onOpenView: (
+    viewId: string,
+    opts?: { ctrlKey?: boolean; metaKey?: boolean },
+  ) => void
+  onBackView?: () => void
+  onUseCaseDoubleClick?: (useCaseId: string) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -499,6 +507,8 @@ export function DiagramCanvas({
   onSelectArtifact,
   onSelectionFromFlow,
   onOpenView,
+  onBackView,
+  onUseCaseDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
   onPortMoved,
@@ -717,7 +727,10 @@ export function DiagramCanvas({
       return
     }
 
-    const stableOpen = (id: string) => onOpenViewRef.current(id)
+    const stableOpen = (
+      id: string,
+      opts?: { ctrlKey?: boolean; metaKey?: boolean },
+    ) => onOpenViewRef.current(id, opts)
     const stablePort = (portId: string, side: PortSide, offset: number) =>
       handlePortMovedRef.current(portId, side, offset)
     const stableWp = (id: string, wps: { x: number; y: number }[]) =>
@@ -2021,6 +2034,15 @@ export function DiagramCanvas({
           <strong className="diagram-view-name">{view.view.name}</strong>
           <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
           <div className="redraw-actions">
+            {onBackView ? (
+              <button
+                type="button"
+                onClick={() => onBackView()}
+                title="Go to previous diagram"
+              >
+                Back
+              </button>
+            ) : null}
             <DiagramEditToolbar
               view={view}
               selectedIds={selectedIds}
@@ -2088,27 +2110,16 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameX')
                           return
                         }
-                        const items = nodes.map((n) => ({
-                          id: n.id,
-                          x: n.position.x,
-                          y: n.position.y,
-                          width: Number(n.style?.width) || 100,
-                          height: Number(n.style?.height) || 40,
-                          parentAbs: n.parentId
-                            ? (() => {
-                                const p = nodes.find((x) => x.id === n.parentId)
-                                return p
-                                  ? { x: p.position.x, y: p.position.y }
-                                  : undefined
-                              })()
-                            : undefined,
-                        }))
-                        const { patch } = alignSelection(
-                          items,
-                          'horizontal',
+                        const { patch } = alignFlowSelection(
+                          nodes,
                           selectedIds,
+                          'horizontal',
                         )
-                        if (Object.keys(patch).length) onNodesMoved(patch)
+                        if (!Object.keys(patch).length) return
+                        setNodes((current) =>
+                          applyAlignPatchToFlowNodes(current, patch),
+                        )
+                        onNodesMoved(patch)
                       }}
                     >
                       Align H
@@ -2136,27 +2147,16 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameY')
                           return
                         }
-                        const items = nodes.map((n) => ({
-                          id: n.id,
-                          x: n.position.x,
-                          y: n.position.y,
-                          width: Number(n.style?.width) || 100,
-                          height: Number(n.style?.height) || 40,
-                          parentAbs: n.parentId
-                            ? (() => {
-                                const p = nodes.find((x) => x.id === n.parentId)
-                                return p
-                                  ? { x: p.position.x, y: p.position.y }
-                                  : undefined
-                              })()
-                            : undefined,
-                        }))
-                        const { patch } = alignSelection(
-                          items,
-                          'vertical',
+                        const { patch } = alignFlowSelection(
+                          nodes,
                           selectedIds,
+                          'vertical',
                         )
-                        if (Object.keys(patch).length) onNodesMoved(patch)
+                        if (!Object.keys(patch).length) return
+                        setNodes((current) =>
+                          applyAlignPatchToFlowNodes(current, patch),
+                        )
+                        onNodesMoved(patch)
                       }}
                     >
                       Align V
@@ -2239,17 +2239,17 @@ export function DiagramCanvas({
           onClose={() => setLayoutWizardOpen(false)}
         />
       )}
-      {!printMode && portMoveMode && isStructure && (
-        <div className="tool-banner" role="status">
-          Move ports — dra längs partens kant
-        </div>
-      )}
-      {!printMode && formatPaintMode && (
-        <div className="tool-banner" role="status">
-          Format paint — click a target
-        </div>
-      )}
       <div className="diagram-sheet-host" ref={sheetHostRef}>
+        {!printMode && portMoveMode && isStructure && (
+          <div className="tool-banner" role="status">
+            Move ports — dra längs partens kant
+          </div>
+        )}
+        {!printMode && formatPaintMode && (
+          <div className="tool-banner" role="status">
+            Format paint — click a target
+          </div>
+        )}
         {!printMode && sheet?.frame?.visible && (
           <div
             className="diagram-paper-frame"
@@ -2289,6 +2289,14 @@ export function DiagramCanvas({
               ? undefined
               : (e, node) =>
                   onSelectArtifact(node.id, { shift: e.shiftKey })
+          }
+          onNodeDoubleClick={
+            printMode || !onUseCaseDoubleClick
+              ? undefined
+              : (_e, node) => {
+                  const el = view?.semantic[node.id]
+                  if (el?.kind === 'useCase') onUseCaseDoubleClick(node.id)
+                }
           }
           onEdgeClick={
             printMode

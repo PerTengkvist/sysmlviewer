@@ -171,6 +171,7 @@ NODE_KINDS = {
     ArtifactKind.ACTION,
     ArtifactKind.REQUIREMENT,
     ArtifactKind.USE_CASE,
+    ArtifactKind.CASE,
     ArtifactKind.ACTOR,
 }
 
@@ -280,6 +281,7 @@ def merge_visualization(
             ArtifactKind.INTERACTION,
             ArtifactKind.REQUIREMENT,
             ArtifactKind.USE_CASE,
+    ArtifactKind.CASE,
             ArtifactKind.ACTOR,
         }
     ]
