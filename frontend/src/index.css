@@ -1783,22 +1783,38 @@ body.port-dragging * {
   min-width: 7rem;
 }
 
-/* Text/select fields stay light so typed paths remain readable in dark theme. */
+/* Form controls in modals stay light so values remain readable in any theme. */
+.modal-dialog {
+  color-scheme: light;
+}
+
 .modal-dialog input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
 .modal-dialog select,
-.modal-dialog textarea {
+.modal-dialog textarea,
+.modal-dialog .path-input-group input {
   font: inherit;
   border: 1px solid var(--panel-border);
   border-radius: 4px;
   padding: 0.35rem 0.5rem;
-  background: #ffffff;
+  background-color: #ffffff;
+  background-image: none;
   color: #1a2330;
+  -webkit-text-fill-color: #1a2330;
   color-scheme: light;
 }
 
 .modal-dialog input::placeholder,
 .modal-dialog textarea::placeholder {
   color: #5c6b7a;
+  -webkit-text-fill-color: #5c6b7a;
+}
+
+.modal-dialog input:-webkit-autofill,
+.modal-dialog input:-webkit-autofill:hover,
+.modal-dialog input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #1a2330;
+  caret-color: #1a2330;
 }
 
 .path-input-row {
@@ -2006,7 +2022,7 @@ body.port-dragging * {
 .example-projects-label {
   margin: 0 0 0.5rem;
   font-size: 0.85rem;
-  color: #8fa3b8;
+  color: var(--muted);
 }
 
 .example-projects-list {
@@ -2021,15 +2037,18 @@ body.port-dragging * {
 .example-projects-list button {
   width: 100%;
   text-align: left;
-  border: 1px solid #3a4d61;
-  background: #1c2c3c;
-  color: inherit;
+  border: 1px solid var(--panel-border);
+  background: #ffffff;
+  color: #1a2330;
   border-radius: 4px;
   padding: 0.45rem 0.65rem;
+  cursor: pointer;
 }
 
 .example-projects-list button:hover {
-  background: #254056;
+  background: #f0f4f7;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .diagram-paper-frame {
