@@ -71,6 +71,137 @@ input {
   height: 100%;
 }
 
+.usecase-flow-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.usecase-flow-dialog {
+  width: min(960px, 94vw);
+  height: min(640px, 88vh);
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.usecase-flow-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.usecase-flow-params {
+  width: 240px;
+  padding: 0.75rem 1rem;
+  border-right: 1px solid var(--panel-border);
+  overflow: auto;
+}
+
+.usecase-flow-params dl {
+  margin: 0;
+}
+
+.usecase-flow-params dt {
+  font-weight: 600;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.usecase-flow-params dd {
+  margin: 0.15rem 0 0;
+}
+
+.usecase-flow-canvas {
+  flex: 1;
+  min-width: 0;
+}
+
+.open-target-menu {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.open-target-menu button {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.open-target-menu button:hover {
+  background: var(--surface-raised);
+}
+
+.canvas-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--surface);
+  min-height: 2rem;
+}
+
+.canvas-tab {
+  display: inline-flex;
+  align-items: center;
+  max-width: 14rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px 4px 0 0;
+  background: var(--surface-raised, var(--surface));
+}
+
+.canvas-tab.active {
+  border-color: var(--accent);
+  background: var(--bg, #fff);
+}
+
+.canvas-tab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.canvas-tab-close {
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.canvas-tab-close:hover {
+  opacity: 1;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -232,6 +363,46 @@ input {
   background: var(--canvas);
   padding: 0.1rem 0.25rem;
   border-radius: 3px;
+}
+
+.markdown-body .mermaid-diagram {
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.markdown-body .mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-body .mermaid-diagram-error {
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+}
+
+.markdown-body .mermaid-diagram-error .mermaid-source {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem;
+  overflow: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  background: var(--canvas);
+  border-radius: 3px;
+}
+
+.markdown-body .mermaid-error-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+.markdown-body .mermaid-diagram-loading {
+  padding: 0.5rem 0;
 }
 
 .doc-path {
@@ -515,6 +686,14 @@ input {
   font: inherit;
 }
 
+.tree-name {
+  display: inline;
+}
+
+.tree-name-part {
+  display: inline-block;
+}
+
 .tree-row.is-other .tree-label,
 .tree-row.is-other .tree-label .artifact-kind,
 .tree-row.is-other .tree-label .view-type-ref {
@@ -563,24 +742,23 @@ input {
 }
 
 .diagram-canvas-header {
-  position: absolute;
-  z-index: 8;
-  top: 10px;
-  left: 12px;
-  right: 12px;
-  max-width: calc(100% - 24px);
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
-  pointer-events: none;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-border);
+  pointer-events: auto;
 }
 
 .diagram-canvas-header .redraw-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  pointer-events: auto;
   margin-left: 0;
   max-width: 100%;
 }
@@ -627,7 +805,7 @@ input {
   gap: 2px;
   border: 1px solid var(--panel-border);
   border-radius: 4px;
-  background: var(--panel);
+  background: var(--surface);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
@@ -638,7 +816,7 @@ input {
 
 .diagram-canvas-header .redraw-actions button {
   border: 1px solid var(--panel-border);
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  background: var(--surface);
   color: var(--ink);
   font-size: 0.72rem;
   font-weight: 600;
@@ -651,11 +829,13 @@ input {
 .diagram-canvas-header .redraw-actions button:hover {
   border-color: var(--accent);
   color: var(--accent);
+  background: var(--surface-raised);
 }
 
 .diagram-view-name {
   font-size: 0.95rem;
   letter-spacing: 0.01em;
+  color: var(--ink);
 }
 
 .diagram-mode-badge {
@@ -667,9 +847,8 @@ input {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border: 1px solid var(--panel-border);
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  background: var(--surface);
   color: var(--muted);
-  pointer-events: none;
 }
 
 .canvas-empty.mode-error {
@@ -939,9 +1118,18 @@ input {
   inset: 0;
 }
 
+.diagram-canvas {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .diagram-sheet-host {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  z-index: 0;
 }
 
 .diagram-canvas .react-flow {
@@ -965,7 +1153,7 @@ input {
 
 .tool-banner {
   position: absolute;
-  z-index: 10;
+  z-index: 26;
   top: 0.6rem;
   left: 50%;
   transform: translateX(-50%);
@@ -1595,6 +1783,24 @@ body.port-dragging * {
   min-width: 7rem;
 }
 
+/* Text/select fields stay light so typed paths remain readable in dark theme. */
+.modal-dialog input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+.modal-dialog select,
+.modal-dialog textarea {
+  font: inherit;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  background: #ffffff;
+  color: #1a2330;
+  color-scheme: light;
+}
+
+.modal-dialog input::placeholder,
+.modal-dialog textarea::placeholder {
+  color: #5c6b7a;
+}
+
 .path-input-row {
   flex-direction: column;
   align-items: stretch;
@@ -1616,12 +1822,6 @@ body.port-dragging * {
 .path-input-group input {
   flex: 1;
   min-width: 0;
-  font: inherit;
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  padding: 0.35rem 0.5rem;
-  background: var(--panel);
-  color: var(--ink);
 }
 
 .path-browse-btn {
@@ -1832,11 +2032,6 @@ body.port-dragging * {
   background: #254056;
 }
 
-.diagram-sheet-host {
-  position: absolute;
-  inset: 0;
-}
-
 .diagram-paper-frame {
   pointer-events: none;
   position: absolute;
@@ -2012,6 +2207,7 @@ body.port-dragging * {
 .print-diagram-canvas-host .diagram-sheet-host {
   position: absolute;
   inset: 0;
+  flex: none;
 }
 
 .print-diagram-canvas-host .react-flow {
@@ -2176,6 +2372,8 @@ body.port-dragging * {
   pointer-events: none;
 }
 .requirement-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 0.5rem 1rem 1rem;
 }
@@ -2183,6 +2381,12 @@ body.port-dragging * {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+}
+.requirement-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
 }
 .requirement-table th,
 .requirement-table td {

@@ -38,6 +38,7 @@ class ArtifactKind(str, Enum):
     SUCCESSION = "succession"
     REQUIREMENT = "requirement"
     USE_CASE = "useCase"
+    CASE = "case"
     ACTOR = "actor"
     INCLUDE = "include"
     INTERFACE = "interface"

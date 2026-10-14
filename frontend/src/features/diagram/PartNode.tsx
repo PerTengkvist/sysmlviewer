@@ -62,7 +62,7 @@ export type PartNodeData = {
   /** Diagram edit lock — no resize or port move. */
   editLocked?: boolean
   viewMode?: ViewMode
-  onOpenView?: (viewId: string) => void
+  onOpenView?: (viewId: string, opts?: { ctrlKey?: boolean; metaKey?: boolean }) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
   /** Live drag of a relation endpoint along this part's boundary. */
   onRelationEndDrag?: (
@@ -351,7 +351,10 @@ export function PartNode({ data, selected }: NodeProps) {
                       onClick={(e) => {
                         e.stopPropagation()
                         setMenuOpen(false)
-                        d.onOpenView?.(item.viewId)
+                        d.onOpenView?.(item.viewId, {
+                          ctrlKey: e.ctrlKey,
+                          metaKey: e.metaKey,
+                        })
                       }}
                     >
                       {item.name}
