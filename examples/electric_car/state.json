@@ -8178,6 +8178,12 @@
         "PhysicalArchitecture::VehiclePhysical::dep28",
         "PhysicalArchitecture::VehiclePhysical::dep29",
         "PhysicalArchitecture::VehiclePhysical::dep30",
+        "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionIn",
+        "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionOut",
+        "PhysicalArchitecture::VehiclePhysical::engineGearIn",
+        "PhysicalArchitecture::VehiclePhysical::engineTorqueIn",
+        "PhysicalArchitecture::VehiclePhysical::batteryEnergyOut",
+        "PhysicalArchitecture::VehiclePhysical::batteryChargeIn",
         "PhysicalArchitecture::VehiclePhysical::direction",
         "PhysicalArchitecture::VehiclePhysical::steerInput",
         "PhysicalArchitecture::VehiclePhysical::gear",
@@ -8270,11 +8276,53 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Embedded computer for steering. Separate from the other controllers. Implements the logical steering wheel's control path.",
+      "documentation": "Embedded computer for steering. Separate from the other controllers. Implements the logical steering wheel's control path. Proxy ports expose DirectionCommand at the ECU boundary.",
       "shortId": null,
       "children": [
+        "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn",
+        "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut",
         "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw"
       ],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn",
+      "kind": "port",
+      "name": "directionIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut": {
+      "id": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut",
+      "kind": "port",
+      "name": "directionOut",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu",
+      "typeRef": "DirectionCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
     "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw": {
@@ -8355,11 +8403,53 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Embedded computer for the traction motor. Separate module. Implements the logical engine.",
+      "documentation": "Embedded computer for the traction motor. Separate module. Implements the logical engine. Proxy ports expose GearCommand and TorqueRequest at the ECU boundary.",
       "shortId": null,
       "children": [
+        "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn",
+        "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn",
         "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw"
       ],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn",
+      "kind": "port",
+      "name": "gearIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::engineEcu",
+      "typeRef": "GearCommand",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn",
+      "kind": "port",
+      "name": "torqueIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::engineEcu",
+      "typeRef": "TorqueRequest",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
     "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw": {
@@ -8440,11 +8530,53 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Embedded computer for the traction battery and charging. Separate module. Implements the logical battery.",
+      "documentation": "Embedded computer for the traction battery and charging. Separate module. Implements the logical battery. Proxy ports expose EnergySupply and ChargeFeed at the ECU boundary.",
       "shortId": null,
       "children": [
+        "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
+        "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn",
         "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw"
       ],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
+      "kind": "port",
+      "name": "energyOut",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryEcu",
+      "typeRef": "EnergySupply",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn",
+      "kind": "port",
+      "name": "chargeIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryEcu",
+      "typeRef": "ChargeFeed",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
     "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw": {
@@ -9815,13 +9947,133 @@
       "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionIn",
+      "kind": "connection",
+      "name": "maneuvrabilityDirectionIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionIn",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionOut": {
+      "id": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionOut",
+      "kind": "connection",
+      "name": "maneuvrabilityDirectionOut",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineGearIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::engineGearIn",
+      "kind": "connection",
+      "name": "engineGearIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw::gearIn",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineTorqueIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::engineTorqueIn",
+      "kind": "connection",
+      "name": "engineTorqueIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw::torqueIn",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEnergyOut": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryEnergyOut",
+      "kind": "connection",
+      "name": "batteryEnergyOut",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::energyOut",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryChargeIn": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryChargeIn",
+      "kind": "connection",
+      "name": "batteryChargeIn",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::chargeIn",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
     "PhysicalArchitecture::VehiclePhysical::direction": {
       "id": "PhysicalArchitecture::VehiclePhysical::direction",
       "kind": "connection",
       "name": "direction",
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
-      "sourceId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut",
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut",
       "targetId": "PhysicalArchitecture::VehiclePhysical::wheelSet::directionIn",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9842,7 +10094,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::steeringWheelMech::directionOut",
-      "targetId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -9862,7 +10114,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::gearStickMech::gearOut",
-      "targetId": "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw::gearIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -9882,7 +10134,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech::torqueOut",
-      "targetId": "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw::torqueIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -9921,7 +10173,7 @@
       "name": "energyMotor",
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
-      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::energyOut",
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
       "targetId": "PhysicalArchitecture::VehiclePhysical::electricMotor::energyIn",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9941,7 +10193,7 @@
       "name": "energyClimate",
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
-      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::energyOut",
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
       "targetId": "PhysicalArchitecture::VehiclePhysical::hvacAssembly::energyIn",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9961,7 +10213,7 @@
       "name": "energyEntertainment",
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
-      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::energyOut",
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
       "targetId": "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers::energyIn",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9981,7 +10233,7 @@
       "name": "energyLamps",
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
-      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::energyOut",
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
       "targetId": "PhysicalArchitecture::VehiclePhysical::lampUnits::energyIn",
       "exposeRef": null,
       "exposeRefs": [],
@@ -10002,7 +10254,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::chargeInletMech::chargeOut",
-      "targetId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::chargeIn",
+      "targetId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -12156,11 +12408,31 @@
         "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu",
         "x": 640.0,
         "y": 9800.0,
-        "width": 200.0,
+        "width": 215.60000000000002,
         "height": 120.0,
         "symbolRef": "default-part",
         "side": null,
         "offset": null
+      },
+      "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn",
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5675
+      },
+      "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut",
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8025
       },
       "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw",
@@ -12202,6 +12474,26 @@
         "side": null,
         "offset": null
       },
+      "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn",
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5675
+      },
+      "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn",
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8025
+      },
       "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw",
         "x": 640.0,
@@ -12241,6 +12533,26 @@
         "symbolRef": "default-part",
         "side": null,
         "offset": null
+      },
+      "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut",
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8025
+      },
+      "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn",
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 12,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.5675
       },
       "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw",
@@ -15357,6 +15669,108 @@
           "dark": {
             "lineStyle": "dashed",
             "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionIn",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionOut": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionOut",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::engineGearIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::engineGearIn",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::engineTorqueIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::engineTorqueIn",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::batteryEnergyOut": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryEnergyOut",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::batteryChargeIn": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryChargeIn",
+        "routing": "angular",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid"
+          },
+          "dark": {
+            "lineStyle": "solid"
           }
         }
       },

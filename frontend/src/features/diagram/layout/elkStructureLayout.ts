@@ -35,6 +35,10 @@ import {
   type ParentOfMap,
 } from './flowPlacement'
 import { resolvePlacementPipeline } from './placementPipelines'
+import {
+  applyNestPatchToNodes,
+  layoutNestBottomUp,
+} from './nestBottomUp'
 import { simplifyOrtho } from '../edgeRouting'
 import {
   pathCrossesObstaclesMid,
@@ -518,13 +522,16 @@ export function buildElkGraph(
     if (isBoundary(node)) {
       sizes.set(node.id, readSize(node))
     } else {
-      sizes.set(
-        node.id,
-        sizePartForPorts(
-          label,
-          seeded.length ? seeded : [{ name: '·', side: 'right' }],
-        ),
+      const portSize = sizePartForPorts(
+        label,
+        seeded.length ? seeded : [{ name: '·', side: 'right' }],
       )
+      // Prefer nest-grown (or otherwise pre-sized) boxes over port-only minima.
+      const current = readSize(node)
+      sizes.set(node.id, {
+        width: Math.max(portSize.width, current.width),
+        height: Math.max(portSize.height, current.height),
+      })
     }
   }
 
@@ -650,8 +657,18 @@ export async function layoutStructureWithElk(
   const includeEdges = options.includeEdges === true
   const layoutNodes = options.layoutNodes !== false
   const directives = options.directives || DEFAULT_AUTO_LAYOUT_DIRECTIVES
+  const resolved = resolvePlacementPipeline(directives)
 
-  const graph = buildElkGraph(nodes, edges, {
+  // Bottom-up nest: place nested children and grow parents before top-level ELK.
+  let workingNodes = nodes
+  let nestPatch: Record<string, Partial<VisualizationNode>> = {}
+  if (layoutNodes && resolved.steps.includes('nest-layout')) {
+    const nest = layoutNestBottomUp(nodes, edges, { pad: 24 })
+    nestPatch = nest.nodePatch
+    workingNodes = applyNestPatchToNodes(nodes, nestPatch)
+  }
+
+  const graph = buildElkGraph(workingNodes, edges, {
     includeEdges,
     layoutNodes,
     directives,
@@ -661,17 +678,26 @@ export async function layoutStructureWithElk(
   const byElk = new Map<string, ElkNode>()
   collectLaidOutNodes(laidOut, byElk)
 
-  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const byId = new Map(workingNodes.map((n) => [n.id, n]))
   const nodePatch: Record<string, Partial<VisualizationNode>> = {}
 
-  for (const node of nodes) {
+  for (const node of workingNodes) {
     if (node.type && node.type !== 'part') continue
     const en = byElk.get(node.id)
     if (!en) continue
 
     const fallback = readSize(node)
-    const width = en.width && en.width > 0 ? en.width : fallback.width
-    const height = en.height && en.height > 0 ? en.height : fallback.height
+    const nestSz = nestPatch[node.id]
+    const width = Math.max(
+      en.width && en.width > 0 ? en.width : 0,
+      nestSz?.width ?? 0,
+      fallback.width,
+    )
+    const height = Math.max(
+      en.height && en.height > 0 ? en.height : 0,
+      nestSz?.height ?? 0,
+      fallback.height,
+    )
 
     if (isBoundary(node)) {
       nodePatch[node.id] = {
@@ -717,12 +743,16 @@ export async function layoutStructureWithElk(
 
   // After AutoLayout placement, assign port sides per dialog directive.
   if (layoutNodes) {
-    const resolved = resolvePlacementPipeline(directives)
-    // Seed nested parts ELK did not place (grandchildren) from current RF coords.
-    for (const node of nodes) {
+    // Nested parts ELK did not place: prefer nest-layout patch over stale RF coords.
+    for (const node of workingNodes) {
       if (node.type && node.type !== 'part') continue
       if (nodePatch[node.id]) continue
       if (isBoundary(node)) continue
+      const fromNest = nestPatch[node.id]
+      if (fromNest?.x != null && fromNest?.y != null) {
+        nodePatch[node.id] = { ...fromNest, artifactId: node.id }
+        continue
+      }
       const sz = readSize(node)
       nodePatch[node.id] = {
         artifactId: node.id,
@@ -734,11 +764,11 @@ export async function layoutStructureWithElk(
     }
 
     const parentOf: ParentOfMap = new Map()
-    for (const node of nodes) {
+    for (const node of workingNodes) {
       if (node.type && node.type !== 'part') continue
       parentOf.set(node.id, node.parentId)
     }
-    const partIds = nodes
+    const partIds = workingNodes
       .filter(
         (n) =>
           !isBoundary(n) &&
@@ -775,7 +805,7 @@ export async function layoutStructureWithElk(
       // Flow nudge among boundary siblings only (same coordinate frame).
       const siblingIds = partIds.filter((id) => {
         const p = parentOf.get(id)
-        return !p || p === nodes.find(isBoundary)?.id
+        return !p || p === workingNodes.find(isBoundary)?.id
       })
       enforceFlowLeftToRight(
         nodePatch,
@@ -791,7 +821,7 @@ export async function layoutStructureWithElk(
       )
     }
 
-    const movedNodes = nodes.map((n) => {
+    const movedNodes = workingNodes.map((n) => {
       const p = nodePatch[n.id]
       if (!p || p.x == null || p.y == null) return n
       return {
@@ -846,7 +876,7 @@ export async function layoutStructureWithElk(
   }
 
   // Ensure every known port got a patch even if ELK omitted it
-  for (const node of nodes) {
+  for (const node of workingNodes) {
     if (node.type && node.type !== 'part') continue
     const h = nodePatch[node.id]?.height ?? readSize(node).height
     for (const p of portsOf(node)) {
@@ -860,12 +890,12 @@ export async function layoutStructureWithElk(
     }
   }
 
-  const boundary = nodes.find(isBoundary)
+  const boundary = workingNodes.find(isBoundary)
   const boundaryId = boundary?.id
 
   const sizeMap = new Map<string, { width: number; height: number }>()
   const posMap = new Map<string, { x: number; y: number }>()
-  for (const node of nodes) {
+  for (const node of workingNodes) {
     if (node.type && node.type !== 'part') continue
     const p = nodePatch[node.id]
     sizeMap.set(node.id, {
@@ -881,11 +911,11 @@ export async function layoutStructureWithElk(
   // Final nest-fit + non-overlap after port sizing so parent boxes stay valid.
   if (layoutNodes) {
     const parentOfFinal: ParentOfMap = new Map()
-    for (const node of nodes) {
+    for (const node of workingNodes) {
       if (node.type && node.type !== 'part') continue
       parentOfFinal.set(node.id, node.parentId)
     }
-    const partIdsFinal = nodes
+    const partIdsFinal = workingNodes
       .filter(
         (n) =>
           !isBoundary(n) &&
@@ -900,7 +930,7 @@ export async function layoutStructureWithElk(
     }
     fitNestedChildrenInParents(nodePatch, parentOfFinal, 24)
     // Refresh maps after final separation / nest-fit.
-    for (const node of nodes) {
+    for (const node of workingNodes) {
       if (node.type && node.type !== 'part') continue
       const p = nodePatch[node.id]
       if (!p) continue
@@ -931,7 +961,7 @@ export async function layoutStructureWithElk(
   // Nest-fit once more after boundary shift (absolute separate may have moved kids).
   if (layoutNodes) {
     const parentOfEnd: ParentOfMap = new Map()
-    for (const node of nodes) {
+    for (const node of workingNodes) {
       if (node.type && node.type !== 'part') continue
       parentOfEnd.set(node.id, node.parentId)
     }
@@ -1004,7 +1034,7 @@ export async function layoutStructureWithElk(
     )
 
     const obstacles = childObstacleRects(
-      nodes,
+      workingNodes,
       sizeMap,
       posMap,
       new Set([link.sourcePart, link.targetPart]),

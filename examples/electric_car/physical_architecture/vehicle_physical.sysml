@@ -99,7 +99,9 @@ package PhysicalArchitecture {
     }
 
     part maneuvrabilityEcu {
-      doc /* Embedded computer for steering. Separate from the other controllers. Implements the logical steering wheel's control path. */
+      doc /* Embedded computer for steering. Separate from the other controllers. Implements the logical steering wheel's control path. Proxy ports expose DirectionCommand at the ECU boundary. */
+      port directionIn : DirectionCommand;
+      port directionOut : DirectionCommand;
       part maneuvrabilityControlSw {
         doc /* Software component for steering angle and directional control. Consumes the driver's DirectionCommand and provides it to the wheels. */
         port directionIn : DirectionCommand;
@@ -108,7 +110,9 @@ package PhysicalArchitecture {
     }
 
     part engineEcu {
-      doc /* Embedded computer for the traction motor. Separate module. Implements the logical engine. */
+      doc /* Embedded computer for the traction motor. Separate module. Implements the logical engine. Proxy ports expose GearCommand and TorqueRequest at the ECU boundary. */
+      port gearIn : GearCommand;
+      port torqueIn : TorqueRequest;
       part engineControlSw {
         doc /* Software component for motor torque and mode. Consumes GearCommand and TorqueRequest. */
         port gearIn : GearCommand;
@@ -117,7 +121,9 @@ package PhysicalArchitecture {
     }
 
     part batteryEcu {
-      doc /* Embedded computer for the traction battery and charging. Separate module. Implements the logical battery. */
+      doc /* Embedded computer for the traction battery and charging. Separate module. Implements the logical battery. Proxy ports expose EnergySupply and ChargeFeed at the ECU boundary. */
+      port energyOut : EnergySupply;
+      port chargeIn : ChargeFeed;
       part batteryControlSw {
         doc /* Software component for battery limits and charge sessions. Provides EnergySupply and consumes ChargeFeed. */
         port energyOut : EnergySupply;
@@ -239,16 +245,25 @@ package PhysicalArchitecture {
     #implements dependency from lampUnits to LogicalCounterparts::lamps;
     #implements dependency from chargeInletMech to LogicalCounterparts::chargeInlet;
 
-    connection direction connect maneuvrabilityEcu.maneuvrabilityControlSw.directionOut to wheelSet.directionIn;
-    connection steerInput connect steeringWheelMech.directionOut to maneuvrabilityEcu.maneuvrabilityControlSw.directionIn;
-    connection gear connect gearStickMech.gearOut to engineEcu.engineControlSw.gearIn;
-    connection torque connect acceleratorPedalMech.torqueOut to engineEcu.engineControlSw.torqueIn;
+    // Internal ECU↔SW bindings (proxy faces on the parent).
+    connection maneuvrabilityDirectionIn connect maneuvrabilityEcu.directionIn to maneuvrabilityEcu.maneuvrabilityControlSw.directionIn;
+    connection maneuvrabilityDirectionOut connect maneuvrabilityEcu.maneuvrabilityControlSw.directionOut to maneuvrabilityEcu.directionOut;
+    connection engineGearIn connect engineEcu.gearIn to engineEcu.engineControlSw.gearIn;
+    connection engineTorqueIn connect engineEcu.torqueIn to engineEcu.engineControlSw.torqueIn;
+    connection batteryEnergyOut connect batteryEcu.batteryControlSw.energyOut to batteryEcu.energyOut;
+    connection batteryChargeIn connect batteryEcu.chargeIn to batteryEcu.batteryControlSw.chargeIn;
+
+    // External peer connections (ECU proxy ports ↔ mechanical peers).
+    connection direction connect maneuvrabilityEcu.directionOut to wheelSet.directionIn;
+    connection steerInput connect steeringWheelMech.directionOut to maneuvrabilityEcu.directionIn;
+    connection gear connect gearStickMech.gearOut to engineEcu.gearIn;
+    connection torque connect acceleratorPedalMech.torqueOut to engineEcu.torqueIn;
     connection brake connect brakePedalMech.brakeOut to wheelSet.brakeIn;
-    connection energyMotor connect batteryEcu.batteryControlSw.energyOut to electricMotor.energyIn;
-    connection energyClimate connect batteryEcu.batteryControlSw.energyOut to hvacAssembly.energyIn;
-    connection energyEntertainment connect batteryEcu.batteryControlSw.energyOut to displayAndSpeakers.energyIn;
-    connection energyLamps connect batteryEcu.batteryControlSw.energyOut to lampUnits.energyIn;
-    connection charge connect chargeInletMech.chargeOut to batteryEcu.batteryControlSw.chargeIn;
+    connection energyMotor connect batteryEcu.energyOut to electricMotor.energyIn;
+    connection energyClimate connect batteryEcu.energyOut to hvacAssembly.energyIn;
+    connection energyEntertainment connect batteryEcu.energyOut to displayAndSpeakers.energyIn;
+    connection energyLamps connect batteryEcu.energyOut to lampUnits.energyIn;
+    connection charge connect chargeInletMech.chargeOut to batteryEcu.chargeIn;
     connection clear connect wiperAsm.clearOut to windshieldGlass.clearIn;
   }
 

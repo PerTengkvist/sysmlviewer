@@ -26,6 +26,7 @@ export type PipelineElkAlgorithm =
   | 'rectpacking'
 
 export type PlacementPipelineStep =
+  | 'nest-layout'
   | 'primary-layout'
   | 'nest-fit'
   | 'non-overlap'
@@ -54,6 +55,7 @@ function stepsFor(
   portPlacement: PortPlacementMode,
 ): PlacementPipelineStep[] {
   const steps: PlacementPipelineStep[] = [
+    'nest-layout',
     'primary-layout',
     'nest-fit',
     'non-overlap',

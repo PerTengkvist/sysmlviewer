@@ -19,6 +19,10 @@ describe('resolvePlacementPipeline', () => {
     const r = resolvePlacementPipeline(d)
     expect(r.id).toBe('connection-aware')
     expect(r.elkAlgorithm).toBe('stress')
+    expect(r.steps).toContain('nest-layout')
+    expect(r.steps.indexOf('nest-layout')).toBeLessThan(
+      r.steps.indexOf('primary-layout'),
+    )
     expect(r.steps).toContain('nest-fit')
     expect(r.steps).toContain('non-overlap')
   })

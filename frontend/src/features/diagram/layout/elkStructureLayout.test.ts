@@ -469,4 +469,119 @@ describe('layoutStructureWithElk', () => {
     const result = await layoutStructureWithElk(nodes, edges)
     expect(result.nodes['child::q']?.side).toBe('left')
   })
+
+  it('repositions nested SW away from a bad seed and grows the ECU', async () => {
+    const nodes = [
+      part('root', { isBoundary: true, w: 800, h: 500 }),
+      part('batteryEcu', {
+        parentId: 'root',
+        x: 40,
+        y: 40,
+        w: 100,
+        h: 80,
+        ports: [
+          { id: 'batteryEcu::energyOut', name: 'energyOut', side: 'right', offset: 0.4 },
+        ],
+      }),
+      part('batteryControlSw', {
+        parentId: 'batteryEcu',
+        x: 200,
+        y: 10,
+        w: 140,
+        h: 72,
+        ports: [
+          {
+            id: 'batteryControlSw::energyOut',
+            name: 'energyOut',
+            side: 'right',
+            offset: 0.4,
+          },
+        ],
+      }),
+      part('electricMotor', {
+        parentId: 'root',
+        x: 300,
+        y: 40,
+        w: 140,
+        h: 72,
+        ports: [
+          { id: 'electricMotor::energyIn', name: 'energyIn', side: 'left', offset: 0.4 },
+        ],
+      }),
+    ]
+    const edges: Edge[] = [
+      {
+        id: 'energyMotor',
+        source: 'batteryEcu',
+        target: 'electricMotor',
+        sourceHandle: 'batteryEcu::energyOut',
+        targetHandle: 'target:electricMotor::energyIn',
+      },
+    ]
+    const result = await layoutStructureWithElk(nodes, edges, {
+      layoutNodes: true,
+      includeEdges: false,
+    })
+    const sw = result.nodes['batteryControlSw']!
+    const ecu = result.nodes['batteryEcu']!
+    expect(sw.x).not.toBe(200)
+    expect(sw.x!).toBeGreaterThanOrEqual(16)
+    expect(sw.y!).toBeGreaterThanOrEqual(16)
+    expect(ecu.width!).toBeGreaterThanOrEqual(sw.x! + (sw.width || 140) + 16)
+    expect(ecu.height!).toBeGreaterThanOrEqual(sw.y! + (sw.height || 72) + 16)
+  })
+})
+
+describe('buildElkGraph proxy-port edges', () => {
+  it('includes batteryEcu↔electricMotor and skips nested SW as endpoint', () => {
+    const nodes = [
+      part('root', { isBoundary: true, w: 800, h: 500 }),
+      part('batteryEcu', {
+        parentId: 'root',
+        ports: [
+          { id: 'batteryEcu::energyOut', name: 'energyOut', side: 'right', offset: 0.4 },
+        ],
+      }),
+      part('batteryControlSw', {
+        parentId: 'batteryEcu',
+        ports: [
+          {
+            id: 'batteryControlSw::energyOut',
+            name: 'energyOut',
+            side: 'right',
+            offset: 0.4,
+          },
+        ],
+      }),
+      part('electricMotor', {
+        parentId: 'root',
+        ports: [
+          { id: 'electricMotor::energyIn', name: 'energyIn', side: 'left', offset: 0.4 },
+        ],
+      }),
+    ]
+    const edges: Edge[] = [
+      {
+        id: 'internal',
+        source: 'batteryControlSw',
+        target: 'batteryEcu',
+        sourceHandle: 'batteryControlSw::energyOut',
+        targetHandle: 'target:batteryEcu::energyOut',
+      },
+      {
+        id: 'energyMotor',
+        source: 'batteryEcu',
+        target: 'electricMotor',
+        sourceHandle: 'batteryEcu::energyOut',
+        targetHandle: 'target:electricMotor::energyIn',
+      },
+    ]
+    const g = buildElkGraph(nodes, edges, { layoutNodes: true })
+    expect(g.children?.map((c) => c.id).sort()).toEqual([
+      'batteryEcu',
+      'electricMotor',
+    ])
+    expect(g.edges?.some((e) => e.id === 'energyMotor')).toBe(true)
+    expect(g.edges?.some((e) => e.id === 'internal')).toBe(false)
+  })
 })

@@ -1,5 +1,6 @@
 /**
- * Run a resolved AutoLayout placement pipeline (ELK primary + nest/non-overlap).
+ * Run a resolved AutoLayout placement pipeline
+ * (nest-layout → ELK primary → nest-fit / non-overlap).
  */
 import type { Edge, Node } from '@xyflow/react'
 import type { AutoLayoutDirectives } from './autoLayoutOptions'
