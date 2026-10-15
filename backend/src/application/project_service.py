@@ -686,6 +686,7 @@ class ProjectService:
             parent_id=parent_id,
             type_ref=type_ref,
             expose_ref=expose_ref,
+            expose_refs=[expose_ref] if expose_ref else [],
             file_id=file_id,
         )
         project.semantic[element_id] = el
@@ -1323,6 +1324,23 @@ class ProjectService:
         if not root:
             return None
 
+        view_el = project.semantic.get(view.id)
+        expose_root_ids: list[str] = []
+        if view_el is not None:
+            expose_root_ids = [
+                rid
+                for rid in (view_el.expose_refs or [])
+                if rid in project.semantic
+            ]
+            if not expose_root_ids and view_el.expose_ref:
+                if view_el.expose_ref in project.semantic:
+                    expose_root_ids = [view_el.expose_ref]
+        if not expose_root_ids:
+            expose_root_ids = [root.id]
+        expose_roots = [
+            project.semantic[rid] for rid in expose_root_ids if rid in project.semantic
+        ]
+
         levels_override: int | None = None
         layout_for_view = (
             overlay_layouts.by_view.get(view.id)
@@ -1349,19 +1367,22 @@ class ProjectService:
                 f"{', '.join(k.value for k in expected)}; got '{root.kind.value}'"
             )
 
+        artifact_ids: set[str] = set()
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
-            artifact_ids = {root.id}
-            for cid in root.children:
-                artifact_ids.add(cid)
-                child = project.semantic.get(cid)
-                if child:
-                    for gc in child.children:
-                        artifact_ids.add(gc)
+            for eroot in expose_roots:
+                artifact_ids.add(eroot.id)
+                for cid in eroot.children:
+                    artifact_ids.add(cid)
+                    child = project.semantic.get(cid)
+                    if child:
+                        for gc in child.children:
+                            artifact_ids.add(gc)
         elif diagram_mode == "tree":
-            artifact_ids = collect_artifacts_to_depth(
-                project.semantic, root.id, effective_levels
-            )
+            for eroot in expose_roots:
+                artifact_ids |= collect_artifacts_to_depth(
+                    project.semantic, eroot.id, effective_levels
+                )
             # Include non-part children for tree browsing
             extra: set[str] = set()
             for aid in list(artifact_ids):
@@ -1381,49 +1402,66 @@ class ProjectService:
                         extra.add(cid)
             artifact_ids |= extra
         elif diagram_mode == "allocation":
-            artifact_ids = {root.id}
-            for cid in root.children:
-                child = project.semantic.get(cid)
-                if not child:
-                    continue
-                if child.kind == ArtifactKind.PORT:
-                    artifact_ids.add(cid)
-                elif child.kind == ArtifactKind.PART:
-                    if child.name == "logical":
-                        artifact_ids |= collect_artifacts_to_depth(
-                            project.semantic, child.id, effective_levels
-                        )
-                    else:
-                        artifact_ids.add(child.id)
-                        for pc in child.children:
-                            port = project.semantic.get(pc)
-                            if port and port.kind == ArtifactKind.PORT:
-                                artifact_ids.add(pc)
-            for el in project.semantic.values():
-                if el.kind == ArtifactKind.ALLOCATION:
-                    if el.parent_id != root.id:
+            for eroot in expose_roots:
+                artifact_ids.add(eroot.id)
+                for cid in eroot.children:
+                    child = project.semantic.get(cid)
+                    if not child:
+                        continue
+                    if child.kind == ArtifactKind.PORT:
+                        artifact_ids.add(cid)
+                    elif child.kind == ArtifactKind.PART:
+                        if child.name == "logical":
+                            artifact_ids |= collect_artifacts_to_depth(
+                                project.semantic, child.id, effective_levels
+                            )
+                        else:
+                            artifact_ids.add(child.id)
+                            for pc in child.children:
+                                port = project.semantic.get(pc)
+                                if port and port.kind == ArtifactKind.PORT:
+                                    artifact_ids.add(pc)
+                for el in project.semantic.values():
+                    if el.kind == ArtifactKind.ALLOCATION:
+                        if el.parent_id != eroot.id:
+                            continue
+                        artifact_ids.add(el.id)
+                        if el.source_id:
+                            artifact_ids.add(el.source_id)
+                        if el.target_id:
+                            artifact_ids.add(el.target_id)
+                        continue
+                    if el.kind != ArtifactKind.CONNECTION:
+                        continue
+                    if not el.name.startswith("alloc"):
+                        continue
+                    if el.parent_id != eroot.id:
                         continue
                     artifact_ids.add(el.id)
                     if el.source_id:
                         artifact_ids.add(el.source_id)
                     if el.target_id:
                         artifact_ids.add(el.target_id)
-                    continue
-                if el.kind != ArtifactKind.CONNECTION:
-                    continue
-                if not el.name.startswith("alloc"):
-                    continue
-                if el.parent_id != root.id:
-                    continue
-                artifact_ids.add(el.id)
-                if el.source_id:
-                    artifact_ids.add(el.source_id)
-                if el.target_id:
-                    artifact_ids.add(el.target_id)
         else:
             # Structure / whitebox: depth-limit parts & packages (incl. package roots)
-            artifact_ids = collect_artifacts_to_depth(
-                project.semantic, root.id, effective_levels
+            for eroot in expose_roots:
+                artifact_ids |= collect_artifacts_to_depth(
+                    project.semantic, eroot.id, effective_levels
+                )
+
+        # SysML view filter clauses (alpha: @metaclass, name.startsWith)
+        from domain.view_filter import apply_view_filters, parse_stored_filters
+
+        view_filters = parse_stored_filters(
+            view_el.view_filters if view_el is not None else None
+        )
+        if view_filters:
+            artifact_ids = apply_view_filters(
+                project.semantic,
+                artifact_ids,
+                view_filters,
+                root_id=root.id,
+                root_ids=set(expose_root_ids),
             )
 
         structure_edge_kinds = {

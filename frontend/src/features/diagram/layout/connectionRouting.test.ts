@@ -4,6 +4,7 @@ import type { PartNodeData } from '../PartNode'
 import {
   boundaryFlowBounds,
   findNodeIdForPort,
+  gridCellSize,
   pathCrossesObstaclesMid,
   polylineHitsRect,
   edgePortEndpoints,
@@ -18,6 +19,14 @@ import {
 import { resolveRoutePoints, type Pt } from '../edgeRouting'
 import { closestParallelGap } from './connectionSeparation'
 import { EDGE_LABEL_TEXT_HEIGHT_PX } from '../../../settings'
+
+function pathLengthApprox(path: Pt[]): number {
+  let n = 0
+  for (let i = 1; i < path.length; i++) {
+    n += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y)
+  }
+  return n
+}
 
 describe('pathCrossesObstaclesMid', () => {
   const box: Rect = { minX: 40, minY: 20, maxX: 80, maxY: 80 }
@@ -194,7 +203,51 @@ function isOrtho(pts: { x: number; y: number }[]): boolean {
   return true
 }
 
+describe('gridCellSize', () => {
+  it('keeps fine cells on small bounds', () => {
+    expect(
+      gridCellSize({ minX: 0, minY: 0, maxX: 200, maxY: 200 }),
+    ).toBe(4)
+  })
+
+  it('coarsens cells on large PhysicalView-scale frames', () => {
+    const cell = gridCellSize({
+      minX: 0,
+      minY: 0,
+      maxX: 2000,
+      maxY: 3000,
+    })
+    expect(cell).toBeGreaterThanOrEqual(Math.ceil(3000 / 120))
+    // Grid axis stays ≤ 120 cells along the long side
+    expect(Math.ceil(3000 / cell)).toBeLessThanOrEqual(120)
+  })
+})
+
 describe('routeOrthogonal', () => {
+  it('finishes quickly on a large whitebox with many obstacles', () => {
+    const bounds: Rect = { minX: 0, minY: 0, maxX: 1800, maxY: 1600 }
+    const obstacles: Rect[] = []
+    for (let i = 0; i < 24; i++) {
+      const col = i % 6
+      const row = Math.floor(i / 6)
+      obstacles.push({
+        minX: 80 + col * 280,
+        minY: 80 + row * 360,
+        maxX: 80 + col * 280 + 160,
+        maxY: 80 + row * 360 + 100,
+      })
+    }
+    const start = { x: 40, y: 120 }
+    const end = { x: 1700, y: 1400 }
+    const t0 = performance.now()
+    const path = routeOrthogonal(start, end, obstacles, bounds, {
+      strictBounds: true,
+    })
+    const ms = performance.now() - t0
+    expect(path.length).toBeGreaterThanOrEqual(2)
+    expect(ms).toBeLessThan(500)
+  })
+
   it('uses a simple L when the corridor is empty', () => {
     const path = routeOrthogonal(
       { x: 0, y: 10 },
@@ -233,6 +286,46 @@ describe('routeOrthogonal', () => {
     )
     expect(isOrtho(path)).toBe(true)
     expect(polylineHitsRect(path, wall)).toBe(false)
+  })
+
+  it('prefers the gap between stacked parts over looping around', () => {
+    // Source stub to the right of the upper part; target stub to the left of the lower.
+    const upper: Rect = { minX: 40, minY: 40, maxX: 180, maxY: 120 }
+    const lower: Rect = { minX: 40, minY: 160, maxX: 180, maxY: 240 }
+    const start = { x: 192, y: 80 }
+    const end = { x: 28, y: 200 }
+    const path = routeOrthogonal(start, end, [upper, lower], {
+      minX: 0,
+      minY: 0,
+      maxX: 400,
+      maxY: 300,
+    })
+    expect(polylineHitsRect(path, upper)).toBe(false)
+    expect(polylineHitsRect(path, lower)).toBe(false)
+    const maxX = Math.max(...path.map((p) => p.x))
+    // Must not swing past the right side of the pair (the old bad “loop around”).
+    expect(maxX).toBeLessThan(lower.maxX + 40)
+    expect(pathLengthApprox(path)).toBeLessThan(420)
+  })
+
+  it('strictBounds keeps the path inside the whitebox frame', () => {
+    // Leave corridors at top/bottom inside the frame (no exterior escape).
+    const wall: Rect = { minX: 30, minY: 28, maxX: 70, maxY: 72 }
+    const frame: Rect = { minX: 0, minY: 0, maxX: 100, maxY: 100 }
+    const path = routeOrthogonal(
+      { x: 10, y: 50 },
+      { x: 90, y: 50 },
+      [wall],
+      frame,
+      { strictBounds: true },
+    )
+    expect(polylineHitsRect(path, wall)).toBe(false)
+    for (const p of path) {
+      expect(p.x).toBeGreaterThanOrEqual(frame.minX - 0.5)
+      expect(p.x).toBeLessThanOrEqual(frame.maxX + 0.5)
+      expect(p.y).toBeGreaterThanOrEqual(frame.minY - 0.5)
+      expect(p.y).toBeLessThanOrEqual(frame.maxY + 0.5)
+    }
   })
 })
 

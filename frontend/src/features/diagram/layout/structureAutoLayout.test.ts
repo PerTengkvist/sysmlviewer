@@ -104,8 +104,8 @@ describe('assignPortSidesAndOffsets', () => {
   })
 })
 
-describe('autoLayoutStructure', () => {
-  it('returns size and position patches for parts and port sides', () => {
+describe('autoLayoutStructure (legacy sync)', () => {
+  it('still returns size and position patches for parts and port sides', () => {
     const nodes = [
       part('root', { isBoundary: true, w: 400, h: 240 }),
       part('a', {

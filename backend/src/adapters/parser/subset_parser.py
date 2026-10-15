@@ -6,6 +6,12 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.view_filter import (
+    MetaclassAnyFilter,
+    MetaclassFilter,
+    NameStartsWithFilter,
+    metaclass_to_kind,
+)
 from ports import ParseResult
 
 
@@ -16,7 +22,7 @@ _TOKEN_RE = re.compile(
     (?P<string>'[^']*'|"[^"]*")|
     (?P<number>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|
     (?P<ident>[A-Za-z_][\w]*)|
-    (?P<punct>:>>|:>|::|[{}:;=,<\>]|\.|~)|
+    (?P<punct>:>>|:>|::|[{}:;=,<\>]|\.|~|@)|
     (?P<ws>\s+)|
     (?P<other>.)
     """,
@@ -1523,7 +1529,89 @@ class SubsetSysmlParser:
                             resolved = matches[0] if matches else (
                                 f"{scope}::{ref}" if scope else ref
                             )
-                        view_el.expose_ref = resolved
+                        if resolved:
+                            if resolved not in view_el.expose_refs:
+                                view_el.expose_refs.append(resolved)
+                            # Primary root = first expose (unchanged on later exposes)
+                            if not view_el.expose_ref:
+                                view_el.expose_ref = resolved
+                continue
+
+            if tok.kind == "ident" and tok.value == "filter":
+                line = tok.line
+                take()
+                parent = state.current_parent()
+                view_el = (
+                    state.elements.get(parent)
+                    if parent and parent in state.elements
+                    else None
+                )
+                if not view_el or view_el.kind != ArtifactKind.VIEW:
+                    state.warnings.append(
+                        f"line {line}: filter outside view definition"
+                    )
+                    skip_until_semicolon_or_brace()
+                    continue
+
+                parsed_filter = None
+                # filter @A;  or  filter @A or @B or @C;
+                if peek() and peek().value == "@":
+                    take()
+                    ref = expect_qualified_name()
+                    refs: list[str] = [ref] if ref else []
+                    while (
+                        refs
+                        and peek()
+                        and peek().kind == "ident"
+                        and peek().value == "or"
+                    ):
+                        take()  # or
+                        if not (peek() and peek().value == "@"):
+                            refs = []
+                            break
+                        take()
+                        nxt = expect_qualified_name()
+                        if not nxt:
+                            refs = []
+                            break
+                        refs.append(nxt)
+                    if refs and all(metaclass_to_kind(r) is not None for r in refs):
+                        if len(refs) == 1:
+                            parsed_filter = MetaclassFilter(refs[0])
+                        else:
+                            parsed_filter = MetaclassAnyFilter(tuple(refs))
+                    else:
+                        # Unknown @status / metadata annotations are not v1 metaclasses
+                        parsed_filter = None
+                        refs = []
+                # filter name.startsWith("prefix");
+                elif peek() and peek().kind == "ident" and peek().value == "name":
+                    take()
+                    if peek() and peek().value == ".":
+                        take()
+                    method = expect_ident()
+                    if method == "startsWith" and peek() and peek().value == "(":
+                        take()
+                        prefix_tok = peek()
+                        prefix: str | None = None
+                        if prefix_tok and prefix_tok.kind == "string":
+                            take()
+                            prefix = _strip_quotes(prefix_tok.value)
+                        if peek() and peek().value == ")":
+                            take()
+                        if prefix is not None:
+                            parsed_filter = NameStartsWithFilter(prefix)
+
+                # Accept only a complete statement ending at `;`.
+                # Incomplete `or` chains / `not` / metadata ⇒ unsupported.
+                if parsed_filter is not None and peek() and peek().value == ";":
+                    take()
+                    view_el.view_filters.append(parsed_filter.to_stored())
+                else:
+                    skip_until_semicolon_or_brace()
+                    state.warnings.append(
+                        f"line {line}: unsupported filter expression"
+                    )
                 continue
 
             if tok.kind == "ident" and tok.value == "attribute":
@@ -1966,7 +2054,6 @@ class SubsetSysmlParser:
                     "occurrence",
                     "calc",
                     "assert",
-                    "filter",
                     "render",
                 }
                 take()

@@ -45,7 +45,11 @@ def _load():
 def test_electric_car_parses_without_warnings():
     result = _load()
     assert result.warnings == []
-    names = {e.name for e in result.elements.values() if e.kind == ArtifactKind.PACKAGE}
+    names = {
+        e.name
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.PACKAGE and e.parent_id is None
+    }
     assert names == {
         "Requirements",
         "Functions",
@@ -54,6 +58,7 @@ def test_electric_car_parses_without_warnings():
         "Dynamics",
         "PhysicalArchitecture",
     }
+    assert "PhysicalArchitecture::LogicalCounterparts" in result.elements
 
 
 def test_physical_parts_implement_logical_parts():
@@ -184,15 +189,58 @@ def test_shipped_views_render_requested_diagrams():
     assert physical["diagramMode"] == "whitebox"
     assert physical["hierarchicalLevels"] == 3
     assert any(e["name"] == "entertainmentSw" for e in physical["semantic"].values())
+    # Logical counterparts live outside VehiclePhysical; implements filtered out of whitebox
+    assert not any(
+        e["kind"] == "dependency" and "implements" in (e.get("metadataKeywords") or [])
+        for e in physical["semantic"].values()
+    )
+    assert not any(
+        "Logical" in (e.get("metadataKeywords") or [])
+        for e in physical["semantic"].values()
+    )
+
+    physical_deps = service.get_view(
+        project.id,
+        "PhysicalArchitecture::PhysicalDependenciesView",
+        hierarchical_levels=3,
+    )
+    assert physical_deps["diagramMode"] == "whitebox"
     assert (
         sum(
             1
-            for e in physical["semantic"].values()
-            if e["kind"] == "dependency" and "implements" in (e.get("metadataKeywords") or [])
+            for e in physical_deps["semantic"].values()
+            if e["kind"] == "dependency"
+            and "implements" in (e.get("metadataKeywords") or [])
         )
         == 30
+    )
+    assert any(
+        e["id"] == "PhysicalArchitecture::LogicalCounterparts::car"
+        for e in physical_deps["semantic"].values()
     )
 
     unlock = service.get_view(project.id, "Dynamics::UnlockSequenceView")
     assert unlock["diagramMode"] == "sequence"
     assert sum(1 for e in unlock["semantic"].values() if e["kind"] == "message") == 4
+
+    logical = service.get_view(
+        project.id, "LogicalArchitecture::CarLogicalView", hierarchical_levels=3
+    )
+    assert logical["diagramMode"] == "whitebox"
+    assert sum(1 for e in logical["semantic"].values() if e["kind"] == "dependency") == 0
+    assert sum(1 for e in logical["semantic"].values() if e["kind"] == "connection") == 10
+
+    logical_deps = service.get_view(
+        project.id,
+        "LogicalArchitecture::CarLogicalDependenciesView",
+        hierarchical_levels=3,
+    )
+    assert logical_deps["diagramMode"] == "whitebox"
+    assert (
+        sum(1 for e in logical_deps["semantic"].values() if e["kind"] == "connection")
+        == 0
+    )
+    assert (
+        sum(1 for e in logical_deps["semantic"].values() if e["kind"] == "dependency")
+        == 20
+    )

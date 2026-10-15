@@ -171,10 +171,23 @@ def _emit_element(
     if el.kind == ArtifactKind.VIEW:
         type_bit = f" : {el.type_ref}" if el.type_ref else ""
         lines.append(f"{pad}view def {el.name}{type_bit} {{")
-        if el.expose_ref:
-            exposed = semantic.get(el.expose_ref)
-            name = exposed.name if exposed else el.expose_ref.split("::")[-1]
+        refs = list(el.expose_refs) or (
+            [el.expose_ref] if el.expose_ref else []
+        )
+        for ref in refs:
+            exposed = semantic.get(ref)
+            name = exposed.name if exposed else ref.split("::")[-1]
             lines.append(f"{pad}  expose {name};")
+        for filt in el.view_filters or []:
+            op = filt.get("op")
+            if op == "metaclass" and filt.get("ref"):
+                lines.append(f"{pad}  filter @{filt['ref']};")
+            elif op == "metaclassAny" and filt.get("refs"):
+                joined = " or ".join(f"@{r}" for r in filt["refs"])
+                lines.append(f"{pad}  filter {joined};")
+            elif op == "nameStartsWith" and "prefix" in filt:
+                prefix = str(filt["prefix"]).replace('"', '\\"')
+                lines.append(f'{pad}  filter name.startsWith("{prefix}");')
         _emit_children(semantic, el, lines, indent + 1, skip_kinds=set())
         lines.append(f"{pad}}}")
         return

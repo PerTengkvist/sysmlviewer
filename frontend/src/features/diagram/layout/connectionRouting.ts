@@ -37,12 +37,25 @@ export type RedrawOptions = {
   contextEdges?: Edge[]
 }
 
+/** Base grid step (px). Larger whiteboxes use a coarser step — see gridCellSize. */
 const CELL = 4
+/** Cap A* grid so AutoLayout stays interactive on large PhysicalView frames. */
+const MAX_GRID_AXIS = 120
+const MAX_ASTAR_EXPANSIONS = 40_000
 const OBSTACLE_PAD = 8
 const STUB_LEN = 12
 const BOUNDS_PAD = 4
 const TURN_COST = 1
 const ESCAPE_PAD = 48
+
+/** Scale cell size so cols/rows never exceed MAX_GRID_AXIS. */
+export function gridCellSize(bounds: Rect): number {
+  const width = Math.max(0, bounds.maxX - bounds.minX)
+  const height = Math.max(0, bounds.maxY - bounds.minY)
+  const span = Math.max(width, height)
+  if (span <= 0) return CELL
+  return Math.max(CELL, Math.ceil(span / MAX_GRID_AXIS))
+}
 
 function nearlyEq(a: number, b: number, eps = 0.75): boolean {
   return Math.abs(a - b) < eps
@@ -120,6 +133,67 @@ function clampPt(p: Pt, b: Rect): Pt {
   }
 }
 
+export type RouteOrthogonalOptions = {
+  /**
+   * When true, never expand the search past `bounds` (whitebox / parent frame).
+   * Default false keeps ESCAPE_PAD / far U-turns for open canvases.
+   */
+  strictBounds?: boolean
+}
+
+/**
+ * Short orthogonal detours through gaps between stacked / side-by-side parts
+ * (avoids looping around the far side of a vertically stacked pair).
+ *
+ * Only emit a corridor when the horizontal/vertical span between endpoints
+ * actually crosses that gap (otherwise a≈b aligned paths degenerate into
+ * cuts through later obstacles).
+ */
+function gapCorridorPaths(
+  a: Pt,
+  b: Pt,
+  inflated: Rect[],
+  bounds: Rect,
+): Pt[][] {
+  const out: Pt[][] = []
+  const m = 4
+  const minGap = CELL * 2
+  for (let i = 0; i < inflated.length; i++) {
+    for (let j = 0; j < inflated.length; j++) {
+      if (i === j) continue
+      const r = inflated[i]
+      const s = inflated[j]
+      // Horizontal corridor between vertically stacked obstacles
+      if (r.maxY + minGap < s.minY) {
+        const gapY = (r.maxY + s.minY) / 2
+        if (
+          gapY > bounds.minY &&
+          gapY < bounds.maxY &&
+          Math.min(a.y, b.y) <= gapY &&
+          Math.max(a.y, b.y) >= gapY &&
+          Math.abs(a.x - b.x) > minGap
+        ) {
+          out.push([a, { x: a.x, y: gapY }, { x: b.x, y: gapY }, b])
+        }
+      }
+      // Vertical corridor between horizontally stacked obstacles
+      if (r.maxX + minGap < s.minX) {
+        const gapX = (r.maxX + s.minX) / 2
+        if (
+          gapX > bounds.minX &&
+          gapX < bounds.maxX &&
+          Math.min(a.x, b.x) <= gapX &&
+          Math.max(a.x, b.x) >= gapX &&
+          Math.abs(a.y - b.y) > minGap
+        ) {
+          out.push([a, { x: gapX, y: a.y }, { x: gapX, y: b.y }, b])
+        }
+      }
+    }
+  }
+  return out
+}
+
 /**
  * Orthogonal path from start to end that stays inside `bounds` and does not
  * cross obstacle interiors. Never returns a path that cuts through a part.
@@ -129,7 +203,9 @@ export function routeOrthogonal(
   end: Pt,
   obstacles: Rect[],
   bounds: Rect,
+  options?: RouteOrthogonalOptions,
 ): Pt[] {
+  const strict = options?.strictBounds === true
   const padded = inflateRect(bounds, -BOUNDS_PAD)
   const walk =
     padded.minX < padded.maxX && padded.minY < padded.maxY ? padded : bounds
@@ -137,18 +213,70 @@ export function routeOrthogonal(
   const b = clampPt(end, walk)
   const inflated = obstacles.map((r) => inflateRect(r, OBSTACLE_PAD))
 
+  const pickShortest = (candidates: (Pt[] | null)[]): Pt[] | null => {
+    let best: Pt[] | null = null
+    let bestLen = Infinity
+    for (const raw of candidates) {
+      if (!raw || raw.length < 2) continue
+      const c = simplifyOrtho(raw)
+      if (pathHitsAny(c, inflated)) continue
+      const len = pathLength(c)
+      if (len < bestLen) {
+        bestLen = len
+        best = c
+      }
+    }
+    return best
+  }
+
   const tryCandidates = (searchBounds: Rect): Pt[] | null => {
-    const hv = hvPath(a, b)
-    if (!pathHitsAny(hv, inflated)) return simplifyOrtho(hv)
-    const vh = vhPath(a, b)
-    if (!pathHitsAny(vh, inflated)) return simplifyOrtho(vh)
     const viaGrid = astarPath(a, b, inflated, searchBounds)
-    if (viaGrid && !pathHitsAny(viaGrid, inflated)) return simplifyOrtho(viaGrid)
-    return null
+    return pickShortest([
+      hvPath(a, b),
+      vhPath(a, b),
+      viaGrid,
+      ...gapCorridorPaths(a, b, inflated, searchBounds),
+    ])
   }
 
   const direct = tryCandidates(walk)
   if (direct) return direct
+
+  // Inside-frame U-turns along the walk rectangle (always allowed).
+  const innerCandidates: Pt[][] = [
+    simplifyOrtho([a, { x: a.x, y: walk.minY }, { x: b.x, y: walk.minY }, b]),
+    simplifyOrtho([a, { x: a.x, y: walk.maxY }, { x: b.x, y: walk.maxY }, b]),
+    simplifyOrtho([a, { x: walk.minX, y: a.y }, { x: walk.minX, y: b.y }, b]),
+    simplifyOrtho([a, { x: walk.maxX, y: a.y }, { x: walk.maxX, y: b.y }, b]),
+  ]
+  const bestInner = pickShortest([
+    ...innerCandidates,
+    ...gapCorridorPaths(a, b, inflated, walk),
+    routeViaObstacleCorners(a, b, inflated, walk),
+  ])
+  if (bestInner) return bestInner
+
+  if (strict) {
+    const clampPath = (pts: Pt[]) =>
+      simplifyOrtho(pts.map((p) => clampPt(p, walk)))
+    // Stay inside the whitebox even if the path is longer / denser.
+    const hull = unionRects(inflated, OBSTACLE_PAD)
+    if (hull) {
+      const escape = routeViaHullEscape(a, b, hull, inflated, walk)
+      if (escape && !pathHitsAny(escape, inflated)) {
+        const c = clampPath(escape)
+        if (!pathHitsAny(c, inflated)) return c
+      }
+    }
+    const fallback = innerCandidates
+      .filter((c) => !pathHitsAny(c, inflated))
+      .sort((p, q) => pathLength(p) - pathLength(q))[0]
+    if (fallback) return clampPath(fallback)
+    // Last resort: A* on full walk, then clamp — still no exterior escape.
+    const grid = astarPath(a, b, inflated, walk)
+    if (grid && !pathHitsAny(grid, inflated)) return clampPath(grid)
+    return clampPath([a, b])
+  }
 
   const expanded = inflateRect(walk, ESCAPE_PAD)
   const expandedHit = tryCandidates(expanded)
@@ -348,23 +476,41 @@ export function pathCrossesObstaclesMid(path: Pt[], obstacles: Rect[]): boolean 
 function astarPath(start: Pt, end: Pt, obstacles: Rect[], bounds: Rect): Pt[] | null {
   const width = bounds.maxX - bounds.minX
   const height = bounds.maxY - bounds.minY
-  if (width < CELL || height < CELL) return null
+  const cell = gridCellSize(bounds)
+  if (width < cell || height < cell) return null
 
-  const cols = Math.max(1, Math.ceil(width / CELL))
-  const rows = Math.max(1, Math.ceil(height / CELL))
+  const cols = Math.max(1, Math.min(MAX_GRID_AXIS, Math.ceil(width / cell)))
+  const rows = Math.max(1, Math.min(MAX_GRID_AXIS, Math.ceil(height / cell)))
 
+  // Mark blocked cells by sweeping obstacles (not every cell × every obstacle).
   const blocked = new Uint8Array(cols * rows)
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const p = cellCenter(c, r, bounds)
-      if (obstacles.some((ob) => pointInRect(p, ob, 0))) {
-        blocked[r * cols + c] = 1
+  for (const ob of obstacles) {
+    const c0 = Math.max(
+      0,
+      Math.floor((ob.minX - bounds.minX) / cell),
+    )
+    const c1 = Math.min(
+      cols - 1,
+      Math.floor((ob.maxX - bounds.minX) / cell),
+    )
+    const r0 = Math.max(
+      0,
+      Math.floor((ob.minY - bounds.minY) / cell),
+    )
+    const r1 = Math.min(
+      rows - 1,
+      Math.floor((ob.maxY - bounds.minY) / cell),
+    )
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const p = cellCenter(c, r, bounds, cell)
+        if (pointInRect(p, ob, 0)) blocked[r * cols + c] = 1
       }
     }
   }
 
-  const sc = cellIndex(start, bounds, cols, rows)
-  const gc = cellIndex(end, bounds, cols, rows)
+  const sc = cellIndex(start, bounds, cols, rows, cell)
+  const gc = cellIndex(end, bounds, cols, rows, cell)
   blocked[sc.r * cols + sc.c] = 0
   blocked[gc.r * cols + gc.c] = 0
 
@@ -379,40 +525,68 @@ function astarPath(start: Pt, end: Pt, obstacles: Rect[], bounds: Rect): Pt[] | 
   dist.fill(Infinity)
   const prev = new Int32Array(stateCount)
   prev.fill(-1)
+  const closed = new Uint8Array(stateCount)
 
+  // Binary min-heap of state keys ordered by f = g + h (stored in heapF).
   const heap: number[] = []
+  const heapF: number[] = []
+  const heuristic = (c: number, r: number) =>
+    Math.abs(c - gc.c) + Math.abs(r - gc.r)
+
+  const heapPush = (k: number, f: number) => {
+    heap.push(k)
+    heapF.push(f)
+    let i = heap.length - 1
+    while (i > 0) {
+      const p = (i - 1) >> 1
+      if (heapF[p] <= heapF[i]) break
+      ;[heap[p], heap[i]] = [heap[i], heap[p]]
+      ;[heapF[p], heapF[i]] = [heapF[i], heapF[p]]
+      i = p
+    }
+  }
+  const heapPop = (): number => {
+    const out = heap[0]
+    const last = heap.pop()!
+    const lastF = heapF.pop()!
+    if (!heap.length) return out
+    heap[0] = last
+    heapF[0] = lastF
+    let i = 0
+    for (;;) {
+      const l = i * 2 + 1
+      const right = l + 1
+      let smallest = i
+      if (l < heap.length && heapF[l] < heapF[smallest]) smallest = l
+      if (right < heap.length && heapF[right] < heapF[smallest]) {
+        smallest = right
+      }
+      if (smallest === i) break
+      ;[heap[i], heap[smallest]] = [heap[smallest], heap[i]]
+      ;[heapF[i], heapF[smallest]] = [heapF[smallest], heapF[i]]
+      i = smallest
+    }
+    return out
+  }
+
   const startKey = (sc.r * cols + sc.c) * 4
   for (let d = 0; d < 4; d++) {
     const k = startKey + d
     dist[k] = 0
-    heap.push(k)
+    heapPush(k, heuristic(sc.c, sc.r))
   }
 
-  const heuristic = (c: number, r: number) =>
-    Math.abs(c - gc.c) + Math.abs(r - gc.r)
-
   let goalState = -1
+  let expansions = 0
   while (heap.length) {
-    let bestI = 0
-    let bestF = Infinity
-    for (let i = 0; i < heap.length; i++) {
-      const k = heap[i]
-      const c = Math.floor(k / 4) % cols
-      const r = Math.floor(Math.floor(k / 4) / cols)
-      const f = dist[k] + heuristic(c, r)
-      if (f < bestF) {
-        bestF = f
-        bestI = i
-      }
-    }
-    const k = heap[bestI]
-    heap[bestI] = heap[heap.length - 1]
-    heap.pop()
-
+    if (++expansions > MAX_ASTAR_EXPANSIONS) break
+    const k = heapPop()
+    if (closed[k]) continue
+    closed[k] = 1
     const dir = k % 4
-    const cell = Math.floor(k / 4)
-    const c = cell % cols
-    const r = Math.floor(cell / cols)
+    const cellIdx = Math.floor(k / 4)
+    const c = cellIdx % cols
+    const r = Math.floor(cellIdx / cols)
     if (c === gc.c && r === gc.r) {
       goalState = k
       break
@@ -424,12 +598,13 @@ function astarPath(start: Pt, end: Pt, obstacles: Rect[], bounds: Rect): Pt[] | 
       if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue
       if (blocked[nr * cols + nc]) continue
       const nk = (nr * cols + nc) * 4 + nd
+      if (closed[nk]) continue
       const step = 1 + (nd === dir ? 0 : TURN_COST)
       const next = dist[k] + step
       if (next < dist[nk]) {
         dist[nk] = next
         prev[nk] = k
-        heap.push(nk)
+        heapPush(nk, next + heuristic(nc, nr))
       }
     }
   }
@@ -439,24 +614,24 @@ function astarPath(start: Pt, end: Pt, obstacles: Rect[], bounds: Rect): Pt[] | 
   const cells: { c: number; r: number }[] = []
   let cur = goalState
   while (cur >= 0) {
-    const cell = Math.floor(cur / 4)
-    cells.push({ c: cell % cols, r: Math.floor(cell / cols) })
+    const cellIdx = Math.floor(cur / 4)
+    cells.push({ c: cellIdx % cols, r: Math.floor(cellIdx / cols) })
     cur = prev[cur]
   }
   cells.reverse()
 
   const pts: Pt[] = [start]
-  for (const cell of cells) {
-    pts.push(cellCenter(cell.c, cell.r, bounds))
+  for (const cellPos of cells) {
+    pts.push(cellCenter(cellPos.c, cellPos.r, bounds, cell))
   }
   pts.push(end)
   return pts
 }
 
-function cellCenter(c: number, r: number, bounds: Rect): Pt {
+function cellCenter(c: number, r: number, bounds: Rect, cell: number): Pt {
   return {
-    x: bounds.minX + (c + 0.5) * CELL,
-    y: bounds.minY + (r + 0.5) * CELL,
+    x: bounds.minX + (c + 0.5) * cell,
+    y: bounds.minY + (r + 0.5) * cell,
   }
 }
 
@@ -465,14 +640,15 @@ function cellIndex(
   bounds: Rect,
   cols: number,
   rows: number,
+  cell: number,
 ): { c: number; r: number } {
   const c = Math.min(
     cols - 1,
-    Math.max(0, Math.floor((p.x - bounds.minX) / CELL)),
+    Math.max(0, Math.floor((p.x - bounds.minX) / cell)),
   )
   const r = Math.min(
     rows - 1,
-    Math.max(0, Math.floor((p.y - bounds.minY) / CELL)),
+    Math.max(0, Math.floor((p.y - bounds.minY) / cell)),
   )
   return { c, r }
 }
@@ -801,6 +977,7 @@ export function redrawStructureConnections(
       locked,
       obstacles,
       bounds,
+      { strictBounds: !!boundary },
     )
     const full = simplifyOrtho([
       start,
@@ -879,6 +1056,7 @@ export function redrawStructureConnections(
       draft.locked,
       draft.obstacles,
       bounds,
+      { strictBounds: !!boundary },
     )
     return {
       ...r,
@@ -912,6 +1090,7 @@ export function redrawStructureConnections(
       draft.locked,
       draft.obstacles,
       bounds,
+      { strictBounds: !!boundary },
     )
     r.points = simplifyOrtho([
       dStart,
@@ -1072,9 +1251,10 @@ export function routeWithLockedVia(
   locked: Pt[],
   obstacles: Rect[],
   bounds: Rect,
+  options?: RouteOrthogonalOptions,
 ): Pt[] {
   if (!locked.length) {
-    const inner = routeOrthogonal(srcStub, tgtStub, obstacles, bounds)
+    const inner = routeOrthogonal(srcStub, tgtStub, obstacles, bounds, options)
     const full = simplifyOrtho([start, ...inner, end])
     return full.length <= 2 ? [] : full.slice(1, -1).map((p) => ({ x: p.x, y: p.y }))
   }
@@ -1084,7 +1264,7 @@ export function routeWithLockedVia(
   for (let i = 1; i < anchors.length; i++) {
     const a = anchors[i - 1]
     const b = anchors[i]
-    const seg = routeOrthogonal(a, b, obstacles, bounds)
+    const seg = routeOrthogonal(a, b, obstacles, bounds, options)
     // Drop duplicate join point
     assembled.push(...seg.slice(1))
   }
