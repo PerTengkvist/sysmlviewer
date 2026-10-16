@@ -24,10 +24,18 @@ export async function runPlacementPipeline(
     ...directives,
     mode: directives.mode ?? 'simple',
     pipeline: resolved.id,
-    algorithm: resolved.elkAlgorithm === 'layered' ? 'layered' : 'stress',
+    algorithm:
+      resolved.id === 'clustered'
+        ? 'clustered'
+        : resolved.id === 'favour-grid'
+          ? 'favour-grid'
+          : resolved.elkAlgorithm === 'layered'
+            ? 'layered'
+            : 'stress',
     spacing: resolved.spacing,
     aspectRatio: resolved.aspectRatio,
     portPlacement: resolved.portPlacement,
+    customWeights: resolved.customWeights ?? directives.customWeights,
   }
   return layoutStructureWithElk(nodes, edges, {
     includeEdges: false,

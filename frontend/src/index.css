@@ -1793,6 +1793,26 @@ body.port-dragging * {
   width: min(640px, 96vw);
 }
 
+/* AutoLayout (esp. custom weights): stay within viewport; scroll body. */
+.modal-dialog.modal-autolayout {
+  max-height: min(90vh, 100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-dialog.modal-autolayout .modal-header,
+.modal-dialog.modal-autolayout .modal-footer {
+  flex-shrink: 0;
+}
+
+.modal-dialog.modal-autolayout .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1843,6 +1863,24 @@ body.port-dragging * {
 .settings-row select,
 .settings-row input[type='number'] {
   min-width: 7rem;
+}
+
+.custom-weight-level {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--panel-border);
+}
+
+.custom-weight-level-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.custom-weight-row input[type='range'] {
+  flex: 1;
+  min-width: 8rem;
+  max-width: 14rem;
 }
 
 /* Form controls in modals stay light so values remain readable in any theme. */

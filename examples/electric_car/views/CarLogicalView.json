@@ -6,117 +6,185 @@
   "nodes": {
     "LogicalArchitecture::Car": {
       "x": -861.0,
-      "y": 5326.0,
-      "width": 1253.3551518911713,
-      "height": 1263.8839061984963
+      "y": 5309.0,
+      "width": 1117.0,
+      "height": 608.0
     },
     "LogicalArchitecture::Car::windows": {
-      "x": 284.0,
-      "y": 1139.8839061984963,
+      "x": 496.59999999999997,
+      "y": 484.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::battery": {
-      "x": 748.9551518911712,
-      "y": 239.18373550107503,
+      "x": 48.0,
+      "y": 70.0,
       "width": 172.39999999999998,
       "height": 76.0
     },
     "LogicalArchitecture::Car::steeringWheel": {
-      "x": 47.03449393817027,
-      "y": 811.4868785160797,
+      "x": 64.19999999999999,
+      "y": 346.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::engine": {
-      "x": 1017.3551518911712,
-      "y": 363.18373550107503,
+      "x": 280.4,
+      "y": 48.0,
       "width": 140.0,
       "height": 120.0
     },
     "LogicalArchitecture::Car::chassis": {
-      "x": 756.0,
-      "y": 1139.8839061984963,
+      "x": 929.0,
+      "y": 346.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::suspension": {
-      "x": 520.0,
-      "y": 1139.8839061984963,
+      "x": 280.4,
+      "y": 484.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::climateSystem": {
-      "x": 1017.3551518911712,
-      "y": 172.0,
+      "x": 280.4,
+      "y": 208.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::chargeInlet": {
-      "x": 190.56842802146195,
-      "y": 238.69578037734573,
+      "x": 64.19999999999999,
+      "y": 208.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::lamps": {
-      "x": 1017.3551518911712,
-      "y": 655.183735501075,
+      "x": 929.0,
+      "y": 208.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::brakePedal": {
-      "x": 48.0,
-      "y": 967.8839061984964,
+      "x": 929.0,
+      "y": 70.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::body": {
-      "x": 984.8869474362265,
-      "y": 1141.9931247468821,
+      "x": 712.8,
+      "y": 346.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::windshield": {
-      "x": 435.4348188562971,
-      "y": 677.5827390963868,
+      "x": 280.4,
+      "y": 346.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::locks": {
-      "x": 48.0,
-      "y": 1139.8839061984963,
+      "x": 64.19999999999999,
+      "y": 484.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::wipers": {
-      "x": 179.9638387541794,
-      "y": 678.6528548599908,
+      "x": 496.59999999999997,
+      "y": 346.0,
       "width": 140.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::entertainmentSystem": {
-      "x": 1017.3551518911712,
-      "y": 48.0,
+      "x": 472.59999999999997,
+      "y": 208.0,
       "width": 188.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::wheels": {
-      "x": 494.83711292653135,
-      "y": 808.0013085046616,
+      "x": 496.59999999999997,
+      "y": 59.0,
       "width": 140.0,
       "height": 98.0
     },
     "LogicalArchitecture::Car::acceleratorPedal": {
-      "x": 162.39528911505818,
-      "y": 472.10214447180715,
+      "x": 700.8,
+      "y": 70.0,
       "width": 164.0,
       "height": 76.0
     },
     "LogicalArchitecture::Car::gearStick": {
-      "x": 188.32045098736728,
-      "y": 371.61195640935875,
+      "x": 712.8,
+      "y": 208.0,
       "width": 140.0,
       "height": 76.0
+    },
+    "LogicalArchitecture::Car::lamps::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::engine::gearIn": {
+      "side": "left",
+      "offset": 0.4214285714285714
+    },
+    "LogicalArchitecture::Car::engine::torqueIn": {
+      "side": "left",
+      "offset": 0.5642857142857143
+    },
+    "LogicalArchitecture::Car::engine::energyIn": {
+      "side": "left",
+      "offset": 0.7071428571428571
+    },
+    "LogicalArchitecture::Car::battery::chargeIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::battery::energyOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::wipers::clearOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::steeringWheel::directionOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::gearStick::gearOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::climateSystem::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::chargeInlet::chargeOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::entertainmentSystem::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::brakePedal::brakeOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::windshield::clearIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "LogicalArchitecture::Car::wheels::directionIn": {
+      "side": "left",
+      "offset": 0.45
+    },
+    "LogicalArchitecture::Car::wheels::brakeIn": {
+      "side": "left",
+      "offset": 0.6499999999999999
+    },
+    "LogicalArchitecture::Car::acceleratorPedal::torqueOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
     }
   },
   "edges": {
@@ -124,12 +192,12 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 144.3551518911712,
-          "y": 5609.263735501075
+          "x": -592.6,
+          "y": 5418.266666666666
         },
         {
-          "x": 144.3551518911712,
-          "y": 5542.08
+          "x": -592.6,
+          "y": 5556.266666666666
         }
       ],
       "labelOffset": {
@@ -141,12 +209,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 144.3551518911712,
-          "y": 5609.263735501075
+          "x": -628.6,
+          "y": 5418.266666666666
         },
         {
-          "x": 144.3551518911712,
-          "y": 5418.08
+          "x": -628.6,
+          "y": 5491.0
+        },
+        {
+          "x": -400.40000000000003,
+          "y": 5491.0
+        },
+        {
+          "x": -400.40000000000003,
+          "y": 5556.266666666666
         }
       ],
       "labelOffset": {
@@ -158,12 +234,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": -124.04484810882877,
-          "y": 5901.263735501075
+          "x": -644.8,
+          "y": 5556.266666666666
         },
         {
-          "x": -124.04484810882877,
-          "y": 5609.263735501075
+          "x": -644.8,
+          "y": 5486.0
+        },
+        {
+          "x": -825.0,
+          "y": 5486.0
+        },
+        {
+          "x": -825.0,
+          "y": 5418.266666666666
         }
       ],
       "labelOffset": {
@@ -175,12 +259,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": -450.1628870734687,
-          "y": 6046.286496065449
+          "x": -654.8,
+          "y": 5694.266666666666
         },
         {
-          "x": -449.46182383124676,
-          "y": 6182.001308504661
+          "x": -654.8,
+          "y": 5479.0
+        },
+        {
+          "x": -386.40000000000003,
+          "y": 5479.0
+        },
+        {
+          "x": -386.40000000000003,
+          "y": 5412.1
         }
       ],
       "labelOffset": {
@@ -192,12 +284,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": -538.8787995536647,
-          "y": 5874.286496065449
+          "x": -6.2000000000000455,
+          "y": 5556.266666666666
         },
         {
-          "x": -539.0,
-          "y": 5740.0
+          "x": -6.2000000000000455,
+          "y": 5484.0
+        },
+        {
+          "x": -582.6,
+          "y": 5484.0
+        },
+        {
+          "x": -582.6,
+          "y": 5407.571428571428
         }
       ],
       "labelOffset": {
@@ -209,12 +309,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": -152.90386759114875,
-          "y": 5612.091619774474
+          "x": 8.0,
+          "y": 5418.266666666666
         },
         {
-          "x": -152.90386759114875,
-          "y": 5756.89802121536
+          "x": 8.0,
+          "y": 5354.0
+        },
+        {
+          "x": -587.6,
+          "y": 5354.0
+        },
+        {
+          "x": -587.6,
+          "y": 5424.714285714285
         }
       ],
       "labelOffset": {
@@ -226,12 +334,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 144.3551518911712,
-          "y": 5609.263735501075
+          "x": -628.6,
+          "y": 5418.266666666666
         },
         {
-          "x": 144.3551518911712,
-          "y": 6025.263735501075
+          "x": -628.6,
+          "y": 5491.0
+        },
+        {
+          "x": 56.0,
+          "y": 5491.0
+        },
+        {
+          "x": 56.0,
+          "y": 5556.266666666666
         }
       ]
     },
@@ -239,12 +355,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": -378.16288707346865,
-          "y": 6337.963906198496
+          "x": 220.0,
+          "y": 5418.266666666666
         },
         {
-          "x": -378.16288707346865,
-          "y": 6197.701308504661
+          "x": 220.0,
+          "y": 5478.0
+        },
+        {
+          "x": -376.40000000000003,
+          "y": 5478.0
+        },
+        {
+          "x": -376.40000000000003,
+          "y": 5431.7
         }
       ],
       "labelOffset": {
@@ -256,12 +380,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 284.30012687299063,
-          "y": 733.9511811614722
+          "x": -212.40000000000003,
+          "y": 5694.266666666666
         },
         {
-          "x": 284.30012687299063,
-          "y": 731.3617109839071
+          "x": -212.0,
+          "y": 5748.0
+        },
+        {
+          "x": -592.0,
+          "y": 5748.0
+        },
+        {
+          "x": -592.6,
+          "y": 5694.266666666666
         }
       ],
       "labelOffset": {
@@ -273,12 +405,12 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 144.3551518911712,
-          "y": 5609.263735501075
+          "x": -592.6,
+          "y": 5418.266666666666
         },
         {
-          "x": 144.3551518911712,
-          "y": 5774.040878358218
+          "x": -592.6,
+          "y": 5441.857142857143
         }
       ],
       "labelOffset": {
@@ -304,5 +436,6 @@
         "y": 5.893776787160277
       }
     }
-  }
+  },
+  "hierarchicalLevelsOverride": 3
 }

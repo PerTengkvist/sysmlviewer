@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Edge, Node } from '@xyflow/react'
 import type { PartNodeData } from '../PartNode'
+import { SUGGESTED_LEVEL_WEIGHTS } from './autoLayoutOptions'
 import {
   groupChildrenByParent,
   layoutNestBottomUp,
+  layoutNestBottomUpAdaptive,
   maxNestDepth,
   parentsOrderedDeepestFirst,
 } from './nestBottomUp'
@@ -190,5 +192,65 @@ describe('layoutNestBottomUp', () => {
     expect(nodePatch['ecu']!.width!).toBeGreaterThanOrEqual(
       Math.max(a.x! + (a.width || 140), b.x! + (b.width || 140)) + 24,
     )
+  })
+})
+
+describe('layoutNestBottomUpAdaptive', () => {
+  it('grows parent with corridor pad and records scope plans', async () => {
+    const nodes = [
+      part('root', { isBoundary: true, w: 800, h: 600 }),
+      part('ecu', { parentId: 'root', w: 100, h: 80 }),
+      part('swA', {
+        parentId: 'ecu',
+        w: 140,
+        h: 72,
+        ports: [
+          { id: 'swA::out', name: 'energyOut', side: 'right', offset: 0.5 },
+        ],
+      }),
+      part('swB', {
+        parentId: 'ecu',
+        w: 140,
+        h: 72,
+        ports: [
+          { id: 'swB::in', name: 'energyIn', side: 'left', offset: 0.5 },
+        ],
+      }),
+    ]
+    const edges: Edge[] = [
+      {
+        id: 'c1',
+        source: 'swA',
+        target: 'swB',
+        sourceHandle: 'swA::out',
+        targetHandle: 'target:swB::in',
+      },
+    ]
+    const { nodePatch, scopePlans } = await layoutNestBottomUpAdaptive(
+      nodes,
+      edges,
+      SUGGESTED_LEVEL_WEIGHTS,
+    )
+    expect(scopePlans?.some((p) => p.parentId === 'ecu')).toBe(true)
+    const ecu = nodePatch['ecu']!
+    const a = nodePatch['swA']!
+    const b = nodePatch['swB']!
+    expect(ecu.width!).toBeGreaterThanOrEqual(
+      Math.max(a.x! + (a.width || 140), b.x! + (b.width || 140)) + 24,
+    )
+    // Corridor from leaf weights (high bendMin/portClarity) exceeds base pad.
+    expect(ecu.width!).toBeGreaterThan(140 + 140 + 16 + 48)
+  })
+
+  it('keeps row-pack path available via layoutNestBottomUp', () => {
+    const nodes = [
+      part('root', { isBoundary: true, w: 800, h: 600 }),
+      part('ecu', { parentId: 'root', w: 100, h: 80 }),
+      part('swA', { parentId: 'ecu', w: 140, h: 72 }),
+      part('swB', { parentId: 'ecu', w: 140, h: 72 }),
+    ]
+    const { nodePatch } = layoutNestBottomUp(nodes, [])
+    expect(nodePatch['swA']!.y).toBe(nodePatch['swB']!.y)
+    expect(nodePatch['swB']!.x!).toBeGreaterThan(nodePatch['swA']!.x!)
   })
 })

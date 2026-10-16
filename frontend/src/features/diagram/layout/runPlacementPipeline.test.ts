@@ -59,6 +59,8 @@ describe('runPlacementPipeline', () => {
     'compact-pack',
     'flow-layered',
     'organic-force',
+    'clustered',
+    'favour-grid',
   ]
 
   for (const pipeline of pipelines) {
@@ -240,5 +242,44 @@ describe('runPlacementPipeline', () => {
     expect(sw.x).not.toBe(200)
     expect(ecu.width!).toBeGreaterThanOrEqual(sw.x! + (sw.width || 140) + 16)
     expect(ecu.height!).toBeGreaterThanOrEqual(sw.y! + (sw.height || 72) + 16)
+  }, 15_000)
+
+  it('favour-grid + inputsLeftOutputsRight assigns IO port sides', async () => {
+    const nodes = [
+      part('root', { isBoundary: true, w: 800, h: 600 }),
+      part('src', {
+        parentId: 'root',
+        ports: [
+          { id: 'src::out', name: 'energyOut', side: 'left', offset: 0.5 },
+        ],
+      }),
+      part('dst', {
+        parentId: 'root',
+        ports: [
+          { id: 'dst::in', name: 'energyIn', side: 'right', offset: 0.5 },
+        ],
+      }),
+      part('mid', { parentId: 'root' }),
+      part('extra', { parentId: 'root' }),
+    ]
+    const edges: Edge[] = [
+      {
+        id: 'e1',
+        source: 'src',
+        target: 'dst',
+        sourceHandle: 'src::out',
+        targetHandle: 'target:dst::in',
+      },
+    ]
+    const result = await runPlacementPipeline(nodes, edges, {
+      ...DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+      mode: 'simple',
+      algorithm: 'favour-grid',
+      portPlacement: 'inputsLeftOutputsRight',
+    })
+    expect(result.nodes['src::out']?.side).toBe('right')
+    expect(result.nodes['dst::in']?.side).toBe('left')
+    const xs = ['src', 'dst', 'mid', 'extra'].map((id) => result.nodes[id]!.x!)
+    expect(new Set(xs.map((x) => Math.round(x))).size).toBeGreaterThan(1)
   }, 15_000)
 })

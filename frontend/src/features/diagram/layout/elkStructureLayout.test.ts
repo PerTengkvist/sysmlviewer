@@ -69,7 +69,17 @@ describe('buildElkGraph', () => {
         targetHandle: 'target:b::in',
       },
     ]
-    const g = buildElkGraph(nodes, edges, { includeEdges: false, layoutNodes: true })
+    const g = buildElkGraph(nodes, edges, {
+      includeEdges: false,
+      layoutNodes: true,
+      directives: {
+        mode: 'simple',
+        algorithm: 'stress',
+        portPlacement: 'optimized',
+        spacing: 'normal',
+        aspectRatio: 1,
+      },
+    })
     expect(g.id).toBe('root')
     expect(g.layoutOptions?.['elk.algorithm']).toBe('stress')
     expect(g.children?.map((c) => c.id).sort()).toEqual(['a', 'b'])

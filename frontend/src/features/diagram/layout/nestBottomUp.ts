@@ -2,9 +2,16 @@
  * Bottom-up nest placement: deepest parents first, size parents from children,
  * then top-level ELK can place peers with correct container sizes.
  */
+import ELK, { type ElkNode } from 'elkjs/lib/elk.bundled.js'
 import type { Edge, Node } from '@xyflow/react'
 import type { VisualizationNode } from '../../../api'
 import type { PartNodeData, PartPort } from '../PartNode'
+import {
+  planScope,
+  type AdaptiveElkAlgorithm,
+  type ScopePlan,
+} from './adaptiveLayoutPolicy'
+import type { LevelWeights } from './autoLayoutOptions'
 import { sizePartForPorts } from './structureAutoLayout'
 
 export const DEFAULT_NEST_PAD = 24
@@ -12,10 +19,14 @@ const MIN_W = 140
 const MIN_H = 72
 const CHILD_GAP = 16
 
+const nestElk = new ELK()
+
 export type NestBottomUpResult = {
   nodePatch: Record<string, Partial<VisualizationNode>>
   /** Parent ids processed deepest-first. */
   processedParents: string[]
+  /** Present when adaptive custom nest ran. */
+  scopePlans?: ScopePlan[]
 }
 
 function isBoundary(node: Node): boolean {
@@ -216,6 +227,246 @@ export function layoutNestBottomUp(
   }
 
   return { nodePatch, processedParents }
+}
+
+function portIdFromHandle(handleId: string | null | undefined): string | null {
+  if (!handleId) return null
+  return handleId.startsWith('target:') ? handleId.slice('target:'.length) : handleId
+}
+
+function nestAlgoOptions(
+  algo: AdaptiveElkAlgorithm,
+  pad: number,
+  nodeNode: number,
+  edgeLen: number,
+  fixedSide: boolean,
+  aspectRatio: number,
+): Record<string, string> {
+  const padStr = `[top=${pad},left=${pad},bottom=${pad},right=${pad}]`
+  const portConstraints = fixedSide
+    ? { 'org.eclipse.elk.portConstraints': 'FIXED_SIDE' }
+    : {}
+  if (algo === 'layered') {
+    return {
+      'elk.algorithm': 'layered',
+      'elk.direction': 'RIGHT',
+      'elk.edgeRouting': 'ORTHOGONAL',
+      'elk.padding': padStr,
+      'elk.spacing.nodeNode': String(nodeNode),
+      'elk.layered.spacing.nodeNodeBetweenLayers': String(edgeLen),
+      ...portConstraints,
+    }
+  }
+  if (algo === 'force') {
+    return {
+      'elk.algorithm': 'force',
+      'elk.aspectRatio': String(aspectRatio),
+      'elk.edgeRouting': 'ORTHOGONAL',
+      'elk.padding': padStr,
+      'elk.spacing.nodeNode': String(nodeNode),
+    }
+  }
+  if (algo === 'rectpacking') {
+    return {
+      'elk.algorithm': 'rectpacking',
+      'elk.padding': padStr,
+      'elk.spacing.nodeNode': String(nodeNode),
+    }
+  }
+  return {
+    'elk.algorithm': 'stress',
+    'elk.aspectRatio': String(aspectRatio),
+    'elk.edgeRouting': 'ORTHOGONAL',
+    'elk.padding': padStr,
+    'elk.spacing.nodeNode': String(nodeNode),
+    'elk.stress.desiredEdgeLength': String(edgeLen),
+  }
+}
+
+/**
+ * Adaptive nest for the custom pipeline: deepest-first mini-ELK per parent
+ * (skip boundary peers — primary ELK owns those).
+ */
+export async function layoutNestBottomUpAdaptive(
+  nodes: Node[],
+  edges: Edge[],
+  levelWeights: LevelWeights,
+  opts: { pad?: number; aspectRatio?: number; baseNodeNode?: number } = {},
+): Promise<NestBottomUpResult> {
+  const basePad = opts.pad ?? DEFAULT_NEST_PAD
+  const aspectRatio = opts.aspectRatio ?? 1
+  const baseNodeNode = opts.baseNodeNode ?? 48
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const parentOf = new Map<string, string | undefined>()
+  let boundaryId: string | undefined
+  for (const n of nodes) {
+    if (!isPartNode(n)) continue
+    parentOf.set(n.id, n.parentId)
+    if (isBoundary(n)) boundaryId = n.id
+  }
+
+  const nodePatch: Record<string, Partial<VisualizationNode>> = {}
+  const groups = groupChildrenByParent(nodes)
+  const processedParents = parentsOrderedDeepestFirst(nodes)
+  const scopePlans: ScopePlan[] = []
+  const maxDepth = maxNestDepth(nodes)
+
+  for (const parentId of processedParents) {
+    if (parentId === boundaryId) continue
+
+    const childIds = groups.get(parentId) || []
+    if (!childIds.length) continue
+    const parentNode = byId.get(parentId)
+    if (!parentNode) continue
+
+    const plan = planScope(parentId, nodes, edges, levelWeights, {
+      isBoundary: false,
+      depth: nestDepth(parentId, parentOf, boundaryId),
+      maxDepth,
+    })
+    scopePlans.push(plan)
+
+    const pad = Math.max(basePad, plan.corridorPad)
+    const nodeNode = Math.round(baseNodeNode * plan.spacingScale)
+    const edgeLen = Math.round(120 * plan.spacingScale)
+
+    const childBoxes = childIds.map((id) => {
+      const n = byId.get(id)!
+      const prev = nodePatch[id]
+      const base = readSize(n)
+      return {
+        id,
+        w: prev?.width && prev.width > 0 ? prev.width : base.width,
+        h: prev?.height && prev.height > 0 ? prev.height : base.height,
+      }
+    })
+
+    const childSet = new Set(childIds)
+    const scopeEdges: { id: string; sources: string[]; targets: string[] }[] =
+      []
+    for (const e of edges) {
+      if (!childSet.has(e.source) || !childSet.has(e.target)) continue
+      if (e.source === e.target) continue
+      const sp = portIdFromHandle(e.sourceHandle)
+      const tp = portIdFromHandle(e.targetHandle)
+      if (!sp || !tp) continue
+      scopeEdges.push({
+        id: e.id,
+        sources: [e.source],
+        targets: [e.target],
+      })
+    }
+
+    const graph: ElkNode = {
+      id: `nest:${parentId}`,
+      layoutOptions: nestAlgoOptions(
+        plan.algorithm,
+        pad,
+        nodeNode,
+        edgeLen,
+        plan.useFixedSidePorts,
+        aspectRatio,
+      ),
+      children: childBoxes.map((box) => ({
+        id: box.id,
+        width: box.w,
+        height: box.h,
+      })),
+      edges: scopeEdges,
+    }
+
+    let laidOut: ElkNode
+    try {
+      laidOut = await nestElk.layout(graph)
+    } catch {
+      // Fallback: deterministic row pack if ELK fails for this scope.
+      let x = pad
+      let maxX = pad
+      let maxY = pad
+      for (const box of childBoxes) {
+        nodePatch[box.id] = {
+          artifactId: box.id,
+          x,
+          y: pad,
+          width: box.w,
+          height: box.h,
+        }
+        maxX = Math.max(maxX, x + box.w)
+        maxY = Math.max(maxY, pad + box.h)
+        x += box.w + CHILD_GAP
+      }
+      const portSized = sizePartForPorts(
+        labelOf(parentNode),
+        portsOf(parentNode).map((p) => ({ name: p.name, side: p.side })),
+      )
+      const parentPrev = nodePatch[parentId]
+      const parentBase = readSize(parentNode)
+      nodePatch[parentId] = {
+        artifactId: parentId,
+        x: parentPrev?.x ?? parentNode.position.x,
+        y: parentPrev?.y ?? parentNode.position.y,
+        width: Math.max(
+          maxX + pad,
+          portSized.width,
+          parentPrev?.width ?? 0,
+          parentBase.width,
+        ),
+        height: Math.max(
+          maxY + pad,
+          portSized.height,
+          parentPrev?.height ?? 0,
+          parentBase.height,
+        ),
+      }
+      continue
+    }
+
+    let maxX = pad
+    let maxY = pad
+    for (const child of laidOut.children || []) {
+      const box = childBoxes.find((b) => b.id === child.id)
+      if (!box) continue
+      const x = child.x ?? pad
+      const y = child.y ?? pad
+      nodePatch[box.id] = {
+        artifactId: box.id,
+        x,
+        y,
+        width: box.w,
+        height: box.h,
+      }
+      maxX = Math.max(maxX, x + box.w)
+      maxY = Math.max(maxY, y + box.h)
+    }
+
+    const contentW = maxX + pad
+    const contentH = maxY + pad
+    const portSized = sizePartForPorts(
+      labelOf(parentNode),
+      portsOf(parentNode).map((p) => ({ name: p.name, side: p.side })),
+    )
+    const parentPrev = nodePatch[parentId]
+    const parentBase = readSize(parentNode)
+    nodePatch[parentId] = {
+      artifactId: parentId,
+      x: parentPrev?.x ?? parentNode.position.x,
+      y: parentPrev?.y ?? parentNode.position.y,
+      width: Math.max(
+        contentW,
+        portSized.width,
+        parentPrev?.width ?? 0,
+        parentBase.width,
+      ),
+      height: Math.max(
+        contentH,
+        portSized.height,
+        parentPrev?.height ?? 0,
+        parentBase.height,
+      ),
+    }
+  }
+
+  return { nodePatch, processedParents, scopePlans }
 }
 
 /** Apply nest patch sizes/positions onto RF nodes for the next ELK pass. */

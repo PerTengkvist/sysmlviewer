@@ -2,8 +2,10 @@
  * Named AutoLayout placement pipelines (Advanced presets + Simple mapping).
  */
 import {
+  clampLevelWeights,
   DEFAULT_AUTO_LAYOUT_DIRECTIVES,
   type AutoLayoutDirectives,
+  type LevelWeights,
   type PlacementAlgorithm,
   type PortPlacementMode,
   type SpacingPreset,
@@ -14,6 +16,9 @@ export const PIPELINE_IDS = [
   'compact-pack',
   'flow-layered',
   'organic-force',
+  'custom',
+  'clustered',
+  'favour-grid',
 ] as const
 
 export type PlacementPipelineId = (typeof PIPELINE_IDS)[number]
@@ -41,6 +46,8 @@ export type ResolvedPlacementPipeline = {
   portPlacement: PortPlacementMode
   /** Ordered post/primary steps for UI + runner. */
   steps: PlacementPipelineStep[]
+  /** Present when id === 'custom' (clamped level weights). */
+  customWeights?: LevelWeights
 }
 
 const ELK_BY_PIPELINE: Record<PlacementPipelineId, PipelineElkAlgorithm> = {
@@ -48,12 +55,25 @@ const ELK_BY_PIPELINE: Record<PlacementPipelineId, PipelineElkAlgorithm> = {
   'organic-force': 'force',
   'compact-pack': 'rectpacking',
   'flow-layered': 'layered',
+  // Fallback until layoutStructureWithElk applies adaptive root choice.
+  custom: 'stress',
+  // Composition pipelines do not use ELK for primary placement.
+  clustered: 'rectpacking',
+  'favour-grid': 'rectpacking',
+}
+
+function isCompositionPipeline(id: PlacementPipelineId): boolean {
+  return id === 'clustered' || id === 'favour-grid'
 }
 
 function stepsFor(
   id: PlacementPipelineId,
   portPlacement: PortPlacementMode,
 ): PlacementPipelineStep[] {
+  if (isCompositionPipeline(id)) {
+    // Composition owns H/V; ports still follow portPlacement after place.
+    return ['nest-layout', 'nest-fit', 'non-overlap', 'fit-boundary']
+  }
   const steps: PlacementPipelineStep[] = [
     'nest-layout',
     'primary-layout',
@@ -64,7 +84,8 @@ function stepsFor(
     portPlacement === 'inputsLeftOutputsRight' &&
     (id === 'connection-aware' ||
       id === 'organic-force' ||
-      id === 'flow-layered')
+      id === 'flow-layered' ||
+      id === 'custom')
   if (flow) steps.push('flow-nudge')
   steps.push('fit-boundary')
   return steps
@@ -73,7 +94,10 @@ function stepsFor(
 function pipelineFromSimpleAlgorithm(
   algorithm: PlacementAlgorithm,
 ): PlacementPipelineId {
-  return algorithm === 'layered' ? 'flow-layered' : 'connection-aware'
+  if (algorithm === 'layered') return 'flow-layered'
+  if (algorithm === 'clustered') return 'clustered'
+  if (algorithm === 'favour-grid') return 'favour-grid'
+  return 'connection-aware'
 }
 
 export function isPlacementPipelineId(raw: string): raw is PlacementPipelineId {
@@ -96,6 +120,8 @@ export function resolvePlacementPipeline(
   } else {
     id = pipelineFromSimpleAlgorithm(d.algorithm)
   }
+  const customWeights =
+    id === 'custom' ? clampLevelWeights(d.customWeights) : undefined
   return {
     id,
     elkAlgorithm: ELK_BY_PIPELINE[id],
@@ -103,6 +129,7 @@ export function resolvePlacementPipeline(
     aspectRatio: d.aspectRatio,
     portPlacement: d.portPlacement,
     steps: stepsFor(id, d.portPlacement),
+    customWeights,
   }
 }
 
@@ -116,5 +143,11 @@ export function pipelineLabel(id: PlacementPipelineId): string {
       return 'Flow layered (L→R)'
     case 'organic-force':
       return 'Organic force'
+    case 'custom':
+      return 'Custom (adaptive)'
+    case 'clustered':
+      return 'Clustered (onion-leaning)'
+    case 'favour-grid':
+      return 'Favour grid (matrix-leaning)'
   }
 }

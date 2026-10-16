@@ -21,6 +21,7 @@ import type { PartNodeData, PartPort } from '../PartNode'
 import { sizePartForPorts } from './structureAutoLayout'
 import { clampPortOffset } from './portPlacement'
 import {
+  clampLevelWeights,
   DEFAULT_AUTO_LAYOUT_DIRECTIVES,
   inferPortFlowRole,
   spacingToDesiredEdgeLength,
@@ -34,10 +35,16 @@ import {
   separateAbsoluteOverlaps,
   type ParentOfMap,
 } from './flowPlacement'
-import { resolvePlacementPipeline } from './placementPipelines'
+import { planScope } from './adaptiveLayoutPolicy'
+import { layoutBalancedBottomUp } from './balancedLayout'
+import {
+  resolvePlacementPipeline,
+  type PipelineElkAlgorithm,
+} from './placementPipelines'
 import {
   applyNestPatchToNodes,
   layoutNestBottomUp,
+  layoutNestBottomUpAdaptive,
 } from './nestBottomUp'
 import { simplifyOrtho } from '../edgeRouting'
 import {
@@ -71,6 +78,12 @@ export type ElkGraphBuildOptions = {
   layoutNodes?: boolean
   /** AutoLayout dialog directives (ignored when layoutNodes is false). */
   directives?: AutoLayoutDirectives
+  /** Override ELK algorithm (custom adaptive root choice). */
+  elkAlgorithmOverride?: PipelineElkAlgorithm
+  /** Multiply node/edge spacing (custom weights). Default 1. */
+  spacingScale?: number
+  /** Force FIXED_SIDE port constraints on the root graph. */
+  fixedSidePorts?: boolean
 }
 
 export type ElkStructureLayoutResult = {
@@ -420,13 +433,24 @@ function makeElkPort(port: PartPort, side: PortSide): ElkPort {
 function layoutRootOptions(
   layoutNodes: boolean,
   directives: AutoLayoutDirectives = DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+  overrides: {
+    elkAlgorithmOverride?: PipelineElkAlgorithm
+    spacingScale?: number
+    fixedSidePorts?: boolean
+  } = {},
 ): Record<string, string> {
+  const scale = overrides.spacingScale ?? 1
   const pad = `[top=${PAD},left=${PAD},bottom=${PAD},right=${PAD}]`
-  const nodeNode = String(spacingToNodeNode(directives.spacing))
-  const edgeLen = String(spacingToDesiredEdgeLength(directives.spacing))
+  const nodeNode = String(
+    Math.round(spacingToNodeNode(directives.spacing) * scale),
+  )
+  const edgeLen = String(
+    Math.round(spacingToDesiredEdgeLength(directives.spacing) * scale),
+  )
   if (layoutNodes) {
     const resolved = resolvePlacementPipeline(directives)
-    const algo = resolved.elkAlgorithm
+    const algo = overrides.elkAlgorithmOverride ?? resolved.elkAlgorithm
+    const fixedSide = overrides.fixedSidePorts === true
     if (algo === 'layered') {
       return {
         'elk.algorithm': 'layered',
@@ -447,6 +471,9 @@ function layoutRootOptions(
         'elk.padding': pad,
         'elk.spacing.nodeNode': nodeNode,
         'org.eclipse.elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+        ...(fixedSide
+          ? { 'org.eclipse.elk.portConstraints': 'FIXED_SIDE' }
+          : {}),
       }
     }
     if (algo === 'rectpacking') {
@@ -466,6 +493,9 @@ function layoutRootOptions(
       'elk.spacing.nodeNode': nodeNode,
       'elk.stress.desiredEdgeLength': edgeLen,
       'org.eclipse.elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+      ...(fixedSide
+        ? { 'org.eclipse.elk.portConstraints': 'FIXED_SIDE' }
+        : {}),
     }
   }
   // Fixed-node redraw: layered orthogonal for bend points.
@@ -496,6 +526,7 @@ export function buildElkGraph(
   const directives = options.directives || DEFAULT_AUTO_LAYOUT_DIRECTIVES
   const resolved = resolvePlacementPipeline(directives)
   void options.includeEdges
+  void resolved
 
   const byId = new Map(nodes.map((n) => [n.id, n]))
   const boundary = nodes.find(isBoundary)
@@ -612,7 +643,13 @@ export function buildElkGraph(
   }
 
   const childNodes = children.map(toElkChild)
-  const rootOpts = layoutRootOptions(layoutNodes, directives)
+  const rootOpts = layoutRootOptions(layoutNodes, directives, {
+    elkAlgorithmOverride: options.elkAlgorithmOverride,
+    spacingScale: options.spacingScale,
+    fixedSidePorts:
+      options.fixedSidePorts === true ||
+      options.elkAlgorithmOverride === 'layered',
+  })
 
   if (boundary) {
     const bPorts = portsOf(boundary).map((p) =>
@@ -658,84 +695,151 @@ export async function layoutStructureWithElk(
   const layoutNodes = options.layoutNodes !== false
   const directives = options.directives || DEFAULT_AUTO_LAYOUT_DIRECTIVES
   const resolved = resolvePlacementPipeline(directives)
+  const isCustom = resolved.id === 'custom'
+  const isComposition =
+    resolved.id === 'clustered' || resolved.id === 'favour-grid'
+  const compositionVariant =
+    resolved.id === 'favour-grid' ? 'favour-grid' : 'clustered'
+  const customWeights = isCustom
+    ? (resolved.customWeights ?? clampLevelWeights(directives.customWeights))
+    : undefined
+
+  let rootAlgoOverride = options.elkAlgorithmOverride
+  let rootSpacingScale = options.spacingScale
+  let rootFixedSide: boolean | undefined
+
+  if (isCustom && customWeights && layoutNodes) {
+    const boundary = nodes.find(isBoundary)
+    if (boundary) {
+      const rootPlan = planScope(boundary.id, nodes, edges, customWeights, {
+        isBoundary: true,
+        depth: 0,
+      })
+      rootAlgoOverride = rootAlgoOverride ?? rootPlan.algorithm
+      rootSpacingScale = rootSpacingScale ?? rootPlan.spacingScale
+      rootFixedSide = rootPlan.useFixedSidePorts
+    }
+  }
 
   // Bottom-up nest: place nested children and grow parents before top-level ELK.
   let workingNodes = nodes
   let nestPatch: Record<string, Partial<VisualizationNode>> = {}
   if (layoutNodes && resolved.steps.includes('nest-layout')) {
-    const nest = layoutNestBottomUp(nodes, edges, { pad: 24 })
-    nestPatch = nest.nodePatch
-    workingNodes = applyNestPatchToNodes(nodes, nestPatch)
+    if (isComposition) {
+      const nest = layoutBalancedBottomUp(nodes, edges, {
+        spacing: directives.spacing,
+        aspectRatio: directives.aspectRatio || 1,
+        variant: compositionVariant,
+      })
+      nestPatch = nest.nodePatch
+      workingNodes = applyNestPatchToNodes(nodes, nestPatch)
+    } else if (isCustom && customWeights) {
+      const nest = await layoutNestBottomUpAdaptive(nodes, edges, customWeights, {
+        pad: 24,
+        aspectRatio: directives.aspectRatio || 1,
+        baseNodeNode: spacingToNodeNode(directives.spacing) * 0.5,
+      })
+      nestPatch = nest.nodePatch
+      workingNodes = applyNestPatchToNodes(nodes, nestPatch)
+    } else {
+      const nest = layoutNestBottomUp(nodes, edges, { pad: 24 })
+      nestPatch = nest.nodePatch
+      workingNodes = applyNestPatchToNodes(nodes, nestPatch)
+    }
   }
 
-  const graph = buildElkGraph(workingNodes, edges, {
-    includeEdges,
-    layoutNodes,
-    directives,
-  })
-  const laidOut = await elk.layout(graph)
-
+  // Composition owns part placement (no ELK). Redraw / other pipelines still use ELK.
+  const skipElkPlacement = isComposition && layoutNodes
   const byElk = new Map<string, ElkNode>()
-  collectLaidOutNodes(laidOut, byElk)
+  let laidOut: ElkNode | null = null
+  if (!skipElkPlacement) {
+    const graph = buildElkGraph(workingNodes, edges, {
+      includeEdges,
+      layoutNodes,
+      directives: isComposition
+        ? { ...directives, algorithm: 'stress', pipeline: 'connection-aware' }
+        : directives,
+      elkAlgorithmOverride: rootAlgoOverride,
+      spacingScale: rootSpacingScale,
+      fixedSidePorts: rootFixedSide,
+    })
+    laidOut = await elk.layout(graph)
+    collectLaidOutNodes(laidOut, byElk)
+  }
 
   const byId = new Map(workingNodes.map((n) => [n.id, n]))
   const nodePatch: Record<string, Partial<VisualizationNode>> = {}
 
-  for (const node of workingNodes) {
-    if (node.type && node.type !== 'part') continue
-    const en = byElk.get(node.id)
-    if (!en) continue
-
-    const fallback = readSize(node)
-    const nestSz = nestPatch[node.id]
-    const width = Math.max(
-      en.width && en.width > 0 ? en.width : 0,
-      nestSz?.width ?? 0,
-      fallback.width,
-    )
-    const height = Math.max(
-      en.height && en.height > 0 ? en.height : 0,
-      nestSz?.height ?? 0,
-      fallback.height,
-    )
-
-    if (isBoundary(node)) {
+  if (skipElkPlacement) {
+    for (const node of workingNodes) {
+      if (node.type && node.type !== 'part') continue
+      const fromNest = nestPatch[node.id]
+      const fallback = readSize(node)
       nodePatch[node.id] = {
         artifactId: node.id,
-        x: node.position.x,
-        y: node.position.y,
-        width,
-        height,
-      }
-    } else if (layoutNodes) {
-      nodePatch[node.id] = {
-        artifactId: node.id,
-        x: en.x ?? node.position.x,
-        y: en.y ?? node.position.y,
-        width,
-        height,
-      }
-    } else {
-      nodePatch[node.id] = {
-        artifactId: node.id,
-        x: node.position.x,
-        y: node.position.y,
-        width,
-        height,
+        x: fromNest?.x ?? node.position.x,
+        y: fromNest?.y ?? node.position.y,
+        width: fromNest?.width ?? fallback.width,
+        height: fromNest?.height ?? fallback.height,
       }
     }
+  } else {
+    for (const node of workingNodes) {
+      if (node.type && node.type !== 'part') continue
+      const en = byElk.get(node.id)
+      if (!en) continue
 
-    const w = width
-    const h = height
-    // Only adopt ELK port sides after AutoLayout. On redraw, ELK interactive
-    // often drifts ports to left/right and portFromElk would overwrite bottom/top.
-    if (layoutNodes) {
-      for (const ep of en.ports || []) {
-        const placed = portFromElk(ep, w, h)
-        nodePatch[ep.id] = {
-          artifactId: ep.id,
-          side: placed.side,
-          offset: placed.offset,
+      const fallback = readSize(node)
+      const nestSz = nestPatch[node.id]
+      const width = Math.max(
+        en.width && en.width > 0 ? en.width : 0,
+        nestSz?.width ?? 0,
+        fallback.width,
+      )
+      const height = Math.max(
+        en.height && en.height > 0 ? en.height : 0,
+        nestSz?.height ?? 0,
+        fallback.height,
+      )
+
+      if (isBoundary(node)) {
+        nodePatch[node.id] = {
+          artifactId: node.id,
+          x: node.position.x,
+          y: node.position.y,
+          width,
+          height,
+        }
+      } else if (layoutNodes) {
+        nodePatch[node.id] = {
+          artifactId: node.id,
+          x: en.x ?? node.position.x,
+          y: en.y ?? node.position.y,
+          width,
+          height,
+        }
+      } else {
+        nodePatch[node.id] = {
+          artifactId: node.id,
+          x: node.position.x,
+          y: node.position.y,
+          width,
+          height,
+        }
+      }
+
+      const w = width
+      const h = height
+      // Only adopt ELK port sides after AutoLayout. On redraw, ELK interactive
+      // often drifts ports to left/right and portFromElk would overwrite bottom/top.
+      if (layoutNodes) {
+        for (const ep of en.ports || []) {
+          const placed = portFromElk(ep, w, h)
+          nodePatch[ep.id] = {
+            artifactId: ep.id,
+            side: placed.side,
+            offset: placed.offset,
+          }
         }
       }
     }
@@ -973,7 +1077,7 @@ export async function layoutStructureWithElk(
   }
 
   const byEdge = new Map<string, ElkExtendedEdge>()
-  collectLaidOutEdges(laidOut, byEdge)
+  if (laidOut) collectLaidOutEdges(laidOut, byEdge)
 
   const routeBounds: Rect = boundaryId
     ? {

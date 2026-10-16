@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react'
 import {
+  clampLevelWeights,
   DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+  LAYOUT_LEVELS,
+  LAYOUT_WEIGHT_KEYS,
+  layoutLevelLabel,
+  layoutWeightLabel,
+  SUGGESTED_LEVEL_WEIGHTS,
   type AutoLayoutDirectives,
   type AutoLayoutUiMode,
+  type LayoutLevel,
+  type LayoutWeightKey,
   type PlacementAlgorithm,
   type PortPlacementMode,
   type SpacingPreset,
@@ -47,16 +55,41 @@ export function AutoLayoutDialog({
 
   const uiMode: AutoLayoutUiMode = directives.mode || 'simple'
   const resolved = resolvePlacementPipeline(directives)
+  const isCustom = uiMode === 'advanced' && resolved.id === 'custom'
+  const customWeights = clampLevelWeights(directives.customWeights)
+  const isCompositionAlgo =
+    directives.algorithm === 'clustered' ||
+    directives.algorithm === 'favour-grid' ||
+    resolved.id === 'clustered' ||
+    resolved.id === 'favour-grid'
   const showAspect =
     uiMode === 'simple'
-      ? directives.algorithm === 'stress'
-      : resolved.elkAlgorithm === 'stress' ||
-        resolved.elkAlgorithm === 'force'
+      ? directives.algorithm === 'stress' || isCompositionAlgo
+      : isCustom ||
+        resolved.elkAlgorithm === 'stress' ||
+        resolved.elkAlgorithm === 'force' ||
+        isCompositionAlgo
+
+  const patchWeight = (
+    level: LayoutLevel,
+    key: LayoutWeightKey,
+    value: number,
+  ) => {
+    patch({
+      customWeights: {
+        ...customWeights,
+        [level]: {
+          ...customWeights[level],
+          [key]: value,
+        },
+      },
+    })
+  }
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onCancel}>
       <div
-        className="modal-dialog"
+        className="modal-dialog modal-autolayout"
         role="dialog"
         aria-label="AutoLayout directives"
         onClick={(e) => e.stopPropagation()}
@@ -127,6 +160,12 @@ export function AutoLayoutDialog({
                     })
                   }
                 >
+                  <option value="favour-grid">
+                    Favour grid (matrix at N≥4)
+                  </option>
+                  <option value="clustered">
+                    Clustered (onion-leaning at N≥4)
+                  </option>
                   <option value="stress">
                     Stress (2D, hubs toward center)
                   </option>
@@ -141,9 +180,9 @@ export function AutoLayoutDialog({
                     patch({ spacing: e.target.value as SpacingPreset })
                   }
                 >
-                  <option value="compact">Compact</option>
-                  <option value="normal">Normal</option>
-                  <option value="spacious">Spacious</option>
+                  <option value="compact">Compact (15%)</option>
+                  <option value="normal">Normal (20%)</option>
+                  <option value="spacious">Spacious (25%)</option>
                 </select>
               </label>
               <label className="settings-row">
@@ -161,8 +200,11 @@ export function AutoLayoutDialog({
                 </select>
               </label>
               <p className="muted settings-note">
-                Runs pipeline “{pipelineLabel(resolved.id)}” with nest-fit and
-                hard non-overlap. Routing is always orthogonal after placement.
+                {directives.algorithm === 'favour-grid'
+                  ? 'Favour grid: 1→center+25%, 2→stack, 3→onion, 4+→matrix (orphans fill grid). Combines with port mode above.'
+                  : directives.algorithm === 'clustered'
+                    ? 'Clustered: same as favour-grid for N≤3; at N≥4 prefers onion around hubs. Combines with port mode above.'
+                    : `Runs pipeline “${pipelineLabel(resolved.id)}” with nest-fit and hard non-overlap. Routing is always orthogonal after placement.`}
               </p>
             </fieldset>
           ) : (
@@ -216,6 +258,63 @@ export function AutoLayoutDialog({
                 Steps: {resolved.steps.join(' → ')}. Routing is always
                 orthogonal (angular) around parts after placement.
               </p>
+            </fieldset>
+          )}
+
+          {isCustom && (
+            <fieldset className="settings-fieldset">
+              <legend>Custom level weights</legend>
+              <p className="muted settings-note">
+                Per nest level, algorithm is chosen from graph metrics and
+                these weights (0–1). Leaf = deepest nests, Mid = intermediate,
+                Root = boundary peers.
+              </p>
+              <div className="settings-row" style={{ justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    patch({ customWeights: SUGGESTED_LEVEL_WEIGHTS })
+                  }
+                >
+                  Reset to suggested
+                </button>
+              </div>
+              {LAYOUT_LEVELS.map((level) => (
+                <div key={level} className="custom-weight-level">
+                  <h3 className="custom-weight-level-title">
+                    {layoutLevelLabel(level)}
+                    <span className="muted">
+                      {' '}
+                      (suggested connection{' '}
+                      {SUGGESTED_LEVEL_WEIGHTS[level].connectionAwareness.toFixed(
+                        2,
+                      )}
+                      )
+                    </span>
+                  </h3>
+                  {LAYOUT_WEIGHT_KEYS.map((key) => (
+                    <label key={key} className="settings-row custom-weight-row">
+                      <span>
+                        {layoutWeightLabel(key)}{' '}
+                        <span className="muted">
+                          {customWeights[level][key].toFixed(2)}
+                        </span>
+                      </span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={customWeights[level][key]}
+                        onChange={(e) =>
+                          patchWeight(level, key, Number(e.target.value))
+                        }
+                        aria-label={`${layoutLevelLabel(level)} ${layoutWeightLabel(key)}`}
+                      />
+                    </label>
+                  ))}
+                </div>
+              ))}
             </fieldset>
           )}
         </div>

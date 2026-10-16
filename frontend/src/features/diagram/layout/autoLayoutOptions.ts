@@ -6,12 +6,122 @@ import type { PlacementPipelineId } from './placementPipelines'
 
 export type PortPlacementMode = 'inputsLeftOutputsRight' | 'optimized'
 
-/** How parts are arranged from connections (Simple mode). */
-export type PlacementAlgorithm = 'stress' | 'layered'
+/** How parts are arranged (Simple mode). */
+export type PlacementAlgorithm =
+  | 'stress'
+  | 'layered'
+  | 'clustered'
+  | 'favour-grid'
 
 export type SpacingPreset = 'compact' | 'normal' | 'spacious'
 
 export type AutoLayoutUiMode = 'simple' | 'advanced'
+
+/** Nest / hierarchy band for adaptive custom pipeline. */
+export type LayoutLevel = 'leaf' | 'mid' | 'root'
+
+/** Aspects the custom pipeline weights (each clamped 0..1). */
+export type LayoutWeightKey =
+  | 'connectionAwareness'
+  | 'flowDirection'
+  | 'compactness'
+  | 'portClarity'
+  | 'bendMinimization'
+
+export type LayoutWeights = Record<LayoutWeightKey, number>
+
+/** Per-level weights for the Advanced "custom" pipeline. */
+export type LevelWeights = Record<LayoutLevel, LayoutWeights>
+
+export const LAYOUT_WEIGHT_KEYS: LayoutWeightKey[] = [
+  'connectionAwareness',
+  'flowDirection',
+  'compactness',
+  'portClarity',
+  'bendMinimization',
+]
+
+export const LAYOUT_LEVELS: LayoutLevel[] = ['leaf', 'mid', 'root']
+
+/** Suggested defaults per nest level (custom pipeline). */
+export const SUGGESTED_LEVEL_WEIGHTS: LevelWeights = {
+  leaf: {
+    connectionAwareness: 0.35,
+    flowDirection: 0.55,
+    compactness: 0.25,
+    portClarity: 0.9,
+    bendMinimization: 0.8,
+  },
+  mid: {
+    connectionAwareness: 0.7,
+    flowDirection: 0.5,
+    compactness: 0.35,
+    portClarity: 0.6,
+    bendMinimization: 0.55,
+  },
+  root: {
+    connectionAwareness: 0.85,
+    flowDirection: 0.45,
+    compactness: 0.3,
+    portClarity: 0.5,
+    bendMinimization: 0.5,
+  },
+}
+
+export function clampWeight(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(1, Math.max(0, value))
+}
+
+export function clampLayoutWeights(
+  weights: Partial<LayoutWeights> | undefined,
+  fallback: LayoutWeights,
+): LayoutWeights {
+  const out = { ...fallback }
+  if (!weights) return out
+  for (const key of LAYOUT_WEIGHT_KEYS) {
+    if (typeof weights[key] === 'number') {
+      out[key] = clampWeight(weights[key] as number)
+    }
+  }
+  return out
+}
+
+export function clampLevelWeights(
+  weights: Partial<LevelWeights> | undefined,
+): LevelWeights {
+  return {
+    leaf: clampLayoutWeights(weights?.leaf, SUGGESTED_LEVEL_WEIGHTS.leaf),
+    mid: clampLayoutWeights(weights?.mid, SUGGESTED_LEVEL_WEIGHTS.mid),
+    root: clampLayoutWeights(weights?.root, SUGGESTED_LEVEL_WEIGHTS.root),
+  }
+}
+
+export function layoutWeightLabel(key: LayoutWeightKey): string {
+  switch (key) {
+    case 'connectionAwareness':
+      return 'Connection awareness'
+    case 'flowDirection':
+      return 'Flow direction (L→R)'
+    case 'compactness':
+      return 'Compactness'
+    case 'portClarity':
+      return 'Port clarity'
+    case 'bendMinimization':
+      return 'Bend minimization'
+  }
+}
+
+export function layoutLevelLabel(level: LayoutLevel): string {
+  switch (level) {
+    case 'leaf':
+      return 'Leaf'
+    case 'mid':
+      return 'Mid'
+    case 'root':
+      return 'Root'
+  }
+}
 
 export type AutoLayoutDirectives = {
   /** Simple ≈ legacy controls; Advanced = named pipeline preset. */
@@ -20,22 +130,25 @@ export type AutoLayoutDirectives = {
   pipeline?: PlacementPipelineId
   /** Port sides before / after part placement. */
   portPlacement: PortPlacementMode
-  /** Simple: stress ≈ connection-aware; layered ≈ flow-layered. */
+  /** Simple: stress / layered / clustered / favour-grid. */
   algorithm: PlacementAlgorithm
   /** Distance between connected parts (centers). */
   spacing: SpacingPreset
   /** Target width/height of the diagram (stress / force). */
   aspectRatio: number
+  /** Advanced custom pipeline: per-level aspect weights (0..1). */
+  customWeights?: LevelWeights
 }
 
 export const DEFAULT_AUTO_LAYOUT_DIRECTIVES: AutoLayoutDirectives = {
   mode: 'simple',
-  pipeline: 'connection-aware',
-  // Default to IO sides + flow nudge so Out→In pairs sit left→right.
+  pipeline: 'favour-grid',
+  // Default favour-grid composition + IO sides; ports combine with placement.
   portPlacement: 'inputsLeftOutputsRight',
-  algorithm: 'stress',
+  algorithm: 'favour-grid',
   spacing: 'normal',
   aspectRatio: 1,
+  customWeights: SUGGESTED_LEVEL_WEIGHTS,
 }
 
 export function spacingToDesiredEdgeLength(spacing: SpacingPreset): number {

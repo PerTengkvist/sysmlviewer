@@ -94,12 +94,57 @@ describe('resolvePlacementPipeline', () => {
     expect(r.id).toBe('connection-aware')
   })
 
-  it('exposes all four pipeline ids', () => {
+  it('exposes all pipeline ids including composition variants', () => {
     expect(PIPELINE_IDS).toEqual([
       'connection-aware',
       'compact-pack',
       'flow-layered',
       'organic-force',
+      'custom',
+      'clustered',
+      'favour-grid',
     ] satisfies PlacementPipelineId[])
+  })
+
+  it('maps simple composition algorithms and skips primary-layout / flow-nudge', () => {
+    for (const algorithm of ['clustered', 'favour-grid'] as const) {
+      const r = resolvePlacementPipeline({
+        ...DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+        mode: 'simple',
+        algorithm,
+        portPlacement: 'inputsLeftOutputsRight',
+      })
+      expect(r.id).toBe(algorithm)
+      expect(r.steps).toContain('nest-layout')
+      expect(r.steps).not.toContain('primary-layout')
+      expect(r.steps).not.toContain('flow-nudge')
+      expect(r.steps).toContain('fit-boundary')
+    }
+  })
+
+  it('resolves custom with clamped weights and flow-nudge for IO ports', () => {
+    const r = resolvePlacementPipeline({
+      ...DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+      mode: 'advanced',
+      pipeline: 'custom',
+      portPlacement: 'inputsLeftOutputsRight',
+      customWeights: {
+        leaf: {
+          connectionAwareness: 2,
+          flowDirection: -1,
+          compactness: 0.5,
+          portClarity: 0.5,
+          bendMinimization: 0.5,
+        },
+        mid: DEFAULT_AUTO_LAYOUT_DIRECTIVES.customWeights!.mid,
+        root: DEFAULT_AUTO_LAYOUT_DIRECTIVES.customWeights!.root,
+      },
+    })
+    expect(r.id).toBe('custom')
+    expect(r.elkAlgorithm).toBe('stress')
+    expect(r.customWeights?.leaf.connectionAwareness).toBe(1)
+    expect(r.customWeights?.leaf.flowDirection).toBe(0)
+    expect(r.steps).toContain('flow-nudge')
+    expect(r.steps).toContain('nest-layout')
   })
 })
