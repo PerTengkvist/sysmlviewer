@@ -1615,8 +1615,43 @@ body.port-dragging * {
 }
 
 .part-node-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 1.5rem;
+}
+
+.part-node-body-icon-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.part-node-body-icon-box {
+  height: 50%;
+  aspect-ratio: 1;
+  max-width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.part-node-body-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.part-node-body .part-attr-list {
+  position: relative;
+  z-index: 1;
 }
 
 .port-label {

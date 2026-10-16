@@ -28,15 +28,35 @@ import {
   PORT_BOUNDARY_OFFSET_MIN,
   PORT_TB_INSET,
 } from './layout/portPlacement'
-import { resolvePartIcon } from './partIcon'
+import {
+  parsePartIconRef,
+  partSvgIconUrl,
+  resolveLucideIcon,
+} from './partIcon'
 
-/** Header Lucide glyph from `_icon` (testable without React Flow). */
+/** Header icon from `_icon` — Lucide component or SVG library img. */
 export function PartHeaderIcon({
   iconName,
 }: {
   iconName?: string | null
 }) {
-  const Icon = resolvePartIcon(iconName)
+  const ref = parsePartIconRef(iconName)
+  if (!ref) return null
+  if (ref.kind === 'svg') {
+    return (
+      <img
+        className="part-node-icon"
+        src={partSvgIconUrl(ref.path)}
+        alt=""
+        width={16}
+        height={16}
+        aria-hidden
+        data-testid="part-icon"
+        data-icon-library={ref.library}
+      />
+    )
+  }
+  const Icon = resolveLucideIcon(ref.name)
   if (!Icon) return null
   return (
     <Icon
@@ -44,7 +64,52 @@ export function PartHeaderIcon({
       size={16}
       aria-hidden
       data-testid="part-icon"
+      data-icon-library="lucide"
     />
+  )
+}
+
+/**
+ * Body icon from `_icon_body` — centered, height = 50% of body, aspect preserved.
+ */
+export function PartBodyIcon({
+  iconName,
+}: {
+  iconName?: string | null
+}) {
+  const ref = parsePartIconRef(iconName)
+  if (!ref) return null
+  if (ref.kind === 'svg') {
+    return (
+      <div className="part-node-body-icon-wrap" data-testid="part-body-icon-wrap">
+        <div className="part-node-body-icon-box">
+          <img
+            className="part-node-body-icon"
+            src={partSvgIconUrl(ref.path)}
+            alt=""
+            aria-hidden
+            data-testid="part-body-icon"
+            data-icon-library={ref.library}
+          />
+        </div>
+      </div>
+    )
+  }
+  const Icon = resolveLucideIcon(ref.name)
+  if (!Icon) return null
+  return (
+    <div className="part-node-body-icon-wrap" data-testid="part-body-icon-wrap">
+      <div className="part-node-body-icon-box">
+        <Icon
+          className="part-node-body-icon"
+          width="100%"
+          height="100%"
+          aria-hidden
+          data-testid="part-body-icon"
+          data-icon-library="lucide"
+        />
+      </div>
+    </div>
   )
 }
 
@@ -77,8 +142,10 @@ export type PartNodeData = {
   /** Show attribute names inside the part */
   showAttributes?: boolean
   attributeNames?: string[]
-  /** Lucide allowlist key from `attribute _icon = "…"` */
+  /** From `attribute _icon` — Lucide name or `iconmind/<name>` / `carbon/<name>` */
   iconName?: string | null
+  /** From `attribute _icon_body` — centered in body at 50% body height */
+  iconBodyName?: string | null
   formatStyle?: ElementStyle | null
   /** Diagram edit lock — no resize or port move. */
   editLocked?: boolean
@@ -391,6 +458,7 @@ export function PartNode({ data, selected }: NodeProps) {
         ) : null}
       </div>
       <div className="part-node-body" style={regions.body}>
+        <PartBodyIcon iconName={d.iconBodyName} />
         {d.showAttributes && d.attributeNames && d.attributeNames.length > 0 && (
           <ul className="part-attr-list">
             {d.attributeNames.map((n) => (

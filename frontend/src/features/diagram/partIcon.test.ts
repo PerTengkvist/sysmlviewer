@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../api'
 import {
-  isAllowedPartIcon,
+  parsePartIconRef,
+  readPartIconBodyName,
   readPartIconName,
+  resolveLucideIcon,
   resolvePartIcon,
   stripIconQuotes,
+  toPascalCaseIcon,
 } from './partIcon'
 
 function el(
@@ -23,25 +26,54 @@ function el(
   }
 }
 
-describe('stripIconQuotes', () => {
-  it('strips double and single quotes', () => {
+describe('stripIconQuotes / toPascalCaseIcon', () => {
+  it('strips quotes and maps kebab to PascalCase', () => {
     expect(stripIconQuotes('"cpu"')).toBe('cpu')
-    expect(stripIconQuotes("'cpu'")).toBe('cpu')
-    expect(stripIconQuotes('cpu')).toBe('cpu')
+    expect(toPascalCaseIcon('circuit-board')).toBe('CircuitBoard')
+    expect(toPascalCaseIcon('cloud')).toBe('Cloud')
   })
 })
 
-describe('isAllowedPartIcon / resolvePartIcon', () => {
-  it('allows known Lucide keys and rejects garbage', () => {
-    expect(isAllowedPartIcon('battery')).toBe(true)
-    expect(isAllowedPartIcon('circuit-board')).toBe(true)
-    expect(isAllowedPartIcon('not-a-real-icon')).toBe(false)
+describe('parsePartIconRef', () => {
+  it('treats bare names as Lucide', () => {
+    expect(parsePartIconRef('cloud')).toEqual({ kind: 'lucide', name: 'cloud' })
+    expect(parsePartIconRef('"battery"')).toEqual({
+      kind: 'lucide',
+      name: 'battery',
+    })
   })
 
-  it('resolvePartIcon returns a component for allowlisted names', () => {
-    expect(resolvePartIcon('battery')).not.toBeNull()
-    expect(resolvePartIcon('"cpu"')).not.toBeNull()
+  it('parses iconmind/ and carbon/ as SVG libraries', () => {
+    expect(parsePartIconRef('iconmind/agent')).toEqual({
+      kind: 'svg',
+      library: 'iconmind',
+      name: 'agent',
+      path: 'iconmind/agent',
+    })
+    expect(parsePartIconRef('carbon/user')).toEqual({
+      kind: 'svg',
+      library: 'carbon',
+      name: 'user',
+      path: 'carbon/user',
+    })
+  })
+
+  it('treats lucide/ prefix as explicit Lucide', () => {
+    expect(parsePartIconRef('lucide/cloud')).toEqual({
+      kind: 'lucide',
+      name: 'cloud',
+    })
+  })
+})
+
+describe('resolveLucideIcon / resolvePartIcon', () => {
+  it('resolves any Lucide icon including cloud', () => {
+    expect(resolveLucideIcon('cloud')).not.toBeNull()
+    expect(resolveLucideIcon('battery')).not.toBeNull()
+    expect(resolveLucideIcon('circuit-board')).not.toBeNull()
+    expect(resolvePartIcon('cloud')).not.toBeNull()
     expect(resolvePartIcon('not-a-real-icon')).toBeNull()
+    expect(resolvePartIcon('iconmind/agent')).toBeNull()
     expect(resolvePartIcon(null)).toBeNull()
   })
 })
@@ -62,6 +94,19 @@ describe('readPartIconName', () => {
       }),
     }
     expect(readPartIconName(semantic, 'P::ecu')).toBe('battery')
+  })
+
+  it('preserves iconmind/ paths', () => {
+    const semantic: Record<string, SemanticElement> = {
+      'P::a': el('P::a', { kind: 'part', name: 'a', children: ['P::a::_icon'] }),
+      'P::a::_icon': el('P::a::_icon', {
+        kind: 'attribute',
+        name: '_icon',
+        defaultValue: '"iconmind/agent"',
+        parentId: 'P::a',
+      }),
+    }
+    expect(readPartIconName(semantic, 'P::a')).toBe('iconmind/agent')
   })
 
   it('strips quotes from unquoted and quoted values', () => {
@@ -127,5 +172,36 @@ describe('readPartIconName', () => {
       }),
     }
     expect(readPartIconName(semantic, 'P::ecu')).toBe('battery')
+  })
+})
+
+describe('readPartIconBodyName', () => {
+  it('reads _icon_body including iconmind paths', () => {
+    const semantic: Record<string, SemanticElement> = {
+      'P::box': el('P::box', {
+        kind: 'part',
+        name: 'box',
+        children: ['P::box::_icon_body'],
+      }),
+      'P::box::_icon_body': el('P::box::_icon_body', {
+        kind: 'attribute',
+        name: '_icon_body',
+        defaultValue: '"cloud"',
+        parentId: 'P::box',
+      }),
+    }
+    expect(readPartIconBodyName(semantic, 'P::box')).toBe('cloud')
+
+    const mind: Record<string, SemanticElement> = {
+      'P::a': el('P::a', { kind: 'part', name: 'a', children: ['P::a::_icon_body'] }),
+      'P::a::_icon_body': el('P::a::_icon_body', {
+        kind: 'attribute',
+        name: '_icon_body',
+        defaultValue: '"iconmind/agent"',
+        parentId: 'P::a',
+      }),
+    }
+    expect(readPartIconBodyName(semantic, 'P::missing')).toBeNull()
+    expect(readPartIconBodyName(mind, 'P::a')).toBe('iconmind/agent')
   })
 })

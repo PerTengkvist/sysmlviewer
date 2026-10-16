@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../api'
-import { iconNameForElement } from './iconRef'
+import { iconNameForElement, iconUrl } from './iconRef'
 
 function el(
   partial: Partial<SemanticElement> & Pick<SemanticElement, 'id' | 'kind' | 'name'>,
@@ -52,5 +52,29 @@ describe('iconNameForElement', () => {
         [attr.id]: attr,
       }),
     ).toBeNull()
+  })
+
+  it('accepts iconmind/ paths without carbon allowlist', () => {
+    const actor = el({ id: 'P::Driver', kind: 'actor', name: 'Driver' })
+    const attr = el({
+      id: 'P::Driver::_icon',
+      kind: 'attribute',
+      name: '_icon',
+      parentId: 'P::Driver',
+      defaultValue: '"iconmind/agent"',
+    })
+    expect(
+      iconNameForElement(actor, {
+        [actor.id]: actor,
+        [attr.id]: attr,
+      }),
+    ).toBe('iconmind/agent')
+  })
+})
+
+describe('iconUrl', () => {
+  it('builds default and library-prefixed URLs', () => {
+    expect(iconUrl('user')).toBe('/api/icons/user.svg')
+    expect(iconUrl('iconmind/agent')).toBe('/api/icons/iconmind/agent.svg')
   })
 })

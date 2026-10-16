@@ -34,7 +34,11 @@ import {
   type BoundaryAnchor,
 } from '../../boundaryAnchors'
 import type { PartNodeData } from '../../PartNode'
-import { readPartIconName } from '../../partIcon'
+import {
+  PART_ICON_ATTR_NAMES,
+  readPartIconBodyName,
+  readPartIconName,
+} from '../../partIcon'
 import { sizePartForPorts } from '../../layout/structureAutoLayout'
 import {
   clampPortOffset,
@@ -336,7 +340,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         .map((cid) => semantic[cid])
         .filter((c): c is SemanticElement => !!c && c.kind === 'attribute')
         .map((a) => a.name)
-        .filter((n) => n !== '_icon')
+        .filter((n) => !PART_ICON_ATTR_NAMES.has(n))
     const direct = fromAttrs(part.children || [])
     if (direct.length || !part.typeRef) return direct
     const typeDef = Object.values(semantic).find(
@@ -401,6 +405,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     showAttributes,
     attributeNames: attrNames(id),
     iconName: readPartIconName(semantic, id),
+    iconBodyName: readPartIconBodyName(semantic, id),
     formatStyle: formatFor(id),
     viewMode,
     onOpenView,

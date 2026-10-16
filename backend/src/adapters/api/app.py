@@ -211,17 +211,35 @@ def create_api_app(
             raise HTTPException(status_code=404, detail="Tutorial not found") from exc
         return {"id": tutorial_id, "content": content}
 
-    @app.get("/icons/{icon_name}.svg")
-    def get_icon(icon_name: str):
+    @app.get("/icons/{icon_path:path}")
+    def get_icon(icon_path: str):
+        """Serve SVG icons.
+
+        - `user.svg` → default library (carbon)
+        - `iconmind/agent.svg` → icons/iconmind/agent.svg
+        """
         from fastapi.responses import FileResponse
 
+        from adapters.api.static_paths import resolve_repo_root
         from domain.icon_library import resolve_icon_library
 
-        _, lib_path = resolve_icon_library()
-        # Prevent path traversal
-        safe = Path(icon_name).name
-        file_path = (lib_path / f"{safe}.svg").resolve()
-        if not str(file_path).startswith(str(lib_path.resolve())):
+        raw = icon_path.strip()
+        if not raw.endswith(".svg"):
+            raise HTTPException(status_code=404, detail="Icon not found")
+        stem = raw[: -len(".svg")]
+        parts = [p for p in Path(stem).parts if p not in ("", ".", "..")]
+        if not parts or any(".." in p or p.startswith("/") for p in parts):
+            raise HTTPException(status_code=404, detail="Icon not found")
+
+        icons_root = (resolve_repo_root() / "icons").resolve()
+        if len(parts) >= 2:
+            # library/name.svg under icons/<library>/
+            file_path = (icons_root.joinpath(*parts).with_suffix(".svg")).resolve()
+        else:
+            _, lib_path = resolve_icon_library()
+            file_path = (lib_path / f"{parts[0]}.svg").resolve()
+
+        if not str(file_path).startswith(str(icons_root)):
             raise HTTPException(status_code=404, detail="Icon not found")
         if not file_path.is_file():
             raise HTTPException(status_code=404, detail="Icon not found")

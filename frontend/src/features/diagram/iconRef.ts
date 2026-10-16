@@ -19,10 +19,23 @@ export function iconNameForElement(
   )
   if (!attr?.defaultValue) return null
   const raw = attr.defaultValue.replace(/^["']|["']$/g, '').trim()
-  if (!raw || !known.has(raw)) return null
+  if (!raw) return null
+  // Prefixed library paths (iconmind/…) bypass the carbon allowlist.
+  if (raw.includes('/')) return raw
+  if (!known.has(raw)) return null
   return raw
 }
 
+/**
+ * URL for an icon served by the backend.
+ * `user` → `/api/icons/user.svg` (default library)
+ * `iconmind/agent` → `/api/icons/iconmind/agent.svg`
+ */
 export function iconUrl(name: string): string {
-  return `/api/icons/${encodeURIComponent(name)}.svg`
+  const segments = name
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => encodeURIComponent(s))
+  return `/api/icons/${segments.join('/')}.svg`
 }
