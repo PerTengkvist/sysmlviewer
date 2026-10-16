@@ -28,6 +28,25 @@ import {
   PORT_BOUNDARY_OFFSET_MIN,
   PORT_TB_INSET,
 } from './layout/portPlacement'
+import { resolvePartIcon } from './partIcon'
+
+/** Header Lucide glyph from `_icon` (testable without React Flow). */
+export function PartHeaderIcon({
+  iconName,
+}: {
+  iconName?: string | null
+}) {
+  const Icon = resolvePartIcon(iconName)
+  if (!Icon) return null
+  return (
+    <Icon
+      className="part-node-icon"
+      size={16}
+      aria-hidden
+      data-testid="part-icon"
+    />
+  )
+}
 
 export type PartPort = {
   id: string
@@ -58,6 +77,8 @@ export type PartNodeData = {
   /** Show attribute names inside the part */
   showAttributes?: boolean
   attributeNames?: string[]
+  /** Lucide allowlist key from `attribute _icon = "…"` */
+  iconName?: string | null
   formatStyle?: ElementStyle | null
   /** Diagram edit lock — no resize or port move. */
   editLocked?: boolean
@@ -324,10 +345,13 @@ export function PartNode({ data, selected }: NodeProps) {
             )}
             {d.isBoundary && <span className="stereotype">«whitebox»</span>}
           </div>
-          <span className="part-node-title">
-            {d.label}
-            {d.multiplicity ? ` [${d.multiplicity}]` : ''}
-          </span>
+          <div className="part-node-title-row">
+            <PartHeaderIcon iconName={d.iconName} />
+            <span className="part-node-title">
+              {d.label}
+              {d.multiplicity ? ` [${d.multiplicity}]` : ''}
+            </span>
+          </div>
         </div>
         {d.menuItems?.length ? (
           <div className="part-menu">

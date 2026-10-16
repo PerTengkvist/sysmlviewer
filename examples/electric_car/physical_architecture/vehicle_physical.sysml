@@ -122,6 +122,7 @@ package PhysicalArchitecture {
 
     part batteryEcu {
       doc /* Embedded computer for the traction battery and charging. Separate module. Implements the logical battery. Proxy ports expose EnergySupply and ChargeFeed at the ECU boundary. */
+      attribute _icon = "battery";
       port energyOut : EnergySupply;
       port chargeIn : ChargeFeed;
       part batteryControlSw {
@@ -163,6 +164,7 @@ package PhysicalArchitecture {
 
     part electricMotor {
       doc /* Mechanical traction motor. Consumes EnergySupply. The engine computer commands it. */
+      attribute _icon = "zap";
       port energyIn : EnergySupply;
     }
 
@@ -176,6 +178,7 @@ package PhysicalArchitecture {
 
     part wheelSet {
       doc /* Mechanical road wheels. Consume DirectionCommand and BrakeRequest. */
+      attribute _icon = "disc";
       port directionIn : DirectionCommand;
       port brakeIn : BrakeRequest;
     }

@@ -1552,6 +1552,19 @@ body.port-dragging * {
   color: var(--accent);
 }
 
+.part-node-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.part-node-icon {
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.9;
+}
+
 .part-node-title {
   font-weight: 600;
   font-size: 0.85rem;

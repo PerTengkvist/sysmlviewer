@@ -107,8 +107,8 @@
       "height": 76.0
     },
     "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech": {
-      "x": 667.6800473783867,
-      "y": 629.0907554086662,
+      "x": 675.5242628615993,
+      "y": 763.7497878704835,
       "width": 196.0,
       "height": 76.0
     },
@@ -531,5 +531,6 @@
         "y": 64.93017485041855
       }
     }
-  }
+  },
+  "hierarchicalLevelsOverride": 3
 }

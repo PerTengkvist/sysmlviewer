@@ -65,6 +65,7 @@ package LogicalArchitecture {
     }
 
     part battery {
+      attribute _icon="battery";
       attribute capacityKWh = 60;
       doc /* Traction battery, nominally 60 kWh. Provides EnergySupply and consumes ChargeFeed. */
       port energyOut : EnergySupply;

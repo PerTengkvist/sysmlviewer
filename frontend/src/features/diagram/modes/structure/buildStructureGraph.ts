@@ -34,6 +34,7 @@ import {
   type BoundaryAnchor,
 } from '../../boundaryAnchors'
 import type { PartNodeData } from '../../PartNode'
+import { readPartIconName } from '../../partIcon'
 import { sizePartForPorts } from '../../layout/structureAutoLayout'
 import {
   clampPortOffset,
@@ -330,19 +331,19 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
   const attrNames = (partId: string) => {
     const part = semantic[partId]
     if (!part) return [] as string[]
-    const direct = (part.children || [])
-      .map((cid) => semantic[cid])
-      .filter((c): c is SemanticElement => !!c && c.kind === 'attribute')
-      .map((a) => a.name)
+    const fromAttrs = (ids: string[]) =>
+      ids
+        .map((cid) => semantic[cid])
+        .filter((c): c is SemanticElement => !!c && c.kind === 'attribute')
+        .map((a) => a.name)
+        .filter((n) => n !== '_icon')
+    const direct = fromAttrs(part.children || [])
     if (direct.length || !part.typeRef) return direct
     const typeDef = Object.values(semantic).find(
       (e) => e.kind === 'part' && e.name === part.typeRef && !e.typeRef,
     )
     if (!typeDef) return direct
-    return (typeDef.children || [])
-      .map((cid) => semantic[cid])
-      .filter((c): c is SemanticElement => !!c && c.kind === 'attribute')
-      .map((a) => a.name)
+    return fromAttrs(typeDef.children || [])
   }
 
   const formatFor = (id: string): ElementStyle | null | undefined =>
@@ -399,6 +400,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     isBoundary,
     showAttributes,
     attributeNames: attrNames(id),
+    iconName: readPartIconName(semantic, id),
     formatStyle: formatFor(id),
     viewMode,
     onOpenView,

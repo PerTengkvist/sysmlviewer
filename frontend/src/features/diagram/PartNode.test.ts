@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { partStereotypeKeyword } from './PartNode'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { PartHeaderIcon, partStereotypeKeyword } from './PartNode'
 
 describe('partStereotypeKeyword', () => {
   it('defaults to part or package', () => {
@@ -20,5 +22,22 @@ describe('partStereotypeKeyword', () => {
         metadataKeywords: ['a', 'b'],
       }),
     ).toBe('a, b')
+  })
+})
+
+describe('PartHeaderIcon', () => {
+  it('renders data-testid part-icon for an allowlisted name', () => {
+    const html = renderToStaticMarkup(
+      createElement(PartHeaderIcon, { iconName: 'cpu' }),
+    )
+    expect(html).toContain('data-testid="part-icon"')
+    expect(html).toContain('part-node-icon')
+  })
+
+  it('renders nothing for an unknown iconName', () => {
+    const html = renderToStaticMarkup(
+      createElement(PartHeaderIcon, { iconName: 'not-a-real-icon' }),
+    )
+    expect(html).toBe('')
   })
 })
