@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "viewId": "LogicalArchitecture::CarLogicalDependenciesView",
+  "name": "CarLogicalDependenciesView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "LogicalArchitecture::Car": {
+      "x": -545.340846885173,
+      "y": 4678.674531236253,
+      "width": 1062.0,
+      "height": 1273.0
+    },
+    "LogicalArchitecture::Car::windshield": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::body": {
+      "x": 284.0,
+      "y": 48.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::lamps": {
+      "x": 520.0,
+      "y": 48.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::locks": {
+      "x": 48.0,
+      "y": 220.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::windows": {
+      "x": 284.0,
+      "y": 220.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::suspension": {
+      "x": 736.0307562428515,
+      "y": 295.7739624989008,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::battery": {
+      "x": 48.0,
+      "y": 392.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::entertainmentSystem": {
+      "x": 37.10301252969407,
+      "y": 1015.214240646721,
+      "width": 188.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::chassis": {
+      "x": 284.0,
+      "y": 392.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::wipers": {
+      "x": 520.0,
+      "y": 392.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::steeringWheel": {
+      "x": 870.3987781038293,
+      "y": 458.57046565331893,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::acceleratorPedal": {
+      "x": 498.33726561812637,
+      "y": 816.1183906511205,
+      "width": 164.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::climateSystem": {
+      "x": 29.746787523095463,
+      "y": 600.9565449434094,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::wheels": {
+      "x": 520.0,
+      "y": 564.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::gearStick": {
+      "x": 253.8698124945011,
+      "y": 850.7242468675768,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::engine": {
+      "x": 271.40952190496915,
+      "y": 713.5515062648465,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::chargeInlet": {
+      "x": 520.0,
+      "y": 736.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "LogicalArchitecture::Car::brakePedal": {
+      "x": 916.0246467619974,
+      "y": 690.8000844214657,
+      "width": 140.0,
+      "height": 76.0
+    }
+  },
+  "edges": {}
+}

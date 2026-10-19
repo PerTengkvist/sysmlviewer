@@ -5,294 +5,272 @@
   "structureNotation": "sysmlv2",
   "nodes": {
     "PhysicalArchitecture::VehiclePhysical": {
-      "x": -66.0,
-      "y": -76.0,
-      "width": 1616.0,
-      "height": 1920.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::acceleratorPedal": {
-      "x": 1380.0,
-      "y": 84.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech": {
-      "x": 1380.0,
-      "y": 228.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::battery": {
-      "x": 932.0,
-      "y": 372.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::batteryEcu": {
-      "x": 414.53261667774314,
-      "y": 269.0531813208769,
-      "width": 256.0,
-      "height": 200.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw": {
-      "x": 32.20027437107592,
-      "y": 53.89444082722014,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::batteryPack": {
-      "x": 1156.0,
-      "y": 372.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::body": {
-      "x": 1040.0,
-      "y": 1518.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::bodyShell": {
-      "x": 1380.0,
-      "y": 372.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::brakePedal": {
-      "x": 1116.0,
-      "y": 1360.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::brakePedalMech": {
-      "x": 389.6083218386343,
-      "y": 498.24152867245243,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::car": {
-      "x": 26.334013913796554,
-      "y": 562.5089104404294,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::chargeInlet": {
-      "x": 260.0,
-      "y": 660.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::chargeInletMech": {
-      "x": 391.2771423411434,
-      "y": 642.4856824422159,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::chassis": {
-      "x": 1380.0,
-      "y": 660.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::chassisFrame": {
-      "x": 1007.0061073856666,
-      "y": 664.0625364114269,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::climateSystem": {
-      "x": 1338.0,
-      "y": 1564.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers": {
-      "x": 1006.4177254519527,
-      "y": 221.7341182207092,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::door": {
-      "x": 260.0,
-      "y": 804.0,
-      "width": 200.0,
-      "height": 120.0
+      "x": -308.4231717897994,
+      "y": 9429.839877346953,
+      "width": 1480.2217275209914,
+      "height": 1514.5999999999942
     },
     "PhysicalArchitecture::VehiclePhysical::doorLockAsm": {
-      "x": 922.0,
-      "y": 1620.0,
-      "width": 200.0,
-      "height": 120.0
+      "x": 813.2434550419828,
+      "y": 400.20727272727265,
+      "width": 140.0,
+      "height": 76.0
     },
-    "PhysicalArchitecture::VehiclePhysical::electricMotor": {
-      "x": 646.4516057944103,
-      "y": 823.237580585808,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::brakePedalMech": {
+      "x": 584.6217275209913,
+      "y": 325.98686437623394,
+      "width": 148.0,
+      "height": 76.0
     },
-    "PhysicalArchitecture::VehiclePhysical::engine": {
-      "x": 484.0,
-      "y": 804.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::engineEcu": {
-      "x": 120.49295847856058,
-      "y": 272.0195268031645,
-      "width": 256.0,
-      "height": 200.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw": {
-      "x": 28.0,
+    "PhysicalArchitecture::VehiclePhysical::windowAsm": {
+      "x": 399.8217275209913,
       "y": 48.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::entertainmentSystem": {
-      "x": 1380.0,
-      "y": 804.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::gearStick": {
-      "x": 1149.1311958733563,
-      "y": 590.1355721451546,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::gearStickMech": {
-      "x": 726.474798879613,
-      "y": 645.3287063053746,
-      "width": 200.0,
-      "height": 120.0
+      "width": 140.0,
+      "height": 76.0
     },
     "PhysicalArchitecture::VehiclePhysical::hvacAssembly": {
-      "x": 1120.0,
-      "y": 1034.0,
+      "x": 594.7534604779869,
+      "y": 585.2756392357325,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::chassisFrame": {
+      "x": 584.6217275209913,
+      "y": 84.38686437623568,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::bodyShell": {
+      "x": 308.963317031672,
+      "y": 1390.5999999999942,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack": {
+      "x": 779.5534604779871,
+      "y": 710.3868643762318,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::lampUnits": {
+      "x": 218.4697096019569,
+      "y": 1148.9999999999957,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::steeringWheelMech": {
+      "x": 836.0647323253015,
+      "y": 831.186864376231,
+      "width": 172.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::suspensionAsm": {
+      "x": 651.2647323253016,
+      "y": 831.186864376231,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::wheelSet": {
+      "x": 1054.2217275209914,
+      "y": 580.9109090909088,
+      "width": 179.60000000000002,
+      "height": 98.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::gearStickMech": {
+      "x": 204.88999456399574,
+      "y": 907.399999999997,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers": {
+      "x": 584.6217275209913,
+      "y": 205.1868643762347,
+      "width": 180.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::windshieldGlass": {
+      "x": 561.4111930399465,
+      "y": 706.0756392357317,
+      "width": 156.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::electricMotor": {
+      "x": 257.3886095209406,
+      "y": 1269.799999999995,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::wiperAsm": {
+      "x": 779.5534604779871,
+      "y": 589.5868643762325,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech": {
+      "x": 208.10052904504062,
+      "y": 1028.1999999999964,
+      "width": 196.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::chargeInletMech": {
+      "x": 450.46473232530155,
+      "y": 826.875639235731,
+      "width": 156.0,
+      "height": 76.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu": {
+      "x": 809.4217275209915,
+      "y": 235.40727272727273,
       "width": 200.0,
       "height": 120.0
     },
     "PhysicalArchitecture::VehiclePhysical::infotainmentEcu": {
-      "x": 28.0,
-      "y": 48.0,
-      "width": 480.0,
-      "height": 200.0
+      "x": 48.0,
+      "y": 168.7999999999985,
+      "width": 426.0,
+      "height": 431.0
     },
     "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw": {
-      "x": 248.0,
-      "y": 48.0,
+      "x": 48.0,
+      "y": 390.2000000000007,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw": {
+      "x": 48.0,
+      "y": 236.60000000000036,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw": {
+      "x": 101.0,
+      "y": 931.0000000000018,
+      "width": 220.0,
+      "height": 120.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw": {
+      "x": 48.0,
+      "y": 543.8000000000011,
       "width": 200.0,
       "height": 120.0
     },
     "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::entertainmentSw": {
-      "x": 28.0,
-      "y": 48.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::lamps": {
-      "x": 35.03807252435149,
-      "y": 949.9238549512969,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::lampUnits": {
-      "x": 401.7050261066469,
-      "y": 852.1994189701543,
+      "x": 48.0,
+      "y": 83.0,
       "width": 200.0,
       "height": 120.0
     },
     "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu": {
-      "x": 540.0,
-      "y": 48.0,
+      "x": 125.66473232530154,
+      "y": 644.5999999999977,
       "width": 280.0,
-      "height": 200.0
+      "height": 218.0
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw": {
-      "x": 28.0,
-      "y": 48.0,
-      "width": 220.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::engineEcu": {
+      "x": 1054.2217275209914,
+      "y": 264.1109090909091,
+      "width": 378.0,
+      "height": 272.0
     },
-    "PhysicalArchitecture::VehiclePhysical::steeringWheel": {
-      "x": 484.0,
-      "y": 948.0,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::steeringWheelMech::directionOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::steeringWheelMech": {
-      "x": 819.9219496562158,
-      "y": 970.6934118147146,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::windshieldGlass::clearIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::suspension": {
-      "x": 1380.0,
-      "y": 948.0,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::electricMotor::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::suspensionAsm": {
-      "x": 1146.1067751045207,
-      "y": 888.201168802314,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::lampUnits::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::wheels": {
-      "x": 36.0,
-      "y": 1092.0,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::gearStickMech::gearOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::wheelSet": {
-      "x": 726.7412355843957,
-      "y": 501.76779389859337,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::windowAsm": {
-      "x": 474.2936759360979,
-      "y": 1072.5873518721958,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::windows": {
-      "x": 708.0,
-      "y": 1092.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::windshield": {
-      "x": 1380.0,
-      "y": 1092.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::windshieldGlass": {
-      "x": 780.0,
-      "y": 1368.0,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::wiperAsm": {
-      "x": 72.0,
-      "y": 700.0000000000001,
-      "width": 200.0,
-      "height": 120.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::wipers": {
-      "x": 260.0,
-      "y": 1236.0,
-      "width": 200.0,
-      "height": 120.0
+    "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech::torqueOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
     },
     "PhysicalArchitecture::VehiclePhysical::brakePedalMech::brakeOut": {
       "side": "right",
-      "offset": 0.6487212492328258
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::chargeInletMech::chargeOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::wiperAsm::clearOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::wheelSet::directionIn": {
+      "side": "left",
+      "offset": 0.9028488080745566
     },
     "PhysicalArchitecture::VehiclePhysical::wheelSet::brakeIn": {
       "side": "left",
-      "offset": 0.6193357056816514
+      "offset": 0.6499999999999999
+    },
+    "PhysicalArchitecture::VehiclePhysical::hvacAssembly::energyIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw::gearIn": {
+      "side": "left",
+      "offset": 0.44999999999999996
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw::torqueIn": {
+      "side": "left",
+      "offset": 0.6499999999999999
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::chargeIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw::energyOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::chargeIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::energyOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::gearIn": {
+      "side": "left",
+      "offset": 0.44999999999999996
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::torqueIn": {
+      "side": "left",
+      "offset": 0.6499999999999999
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut": {
+      "side": "right",
+      "offset": 0.5166666666666666
     }
   },
   "edges": {
@@ -300,41 +278,37 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 560.0016069379479,
-          "y": 10546.200803468973
+          "x": 728.798555731192,
+          "y": 10376.506544013617
         },
         {
-          "x": 560.0016069379479,
-          "y": 11680.000803468973
-        },
-        {
-          "x": 696.0016069379479,
-          "y": 11680.000803468973
-        },
-        {
-          "x": 696.0016069379479,
-          "y": 11536.000803468973
+          "x": 728.798555731192,
+          "y": 9816.35078643786
         }
-      ]
+      ],
+      "labelOffset": {
+        "x": -69.27254117741529,
+        "y": -1.1528204270689457
+      }
     },
     "PhysicalArchitecture::VehiclePhysical::energyEntertainment": {
       "routing": "angular",
       "waypoints": [
         {
-          "x": 920.0016069379479,
-          "y": 11536.000803468973
+          "x": 712.998555731192,
+          "y": 9727.247150074225
         },
         {
-          "x": 920.0016069379479,
-          "y": 11680.000803468973
+          "x": 712.998555731192,
+          "y": 9623.026741723188
         },
         {
-          "x": 352.00160693794794,
-          "y": 11680.000803468973
+          "x": 264.19855573119185,
+          "y": 9623.026741723188
         },
         {
-          "x": 352.00160693794794,
-          "y": 11216.200803468973
+          "x": 264.19855573119185,
+          "y": 9674.293408389854
         }
       ]
     },
@@ -342,20 +316,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 560.0016069379479,
-          "y": 10412.200803468973
+          "x": 310.04156053550213,
+          "y": 10295.98218324935
         },
         {
-          "x": 560.0016069379479,
-          "y": 11680.000803468973
+          "x": 310.04156053550213,
+          "y": 10242.443513710587
         },
         {
-          "x": 696.0016069379479,
-          "y": 11680.000803468973
+          "x": 459.13028868818765,
+          "y": 10242.443513710587
         },
         {
-          "x": 696.0016069379479,
-          "y": 11536.000803468973
+          "x": 459.13028868818765,
+          "y": 9727.247150074225
         }
       ]
     },
@@ -363,20 +337,12 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 768.0016069379479,
-          "y": 10010.200803468973
+          "x": 738.798555731192,
+          "y": 10497.306544013616
         },
         {
-          "x": 768.0016069379479,
-          "y": 11680.000803468973
-        },
-        {
-          "x": 920.0016069379479,
-          "y": 11680.000803468973
-        },
-        {
-          "x": 920.0016069379479,
-          "y": 11536.000803468973
+          "x": 738.798555731192,
+          "y": 9870.75078643786
         }
       ]
     },
@@ -384,16 +350,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 226.00160693794794,
-          "y": 742.2000000000002
+          "x": 623.1302886881876,
+          "y": 10058.693408389852
         },
         {
-          "x": 226.00160693794794,
-          "y": 9930.200803468973
+          "x": 623.1302886881876,
+          "y": 10126.73987734695
         },
         {
-          "x": 714.0,
-          "y": 9930.200803468973
+          "x": 240.98802125014709,
+          "y": 10126.73987734695
+        },
+        {
+          "x": 240.98802125014709,
+          "y": 10175.182183249352
         }
       ]
     },
@@ -401,20 +371,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 920.0016069379479,
-          "y": 11536.000803468973
+          "x": 712.998555731192,
+          "y": 9727.247150074225
         },
         {
-          "x": 920.0016069379479,
-          "y": 11680.000803468973
+          "x": 712.998555731192,
+          "y": 10677.239877346949
         },
         {
-          "x": 352.00160693794794,
-          "y": 11680.000803468973
+          "x": -63.03456226885885,
+          "y": 10677.239877346949
         },
         {
-          "x": 352.00160693794794,
-          "y": 10278.200803468973
+          "x": -63.03456226885885,
+          "y": 10738.906544013615
         }
       ]
     },
@@ -422,20 +392,20 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 920.0016069379479,
-          "y": 11536.000803468973
+          "x": 712.998555731192,
+          "y": 9727.247150074225
         },
         {
-          "x": 920.0016069379479,
-          "y": 11680.000803468973
+          "x": 712.998555731192,
+          "y": 9945.539877346951
         },
         {
-          "x": 560.0016069379479,
-          "y": 11680.000803468973
+          "x": 274.33028868818747,
+          "y": 9945.539877346951
         },
         {
-          "x": 560.0016069379479,
-          "y": 10278.200803468973
+          "x": 274.33028868818747,
+          "y": 10054.382183249352
         }
       ]
     },
@@ -443,20 +413,16 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 940.0016069379479,
-          "y": 11536.000803468973
+          "x": 138.43609627137292,
+          "y": 10187.073210680284
         },
         {
-          "x": 940.0016069379479,
-          "y": 11680.000803468973
+          "x": 138.43609627137292,
+          "y": 10099.839877346953
         },
         {
-          "x": 784.0016069379479,
-          "y": 11680.000803468973
-        },
-        {
-          "x": 784.0016069379479,
-          "y": 11364.300803468972
+          "x": 740.1319497390969,
+          "y": 10099.839877346953
         }
       ]
     },
@@ -464,92 +430,158 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 560.0016069379479,
-          "y": 10680.200803468973
+          "x": 717.998555731192,
+          "y": 10300.29340838985
         },
         {
-          "x": 560.0016069379479,
-          "y": 11680.000803468973
+          "x": 717.998555731192,
+          "y": 10425.23987734695
         },
         {
-          "x": 696.0016069379479,
-          "y": 11680.000803468973
+          "x": -194.75843946449788,
+          "y": 10425.23987734695
         },
         {
-          "x": 696.0016069379479,
-          "y": 11536.000803468973
+          "x": -194.75843946449788,
+          "y": 10187.073210680284
         }
-      ]
+      ],
+      "labelOffset": {
+        "x": -18.897026789722077,
+        "y": 22.6952262923096
+      }
     },
     "PhysicalArchitecture::VehiclePhysical::brake": {
-      "routing": "direct",
+      "routing": "angular",
       "waypoints": [
         {
-          "x": 1528.0,
-          "y": 554.0
+          "x": 733.798555731192,
+          "y": 9795.093408389854
         },
         {
-          "x": 1528.0,
-          "y": 606.0
-        },
-        {
-          "x": 908.0,
-          "y": 606.0
-        },
-        {
-          "x": 908.0,
-          "y": 590.0
-        },
-        {
-          "x": 276.0,
-          "y": 590.0
-        },
-        {
-          "x": 276.0,
-          "y": 530.0
+          "x": 733.798555731192,
+          "y": 10074.450786437863
         }
-      ]
+      ],
+      "labelOffset": {
+        "x": 113.07028191257109,
+        "y": 43.28870936969906
+      }
     },
     "PhysicalArchitecture::VehiclePhysical::energyLamps": {
       "routing": "angular",
       "waypoints": [
         {
-          "x": 920.0016069379479,
-          "y": 11536.000803468973
+          "x": 712.998555731192,
+          "y": 9727.247150074225
         },
         {
-          "x": 920.0016069379479,
-          "y": 11680.000803468973
+          "x": 712.998555731192,
+          "y": 10556.43987734695
         },
         {
-          "x": 352.00160693794794,
-          "y": 11680.000803468973
+          "x": -101.95346218784252,
+          "y": 10556.43987734695
         },
         {
-          "x": 352.00160693794794,
-          "y": 11484.200803468973
+          "x": -101.95346218784252,
+          "y": 10618.106544013615
         }
       ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryChargeIn": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 218.02419221043618,
+          "y": 9736.0
+        },
+        {
+          "x": 218.02419221043618,
+          "y": 9972.6
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEnergyOut": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 442.4053498989964,
+          "y": 9972.6
+        },
+        {
+          "x": 442.4053498989964,
+          "y": 9736.0
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineGearIn": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 683.3313205389009,
+          "y": 10246.213493934652
+        },
+        {
+          "x": 683.3313205389009,
+          "y": 10721.613493934654
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineTorqueIn": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 673.3313205389009,
+          "y": 10300.613493934652
+        },
+        {
+          "x": 673.3313205389009,
+          "y": 10745.613493934654
+        }
+      ]
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionIn": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 286.0,
+          "y": 10498.877204757058
+        },
+        {
+          "x": 251.0,
+          "y": 10498.877204757058
+        },
+        {
+          "x": 251.0,
+          "y": 11364.243871423727
+        },
+        {
+          "x": 387.0,
+          "y": 11364.243871423727
+        }
+      ],
+      "labelOffset": {
+        "x": -60.46515458991121,
+        "y": -30.487409425115402
+      }
+    },
+    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityDirectionOut": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 619.0,
+          "y": 11374.243871423727
+        },
+        {
+          "x": 619.0,
+          "y": 10493.877204757058
+        }
+      ],
+      "labelOffset": {
+        "x": 69.06484239611609,
+        "y": 64.93017485041855
+      }
     }
-  },
-  "hierarchicalLevelsOverride": 2,
-  "viewFilters": [
-    {
-      "id": "vf-1791130457124-40b45a",
-      "kind": "part",
-      "matchField": "any",
-      "namePattern": "Logical",
-      "enabled": true
-    }
-  ],
-  "layoutRules": [
-    {
-      "id": "lr-1791118760433-9jgyf4",
-      "kind": "part",
-      "namePattern": "*Sw",
-      "placement": "above",
-      "peerKind": "part",
-      "peerNamePattern": "bodyShell"
-    }
-  ]
+  }
 }

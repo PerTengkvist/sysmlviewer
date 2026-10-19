@@ -171,6 +171,7 @@ NODE_KINDS = {
     ArtifactKind.ACTION,
     ArtifactKind.REQUIREMENT,
     ArtifactKind.USE_CASE,
+    ArtifactKind.CASE,
     ArtifactKind.ACTOR,
 }
 
@@ -280,6 +281,7 @@ def merge_visualization(
             ArtifactKind.INTERACTION,
             ArtifactKind.REQUIREMENT,
             ArtifactKind.USE_CASE,
+    ArtifactKind.CASE,
             ArtifactKind.ACTOR,
         }
     ]
@@ -410,7 +412,7 @@ def rebuild_views(semantic: dict[str, SemanticElement]) -> list[ViewDef]:
     declared.sort(key=lambda e: e.id)
 
     for el in declared:
-        root_id = el.expose_ref
+        root_id = el.expose_ref or (el.expose_refs[0] if el.expose_refs else None)
         if not root_id or root_id not in semantic:
             # Fall back to parent package if expose missing/unresolved
             root_id = el.parent_id or el.id
@@ -418,7 +420,10 @@ def rebuild_views(semantic: dict[str, SemanticElement]) -> list[ViewDef]:
         if el.parent_id:
             # Nest under a view that exposes the parent package, if any
             for other in declared:
-                if other.expose_ref == el.parent_id:
+                other_roots = list(other.expose_refs) or (
+                    [other.expose_ref] if other.expose_ref else []
+                )
+                if el.parent_id in other_roots or other.expose_ref == el.parent_id:
                     parent_view_id = other.id
                     break
         views.append(

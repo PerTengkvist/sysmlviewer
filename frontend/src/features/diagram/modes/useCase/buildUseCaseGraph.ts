@@ -11,6 +11,7 @@ import { edgeStrokeStyle } from '../../elementStyle'
 import { pickRelationBoundarySides } from '../../relationshipStyle'
 import { absoluteNodeOrigin } from '../structure/buildStructureGraph'
 import type { HighlightOpts } from '../sequence/buildSequenceGraph'
+import { iconNameForElement } from '../../iconRef'
 import type { ActorNodeData } from './ActorNode'
 import type { UseCaseNodeData } from './UseCaseNode'
 
@@ -204,11 +205,15 @@ export function buildUseCaseGraph(
       },
       placeholder,
     )
+    const actorEl = semantic[group.id]
     const data: ActorNodeData = {
       label: group.name,
       artifactId: group.id,
       formatStyle: visualization.nodes[group.id]?.style,
       viewMode,
+      iconName: actorEl
+        ? iconNameForElement(actorEl, semantic)
+        : null,
     }
     nodes.push({
       id: group.id,

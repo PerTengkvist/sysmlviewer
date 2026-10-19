@@ -7,6 +7,7 @@ import {
   resolveRequirementDocPanel,
 } from '../diagram/requirementDisplay'
 import { docPathForArtifact } from '../docs/docPath'
+import { markdownComponents } from '../docs/markdownComponents'
 import {
   documentationRemarkPlugins,
   interpretDocNewlines,
@@ -106,7 +107,10 @@ export function DocumentationPanel({
       ) : content ? (
         <div className="markdown-body">
           {docPath ? <div className="doc-path muted">{docPath}</div> : null}
-          <ReactMarkdown remarkPlugins={documentationRemarkPlugins}>
+          <ReactMarkdown
+            remarkPlugins={documentationRemarkPlugins}
+            components={markdownComponents}
+          >
             {interpretDocNewlines(content)}
           </ReactMarkdown>
         </div>

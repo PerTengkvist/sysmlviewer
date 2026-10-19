@@ -72,6 +72,11 @@ def main(argv: list[str] | None = None) -> None:
     else:
         os.environ.pop("SYSMLVIEWER_STATIC_DIR", None)
 
+    from domain.icon_library import log_icon_library_startup, resolve_icon_library
+
+    icon_name, icon_path = resolve_icon_library()
+    print(log_icon_library_startup(icon_name, icon_path), flush=True)
+
     import uvicorn
 
     uvicorn.run(

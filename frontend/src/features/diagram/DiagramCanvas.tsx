@@ -18,7 +18,15 @@ import {
   type OnNodesChange,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from 'react'
 import type {
   DiagramMode,
   LayoutRuleRow,
@@ -46,11 +54,14 @@ import type { LayoutArtefact } from './layoutWizard'
 import { resolveAnchors, type BoundaryAnchor } from './boundaryAnchors'
 import {
   alignDirectConnection,
-  alignSelection,
   canAlignDirectConnection,
   type ConnectionAlignMode,
   type PartBox,
 } from './layout/align'
+import {
+  alignFlowSelection,
+  applyAlignPatchToFlowNodes,
+} from './layout/alignFlowSelection'
 import { bulkOp, type BulkCommand } from './bulkOps'
 import { isEditLocked, lockTargets } from './editLock'
 import {
@@ -87,8 +98,15 @@ import {
   orientEdgeHandles,
   type RedrawDirection,
 } from './layout/dependencyLayout'
-import { redrawStructureConnections, boundaryFlowBounds, syncInternalEdgeBounds } from './layout/connectionRouting'
-import { autoLayoutStructure } from './layout/structureAutoLayout'
+import { boundaryFlowBounds, syncInternalEdgeBounds } from './layout/connectionRouting'
+import { AutoLayoutDialog } from './AutoLayoutDialog'
+import {
+  DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+  type AutoLayoutDirectives,
+} from './layout/autoLayoutOptions'
+import { asAngularForLayout } from './layout/elkStructureLayout'
+import { planStructureRoutes } from './layout/layoutRouter'
+import { flowViewportBounds } from './layout/layoutNormalize'
 import { preserveExistingGeometry } from './preserveDiagramGeometry'
 import { applyRelationTodos, type RelationTodo } from './applyRelationTodos'
 import {
@@ -114,6 +132,19 @@ const allEdgeTypes: EdgeTypes = {
   message: MessageEdge,
   smoothstep: HighlightedSmoothStepEdge,
   straight: HighlightedStraightEdge,
+}
+
+/** Expose React Flow APIs to the parent (outside <ReactFlow> tree). */
+function ViewportApiBridge({
+  apiRef,
+}: {
+  apiRef: MutableRefObject<{
+    getViewport: () => { x: number; y: number; zoom: number }
+  } | null>
+}) {
+  const { getViewport } = useReactFlow()
+  apiRef.current = { getViewport }
+  return null
 }
 
 function FitViewOnViewKey({
@@ -450,7 +481,12 @@ type Props = {
     opts?: { shift?: boolean },
   ) => void
   onSelectionFromFlow?: (ids: string[]) => void
-  onOpenView: (viewId: string) => void
+  onOpenView: (
+    viewId: string,
+    opts?: { ctrlKey?: boolean; metaKey?: boolean },
+  ) => void
+  onBackView?: () => void
+  onUseCaseDoubleClick?: (useCaseId: string) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -499,6 +535,8 @@ export function DiagramCanvas({
   onSelectArtifact,
   onSelectionFromFlow,
   onOpenView,
+  onBackView,
+  onUseCaseDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
   onPortMoved,
@@ -523,8 +561,16 @@ export function DiagramCanvas({
   /** Temporarily force light styling while exporting an image to the clipboard. */
   const [captureLight, setCaptureLight] = useState(false)
   const [copyState, setCopyState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
+  const [autoLayoutOpen, setAutoLayoutOpen] = useState(false)
+  const [autoLayoutBusy, setAutoLayoutBusy] = useState(false)
+  const [autoLayoutDirectives, setAutoLayoutDirectives] =
+    useState<AutoLayoutDirectives>(DEFAULT_AUTO_LAYOUT_DIRECTIVES)
+  const [routeNotice, setRouteNotice] = useState<string | null>(null)
   const pendingCopyRef = useRef(false)
   const sheetHostRef = useRef<HTMLDivElement>(null)
+  const viewportApiRef = useRef<{
+    getViewport: () => { x: number; y: number; zoom: number }
+  } | null>(null)
   const viewKeyRef = useRef<string | null>(null)
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
@@ -717,7 +763,10 @@ export function DiagramCanvas({
       return
     }
 
-    const stableOpen = (id: string) => onOpenViewRef.current(id)
+    const stableOpen = (
+      id: string,
+      opts?: { ctrlKey?: boolean; metaKey?: boolean },
+    ) => onOpenViewRef.current(id, opts)
     const stablePort = (portId: string, side: PortSide, offset: number) =>
       handlePortMovedRef.current(portId, side, offset)
     const stableWp = (id: string, wps: { x: number; y: number }[]) =>
@@ -1343,70 +1392,113 @@ export function DiagramCanvas({
     [nodes, edges, mode],
   )
 
+  const currentViewBounds = useCallback(() => {
+    const vp =
+      viewportApiRef.current?.getViewport() ||
+      (view ? viewportCache.current.get(view.view.id) : undefined)
+    const host = sheetHostRef.current
+    if (!vp || !host) return undefined
+    const w = host.clientWidth || 0
+    const h = host.clientHeight || 0
+    if (w < 8 || h < 8) return undefined
+    return flowViewportBounds(vp, w, h)
+  }, [view])
+
   const applyRedrawConnections = useCallback(
     (overrideNodes?: Node[], overrideEdges?: Edge[]) => {
       // Only re-route edges — never patch part/port positions or sizes.
-      // Unlocked waypoints are discarded; only locked vias are kept.
-      // Heavy A* lives here (button / view load / port-move) — never in edge render.
+      // Routes stay inside the current viewport; off-screen endpoints are skipped.
       const routeNodes = Array.isArray(overrideNodes) ? overrideNodes : nodes
       const contextEdges = edges
       const routeEdges = Array.isArray(overrideEdges) ? overrideEdges : contextEdges
       if (!routeNodes.length || !routeEdges.length) return
-      const angularContext = contextEdges.filter(
-        (edge) =>
-          ((edge.data || {}) as SysmlEdgeData).routing === 'angular' ||
-          !((edge.data || {}) as SysmlEdgeData).routing,
-      )
+      const angularContext = asAngularForLayout(contextEdges)
+      const angularRoute = asAngularForLayout(routeEdges)
       const existing = angularContext.map((edge) => {
         const data = (edge.data || {}) as SysmlEdgeData
         return { id: edge.id, waypoints: data.waypoints || [] }
       })
-      const routed = redrawStructureConnections(
-        routeNodes,
-        routeEdges,
-        viewRef.current?.visualization.nodes,
-        existing,
-        {
-          separation: connectionSeparation,
-          contextEdges: angularContext,
-        },
-      )
-      if (!routed.length) return
-      const byId = new Map(routed.map((r) => [r.id, r]))
-      const liveBounds = boundaryFlowBounds(routeNodes)
-      setEdges((current) =>
-        syncInternalEdgeBounds(
-          routeNodes,
-          current.map((edge) => {
-            const r = byId.get(edge.id)
-            if (!r) return edge
-            const data = (edge.data || {}) as SysmlEdgeData
-            return {
-              ...edge,
-              data: {
-                ...data,
-                routing: 'angular',
-                waypoints: r.waypoints,
-                jumps: r.jumps || [],
-                ...(liveBounds && (data.internal || data.parentBounds)
-                  ? { parentBounds: liveBounds }
-                  : {}),
-              } satisfies SysmlEdgeData,
-            }
-          }),
-        ),
-      )
-      const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
-      for (const r of routed) {
-        edgePatch[r.id] = {
-          artifactId: r.id,
-          routing: 'angular',
-          waypoints: r.waypoints,
+      const singleId =
+        angularRoute.length === 1 ? angularRoute[0]!.id : undefined
+      const viewBounds = currentViewBounds()
+      void planStructureRoutes({
+        mode: singleId ? 'single' : 'full',
+        edgeId: singleId,
+        layoutNodes: false,
+        nodes: routeNodes,
+        edges: angularRoute,
+        contextEdges: angularContext,
+        existingRoutes: existing,
+        portLayout: viewRef.current?.visualization.nodes,
+        separation: connectionSeparation,
+        viewBounds,
+      }).then((planned) => {
+        const outside = planned.skipped.filter(
+          (s) => s.reason === 'endpoint-outside-view',
+        )
+        const missing = planned.skipped.filter(
+          (s) => s.reason === 'missing-endpoint',
+        )
+        if (outside.length || missing.length) {
+          const parts: string[] = []
+          if (outside.length) {
+            parts.push(
+              outside.length === 1
+                ? 'One connection has ports outside the current view'
+                : `${outside.length} connections have ports outside the current view`,
+            )
+          }
+          if (missing.length) {
+            parts.push(
+              missing.length === 1
+                ? 'One connection is missing a port on the diagram'
+                : `${missing.length} connections are missing a port on the diagram`,
+            )
+          }
+          setRouteNotice(
+            `${parts.join('. ')}. Zoom out so both ends are visible, then try again.`,
+          )
+        } else {
+          setRouteNotice(null)
         }
-      }
-      onNodesMovedRef.current({}, edgePatch)
+        const routed = planned.routes
+        if (!routed.length) return
+        const byId = new Map(routed.map((r) => [r.id, r]))
+        const liveBounds = boundaryFlowBounds(routeNodes)
+        setEdges((current) =>
+          syncInternalEdgeBounds(
+            routeNodes,
+            current.map((edge) => {
+              const r = byId.get(edge.id)
+              if (!r) return edge
+              const data = (edge.data || {}) as SysmlEdgeData
+              return {
+                ...edge,
+                data: {
+                  ...data,
+                  routing: 'angular',
+                  waypoints: r.waypoints,
+                  jumps: r.jumps || [],
+                  ...(liveBounds && (data.internal || data.parentBounds)
+                    ? { parentBounds: liveBounds }
+                    : {}),
+                } satisfies SysmlEdgeData,
+              }
+            }),
+          ),
+        )
+        const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
+        for (const r of routed) {
+          edgePatch[r.id] = {
+            artifactId: r.id,
+            routing: 'angular',
+            waypoints: r.waypoints,
+          }
+        }
+        onNodesMovedRef.current({}, edgePatch)
+      })
     },
-    [nodes, edges, connectionSeparation],
+    [nodes, edges, connectionSeparation, currentViewBounds],
   )
 
   const handlePortMoved = useCallback(
@@ -1685,106 +1777,105 @@ export function DiagramCanvas({
     )
   }, [viewKey, isStructure, nodes.length])
 
-  const applyAutoLayout = useCallback(() => {
-    const layout = autoLayoutStructure(nodes, edges)
-    if (!Object.keys(layout.nodes).length) return
-
-    const nextNodes = nodes.map((node) => {
-      const patch = layout.nodes[node.id]
-      if (!patch) {
-        const data = node.data as PartNodeData
-        if (!data?.ports?.length) return node
-        return {
-          ...node,
-          data: {
-            ...data,
-            ports: data.ports.map((p) => {
-              const pp = layout.nodes[p.id]
-              if (!pp) return p
-              return {
-                ...p,
-                side: (pp.side as PortSide) || p.side,
-                offset: pp.offset ?? p.offset,
-              }
-            }),
-          },
-        }
-      }
-      const data = node.data as PartNodeData
-      return {
-        ...node,
-        position:
-          patch.x != null && patch.y != null
-            ? { x: patch.x, y: patch.y }
-            : node.position,
-        width: patch.width ?? node.width,
-        height: patch.height ?? node.height,
-        style: {
-          ...node.style,
-          width: patch.width ?? readPx(node.style?.width) ?? node.width,
-          height: patch.height ?? readPx(node.style?.height) ?? node.height,
-        },
-        data: data?.ports
-          ? {
-              ...data,
-              ports: data.ports.map((p) => {
-                const pp = layout.nodes[p.id]
-                if (!pp) return p
-                return {
-                  ...p,
-                  side: (pp.side as PortSide) || p.side,
-                  offset: pp.offset ?? p.offset,
-                }
-              }),
-            }
-          : node.data,
-      }
-    })
-
-    const vizNodes = {
-      ...(viewRef.current?.visualization.nodes || {}),
-    }
-    for (const [id, patch] of Object.entries(layout.nodes)) {
-      const prev = vizNodes[id]
-      vizNodes[id] = {
-        artifactId: id,
-        x: patch.x ?? prev?.x ?? 0,
-        y: patch.y ?? prev?.y ?? 0,
-        width: patch.width ?? prev?.width ?? 12,
-        height: patch.height ?? prev?.height ?? 12,
-        symbolRef: prev?.symbolRef || 'default-part',
-        side: patch.side ?? prev?.side ?? null,
-        offset: patch.offset ?? prev?.offset ?? null,
-        style: prev?.style,
-      }
-    }
-
-    const existing = edges.map((edge) => {
+  const applyAutoLayout = useCallback(async (directives: AutoLayoutDirectives) => {
+    // Include direct connections too — otherwise ELK sees no edges and stacks
+    // every part in one vertical column, and routing stays "direct".
+    setAutoLayoutBusy(true)
+    try {
+    const structureEdges = asAngularForLayout(edges)
+    const existing = structureEdges.map((edge) => {
       const data = (edge.data || {}) as SysmlEdgeData
       return { id: edge.id, waypoints: data.waypoints || [] }
     })
-    const routed = redrawStructureConnections(
-      nextNodes,
-      edges,
-      vizNodes,
-      existing,
-      { separation: connectionSeparation },
-    )
-    const byId = new Map(routed.map((r) => [r.id, r]))
-    const nextEdges = edges.map((edge) => {
-      const r = byId.get(edge.id)
-      if (!r) return edge
-      const data = (edge.data || {}) as SysmlEdgeData
-      return {
-        ...edge,
-        data: {
-          ...data,
-          routing: 'angular' as const,
-          waypoints: r.waypoints,
-          jumps: r.jumps || [],
-        } satisfies SysmlEdgeData,
-      }
+    const planned = await planStructureRoutes({
+      mode: 'full',
+      layoutNodes: true,
+      nodes,
+      edges: structureEdges,
+      existingRoutes: existing,
+      separation: connectionSeparation,
+      directives,
     })
+    if (!Object.keys(planned.nodes).length && !planned.routes.length) return
+
+    const layoutNodes = planned.nodes
+    const nextNodes = Object.keys(layoutNodes).length
+      ? nodes.map((node) => {
+          const patch = layoutNodes[node.id]
+          if (!patch) {
+            const data = node.data as PartNodeData
+            if (!data?.ports?.length) return node
+            return {
+              ...node,
+              data: {
+                ...data,
+                ports: data.ports.map((p) => {
+                  const pp = layoutNodes[p.id]
+                  if (!pp) return p
+                  return {
+                    ...p,
+                    side: (pp.side as PortSide) || p.side,
+                    offset: pp.offset ?? p.offset,
+                  }
+                }),
+              },
+            }
+          }
+          const data = node.data as PartNodeData
+          return {
+            ...node,
+            position:
+              patch.x != null && patch.y != null
+                ? { x: patch.x, y: patch.y }
+                : node.position,
+            width: patch.width ?? node.width,
+            height: patch.height ?? node.height,
+            style: {
+              ...node.style,
+              width: patch.width ?? readPx(node.style?.width) ?? node.width,
+              height: patch.height ?? readPx(node.style?.height) ?? node.height,
+            },
+            data: data?.ports
+              ? {
+                  ...data,
+                  ports: data.ports.map((p) => {
+                    const pp = layoutNodes[p.id]
+                    if (!pp) return p
+                    return {
+                      ...p,
+                      side: (pp.side as PortSide) || p.side,
+                      offset: pp.offset ?? p.offset,
+                    }
+                  }),
+                }
+              : node.data,
+          }
+        })
+      : nodes
+
+    const routed = planned.routes
+    const byId = new Map(routed.map((r) => [r.id, r]))
+    const liveBounds = boundaryFlowBounds(nextNodes)
+    const nextEdges = syncInternalEdgeBounds(
+      nextNodes,
+      edges.map((edge) => {
+        const r = byId.get(edge.id)
+        if (!r) return edge
+        const data = (edge.data || {}) as SysmlEdgeData
+        return {
+          ...edge,
+          data: {
+            ...data,
+            routing: 'angular' as const,
+            waypoints: r.waypoints,
+            jumps: r.jumps || [],
+            ...(liveBounds && (data.internal || data.parentBounds)
+              ? { parentBounds: liveBounds }
+              : {}),
+          } satisfies SysmlEdgeData,
+        }
+      }),
+    )
     const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
     for (const r of routed) {
       edgePatch[r.id] = {
@@ -1796,8 +1887,13 @@ export function DiagramCanvas({
 
     setNodes(nextNodes)
     setEdges(nextEdges)
-    onNodesMovedRef.current(layout.nodes, edgePatch)
+    onNodesMovedRef.current(layoutNodes, edgePatch)
     setLayoutEpoch((n) => n + 1)
+    setAutoLayoutDirectives(directives)
+    setAutoLayoutOpen(false)
+    } finally {
+      setAutoLayoutBusy(false)
+    }
   }, [nodes, edges, connectionSeparation])
 
   const selectedDirectAlign = useMemo(() => {
@@ -2021,6 +2117,15 @@ export function DiagramCanvas({
           <strong className="diagram-view-name">{view.view.name}</strong>
           <span className="diagram-mode-badge">{DIAGRAM_MODE_LABELS[mode] || mode}</span>
           <div className="redraw-actions">
+            {onBackView ? (
+              <button
+                type="button"
+                onClick={() => onBackView()}
+                title="Go to previous diagram"
+              >
+                Back
+              </button>
+            ) : null}
             <DiagramEditToolbar
               view={view}
               selectedIds={selectedIds}
@@ -2051,8 +2156,8 @@ export function DiagramCanvas({
                 </button>
                 <button
                   type="button"
-                  onClick={applyAutoLayout}
-                  title="Size parts, place ports, space parts, then redraw connections"
+                  onClick={() => setAutoLayoutOpen(true)}
+                  title="Open AutoLayout directives, then place parts/ports and route connections"
                 >
                   AutoLayout
                 </button>
@@ -2088,27 +2193,16 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameX')
                           return
                         }
-                        const items = nodes.map((n) => ({
-                          id: n.id,
-                          x: n.position.x,
-                          y: n.position.y,
-                          width: Number(n.style?.width) || 100,
-                          height: Number(n.style?.height) || 40,
-                          parentAbs: n.parentId
-                            ? (() => {
-                                const p = nodes.find((x) => x.id === n.parentId)
-                                return p
-                                  ? { x: p.position.x, y: p.position.y }
-                                  : undefined
-                              })()
-                            : undefined,
-                        }))
-                        const { patch } = alignSelection(
-                          items,
-                          'horizontal',
+                        const { patch } = alignFlowSelection(
+                          nodes,
                           selectedIds,
+                          'horizontal',
                         )
-                        if (Object.keys(patch).length) onNodesMoved(patch)
+                        if (!Object.keys(patch).length) return
+                        setNodes((current) =>
+                          applyAlignPatchToFlowNodes(current, patch),
+                        )
+                        onNodesMoved(patch)
                       }}
                     >
                       Align H
@@ -2136,27 +2230,16 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameY')
                           return
                         }
-                        const items = nodes.map((n) => ({
-                          id: n.id,
-                          x: n.position.x,
-                          y: n.position.y,
-                          width: Number(n.style?.width) || 100,
-                          height: Number(n.style?.height) || 40,
-                          parentAbs: n.parentId
-                            ? (() => {
-                                const p = nodes.find((x) => x.id === n.parentId)
-                                return p
-                                  ? { x: p.position.x, y: p.position.y }
-                                  : undefined
-                              })()
-                            : undefined,
-                        }))
-                        const { patch } = alignSelection(
-                          items,
-                          'vertical',
+                        const { patch } = alignFlowSelection(
+                          nodes,
                           selectedIds,
+                          'vertical',
                         )
-                        if (Object.keys(patch).length) onNodesMoved(patch)
+                        if (!Object.keys(patch).length) return
+                        setNodes((current) =>
+                          applyAlignPatchToFlowNodes(current, patch),
+                        )
+                        onNodesMoved(patch)
                       }}
                     >
                       Align V
@@ -2239,17 +2322,30 @@ export function DiagramCanvas({
           onClose={() => setLayoutWizardOpen(false)}
         />
       )}
-      {!printMode && portMoveMode && isStructure && (
-        <div className="tool-banner" role="status">
-          Move ports — dra längs partens kant
-        </div>
-      )}
-      {!printMode && formatPaintMode && (
-        <div className="tool-banner" role="status">
-          Format paint — click a target
-        </div>
-      )}
       <div className="diagram-sheet-host" ref={sheetHostRef}>
+        {!printMode && portMoveMode && isStructure && (
+          <div className="tool-banner" role="status">
+            Move ports — dra längs partens kant
+          </div>
+        )}
+        {!printMode && formatPaintMode && (
+          <div className="tool-banner" role="status">
+            Format paint — click a target
+          </div>
+        )}
+        {!printMode && routeNotice && (
+          <div className="tool-banner tool-banner-warn" role="status">
+            <span>{routeNotice}</span>
+            <button
+              type="button"
+              className="tool-banner-dismiss"
+              onClick={() => setRouteNotice(null)}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        )}
         {!printMode && sheet?.frame?.visible && (
           <div
             className="diagram-paper-frame"
@@ -2289,6 +2385,14 @@ export function DiagramCanvas({
               ? undefined
               : (e, node) =>
                   onSelectArtifact(node.id, { shift: e.shiftKey })
+          }
+          onNodeDoubleClick={
+            printMode || !onUseCaseDoubleClick
+              ? undefined
+              : (_e, node) => {
+                  const el = view?.semantic[node.id]
+                  if (el?.kind === 'useCase') onUseCaseDoubleClick(node.id)
+                }
           }
           onEdgeClick={
             printMode
@@ -2345,6 +2449,7 @@ export function DiagramCanvas({
           proOptions={{ hideAttribution: true }}
         >
           <EdgeMarkerDefs />
+          <ViewportApiBridge apiRef={viewportApiRef} />
           <FitViewOnViewKey
             viewKey={viewKey}
             layoutEpoch={layoutEpoch}
@@ -2357,6 +2462,15 @@ export function DiagramCanvas({
           {!printMode && !captureLight && <MiniMap pannable zoomable />}
         </ReactFlow>
       </div>
+      <AutoLayoutDialog
+        open={autoLayoutOpen}
+        initial={autoLayoutDirectives}
+        busy={autoLayoutBusy}
+        onCancel={() => {
+          if (!autoLayoutBusy) setAutoLayoutOpen(false)
+        }}
+        onConfirm={(d) => void applyAutoLayout(d)}
+      />
     </div>
   )
 }

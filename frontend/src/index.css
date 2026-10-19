@@ -71,6 +71,137 @@ input {
   height: 100%;
 }
 
+.usecase-flow-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.usecase-flow-dialog {
+  width: min(960px, 94vw);
+  height: min(640px, 88vh);
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.usecase-flow-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.usecase-flow-params {
+  width: 240px;
+  padding: 0.75rem 1rem;
+  border-right: 1px solid var(--panel-border);
+  overflow: auto;
+}
+
+.usecase-flow-params dl {
+  margin: 0;
+}
+
+.usecase-flow-params dt {
+  font-weight: 600;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.usecase-flow-params dd {
+  margin: 0.15rem 0 0;
+}
+
+.usecase-flow-canvas {
+  flex: 1;
+  min-width: 0;
+}
+
+.open-target-menu {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.open-target-menu button {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.open-target-menu button:hover {
+  background: var(--surface-raised);
+}
+
+.canvas-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--surface);
+  min-height: 2rem;
+}
+
+.canvas-tab {
+  display: inline-flex;
+  align-items: center;
+  max-width: 14rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px 4px 0 0;
+  background: var(--surface-raised, var(--surface));
+}
+
+.canvas-tab.active {
+  border-color: var(--accent);
+  background: var(--bg, #fff);
+}
+
+.canvas-tab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.canvas-tab-close {
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.canvas-tab-close:hover {
+  opacity: 1;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -234,6 +365,46 @@ input {
   border-radius: 3px;
 }
 
+.markdown-body .mermaid-diagram {
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.markdown-body .mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-body .mermaid-diagram-error {
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+}
+
+.markdown-body .mermaid-diagram-error .mermaid-source {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem;
+  overflow: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  background: var(--canvas);
+  border-radius: 3px;
+}
+
+.markdown-body .mermaid-error-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+.markdown-body .mermaid-diagram-loading {
+  padding: 0.5rem 0;
+}
+
 .doc-path {
   font-size: 0.75rem;
   margin-bottom: 0.5rem;
@@ -244,6 +415,8 @@ input {
 }
 
 .tree-row.is-folder .folder-label {
+  flex: 1;
+  min-width: 0;
   font-weight: 600;
   color: var(--muted);
 }
@@ -416,6 +589,39 @@ input {
   gap: 0.15rem;
 }
 
+.model-tree-toolbar {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.model-tree-toolbar button {
+  flex: 1;
+  border: 1px solid var(--panel-border);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 0.3rem 0.45rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.model-tree-toolbar button:hover {
+  background: var(--surface-raised);
+  border-color: var(--accent);
+}
+
+.model-tree-filter-all {
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.model-tree-filter-kinds {
+  max-height: min(50vh, 22rem);
+  overflow-y: auto;
+}
+
 .tree-item {
   display: flex;
   flex-direction: column;
@@ -427,6 +633,11 @@ input {
   align-items: stretch;
   gap: 2px;
   min-width: 0;
+}
+
+.tree-row .tree-grip {
+  order: 3;
+  margin-left: 2px;
 }
 
 .tree-grip {
@@ -515,6 +726,14 @@ input {
   font: inherit;
 }
 
+.tree-name {
+  display: inline;
+}
+
+.tree-name-part {
+  display: inline-block;
+}
+
 .tree-row.is-other .tree-label,
 .tree-row.is-other .tree-label .artifact-kind,
 .tree-row.is-other .tree-label .view-type-ref {
@@ -563,24 +782,23 @@ input {
 }
 
 .diagram-canvas-header {
-  position: absolute;
-  z-index: 8;
-  top: 10px;
-  left: 12px;
-  right: 12px;
-  max-width: calc(100% - 24px);
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
-  pointer-events: none;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-border);
+  pointer-events: auto;
 }
 
 .diagram-canvas-header .redraw-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  pointer-events: auto;
   margin-left: 0;
   max-width: 100%;
 }
@@ -627,7 +845,7 @@ input {
   gap: 2px;
   border: 1px solid var(--panel-border);
   border-radius: 4px;
-  background: var(--panel);
+  background: var(--surface);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
@@ -638,7 +856,7 @@ input {
 
 .diagram-canvas-header .redraw-actions button {
   border: 1px solid var(--panel-border);
-  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  background: var(--surface);
   color: var(--ink);
   font-size: 0.72rem;
   font-weight: 600;
@@ -651,11 +869,13 @@ input {
 .diagram-canvas-header .redraw-actions button:hover {
   border-color: var(--accent);
   color: var(--accent);
+  background: var(--surface-raised);
 }
 
 .diagram-view-name {
   font-size: 0.95rem;
   letter-spacing: 0.01em;
+  color: var(--ink);
 }
 
 .diagram-mode-badge {
@@ -667,9 +887,8 @@ input {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border: 1px solid var(--panel-border);
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  background: var(--surface);
   color: var(--muted);
-  pointer-events: none;
 }
 
 .canvas-empty.mode-error {
@@ -939,9 +1158,18 @@ input {
   inset: 0;
 }
 
+.diagram-canvas {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .diagram-sheet-host {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  z-index: 0;
 }
 
 .diagram-canvas .react-flow {
@@ -965,7 +1193,7 @@ input {
 
 .tool-banner {
   position: absolute;
-  z-index: 10;
+  z-index: 26;
   top: 0.6rem;
   left: 50%;
   transform: translateX(-50%);
@@ -976,6 +1204,26 @@ input {
   font-size: 0.8rem;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.tool-banner.tool-banner-warn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(36rem, 92%);
+  background: #5b3a12;
+  color: #fff8ee;
+  pointer-events: auto;
+}
+
+.tool-banner-dismiss {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
 }
 
 body.port-dragging {
@@ -1364,6 +1612,19 @@ body.port-dragging * {
   color: var(--accent);
 }
 
+.part-node-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.part-node-icon {
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.9;
+}
+
 .part-node-title {
   font-weight: 600;
   font-size: 0.85rem;
@@ -1414,8 +1675,43 @@ body.port-dragging * {
 }
 
 .part-node-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 1.5rem;
+}
+
+.part-node-body-icon-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.part-node-body-icon-box {
+  height: 50%;
+  aspect-ratio: 1;
+  max-width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.part-node-body-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.part-node-body .part-attr-list {
+  position: relative;
+  z-index: 1;
 }
 
 .port-label {
@@ -1557,6 +1853,26 @@ body.port-dragging * {
   width: min(640px, 96vw);
 }
 
+/* AutoLayout (esp. custom weights): stay within viewport; scroll body. */
+.modal-dialog.modal-autolayout {
+  max-height: min(90vh, 100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-dialog.modal-autolayout .modal-header,
+.modal-dialog.modal-autolayout .modal-footer {
+  flex-shrink: 0;
+}
+
+.modal-dialog.modal-autolayout .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1577,6 +1893,20 @@ body.port-dragging * {
   gap: 0.75rem;
 }
 
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--panel-border);
+}
+
+.modal-footer button.primary {
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  border-color: var(--accent);
+}
+
 .settings-row {
   display: flex;
   justify-content: space-between;
@@ -1593,6 +1923,58 @@ body.port-dragging * {
 .settings-row select,
 .settings-row input[type='number'] {
   min-width: 7rem;
+}
+
+.custom-weight-level {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--panel-border);
+}
+
+.custom-weight-level-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.custom-weight-row input[type='range'] {
+  flex: 1;
+  min-width: 8rem;
+  max-width: 14rem;
+}
+
+/* Form controls in modals stay light so values remain readable in any theme. */
+.modal-dialog {
+  color-scheme: light;
+}
+
+.modal-dialog input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+.modal-dialog select,
+.modal-dialog textarea,
+.modal-dialog .path-input-group input {
+  font: inherit;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  background-color: #ffffff;
+  background-image: none;
+  color: #1a2330;
+  -webkit-text-fill-color: #1a2330;
+  color-scheme: light;
+}
+
+.modal-dialog input::placeholder,
+.modal-dialog textarea::placeholder {
+  color: #5c6b7a;
+  -webkit-text-fill-color: #5c6b7a;
+}
+
+.modal-dialog input:-webkit-autofill,
+.modal-dialog input:-webkit-autofill:hover,
+.modal-dialog input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #1a2330;
+  caret-color: #1a2330;
 }
 
 .path-input-row {
@@ -1616,12 +1998,6 @@ body.port-dragging * {
 .path-input-group input {
   flex: 1;
   min-width: 0;
-  font: inherit;
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  padding: 0.35rem 0.5rem;
-  background: var(--panel);
-  color: var(--ink);
 }
 
 .path-browse-btn {
@@ -1806,7 +2182,7 @@ body.port-dragging * {
 .example-projects-label {
   margin: 0 0 0.5rem;
   font-size: 0.85rem;
-  color: #8fa3b8;
+  color: var(--muted);
 }
 
 .example-projects-list {
@@ -1821,20 +2197,18 @@ body.port-dragging * {
 .example-projects-list button {
   width: 100%;
   text-align: left;
-  border: 1px solid #3a4d61;
-  background: #1c2c3c;
-  color: inherit;
+  border: 1px solid var(--panel-border);
+  background: #ffffff;
+  color: #1a2330;
   border-radius: 4px;
   padding: 0.45rem 0.65rem;
+  cursor: pointer;
 }
 
 .example-projects-list button:hover {
-  background: #254056;
-}
-
-.diagram-sheet-host {
-  position: absolute;
-  inset: 0;
+  background: #f0f4f7;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .diagram-paper-frame {
@@ -2012,6 +2386,7 @@ body.port-dragging * {
 .print-diagram-canvas-host .diagram-sheet-host {
   position: absolute;
   inset: 0;
+  flex: none;
 }
 
 .print-diagram-canvas-host .react-flow {
@@ -2176,6 +2551,8 @@ body.port-dragging * {
   pointer-events: none;
 }
 .requirement-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 0.5rem 1rem 1rem;
 }
@@ -2183,6 +2560,12 @@ body.port-dragging * {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+}
+.requirement-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
 }
 .requirement-table th,
 .requirement-table td {

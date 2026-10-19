@@ -112,6 +112,75 @@ def test_objective_points_to_requirement():
     assert objs[0].target_id == "P::R1"
 
 
+def test_case_scenario_perform_and_branch_flow():
+    content = """
+    package P {
+      case def CaseScenario;
+      case scenarioA : CaseScenario {
+        first start;
+        then action doA;
+        then done;
+      }
+      use case def Pay {
+        subject system : System;
+        actor user : Person;
+        objective {
+          doc /* Pay the fare */
+        }
+        first start;
+        then perform scenarioA;
+        then if chooseC then stepC else stepD;
+        then done;
+        action stepC;
+        action stepD;
+      }
+    }
+    """
+    result = _parse(content)
+    assert result.elements["P::CaseScenario"].kind == ArtifactKind.CASE
+    scenario = result.elements["P::scenarioA"]
+    assert scenario.kind == ArtifactKind.CASE
+    assert scenario.type_ref == "CaseScenario"
+    succ_a = [
+        e
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.SUCCESSION and e.parent_id == "P::scenarioA"
+    ]
+    assert any(e.source_id == "P::scenarioA::start" and e.target_id == "P::scenarioA::doA" for e in succ_a)
+    assert any(e.source_id == "P::scenarioA::doA" and e.target_id == "P::scenarioA::done" for e in succ_a)
+
+    pay = result.elements["P::Pay"]
+    assert pay.kind == ArtifactKind.USE_CASE
+    assert "Pay the fare" in (pay.documentation or "")
+    assert result.elements["P::Pay::system"].metadata_keywords == ["subject"]
+    assert result.elements["P::Pay::user"].kind == ArtifactKind.ACTOR
+
+    performs = [
+        e
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.ACTION
+        and e.parent_id == "P::Pay"
+        and "perform" in (e.metadata_keywords or [])
+    ]
+    assert any(e.type_ref == "scenarioA" or e.name == "scenarioA" for e in performs)
+
+    decide = [
+        e
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.ACTION
+        and e.parent_id == "P::Pay"
+        and (e.type_ref or "").lower() in {"decide", "decision", "condition"}
+    ]
+    assert decide, "expected a decide node for if/else"
+    branches = [
+        e
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.SUCCESSION and e.parent_id == "P::Pay"
+    ]
+    assert any(e.target_id == "P::Pay::stepC" for e in branches)
+    assert any(e.target_id == "P::Pay::stepD" for e in branches)
+
+
 def test_use_case_merge_preserves_layout():
     content = """
     package P {

@@ -17,6 +17,7 @@ import { nextSelection, selectionFromFlow } from './features/diagram/selection'
 import { RightSidebar } from './features/details/RightSidebar'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
+import { TutorialMarkdown } from './features/docs/TutorialMarkdown'
 import { WorkspaceLayout } from './features/layout/WorkspaceLayout'
 import { WorkspaceDialog } from './features/files/WorkspaceDialog'
 import { normalizeRelSysmlPath } from './features/files/workspacePaths'
@@ -36,11 +37,33 @@ import {
 } from './settings'
 import { structureNotationForPatch } from './features/diagram/structureNotationForPatch'
 import { copyStyle } from './features/diagram/formatPainter'
+import { getBrowserSessionId } from './features/session/browserSessionId'
+import {
+  openTargetDecision,
+  viewIdFromLocationSearch,
+  viewWindowUrl,
+} from './features/diagram/openTarget'
+import { UseCaseFlowDialog } from './features/diagram/modes/useCase/UseCaseFlowDialog'
+import { CanvasTabBar } from './features/tabs/CanvasTabBar'
+import {
+  activateTab,
+  activeTab,
+  closeTab,
+  emptyTabs,
+  openDiagramNewTab,
+  openDiagramSameTab,
+  openMarkdownNewTab,
+  openTutorialNewTab,
+  type CanvasTabsState,
+} from './features/tabs/canvasTabs'
 
 type CanvasMode =
   | { type: 'diagram' }
   | { type: 'text'; fileId: string }
   | { type: 'markdown'; docPath: string }
+  | { type: 'tutorial'; tutorialId: string; title: string }
+
+type TutorialItem = { id: string; title: string; filename: string }
 
 type PaintMode = {
   style: ElementStyle
@@ -50,9 +73,17 @@ type PaintMode = {
 export default function App() {
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null)
   const [exampleProjects, setExampleProjects] = useState<ExampleProject[]>([])
+  const [tutorials, setTutorials] = useState<TutorialItem[]>([])
   const [project, setProject] = useState<Project | null>(null)
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
+  const [canvasTabs, setCanvasTabs] = useState<CanvasTabsState>(emptyTabs())
+  const [openMenu, setOpenMenu] = useState<{
+    viewId: string
+    x: number
+    y: number
+  } | null>(null)
+  const [useCaseDialogId, setUseCaseDialogId] = useState<string | null>(null)
   const [viewPayload, setViewPayload] = useState<ViewPayload | null>(null)
   const [diagramEpoch, setDiagramEpoch] = useState(0)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -109,41 +140,57 @@ export default function App() {
         setProject(session.project)
         setSelectedId(null)
         setLeftTab('views')
-        const declared = session.project.views[0]
-        if (declared) {
+        let viewId: string | null = viewIdFromLocationSearch(
+          window.location.search,
+        )
+        if (!viewId) {
+          try {
+            const hist = await api.getViewHistory(getBrowserSessionId())
+            if (
+              hist.lastViewId &&
+              (session.project.views.some((v) => v.id === hist.lastViewId) ||
+                hist.lastViewId.startsWith('artifact::'))
+            ) {
+              viewId = hist.lastViewId
+            }
+          } catch {
+            /* fall through to default */
+          }
+        }
+        if (!viewId) {
+          const declared = session.project.views[0]
+          if (declared) viewId = declared.id
+          else {
+            const pkg = Object.values(session.project.semantic).find(
+              (e) => e.kind === 'package',
+            )
+            if (pkg) viewId = `artifact::${pkg.id}`
+          }
+        }
+        if (viewId) {
           const payload = await api.getView(
             session.project.id,
-            declared.id,
+            viewId,
             settings.showDiagramDetails.hierarchicalLevels,
             structureNotation,
           )
           setViewPayload(payload)
-          setActiveViewId(declared.id)
+          setActiveViewId(viewId)
           setDiagramEpoch((n) => n + 1)
           setCanvasMode({ type: 'diagram' })
-        } else {
-          const pkg = Object.values(session.project.semantic).find(
-            (e) => e.kind === 'package',
+          setCanvasTabs(
+            openDiagramSameTab(emptyTabs(), viewId, payload.view.name || viewId),
           )
-          if (pkg) {
-            const payload = await api.getView(
-              session.project.id,
-              `artifact::${pkg.id}`,
-              settings.showDiagramDetails.hierarchicalLevels,
-              structureNotation,
-            )
-            setViewPayload(payload)
-            setActiveViewId(`artifact::${pkg.id}`)
-            setDiagramEpoch((n) => n + 1)
-          } else {
-            setViewPayload(null)
-            setActiveViewId(null)
-          }
+        } else {
+          setViewPayload(null)
+          setActiveViewId(null)
+          setCanvasTabs(emptyTabs())
         }
       } else {
         setProject(null)
         setViewPayload(null)
         setActiveViewId(null)
+        setCanvasTabs(emptyTabs())
       }
     },
     [settings.showDiagramDetails.hierarchicalLevels, structureNotation],
@@ -164,6 +211,13 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    api
+      .listTutorials()
+      .then(setTutorials)
+      .catch(() => setTutorials([]))
+  }, [])
+
+  useEffect(() => {
     applyTheme(settings.viewMode)
     saveSettings(settings)
   }, [settings])
@@ -173,7 +227,16 @@ export default function App() {
   const sheet: ProjectSheet = normalizeSheet(project?.sheet)
 
   const loadView = useCallback(
-    async (projectId: string, viewId: string) => {
+    async (
+      projectId: string,
+      viewId: string,
+      opts?: {
+        recordHistory?: boolean
+        newTab?: boolean
+        title?: string
+        syncTab?: boolean
+      },
+    ) => {
       const payload = await api.getView(
         projectId,
         viewId,
@@ -184,9 +247,32 @@ export default function App() {
       setActiveViewId(viewId)
       setDiagramEpoch((n) => n + 1)
       setCanvasMode({ type: 'diagram' })
+      if (opts?.syncTab !== false) {
+        const title = opts?.title || payload.view.name || viewId
+        setCanvasTabs((prev) =>
+          opts?.newTab
+            ? openDiagramNewTab(prev, viewId, title)
+            : openDiagramSameTab(prev, viewId, title),
+        )
+      }
+      if (opts?.recordHistory !== false) {
+        void api.recordViewHistory(getBrowserSessionId(), viewId).catch(() => {})
+      }
     },
     [levels, structureNotation],
   )
+
+  const goBackView = useCallback(async () => {
+    if (!project) return
+    try {
+      const result = await api.backViewHistory(getBrowserSessionId())
+      if (result.viewId) {
+        await loadView(project.id, result.viewId, { recordHistory: false })
+      }
+    } catch (e) {
+      setError(String(e))
+    }
+  }, [project, loadView])
 
   useEffect(() => {
     if (project && activeViewId) {
@@ -973,9 +1059,34 @@ export default function App() {
   }, [paintMode])
 
   const onOpenView = useCallback(
-    (viewId: string) => {
+    (viewId: string, opts?: { ctrlKey?: boolean; metaKey?: boolean }) => {
       if (!project) return
-      void loadView(project.id, viewId)
+      const decision = openTargetDecision({
+        viewId,
+        modifier: !!(opts?.ctrlKey || opts?.metaKey),
+      })
+      if (!decision.showMenu) {
+        void loadView(project.id, viewId)
+        return
+      }
+      setOpenMenu({
+        viewId,
+        x: typeof window !== 'undefined' ? window.innerWidth / 2 - 80 : 0,
+        y: typeof window !== 'undefined' ? window.innerHeight / 3 : 0,
+      })
+    },
+    [project, loadView],
+  )
+
+  const applyOpenChoice = useCallback(
+    (choice: 'same-tab' | 'new-tab' | 'new-window', viewId: string) => {
+      setOpenMenu(null)
+      if (!project) return
+      if (choice === 'new-window') {
+        window.open(viewWindowUrl(viewId), '_blank', 'noopener,noreferrer')
+        return
+      }
+      void loadView(project.id, viewId, { newTab: choice === 'new-tab' })
     },
     [project, loadView],
   )
@@ -1120,6 +1231,29 @@ export default function App() {
               <option value="__open__">Open other…</option>
             </select>
           )}
+          {tutorials.length > 0 && (
+            <select
+              className="projects-menu"
+              aria-label="Tutorials"
+              value=""
+              onChange={(e) => {
+                const id = e.target.value
+                if (!id) return
+                const item = tutorials.find((t) => t.id === id)
+                const title = item?.title || id
+                setCanvasTabs((prev) => openTutorialNewTab(prev, id, title))
+                setCanvasMode({ type: 'tutorial', tutorialId: id, title })
+                e.target.value = ''
+              }}
+            >
+              <option value="">Tutorials…</option>
+              {tutorials.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          )}
           <button type="button" onClick={() => setWorkspaceDialog('new')}>
             New
           </button>
@@ -1189,6 +1323,51 @@ export default function App() {
           {error}
           <button type="button" onClick={() => setError(null)}>
             Dismiss
+          </button>
+        </div>
+      )}
+
+      {useCaseDialogId && project && (
+        <UseCaseFlowDialog
+          useCaseId={useCaseDialogId}
+          semantic={project.semantic}
+          onClose={() => setUseCaseDialogId(null)}
+          onOpenAction={(actionId) => {
+            setUseCaseDialogId(null)
+            void loadView(project.id, `artifact::${actionId}`, { newTab: true })
+          }}
+        />
+      )}
+
+      {openMenu && (
+        <div
+          className="open-target-menu"
+          style={{ left: openMenu.x, top: openMenu.y }}
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => applyOpenChoice('same-tab', openMenu.viewId)}
+          >
+            Same tab
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => applyOpenChoice('new-tab', openMenu.viewId)}
+          >
+            New tab
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => applyOpenChoice('new-window', openMenu.viewId)}
+          >
+            New window
+          </button>
+          <button type="button" onClick={() => setOpenMenu(null)}>
+            Cancel
           </button>
         </div>
       )}
@@ -1295,12 +1474,83 @@ export default function App() {
               })
             }
             onShowText={(fileId) => setCanvasMode({ type: 'text', fileId })}
-            onShowMarkdown={(path) => setCanvasMode({ type: 'markdown', docPath: path })}
+            onShowMarkdown={(path) => {
+              setCanvasMode({ type: 'markdown', docPath: path })
+              const title = path.split('/').pop() || path
+              setCanvasTabs((prev) => openMarkdownNewTab(prev, path, title))
+            }}
           />
         }
         center={
           <main className="canvas-area">
-            {canvasMode.type === 'text' && textFile ? (
+            <CanvasTabBar
+              tabs={canvasTabs.tabs}
+              activeId={canvasTabs.activeId}
+              onActivate={(tabId) => {
+                const next = activateTab(canvasTabs, tabId)
+                setCanvasTabs(next)
+                const tab = activeTab(next)
+                if (!tab || !project) return
+                if (tab.kind === 'diagram') {
+                  setCanvasMode({ type: 'diagram' })
+                  void loadView(project.id, tab.viewId, {
+                    recordHistory: true,
+                    title: tab.title,
+                    syncTab: false,
+                  })
+                } else if (tab.kind === 'tutorial') {
+                  setCanvasMode({
+                    type: 'tutorial',
+                    tutorialId: tab.tutorialId,
+                    title: tab.title,
+                  })
+                } else {
+                  setCanvasMode({ type: 'markdown', docPath: tab.docPath })
+                }
+              }}
+              onClose={(tabId) => {
+                const next = closeTab(canvasTabs, tabId)
+                setCanvasTabs(next)
+                const tab = activeTab(next)
+                if (!tab) {
+                  setCanvasMode({ type: 'diagram' })
+                  return
+                }
+                if (tab.kind === 'markdown') {
+                  setCanvasMode({ type: 'markdown', docPath: tab.docPath })
+                } else if (tab.kind === 'tutorial') {
+                  setCanvasMode({
+                    type: 'tutorial',
+                    tutorialId: tab.tutorialId,
+                    title: tab.title,
+                  })
+                } else if (project) {
+                  setCanvasMode({ type: 'diagram' })
+                  void loadView(project.id, tab.viewId, {
+                    recordHistory: false,
+                    title: tab.title,
+                    syncTab: false,
+                  })
+                }
+              }}
+            />
+            {canvasMode.type === 'tutorial' ||
+            activeTab(canvasTabs)?.kind === 'tutorial' ? (
+              <TutorialMarkdown
+                tutorialId={
+                  canvasMode.type === 'tutorial'
+                    ? canvasMode.tutorialId
+                    : activeTab(canvasTabs)?.kind === 'tutorial'
+                      ? activeTab(canvasTabs)!.tutorialId
+                      : ''
+                }
+                title={
+                  canvasMode.type === 'tutorial'
+                    ? canvasMode.title
+                    : activeTab(canvasTabs)?.title
+                }
+              />
+            ) : canvasMode.type === 'text' && textFile ? (
               <div className="text-canvas">
                 <div className="text-canvas-toolbar">
                   <strong>{textFile.name}</strong>
@@ -1320,10 +1570,17 @@ export default function App() {
                   </div>
                 )}
               </div>
-            ) : canvasMode.type === 'markdown' ? (
+            ) : canvasMode.type === 'markdown' ||
+              activeTab(canvasTabs)?.kind === 'markdown' ? (
               <MarkdownCanvas
                 projectId={project?.id}
-                docPath={canvasMode.docPath}
+                docPath={
+                  canvasMode.type === 'markdown'
+                    ? canvasMode.docPath
+                    : activeTab(canvasTabs)?.kind === 'markdown'
+                      ? activeTab(canvasTabs)!.docPath
+                      : ''
+                }
                 onBack={() => setCanvasMode({ type: 'diagram' })}
               />
             ) : (
@@ -1371,6 +1628,8 @@ export default function App() {
                   )
                 }}
                 onOpenView={onOpenView}
+                onBackView={() => void goBackView()}
+                onUseCaseDoubleClick={(id) => setUseCaseDialogId(id)}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}

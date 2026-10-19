@@ -6,6 +6,12 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.view_filter import (
+    MetaclassAnyFilter,
+    MetaclassFilter,
+    NameStartsWithFilter,
+    metaclass_to_kind,
+)
 from ports import ParseResult
 
 
@@ -16,7 +22,7 @@ _TOKEN_RE = re.compile(
     (?P<string>'[^']*'|"[^"]*")|
     (?P<number>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|
     (?P<ident>[A-Za-z_][\w]*)|
-    (?P<punct>:>>|:>|::|[{}:;=,<\>]|\.|~)|
+    (?P<punct>:>>|:>|::|[{}:;=,<\>]|\.|~|@)|
     (?P<ws>\s+)|
     (?P<other>.)
     """,
@@ -36,6 +42,8 @@ class _Scope:
     element_id: str | None
     kind: ArtifactKind | None = None
     brace_depth: int = 0
+    last_flow_step: str | None = None  # unqualified name of last flow occurrence
+    branch_ends: list[str] | None = None  # open if/else branch tips awaiting merge
 
 
 @dataclass
@@ -359,6 +367,78 @@ class SubsetSysmlParser:
                     break
                 parts.append(nxt_name)
             return ".".join(parts)
+
+        def current_scope() -> _Scope | None:
+            return state.scopes[-1] if state.scopes else None
+
+        def ensure_flow_action(
+            name: str,
+            *,
+            type_ref: str | None = None,
+            metadata_keywords: list[str] | None = None,
+        ) -> str:
+            element_id = state.qualify(name)
+            if element_id not in state.elements:
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.ACTION,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    file_id=file_id,
+                    metadata_keywords=list(metadata_keywords or []),
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+            elif metadata_keywords:
+                existing = state.elements[element_id]
+                for kw in metadata_keywords:
+                    if kw not in existing.metadata_keywords:
+                        existing.metadata_keywords.append(kw)
+            return element_id
+
+        def add_flow_succession(
+            source_name: str,
+            target_name: str,
+            *,
+            succ_name: str | None = None,
+        ) -> None:
+            parent = state.current_parent()
+
+            def resolve_step(name: str) -> str:
+                if parent:
+                    cand = f"{parent}::{name}"
+                    if cand in state.elements:
+                        return cand
+                return resolve_ref(name)
+
+            if not succ_name:
+                state.anon_succession += 1
+                succ_name = f"succ{state.anon_succession}"
+            element_id = state.qualify(succ_name)
+            el = SemanticElement(
+                id=element_id,
+                kind=ArtifactKind.SUCCESSION,
+                name=succ_name,
+                parent_id=parent,
+                source_id=resolve_step(source_name),
+                target_id=resolve_step(target_name),
+                file_id=file_id,
+            )
+            state.add_child(parent, element_id)
+            state.elements[element_id] = el
+
+        def link_from_previous(target_name: str) -> None:
+            scope = current_scope()
+            if not scope:
+                return
+            if scope.branch_ends:
+                for end in scope.branch_ends:
+                    add_flow_succession(end, target_name)
+                scope.branch_ends = None
+            elif scope.last_flow_step:
+                add_flow_succession(scope.last_flow_step, target_name)
+            scope.last_flow_step = target_name
 
         def add_relationship(
             kind: ArtifactKind,
@@ -980,71 +1060,10 @@ class SubsetSysmlParser:
                 state.elements[element_id] = el
                 continue
 
-            if tok.kind == "ident" and tok.value in {"message", "then"}:
-                # `then message …` or bare `then a1;` (succession chain) or `message …`
+            if tok.kind == "ident" and tok.value == "message":
+                # `message …` (use `then` handler for succession / then message)
                 line = tok.line
-                is_then = tok.value == "then"
                 take()
-                if is_then and peek() and peek().value == "message":
-                    take()
-                elif is_then and peek() and peek().kind == "ident" and peek().value not in {
-                    "message",
-                    "from",
-                }:
-                    # `then a1;` succession step within action
-                    target_name = expect_ident()
-                    if peek() and peek().value == ";":
-                        take()
-                    parent = state.current_parent()
-                    # Find previous succession target or start as source
-                    source_id = None
-                    if parent and parent in state.elements:
-                        prior = [
-                            state.elements[cid]
-                            for cid in state.elements[parent].children
-                            if cid in state.elements
-                            and state.elements[cid].kind == ArtifactKind.SUCCESSION
-                        ]
-                        if prior and prior[-1].target_id:
-                            source_id = prior[-1].target_id
-                        else:
-                            # look for 'start' action or first action
-                            start = next(
-                                (
-                                    state.elements[cid]
-                                    for cid in state.elements[parent].children
-                                    if cid in state.elements
-                                    and state.elements[cid].name in {"start", "Start"}
-                                ),
-                                None,
-                            )
-                            source_id = start.id if start else None
-                    state.anon_succession += 1
-                    succ_name = f"succ{state.anon_succession}"
-                    element_id = state.qualify(succ_name)
-                    target_id = (
-                        state.qualify(target_name) if target_name else None
-                    )
-                    # resolve target among siblings
-                    if target_name and parent:
-                        cand = f"{parent}::{target_name}"
-                        if cand in state.elements:
-                            target_id = cand
-                    el = SemanticElement(
-                        id=element_id,
-                        kind=ArtifactKind.SUCCESSION,
-                        name=succ_name,
-                        parent_id=parent,
-                        source_id=source_id,
-                        target_id=target_id,
-                        file_id=file_id,
-                    )
-                    state.add_child(parent, element_id)
-                    state.elements[element_id] = el
-                    continue
-                elif is_then:
-                    skip_until_semicolon_or_brace()
-                    continue
 
                 # message [payload] from A to B
                 payload_parts: list[str] = []
@@ -1293,26 +1312,176 @@ class SubsetSysmlParser:
                 continue
 
             if tok.kind == "ident" and tok.value == "first":
-                # `first start;` inside action — create/start marker action if needed
+                # `first start;` or `first start then X;` inside action/case/use case
                 take()
                 name = expect_ident()
                 if not name:
                     skip_until_semicolon_or_brace()
                     continue
+                type_ref = "start" if name.lower() == "start" else None
+                ensure_flow_action(name, type_ref=type_ref)
+                scope = current_scope()
+                if scope:
+                    scope.last_flow_step = name
+                    scope.branch_ends = None
+                if peek() and peek().value == "then":
+                    # handled by falling through would skip; parse inline then target
+                    take()
+                    target = expect_ident()
+                    if target:
+                        ensure_flow_action(
+                            target,
+                            type_ref="done" if target.lower() == "done" else None,
+                        )
+                        add_flow_succession(name, target)
+                        if scope:
+                            scope.last_flow_step = target
                 if peek() and peek().value == ";":
                     take()
+                continue
+
+            if tok.kind == "ident" and tok.value == "then":
+                line = tok.line
+                take()
+                # then message … — fall through to message-like parse by rewinding
+                if peek() and peek().value == "message":
+                    # Put back as message token by not consuming; use skip for now
+                    take()  # message
+                    # Reuse message parser body by jumping: emit warning if incomplete
+                    # Minimal: skip rest of statement (sequence diagrams still use
+                    # `message` without leading then in most fixtures).
+                    skip_until_semicolon_or_brace()
+                    continue
+                # then if guard then a else b;
+                if peek() and peek().value == "if":
+                    take()
+                    guard = expect_ident()
+                    if not (peek() and peek().value == "then"):
+                        state.warnings.append(
+                            f"line {line}: if expected 'then' after guard"
+                        )
+                        skip_until_semicolon_or_brace()
+                        continue
+                    take()
+                    yes_name = expect_ident()
+                    no_name: str | None = None
+                    if peek() and peek().value == "else":
+                        take()
+                        no_name = expect_ident()
+                    if peek() and peek().value == ";":
+                        take()
+                    if not guard or not yes_name:
+                        continue
+                    ensure_flow_action(guard, type_ref="decide")
+                    ensure_flow_action(yes_name)
+                    link_from_previous(guard)
+                    add_flow_succession(guard, yes_name, succ_name=f"if_{guard}_yes")
+                    ends = [yes_name]
+                    if no_name:
+                        ensure_flow_action(no_name)
+                        add_flow_succession(
+                            guard, no_name, succ_name=f"if_{guard}_else"
+                        )
+                        ends.append(no_name)
+                    scope = current_scope()
+                    if scope:
+                        scope.last_flow_step = None
+                        scope.branch_ends = ends
+                    continue
+
+                # then perform name; | then action name; | then name;
+                is_perform = False
+                is_action_kw = False
+                if peek() and peek().value == "perform":
+                    take()
+                    is_perform = True
+                elif peek() and peek().value == "action":
+                    take()
+                    is_action_kw = True
+                target = expect_ident()
+                if not target:
+                    skip_until_semicolon_or_brace()
+                    continue
+                # optional `{ ... }` after perform — skip for now
+                if peek() and peek().value == "{":
+                    skip_until_semicolon_or_brace()
+                elif peek() and peek().value == ";":
+                    take()
+                type_ref = None
+                meta: list[str] = []
+                if is_perform:
+                    meta = ["perform"]
+                    type_ref = target  # reference name; usage name may equal target
+                elif target.lower() == "done":
+                    type_ref = "done"
+                elif target.lower() == "start":
+                    type_ref = "start"
+                ensure_flow_action(
+                    target,
+                    type_ref=type_ref,
+                    metadata_keywords=meta or None,
+                )
+                _ = is_action_kw
+                link_from_previous(target)
+                continue
+
+            if tok.kind == "ident" and tok.value == "perform":
+                # Standalone perform (without then) — still record as flow step
+                take()
+                target = expect_ident()
+                if not target:
+                    skip_until_semicolon_or_brace()
+                    continue
+                if peek() and peek().value == "{":
+                    skip_until_semicolon_or_brace()
+                elif peek() and peek().value == ";":
+                    take()
+                ensure_flow_action(
+                    target, type_ref=target, metadata_keywords=["perform"]
+                )
+                link_from_previous(target)
+                continue
+
+            if tok.kind == "ident" and tok.value == "case":
+                # case def / case usage (not "use case")
+                line = tok.line
+                take()
+                if peek() and peek().value == "def":
+                    take()
+                short_id = read_short_id()
+                name = expect_ident()
+                if not name:
+                    state.warnings.append(f"line {line}: case without name")
+                    skip_until_semicolon_or_brace()
+                    continue
+                type_ref = None
+                if peek() and peek().value == ":":
+                    take()
+                    type_ref = expect_qualified_name()
                 element_id = state.qualify(name)
-                if element_id not in state.elements:
-                    el = SemanticElement(
-                        id=element_id,
-                        kind=ArtifactKind.ACTION,
-                        name=name,
-                        parent_id=state.current_parent(),
-                        type_ref="start",
-                        file_id=file_id,
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.CASE,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    short_id=short_id,
+                    file_id=file_id,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                brace = peek()
+                if brace and brace.value == "{":
+                    take()
+                    state.scopes.append(
+                        _Scope(
+                            element_id=element_id,
+                            kind=ArtifactKind.CASE,
+                            brace_depth=1,
+                        )
                     )
-                    state.add_child(el.parent_id, element_id)
-                    state.elements[element_id] = el
+                elif brace and brace.value == ";":
+                    take()
                 continue
 
             if tok.kind == "ident" and tok.value == "expose":
@@ -1360,7 +1529,89 @@ class SubsetSysmlParser:
                             resolved = matches[0] if matches else (
                                 f"{scope}::{ref}" if scope else ref
                             )
-                        view_el.expose_ref = resolved
+                        if resolved:
+                            if resolved not in view_el.expose_refs:
+                                view_el.expose_refs.append(resolved)
+                            # Primary root = first expose (unchanged on later exposes)
+                            if not view_el.expose_ref:
+                                view_el.expose_ref = resolved
+                continue
+
+            if tok.kind == "ident" and tok.value == "filter":
+                line = tok.line
+                take()
+                parent = state.current_parent()
+                view_el = (
+                    state.elements.get(parent)
+                    if parent and parent in state.elements
+                    else None
+                )
+                if not view_el or view_el.kind != ArtifactKind.VIEW:
+                    state.warnings.append(
+                        f"line {line}: filter outside view definition"
+                    )
+                    skip_until_semicolon_or_brace()
+                    continue
+
+                parsed_filter = None
+                # filter @A;  or  filter @A or @B or @C;
+                if peek() and peek().value == "@":
+                    take()
+                    ref = expect_qualified_name()
+                    refs: list[str] = [ref] if ref else []
+                    while (
+                        refs
+                        and peek()
+                        and peek().kind == "ident"
+                        and peek().value == "or"
+                    ):
+                        take()  # or
+                        if not (peek() and peek().value == "@"):
+                            refs = []
+                            break
+                        take()
+                        nxt = expect_qualified_name()
+                        if not nxt:
+                            refs = []
+                            break
+                        refs.append(nxt)
+                    if refs and all(metaclass_to_kind(r) is not None for r in refs):
+                        if len(refs) == 1:
+                            parsed_filter = MetaclassFilter(refs[0])
+                        else:
+                            parsed_filter = MetaclassAnyFilter(tuple(refs))
+                    else:
+                        # Unknown @status / metadata annotations are not v1 metaclasses
+                        parsed_filter = None
+                        refs = []
+                # filter name.startsWith("prefix");
+                elif peek() and peek().kind == "ident" and peek().value == "name":
+                    take()
+                    if peek() and peek().value == ".":
+                        take()
+                    method = expect_ident()
+                    if method == "startsWith" and peek() and peek().value == "(":
+                        take()
+                        prefix_tok = peek()
+                        prefix: str | None = None
+                        if prefix_tok and prefix_tok.kind == "string":
+                            take()
+                            prefix = _strip_quotes(prefix_tok.value)
+                        if peek() and peek().value == ")":
+                            take()
+                        if prefix is not None:
+                            parsed_filter = NameStartsWithFilter(prefix)
+
+                # Accept only a complete statement ending at `;`.
+                # Incomplete `or` chains / `not` / metadata ⇒ unsupported.
+                if parsed_filter is not None and peek() and peek().value == ";":
+                    take()
+                    view_el.view_filters.append(parsed_filter.to_stored())
+                else:
+                    skip_until_semicolon_or_brace()
+                    state.warnings.append(
+                        f"line {line}: unsupported filter expression"
+                    )
                 continue
 
             if tok.kind == "ident" and tok.value == "attribute":
@@ -1584,6 +1835,33 @@ class SubsetSysmlParser:
             if tok.kind == "ident" and tok.value == "objective":
                 line = tok.line
                 take()
+                # objective { doc /* ... */ } — attach text to owning case/use case
+                if peek() and peek().value == "{":
+                    take()
+                    doc_text: str | None = None
+                    depth = 1
+                    while i < n and depth > 0:
+                        t = take()
+                        if not t:
+                            break
+                        if t.value == "{":
+                            depth += 1
+                        elif t.value == "}":
+                            depth -= 1
+                        elif t.kind == "ident" and t.value == "doc":
+                            if peek() and peek().kind == "block_comment":
+                                c = take()
+                                if c:
+                                    doc_text = _block_comment_text(c.value)
+                        elif t.kind == "block_comment" and doc_text is None:
+                            doc_text = _block_comment_text(t.value)
+                    parent = state.current_parent()
+                    if parent and parent in state.elements and doc_text:
+                        existing = state.elements[parent].documentation
+                        state.elements[parent].documentation = (
+                            f"{existing}\n{doc_text}" if existing else doc_text
+                        )
+                    continue
                 target_ref = expect_qualified_name()
                 if not target_ref:
                     skip_until_semicolon_or_brace()
@@ -1776,7 +2054,6 @@ class SubsetSysmlParser:
                     "occurrence",
                     "calc",
                     "assert",
-                    "filter",
                     "render",
                 }
                 take()

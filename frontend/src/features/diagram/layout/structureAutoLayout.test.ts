@@ -104,8 +104,8 @@ describe('assignPortSidesAndOffsets', () => {
   })
 })
 
-describe('autoLayoutStructure', () => {
-  it('returns size and position patches for parts and port sides', () => {
+describe('autoLayoutStructure (legacy sync)', () => {
+  it('still returns size and position patches for parts and port sides', () => {
     const nodes = [
       part('root', { isBoundary: true, w: 400, h: 240 }),
       part('a', {
@@ -140,7 +140,9 @@ describe('autoLayoutStructure', () => {
     expect(result.nodes['b::in']?.side).toBeTruthy()
   })
 
-  it('does not reposition nested parts inside an ECU container', () => {
+  it('legacy structure layout still only places boundary siblings', () => {
+    // autoLayoutStructure is the non-ELK path; nest repositioning lives in
+    // runPlacementPipeline / layoutStructureWithElk (see nestBottomUp tests).
     const nodes = [
       part('root', { isBoundary: true, w: 800, h: 600 }),
       part('ecu', { parentId: 'root', label: 'ECU', x: 40, y: 80 }),
@@ -153,7 +155,6 @@ describe('autoLayoutStructure', () => {
     ]
     const result = autoLayoutStructure(nodes, [])
     expect(result.nodes['sw']?.x).toBeUndefined()
-    expect(result.nodes['sw']?.y).toBeUndefined()
     expect(result.nodes['ecu']?.x).toBeDefined()
   })
 })

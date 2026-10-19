@@ -21,6 +21,7 @@ export type ArtifactKind =
   | 'succession'
   | 'requirement'
   | 'useCase'
+  | 'case'
   | 'actor'
   | 'include'
   | 'interface'
@@ -308,6 +309,32 @@ export const api = {
       body: JSON.stringify({ kind }),
     }),
   listExampleProjects: () => request<ExampleProject[]>('/session/example-projects'),
+  listTutorials: () =>
+    request<{ id: string; title: string; filename: string }[]>('/tutorials'),
+  getTutorial: (id: string) =>
+    request<{ id: string; content: string }>(`/tutorials/${encodeURIComponent(id)}`),
+  getViewHistory: (sessionId: string) =>
+    request<{ lastViewId: string | null; previous: string[] }>(
+      `/session/view-history/${encodeURIComponent(sessionId)}`,
+    ),
+  recordViewHistory: (sessionId: string, viewId: string) =>
+    request<{ lastViewId: string | null; previous: string[] }>(
+      '/session/view-history/record',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, viewId }),
+      },
+    ),
+  backViewHistory: (sessionId: string) =>
+    request<{ lastViewId: string | null; previous: string[]; viewId: string | null }>(
+      '/session/view-history/back',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      },
+    ),
   listProjects: () => request<ProjectSummary[]>('/projects'),
   createProject: (name: string, folder?: string) =>
     request<Project>('/projects', {

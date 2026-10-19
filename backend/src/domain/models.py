@@ -38,6 +38,7 @@ class ArtifactKind(str, Enum):
     SUCCESSION = "succession"
     REQUIREMENT = "requirement"
     USE_CASE = "useCase"
+    CASE = "case"
     ACTOR = "actor"
     INCLUDE = "include"
     INTERFACE = "interface"
@@ -181,8 +182,12 @@ class SemanticElement:
     type_ref: str | None = None
     source_id: str | None = None
     target_id: str | None = None
-    # For view elements: qualified id of the exposed root artifact
+    # For view elements: primary exposed root (first of expose_refs)
     expose_ref: str | None = None
+    # For view elements: all expose targets (`expose A; expose B;`)
+    expose_refs: list[str] = field(default_factory=list)
+    # For view elements: stored filter clauses (alpha: metaclass / nameStartsWith)
+    view_filters: list[dict[str, Any]] = field(default_factory=list)
     # Optional default value for attributes/ports (SysML `= …`)
     default_value: str | None = None
     # Optional multiplicity for part usages, e.g. `0..*` from `part x [0..*] : Type`
@@ -208,6 +213,8 @@ class SemanticElement:
             "sourceId": self.source_id,
             "targetId": self.target_id,
             "exposeRef": self.expose_ref,
+            "exposeRefs": list(self.expose_refs),
+            "viewFilters": list(self.view_filters),
             "defaultValue": self.default_value,
             "multiplicity": self.multiplicity,
             "isReference": self.is_reference,
@@ -229,6 +236,11 @@ class SemanticElement:
             source_id=data.get("sourceId"),
             target_id=data.get("targetId"),
             expose_ref=data.get("exposeRef"),
+            expose_refs=list(
+                data.get("exposeRefs")
+                or ([data["exposeRef"]] if data.get("exposeRef") else [])
+            ),
+            view_filters=list(data.get("viewFilters") or []),
             default_value=data.get("defaultValue"),
             multiplicity=data.get("multiplicity"),
             is_reference=bool(data.get("isReference", False)),

@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react'
-import type { Project, SemanticElement, SysmlFile } from '../../api'
+import type { ArtifactKind, Project, SemanticElement, SysmlFile } from '../../api'
 import { isRelationKind } from '../diagram/relationKinds'
 import { buildFileTree, type FileTreeNode } from './buildFileTree'
+import { ModelTreeFilterDialog } from './ModelTreeFilterDialog'
+import {
+  loadModelTreeKindFilter,
+  saveModelTreeKindFilter,
+  treeKindsInSemantic,
+} from './modelTreeFilter'
 import {
   applyFolderTreeOrder,
   buildFolderTree,
@@ -16,6 +22,7 @@ import {
   UNGROUPED_GROUP_KEY,
   type ViewTreeOrder,
 } from './viewTreeOrder'
+import { viewTreeNameParts } from './viewTreeLabel'
 
 export type LeftTab = 'views' | 'files'
 
@@ -71,13 +78,32 @@ function ViewTree({
     id: string
     position: 'before' | 'after'
   } | null>(null)
+  const [filterOpen, setFilterOpen] = useState(false)
+
+  const availableKinds = useMemo(
+    () => treeKindsInSemantic(semantic),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [semanticKey],
+  )
+
+  const [visibleKinds, setVisibleKinds] = useState<Set<ArtifactKind>>(
+    () => loadModelTreeKindFilter(projectId || '', treeKindsInSemantic(semantic)),
+  )
 
   useEffect(() => {
     setOrder(loadViewTreeOrder(projectId || ''))
     dragRef.current = null
     setDragging(null)
     setDrop(null)
-  }, [projectId])
+    setVisibleKinds(
+      loadModelTreeKindFilter(projectId || '', treeKindsInSemantic(semantic)),
+    )
+  }, [projectId, semanticKey, semantic])
+
+  const setVisibleKindsPersist = (next: Set<ArtifactKind>) => {
+    setVisibleKinds(next)
+    if (projectId) saveModelTreeKindFilter(projectId, next)
+  }
 
   const orderedFolders = useMemo(
     () => applyFolderTreeOrder(folderTree.folders, order.groups),
@@ -217,18 +243,47 @@ function ViewTree({
     })
   }
 
+  const collapseAll = () => {
+    const nextFolders = new Set<string>()
+    const walkFolders = (
+      folders: typeof orderedFolders,
+    ) => {
+      for (const f of folders) {
+        nextFolders.add(`folder::${f.path}`)
+        walkFolders(f.folders)
+      }
+    }
+    walkFolders(orderedFolders)
+    setFolderCollapsed(nextFolders)
+
+    const nextEls = new Set<string>()
+    const walkEl = (id: string) => {
+      const el = byId[id]
+      if (!el) return
+      const kids = defaultChildOrder(el.children || [], byId)
+      if (kids.length) nextEls.add(id)
+      for (const cid of kids) walkEl(cid)
+    }
+    for (const r of roots) walkEl(r.id)
+    setCollapsedIds(nextEls)
+  }
+
   const render = (
     el: SemanticElement,
     depth: number,
     groupKey: string | null,
     siblingIds: string[],
   ): ReactNode => {
+    if (!visibleKinds.has(el.kind)) return null
     const defaultIds = defaultChildOrder(el.children || [], byId)
     const childGroup = el.kind === 'package' ? packageGroupKey(el.id) : null
     const childIds = childGroup
       ? orderSiblingIds(defaultIds, order.groups[childGroup])
       : defaultIds
-    const hasChildren = childIds.length > 0
+    const visibleChildIds = childIds.filter(
+      (cid) => byId[cid] && visibleKinds.has(byId[cid].kind),
+    )
+    const hasChildren = visibleChildIds.length > 0
     const collapsed = collapsedIds.has(el.id)
     const active =
       selectedId === el.id ||
@@ -246,7 +301,6 @@ function ViewTree({
           }${dropHere ? ` drop-${drop.position}` : ''}`}
           {...(groupKey ? rowReorder(groupKey, el.id, siblingIds) : {})}
         >
-          {grip(groupKey || '', el.id, canReorder)}
           {hasChildren ? (
             <button
               type="button"
@@ -272,11 +326,19 @@ function ViewTree({
             }}
             title={el.id}
           >
-            <span className="artifact-kind">{el.kind}</span> {el.name}
+            <span className="artifact-kind">{el.kind}</span>{' '}
+            <span className="tree-name">
+              {viewTreeNameParts(el.name).map((part, index) => (
+                <span key={`${part}-${index}`} className="tree-name-part">
+                  {part}
+                </span>
+              ))}
+            </span>
             {isView && el.typeRef ? (
               <span className="view-type-ref">«{el.typeRef}»</span>
             ) : null}
           </button>
+          {grip(groupKey || '', el.id, canReorder)}
         </div>
         {hasChildren && !collapsed
           ? childIds.map((cid) =>
@@ -312,7 +374,6 @@ function ViewTree({
           }`}
           {...rowReorder(groupKey, folder.path, siblingPaths)}
         >
-          {grip(groupKey, folder.path, canReorder)}
           <button
             type="button"
             className="tree-expand-btn"
@@ -322,6 +383,7 @@ function ViewTree({
             {collapsed ? '▸' : '▾'}
           </button>
           <span className="tree-label folder-label">{folder.name}/</span>
+          {grip(groupKey, folder.path, canReorder)}
         </div>
         {!collapsed ? (
           <>
@@ -348,10 +410,29 @@ function ViewTree({
 
   return (
     <div className="view-tree">
+      <div className="model-tree-toolbar">
+        <button type="button" onClick={collapseAll} title="Collapse all">
+          Collapse
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilterOpen(true)}
+          title="Filter object types"
+        >
+          Filter
+        </button>
+      </div>
       {orderedFolders.map((folder) => renderFolder(folder, 0, '', rootFolderPaths))}
       {ungroupedIds.map((id) =>
         byId[id] ? render(byId[id], 0, UNGROUPED_GROUP_KEY, ungroupedIds) : null,
       )}
+      <ModelTreeFilterDialog
+        open={filterOpen}
+        kinds={availableKinds}
+        enabled={visibleKinds}
+        onChange={setVisibleKindsPersist}
+        onClose={() => setFilterOpen(false)}
+      />
     </div>
   )
 }
@@ -507,7 +588,7 @@ export function LeftSidebar({
           className={activeTab === 'views' ? 'active' : ''}
           onClick={() => onTabChange('views')}
         >
-          Views
+          Model
         </button>
         <button
           type="button"

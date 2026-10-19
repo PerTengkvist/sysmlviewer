@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ViewMode } from '../../settings'
 import { DiagramCanvas } from '../diagram/DiagramCanvas'
+import { markdownComponents } from '../docs/markdownComponents'
 import type { ProjectSheet } from '../sheet/sheet'
 import type { PrintPage } from './printLayout'
 
@@ -101,7 +102,10 @@ export function PrintSheet({
                 ) : null}
                 {d.documentation ? (
                   <div className="print-description markdown-body">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={markdownComponents}
+                    >
                       {d.documentation}
                     </ReactMarkdown>
                   </div>

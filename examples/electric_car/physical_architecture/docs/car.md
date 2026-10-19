@@ -2,7 +2,7 @@
 
 Logical Car. The whole physical car implements this assembly.
 
-Part of `VehiclePhysical`.
+Part of `LogicalCounterparts`.
 
 ## Relations
 
@@ -10,5 +10,4 @@ Part of `VehiclePhysical`.
 
 ## Diagrams
 
-- `PhysicalView`
-- `PhysicalTree`
+- `PhysicalDependenciesView`

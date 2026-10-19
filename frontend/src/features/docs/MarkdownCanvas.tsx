@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '../../api'
+import { markdownComponents } from './markdownComponents'
 
 type Props = {
   projectId: string | undefined
@@ -41,7 +42,12 @@ export function MarkdownCanvas({ projectId, docPath, onBack }: Props) {
         <p className="muted">{error}</p>
       ) : content ? (
         <div className="markdown-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={markdownComponents}
+          >
+            {content}
+          </ReactMarkdown>
         </div>
       ) : (
         <p className="muted">Loading…</p>

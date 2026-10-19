@@ -2,7 +2,7 @@
 
 Logical battery, from the logical architecture.
 
-Part of `VehiclePhysical`.
+Part of `LogicalCounterparts`.
 
 ## Relations
 
@@ -12,5 +12,4 @@ Part of `VehiclePhysical`.
 
 ## Diagrams
 
-- `PhysicalView`
-- `PhysicalTree`
+- `PhysicalDependenciesView`
