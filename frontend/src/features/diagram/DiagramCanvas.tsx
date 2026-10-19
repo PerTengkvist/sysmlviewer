@@ -18,7 +18,15 @@ import {
   type OnNodesChange,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from 'react'
 import type {
   DiagramMode,
   LayoutRuleRow,
@@ -98,6 +106,7 @@ import {
 } from './layout/autoLayoutOptions'
 import { asAngularForLayout } from './layout/elkStructureLayout'
 import { planStructureRoutes } from './layout/layoutRouter'
+import { flowViewportBounds } from './layout/layoutNormalize'
 import { preserveExistingGeometry } from './preserveDiagramGeometry'
 import { applyRelationTodos, type RelationTodo } from './applyRelationTodos'
 import {
@@ -123,6 +132,19 @@ const allEdgeTypes: EdgeTypes = {
   message: MessageEdge,
   smoothstep: HighlightedSmoothStepEdge,
   straight: HighlightedStraightEdge,
+}
+
+/** Expose React Flow APIs to the parent (outside <ReactFlow> tree). */
+function ViewportApiBridge({
+  apiRef,
+}: {
+  apiRef: MutableRefObject<{
+    getViewport: () => { x: number; y: number; zoom: number }
+  } | null>
+}) {
+  const { getViewport } = useReactFlow()
+  apiRef.current = { getViewport }
+  return null
 }
 
 function FitViewOnViewKey({
@@ -543,8 +565,12 @@ export function DiagramCanvas({
   const [autoLayoutBusy, setAutoLayoutBusy] = useState(false)
   const [autoLayoutDirectives, setAutoLayoutDirectives] =
     useState<AutoLayoutDirectives>(DEFAULT_AUTO_LAYOUT_DIRECTIVES)
+  const [routeNotice, setRouteNotice] = useState<string | null>(null)
   const pendingCopyRef = useRef(false)
   const sheetHostRef = useRef<HTMLDivElement>(null)
+  const viewportApiRef = useRef<{
+    getViewport: () => { x: number; y: number; zoom: number }
+  } | null>(null)
   const viewKeyRef = useRef<string | null>(null)
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
@@ -1366,10 +1392,22 @@ export function DiagramCanvas({
     [nodes, edges, mode],
   )
 
+  const currentViewBounds = useCallback(() => {
+    const vp =
+      viewportApiRef.current?.getViewport() ||
+      (view ? viewportCache.current.get(view.view.id) : undefined)
+    const host = sheetHostRef.current
+    if (!vp || !host) return undefined
+    const w = host.clientWidth || 0
+    const h = host.clientHeight || 0
+    if (w < 8 || h < 8) return undefined
+    return flowViewportBounds(vp, w, h)
+  }, [view])
+
   const applyRedrawConnections = useCallback(
     (overrideNodes?: Node[], overrideEdges?: Edge[]) => {
       // Only re-route edges — never patch part/port positions or sizes.
-      // Hybrid: ELK full redraw, or own A* when locked vias / single-edge.
+      // Routes stay inside the current viewport; off-screen endpoints are skipped.
       const routeNodes = Array.isArray(overrideNodes) ? overrideNodes : nodes
       const contextEdges = edges
       const routeEdges = Array.isArray(overrideEdges) ? overrideEdges : contextEdges
@@ -1382,6 +1420,7 @@ export function DiagramCanvas({
       })
       const singleId =
         angularRoute.length === 1 ? angularRoute[0]!.id : undefined
+      const viewBounds = currentViewBounds()
       void planStructureRoutes({
         mode: singleId ? 'single' : 'full',
         edgeId: singleId,
@@ -1392,7 +1431,36 @@ export function DiagramCanvas({
         existingRoutes: existing,
         portLayout: viewRef.current?.visualization.nodes,
         separation: connectionSeparation,
+        viewBounds,
       }).then((planned) => {
+        const outside = planned.skipped.filter(
+          (s) => s.reason === 'endpoint-outside-view',
+        )
+        const missing = planned.skipped.filter(
+          (s) => s.reason === 'missing-endpoint',
+        )
+        if (outside.length || missing.length) {
+          const parts: string[] = []
+          if (outside.length) {
+            parts.push(
+              outside.length === 1
+                ? 'One connection has ports outside the current view'
+                : `${outside.length} connections have ports outside the current view`,
+            )
+          }
+          if (missing.length) {
+            parts.push(
+              missing.length === 1
+                ? 'One connection is missing a port on the diagram'
+                : `${missing.length} connections are missing a port on the diagram`,
+            )
+          }
+          setRouteNotice(
+            `${parts.join('. ')}. Zoom out so both ends are visible, then try again.`,
+          )
+        } else {
+          setRouteNotice(null)
+        }
         const routed = planned.routes
         if (!routed.length) return
         const byId = new Map(routed.map((r) => [r.id, r]))
@@ -1430,7 +1498,7 @@ export function DiagramCanvas({
         onNodesMovedRef.current({}, edgePatch)
       })
     },
-    [nodes, edges, connectionSeparation],
+    [nodes, edges, connectionSeparation, currentViewBounds],
   )
 
   const handlePortMoved = useCallback(
@@ -2265,6 +2333,19 @@ export function DiagramCanvas({
             Format paint — click a target
           </div>
         )}
+        {!printMode && routeNotice && (
+          <div className="tool-banner tool-banner-warn" role="status">
+            <span>{routeNotice}</span>
+            <button
+              type="button"
+              className="tool-banner-dismiss"
+              onClick={() => setRouteNotice(null)}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        )}
         {!printMode && sheet?.frame?.visible && (
           <div
             className="diagram-paper-frame"
@@ -2368,6 +2449,7 @@ export function DiagramCanvas({
           proOptions={{ hideAttribution: true }}
         >
           <EdgeMarkerDefs />
+          <ViewportApiBridge apiRef={viewportApiRef} />
           <FitViewOnViewKey
             viewKey={viewKey}
             layoutEpoch={layoutEpoch}

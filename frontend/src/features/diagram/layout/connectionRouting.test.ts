@@ -753,6 +753,60 @@ describe('redrawStructureConnections', () => {
     expect(path[0]).toEqual(start)
     expect(path[path.length - 1]).toEqual(end)
   })
+
+  it('skips edges whose endpoints lie outside viewBounds', () => {
+    const parent = partNode({
+      id: 'Root',
+      x: 0,
+      y: 0,
+      w: 800,
+      h: 600,
+      isBoundary: true,
+    })
+    const a = partNode({
+      id: 'a',
+      x: 40,
+      y: 40,
+      w: 100,
+      h: 80,
+      parentId: 'Root',
+      ports: [{ id: 'a::out', name: 'out', side: 'right', offset: 0.5 }],
+    })
+    const b = partNode({
+      id: 'b',
+      x: 400,
+      y: 40,
+      w: 100,
+      h: 80,
+      parentId: 'Root',
+      ports: [{ id: 'b::in', name: 'in', side: 'left', offset: 0.5 }],
+    })
+    const edges: Edge[] = [
+      {
+        id: 'c1',
+        source: 'a',
+        target: 'b',
+        sourceHandle: 'a::out',
+        targetHandle: 'target:b::in',
+      },
+    ]
+    const skipped: { id: string; reason: string }[] = []
+    // Viewport only covers the left part — b's port is outside.
+    const routed = redrawStructureConnections(
+      [parent, a, b],
+      edges,
+      undefined,
+      undefined,
+      {
+        viewBounds: { minX: 0, minY: 0, maxX: 200, maxY: 200 },
+        skipped,
+      },
+    )
+    expect(routed).toHaveLength(0)
+    expect(skipped).toEqual([
+      { id: 'c1', reason: 'endpoint-outside-view' },
+    ])
+  })
 })
 
 describe('boundaryFlowBounds / syncInternalEdgeBounds', () => {

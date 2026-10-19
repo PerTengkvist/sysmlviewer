@@ -27,7 +27,9 @@ import { runPlacementPipeline } from './runPlacementPipeline'
 import {
   redrawStructureConnections,
   type ExistingEdgeRoute,
+  type Rect,
   type RoutedConnection,
+  type SkippedRoute,
 } from './connectionRouting'
 
 export type StructureRouteMode = 'full' | 'single'
@@ -47,6 +49,11 @@ export type PlanStructureRoutesInput = {
   directives?: AutoLayoutDirectives
   existingRoutes?: ExistingEdgeRoute[]
   portLayout?: Record<string, Partial<VisualizationNode>>
+  /**
+   * Visible flow viewport for Redraw / single autoroute. Routes stay inside;
+   * endpoints outside are skipped (see `skipped`).
+   */
+  viewBounds?: Rect
   /** Test seams — default to real ELK / own implementations. */
   deps?: {
     runElk?: (args: {
@@ -67,6 +74,8 @@ export type PlanStructureRoutesInput = {
       portLayout?: Record<string, Partial<VisualizationNode>>
       separation: number
       contextEdges: Edge[]
+      viewBounds?: Rect
+      skipped?: SkippedRoute[]
     }) => RoutedConnection[]
   }
 }
@@ -75,6 +84,7 @@ export type PlanStructureRoutesResult = {
   nodes: ElkStructureLayoutResult['nodes']
   routes: RoutedConnection[]
   engine: 'elk' | 'own'
+  skipped: SkippedRoute[]
 }
 
 function isAngular(edge: Edge): boolean {
@@ -142,6 +152,8 @@ function defaultRunOwn(args: {
   portLayout?: Record<string, Partial<VisualizationNode>>
   separation: number
   contextEdges: Edge[]
+  viewBounds?: Rect
+  skipped?: SkippedRoute[]
 }): RoutedConnection[] {
   return redrawStructureConnections(
     args.nodes,
@@ -151,6 +163,8 @@ function defaultRunOwn(args: {
     {
       separation: args.separation,
       contextEdges: args.contextEdges,
+      viewBounds: args.viewBounds,
+      skipped: args.skipped,
     },
   )
 }
@@ -163,6 +177,10 @@ export async function planStructureRoutes(
   const runOwn = input.deps?.runOwn ?? defaultRunOwn
   const angular = input.edges.filter(isAngular)
   const contextEdges = (input.contextEdges || input.edges).filter(isAngular)
+  const skipped: SkippedRoute[] = []
+  // Viewport clip only for redraw / single-edge autoroute (not AutoLayout place).
+  const viewBounds =
+    input.layoutNodes === true ? undefined : input.viewBounds
 
   if (input.mode === 'single') {
     const edgeId = input.edgeId
@@ -174,16 +192,18 @@ export async function planStructureRoutes(
       portLayout: input.portLayout,
       separation,
       contextEdges,
+      viewBounds,
+      skipped,
     })
-    return { nodes: {}, routes, engine: 'own' }
+    return { nodes: {}, routes, engine: 'own', skipped }
   }
 
-  // full — locked via on any *involved* edge ⇒ own router for the whole call
+  // full — locked via, or Redraw (no place): own router for absolute waypoints.
   const involved = angular
   const hasLocked = involved.some((e) =>
     edgeHasLockedVia(e, input.existingRoutes),
   )
-  if (hasLocked) {
+  if (hasLocked || input.layoutNodes === false) {
     const routes = runOwn({
       nodes: input.nodes,
       edges: involved,
@@ -191,15 +211,16 @@ export async function planStructureRoutes(
       portLayout: input.portLayout,
       separation,
       contextEdges,
+      viewBounds,
+      skipped,
     })
-    return { nodes: {}, routes, engine: 'own' }
+    return { nodes: {}, routes, engine: 'own', skipped }
   }
 
-  const layoutNodes = input.layoutNodes !== false
   const elkResult = await runElk({
     nodes: input.nodes,
     edges: involved,
-    layoutNodes,
+    layoutNodes: true,
     separation,
     directives: input.directives,
   })
@@ -207,5 +228,6 @@ export async function planStructureRoutes(
     nodes: elkResult.nodes,
     routes: elkResult.routes,
     engine: 'elk',
+    skipped,
   }
 }

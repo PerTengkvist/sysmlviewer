@@ -30,11 +30,23 @@ export type ExistingEdgeRoute = {
   waypoints?: Pt[]
 }
 
+export type SkippedRoute = {
+  id: string
+  reason: 'endpoint-outside-view' | 'missing-endpoint'
+}
+
 export type RedrawOptions = {
   /** Min gap between unrelated parallel tracks (flow px). */
   separation?: number
   /** All edges used for lane separation and jumpers (defaults to routed set). */
   contextEdges?: Edge[]
+  /**
+   * Current visible flow viewport. Routes stay inside this rect (intersected
+   * with the whitebox when present). Endpoints outside ⇒ skip + report.
+   */
+  viewBounds?: Rect
+  /** Filled with edges that were not routed (mutated when provided). */
+  skipped?: SkippedRoute[]
 }
 
 /** Base grid step (px). Larger whiteboxes use a coarser step — see gridCellSize. */
@@ -891,6 +903,24 @@ function resolvePort(
  * Only *locked* waypoints are kept; all other stored corners are discarded
  * and recomputed (avoids stale segments after port moves).
  */
+function rectContainsPoint(b: Rect, p: Pt, margin = 0): boolean {
+  return (
+    p.x >= b.minX - margin &&
+    p.x <= b.maxX + margin &&
+    p.y >= b.minY - margin &&
+    p.y <= b.maxY + margin
+  )
+}
+
+function intersectRects(a: Rect, b: Rect): Rect | null {
+  const minX = Math.max(a.minX, b.minX)
+  const minY = Math.max(a.minY, b.minY)
+  const maxX = Math.min(a.maxX, b.maxX)
+  const maxY = Math.min(a.maxY, b.maxY)
+  if (minX >= maxX || minY >= maxY) return null
+  return { minX, minY, maxX, maxY }
+}
+
 export function redrawStructureConnections(
   nodes: Node[],
   edges: Edge[],
@@ -904,7 +934,7 @@ export function redrawStructureConnections(
   const rects = new Map<string, Rect>()
   for (const n of parts) rects.set(n.id, nodeRect(n, byId))
 
-  const bounds =
+  const diagramBounds =
     (boundary && rects.get(boundary.id)) ||
     unionRects([...rects.values()], 48) || {
       minX: 0,
@@ -912,6 +942,14 @@ export function redrawStructureConnections(
       maxX: 800,
       maxY: 600,
     }
+
+  const viewBounds = options?.viewBounds
+  const bounds =
+    viewBounds != null
+      ? intersectRects(diagramBounds, viewBounds) || viewBounds
+      : diagramBounds
+  const strictBounds = !!boundary || viewBounds != null
+  const skipped = options?.skipped
 
   const childRects = parts
     .filter((n) => n.id !== boundary?.id)
@@ -944,22 +982,41 @@ export function redrawStructureConnections(
   for (const edge of edges) {
     const srcNode = byId.get(edge.source)
     const tgtNode = byId.get(edge.target)
-    if (!srcNode || !tgtNode) continue
+    if (!srcNode || !tgtNode) {
+      skipped?.push({ id: edge.id, reason: 'missing-endpoint' })
+      continue
+    }
 
     const srcPortId = portIdFromHandle(edge.sourceHandle)
     const tgtPortId = portIdFromHandle(edge.targetHandle)
     const srcPort = portsOf(srcNode).find((p) => p.id === srcPortId)
     const tgtPort = portsOf(tgtNode).find((p) => p.id === tgtPortId)
-    if (!srcPort || !tgtPort || !srcPortId || !tgtPortId) continue
+    if (!srcPort || !tgtPort || !srcPortId || !tgtPortId) {
+      skipped?.push({ id: edge.id, reason: 'missing-endpoint' })
+      continue
+    }
 
     const srcRect = rects.get(srcNode.id)
     const tgtRect = rects.get(tgtNode.id)
-    if (!srcRect || !tgtRect) continue
+    if (!srcRect || !tgtRect) {
+      skipped?.push({ id: edge.id, reason: 'missing-endpoint' })
+      continue
+    }
 
     const src = resolvePort(srcPort, portLayout)
     const tgt = resolvePort(tgtPort, portLayout)
     const start = portPoint(srcRect, src.side, src.offset)
     const end = portPoint(tgtRect, tgt.side, tgt.offset)
+
+    if (
+      viewBounds &&
+      (!rectContainsPoint(viewBounds, start, 1) ||
+        !rectContainsPoint(viewBounds, end, 1))
+    ) {
+      skipped?.push({ id: edge.id, reason: 'endpoint-outside-view' })
+      continue
+    }
+
     const srcStub = stubPoint(start, src.side, isBoundary(srcNode))
     const tgtStub = stubPoint(end, tgt.side, isBoundary(tgtNode))
 
@@ -977,7 +1034,7 @@ export function redrawStructureConnections(
       locked,
       obstacles,
       bounds,
-      { strictBounds: !!boundary },
+      { strictBounds },
     )
     const full = simplifyOrtho([
       start,

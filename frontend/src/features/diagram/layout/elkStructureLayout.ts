@@ -37,6 +37,7 @@ import {
 } from './flowPlacement'
 import { planScope } from './adaptiveLayoutPolicy'
 import { layoutBalancedBottomUp } from './balancedLayout'
+import { normalizeAutoLayoutCanvas } from './layoutNormalize'
 import {
   resolvePlacementPipeline,
   type PipelineElkAlgorithm,
@@ -1070,6 +1071,8 @@ export async function layoutStructureWithElk(
       parentOfEnd.set(node.id, node.parentId)
     }
     fitNestedChildrenInParents(nodePatch, parentOfEnd, 24)
+    // Projects often store huge default Y (~30000). Prefer origin 0…3000.
+    normalizeAutoLayoutCanvas(nodePatch, workingNodes)
   }
 
   if (!includeEdges) {
