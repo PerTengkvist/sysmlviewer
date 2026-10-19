@@ -13,6 +13,7 @@ export const STRUCTURE_EDGE_KINDS: ArtifactKind[] = [
   'redefinition',
   'satisfy',
   'include',
+  'interface',
 ]
 
 type DefaultEdgeStyle = {
@@ -33,6 +34,7 @@ export const DEFAULT_RELATION_EDGE_STYLE: Record<string, DefaultEdgeStyle> = {
   redefinition: { lineStyle: 'solid', markerEnd: 'triangle', routing: 'direct' },
   satisfy: { lineStyle: 'dashed', markerEnd: 'openArrow', routing: 'direct' },
   include: { lineStyle: 'dashed', markerEnd: 'openArrow', routing: 'direct' },
+  interface: { lineStyle: 'solid', routing: 'angular' },
 }
 
 export function defaultRelationStyle(kind: ArtifactKind): DefaultEdgeStyle {
@@ -65,6 +67,7 @@ export function usesPortHandles(
   targetKind: string | undefined,
 ): boolean {
   if (relationKind === 'connection') return true
+  if (relationKind === 'interface') return true
   if (relationKind === 'flow') return sourceKind === 'port' && targetKind === 'port'
   return false
 }

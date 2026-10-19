@@ -212,6 +212,96 @@ def test_existing_connection_unchanged():
     assert conn.target_id == "Example::Vehicle::engine::powerIn"
 
 
+def test_parse_interface_usage_with_connect():
+    content = """
+    package P {
+      port def port_A;
+      port def port_B;
+      interface def itf_y;
+      part def Box {
+        port a : port_A;
+        port b : port_B;
+      }
+      part part1 : Box;
+      part part2 : Box;
+      interface x:itf_y connect part1.a to part2.b;
+    }
+    """
+    result = _parse(content)
+    ifaces = _rels(result, ArtifactKind.INTERFACE)
+    usages = [e for e in ifaces if e.source_id and e.target_id]
+    assert len(usages) == 1
+    usage = usages[0]
+    assert usage.name == "x"
+    assert usage.type_ref == "itf_y"
+    assert usage.source_id == "P::part1::a"
+    assert usage.target_id == "P::part2::b"
+    assert _rels(result, ArtifactKind.CONNECTION) == []
+    defs = [e for e in ifaces if not e.source_id and not e.target_id]
+    assert any(d.name == "itf_y" for d in defs)
+
+
+def test_parse_interface_def_without_ends():
+    content = """
+    package P {
+      interface def itf_y;
+      interface bare;
+    }
+    """
+    result = _parse(content)
+    ifaces = _rels(result, ArtifactKind.INTERFACE)
+    assert len(ifaces) == 2
+    by_name = {e.name: e for e in ifaces}
+    assert by_name["itf_y"].source_id is None
+    assert by_name["itf_y"].target_id is None
+    assert by_name["bare"].source_id is None
+    assert by_name["bare"].target_id is None
+
+
+def test_serialize_interface_usage():
+    from adapters.parser.subset_serializer import serialize_file
+    from domain.models import SemanticElement
+
+    semantic = {
+        "P": SemanticElement(id="P", kind=ArtifactKind.PACKAGE, name="P", file_id="f1"),
+        "P::part1": SemanticElement(
+            id="P::part1", kind=ArtifactKind.PART, name="part1", parent_id="P", file_id="f1"
+        ),
+        "P::part1::a": SemanticElement(
+            id="P::part1::a",
+            kind=ArtifactKind.PORT,
+            name="a",
+            parent_id="P::part1",
+            file_id="f1",
+        ),
+        "P::part2": SemanticElement(
+            id="P::part2", kind=ArtifactKind.PART, name="part2", parent_id="P", file_id="f1"
+        ),
+        "P::part2::b": SemanticElement(
+            id="P::part2::b",
+            kind=ArtifactKind.PORT,
+            name="b",
+            parent_id="P::part2",
+            file_id="f1",
+        ),
+        "P::x": SemanticElement(
+            id="P::x",
+            kind=ArtifactKind.INTERFACE,
+            name="x",
+            parent_id="P",
+            type_ref="itf_y",
+            source_id="P::part1::a",
+            target_id="P::part2::b",
+            file_id="f1",
+        ),
+    }
+    semantic["P"].children = ["P::part1", "P::part2", "P::x"]
+    semantic["P::part1"].children = ["P::part1::a"]
+    semantic["P::part2"].children = ["P::part2::b"]
+    text = serialize_file(semantic, "f1")
+    assert "interface x:itf_y connect part1.a to part2.b;" in text
+
+
 def test_parse_part_relationships_fixture():
     content = resolve_example_path("part_relationships.sysml").read_text(encoding="utf-8")
     result = _parse(content, file_id="part_relationships.sysml")

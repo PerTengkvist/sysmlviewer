@@ -76,6 +76,10 @@ export default function App() {
   const [tutorials, setTutorials] = useState<TutorialItem[]>([])
   const [project, setProject] = useState<Project | null>(null)
   const [leftTab, setLeftTab] = useState<LeftTab>('files')
+  const [locateInModel, setLocateInModel] = useState<{
+    artifactId: string
+    seq: number
+  } | null>(null)
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
   const [canvasTabs, setCanvasTabs] = useState<CanvasTabsState>(emptyTabs())
   const [openMenu, setOpenMenu] = useState<{
@@ -1440,6 +1444,7 @@ export default function App() {
             onTabChange={setLeftTab}
             activeViewId={activeViewId}
             selectedArtifactId={selectedId}
+            locateInModel={locateInModel}
             onSelectView={(viewId) => {
               if (!project) return
               setSelectedId(viewId)
@@ -1694,6 +1699,14 @@ export default function App() {
               void mutateAndSync(() =>
                 api.updateRelationEnds(project!.id, id, sourceId, targetId),
               )
+            }}
+            onLocateInModelView={(artifactId) => {
+              setLeftTab('views')
+              setSelectedId(artifactId)
+              setLocateInModel((prev) => ({
+                artifactId,
+                seq: (prev?.seq ?? 0) + 1,
+              }))
             }}
             onPositionChange={(id, x, y) =>
               void onNodesMoved({ [id]: { x, y } })

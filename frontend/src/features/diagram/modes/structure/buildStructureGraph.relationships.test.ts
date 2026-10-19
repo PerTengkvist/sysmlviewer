@@ -389,4 +389,130 @@ describe('buildStructureGraph relationships', () => {
     expect(conn?.targetHandle).toBe('target:P::System::b::pin')
     expect(conn?.data?.routing).toBe('angular')
   })
+
+  it('builds port-handled edges for interface usages, not for defs', async () => {
+    const { buildStructureGraph } = await import('./buildStructureGraph')
+    const { usesPortHandles } = await import('../../relationshipStyle')
+    expect(usesPortHandles('interface', 'port', 'port')).toBe(true)
+
+    const semantic: Record<string, SemanticElement> = {
+      'P::System': {
+        id: 'P::System',
+        kind: 'part',
+        name: 'System',
+        parentId: 'P',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [
+          'P::System::a',
+          'P::System::b',
+          'P::System::itf_y',
+          'P::System::x',
+        ],
+        fileId: 'f1',
+      },
+      'P::System::a': {
+        id: 'P::System::a',
+        kind: 'part',
+        name: 'a',
+        parentId: 'P::System',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: ['P::System::a::pout'],
+        fileId: 'f1',
+      },
+      'P::System::a::pout': {
+        id: 'P::System::a::pout',
+        kind: 'port',
+        name: 'pout',
+        parentId: 'P::System::a',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f1',
+      },
+      'P::System::b': {
+        id: 'P::System::b',
+        kind: 'part',
+        name: 'b',
+        parentId: 'P::System',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: ['P::System::b::pin'],
+        fileId: 'f1',
+      },
+      'P::System::b::pin': {
+        id: 'P::System::b::pin',
+        kind: 'port',
+        name: 'pin',
+        parentId: 'P::System::b',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f1',
+      },
+      'P::System::itf_y': {
+        id: 'P::System::itf_y',
+        kind: 'interface',
+        name: 'itf_y',
+        parentId: 'P::System',
+        typeRef: null,
+        sourceId: null,
+        targetId: null,
+        children: [],
+        fileId: 'f1',
+      },
+      'P::System::x': {
+        id: 'P::System::x',
+        kind: 'interface',
+        name: 'x',
+        parentId: 'P::System',
+        typeRef: 'itf_y',
+        sourceId: 'P::System::a::pout',
+        targetId: 'P::System::b::pin',
+        children: [],
+        fileId: 'f1',
+      },
+    }
+
+    const view: ViewPayload = {
+      view: {
+        id: 'v',
+        name: 'V',
+        rootArtifactId: 'P::System',
+        parentViewId: null,
+        typeRef: 'GeneralView',
+      },
+      diagramMode: 'whitebox',
+      hierarchicalLevels: 2,
+      semantic,
+      visualization: { nodes: {}, edges: {} },
+      subdiagrams: [],
+      menus: {},
+    }
+
+    const { nodes, edges } = buildStructureGraph({
+      view,
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+    })
+
+    const usage = edges.find((e) => e.id === 'P::System::x')
+    expect(usage).toBeDefined()
+    expect(usage?.data?.relationKind).toBe('interface')
+    expect(usage?.sourceHandle).toBe('P::System::a::pout')
+    expect(usage?.targetHandle).toBe('target:P::System::b::pin')
+    expect(edges.some((e) => e.id === 'P::System::itf_y')).toBe(false)
+    expect(nodes.some((n) => n.id === 'P::System::x')).toBe(false)
+  })
 })

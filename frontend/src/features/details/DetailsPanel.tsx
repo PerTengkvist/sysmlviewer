@@ -15,9 +15,13 @@ import {
   STRUCTURE_EDGE_KINDS,
 } from '../diagram/relationshipStyle'
 import type { ViewMode } from '../../settings'
-import { isRelationKind } from '../diagram/relationKinds'
+import { isRelationElement, isRelationKind } from '../diagram/relationKinds'
 import { isEditLocked } from '../diagram/editLock'
 import { ViewFilterDialog } from '../diagram/ViewFilterDialog'
+import {
+  findInterfaceDefId,
+  interfaceUsageKindLabel,
+} from './interfaceLocate'
 
 type Props = {
   project: Project | null
@@ -53,6 +57,8 @@ type Props = {
   onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
   onEditLockChange?: (artifactId: string, locked: boolean) => void
   onPositionChange?: (artifactId: string, x: number, y: number) => void
+  /** Reveal an artifact in the left Model tree. */
+  onLocateInModelView?: (artifactId: string) => void
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -84,7 +90,7 @@ function diagramChoices(
 ): SemanticElement[] {
   const source = viewPayload?.semantic || project.semantic
   return Object.values(source)
-    .filter((el) => !isRelationKind(el.kind))
+    .filter((el) => !isRelationElement(el))
     .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
 }
 
@@ -186,7 +192,13 @@ function parseUseEdge(id: string | null): { sourceId: string; targetId: string }
   return { sourceId, targetId }
 }
 
-function isRelationDetailKind(kind: string): boolean {
+function isRelationDetailKind(
+  kind: string,
+  el?: { sourceId?: string | null; targetId?: string | null },
+): boolean {
+  if (kind === 'interface') {
+    return Boolean(el?.sourceId && el?.targetId)
+  }
   return isRelationKind(kind) || kind === 'message' || kind === 'transition' || kind === 'succession'
 }
 
@@ -224,7 +236,7 @@ function bucketsFor(project: Project, el: SemanticElement) {
       attributes.push(child)
     } else if (child.kind === 'part') {
       subParts.push(child)
-    } else if (child.kind === 'connection') {
+    } else if (isRelationElement(child)) {
       relations.push(child)
     }
   }
@@ -241,7 +253,7 @@ function bucketsFor(project: Project, el: SemanticElement) {
   }
 
   for (const other of Object.values(project.semantic)) {
-    if (other.kind !== 'connection') continue
+    if (!isRelationElement(other)) continue
     if (relations.some((r) => r.id === other.id)) continue
     if (
       (other.sourceId && portIds.has(other.sourceId)) ||
@@ -521,6 +533,7 @@ export function DetailsPanel({
   onRetargetRelation,
   onEditLockChange,
   onPositionChange,
+  onLocateInModelView,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const unlocked = elementUnlocked(viewVisualization, selectedId)
@@ -681,12 +694,15 @@ export function DetailsPanel({
   const node =
     viewVisualization?.nodes[selectedId] ?? project.visualization.nodes[selectedId]
   const buckets = bucketsFor(project, el)
+  const isInterfaceUsage =
+    el.kind === 'interface' && Boolean(el.sourceId && el.targetId)
   const isEdgeKind =
     el.kind === 'connection' ||
+    isInterfaceUsage ||
     el.kind === 'message' ||
     el.kind === 'transition' ||
     el.kind === 'succession'
-  const relationEnds = isRelationDetailKind(el.kind)
+  const relationEnds = isRelationDetailKind(el.kind, el)
     ? pendingEnds(selectedId, el.sourceId || '', el.targetId || '', relationTodos)
     : null
   const formatKind: 'node' | 'edge' = isEdgeKind ? 'edge' : 'node'
@@ -698,6 +714,7 @@ export function DetailsPanel({
     el.kind === 'useCase' ||
     el.kind === 'port' ||
     el.kind === 'connection' ||
+    isInterfaceUsage ||
     el.kind === 'lifeline' ||
     el.kind === 'state' ||
     el.kind === 'action' ||
@@ -712,7 +729,7 @@ export function DetailsPanel({
       <dl className="detail-list">
         <dt>Name</dt>
         <dd>
-          {el.kind === 'connection' && onRename ? (
+          {(el.kind === 'connection' || isInterfaceUsage) && onRename ? (
             <input
               className="inline-edit"
               defaultValue={el.name}
@@ -727,8 +744,50 @@ export function DetailsPanel({
             el.name
           )}
         </dd>
+        {isInterfaceUsage && (
+          <>
+            <dt>Stereotype</dt>
+            <dd>«interface»</dd>
+          </>
+        )}
         <dt>Kind</dt>
-        <dd>{el.kind}</dd>
+        <dd>
+          {isInterfaceUsage ? (
+            (() => {
+              const kindLabel = interfaceUsageKindLabel(el) || '—'
+              const defId = findInterfaceDefId(project.semantic, el.typeRef)
+              return (
+                <span className="kind-with-locate">
+                  {defId && onLocateInModelView ? (
+                    <button
+                      type="button"
+                      className="linkish"
+                      onClick={() => onLocateInModelView(defId)}
+                      title="Locate interface def in Model view"
+                    >
+                      {kindLabel}
+                    </button>
+                  ) : (
+                    kindLabel
+                  )}
+                  {onLocateInModelView && (
+                    <button
+                      type="button"
+                      className="locate-in-model-btn"
+                      disabled={!defId}
+                      onClick={() => defId && onLocateInModelView(defId)}
+                      title="Locate in Model view"
+                    >
+                      Locate in Model
+                    </button>
+                  )}
+                </span>
+              )
+            })()
+          ) : (
+            el.kind
+          )}
+        </dd>
         <dt>Id</dt>
         <dd className="mono">{el.id}</dd>
         {!relationEnds && (
@@ -786,7 +845,7 @@ export function DetailsPanel({
             </dd>
           </>
         )}
-        {el.typeRef && (
+        {el.typeRef && !isInterfaceUsage && (
           <>
             <dt>Type</dt>
             <dd>{el.typeRef}</dd>

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.relationships import is_relation_element
 
 RELATION_KINDS = {
     ArtifactKind.CONNECTION,
@@ -15,6 +16,7 @@ RELATION_KINDS = {
     ArtifactKind.REDEFINITION,
     ArtifactKind.INCLUDE,
     ArtifactKind.SATISFY,
+    ArtifactKind.INTERFACE,
 }
 
 
@@ -47,12 +49,12 @@ def classify_children(
             attributes.append(child)
         elif child.kind == ArtifactKind.PART:
             sub_parts.append(child)
-        elif child.kind in RELATION_KINDS:
+        elif is_relation_element(child):
             relations.append(child)
 
     # Relationships that touch this element's ports/features but live elsewhere
     for other in semantic.values():
-        if other.kind not in RELATION_KINDS:
+        if not is_relation_element(other):
             continue
         if other.id in {r.id for r in relations}:
             continue
@@ -85,7 +87,8 @@ _ATTACHED_KINDS = {
     ArtifactKind.ATTRIBUTE,
     ArtifactKind.VIEW,
     ArtifactKind.ACTOR,
-    *RELATION_KINDS,
+    ArtifactKind.INTERFACE,
+    *{k for k in RELATION_KINDS if k != ArtifactKind.INTERFACE},
 }
 
 

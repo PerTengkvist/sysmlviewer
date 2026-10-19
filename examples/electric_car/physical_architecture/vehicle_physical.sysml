@@ -169,6 +169,7 @@ package PhysicalArchitecture {
     }
 
     part batteryPack {
+      attribute _icon_body = "battery";
       doc /* Mechanical battery pack. Implements the logical battery. The battery computer manages it. */
     }
 

@@ -1545,6 +1545,11 @@ class ProjectService:
                 and not overlay_has_xy(overlay)
                 and el is not None
                 and el.kind in _VIEW_LOCAL_PLACE_KINDS
+                and not (
+                    el.kind == ArtifactKind.INTERFACE
+                    and el.source_id
+                    and el.target_id
+                )
                 and aid != root.id
             ):
                 pending_local.append(aid)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import type { ArtifactKind, Project, SemanticElement, SysmlFile } from '../../api'
-import { isRelationKind } from '../diagram/relationKinds'
+import { isRelationElement } from '../diagram/relationKinds'
+import { ancestorIdsForLocate } from '../details/interfaceLocate'
 import { buildFileTree, type FileTreeNode } from './buildFileTree'
 import { ModelTreeFilterDialog } from './ModelTreeFilterDialog'
 import {
@@ -26,6 +27,9 @@ import { viewTreeNameParts } from './viewTreeLabel'
 
 export type LeftTab = 'views' | 'files'
 
+/** Bump `seq` to re-trigger expand+scroll for the same artifact. */
+export type LocateInModelRequest = { artifactId: string; seq: number }
+
 type Props = {
   project: Project | null
   docPaths: string[]
@@ -33,6 +37,7 @@ type Props = {
   onTabChange: (tab: LeftTab) => void
   activeViewId: string | null
   selectedArtifactId: string | null
+  locateInModel?: LocateInModelRequest | null
   onSelectView: (viewId: string) => void
   onSelectArtifact: (artifactId: string) => void
   onAddFilePath: () => void
@@ -47,6 +52,7 @@ function ViewTree({
   semantic,
   selectedId,
   activeViewId,
+  locateInModel,
   onSelectArtifact,
   onSelectView,
 }: {
@@ -54,6 +60,7 @@ function ViewTree({
   semantic: Record<string, SemanticElement>
   selectedId: string | null
   activeViewId: string | null
+  locateInModel?: LocateInModelRequest | null
   onSelectArtifact: (artifactId: string) => void
   onSelectView: (viewId: string) => void
 }) {
@@ -63,8 +70,11 @@ function ViewTree({
     const elements = Object.values(semantic)
     const map = Object.fromEntries(elements.map((e) => [e.id, e]))
     const rootList = elements
-      .filter((e) => !isRelationKind(e.kind))
-      .filter((e) => !e.parentId || !map[e.parentId] || isRelationKind(map[e.parentId].kind))
+      .filter((e) => !isRelationElement(e))
+      .filter(
+        (e) =>
+          !e.parentId || !map[e.parentId] || isRelationElement(map[e.parentId]),
+      )
       .sort((a, b) => a.id.localeCompare(b.id))
     return { byId: map, roots: rootList, folderTree: buildFolderTree(rootList) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -225,6 +235,26 @@ function ViewTree({
     setCollapsedIds(new Set(defaultCollapsed))
   }, [defaultCollapsed])
 
+  useEffect(() => {
+    if (!locateInModel?.artifactId) return
+    const { artifactId } = locateInModel
+    if (!byId[artifactId]) return
+    const ancestors = ancestorIdsForLocate(byId, artifactId)
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+      for (const id of ancestors) next.delete(id)
+      next.delete(artifactId)
+      return next
+    })
+    const frame = requestAnimationFrame(() => {
+      const row = document.querySelector(
+        `[data-artifact-id="${CSS.escape(artifactId)}"]`,
+      )
+      row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [locateInModel, byId])
+
   const toggleFolder = (folderKey: string) => {
     setFolderCollapsed((prev) => {
       const next = new Set(prev)
@@ -296,6 +326,7 @@ function ViewTree({
     return (
       <div key={el.id} className="tree-item" style={{ paddingLeft: depth * 12 }}>
         <div
+          data-artifact-id={el.id}
           className={`tree-row${isView ? ' is-view' : ' is-other'}${active ? ' active' : ''}${
             isDragging ? ' is-dragging' : ''
           }${dropHere ? ` drop-${drop.position}` : ''}`}
@@ -561,6 +592,7 @@ export function LeftSidebar({
   onTabChange,
   activeViewId,
   selectedArtifactId,
+  locateInModel,
   onSelectView,
   onSelectArtifact,
   onAddFilePath,
@@ -606,6 +638,7 @@ export function LeftSidebar({
             semantic={project?.semantic || {}}
             selectedId={selectedArtifactId}
             activeViewId={activeViewId}
+            locateInModel={locateInModel}
             onSelectArtifact={onSelectArtifact}
             onSelectView={onSelectView}
           />

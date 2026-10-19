@@ -3,7 +3,7 @@
  * Default: all non-relation kinds present in the project are visible.
  */
 import type { ArtifactKind, SemanticElement } from '../../api'
-import { isRelationKind } from '../diagram/relationKinds'
+import { isRelationElement } from '../diagram/relationKinds'
 
 const STORAGE_PREFIX = 'sysmlviewer.modelTreeKindFilter.'
 
@@ -13,7 +13,7 @@ export function treeKindsInSemantic(
 ): ArtifactKind[] {
   const set = new Set<ArtifactKind>()
   for (const el of Object.values(semantic)) {
-    if (!isRelationKind(el.kind)) set.add(el.kind)
+    if (!isRelationElement(el)) set.add(el.kind)
   }
   return [...set].sort((a, b) => a.localeCompare(b))
 }

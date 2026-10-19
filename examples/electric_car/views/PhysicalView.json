@@ -47,10 +47,10 @@
       "height": 76.0
     },
     "PhysicalArchitecture::VehiclePhysical::batteryPack": {
-      "x": 779.5534604779871,
-      "y": 710.3868643762318,
-      "width": 140.0,
-      "height": 76.0
+      "x": 785.884073657559,
+      "y": 711.4419665728274,
+      "width": 170.0,
+      "height": 89.0
     },
     "PhysicalArchitecture::VehiclePhysical::lampUnits": {
       "x": 218.4697096019569,

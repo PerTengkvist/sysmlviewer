@@ -1924,6 +1924,40 @@ class SubsetSysmlParser:
                 if peek() and peek().value == ":":
                     take()
                     type_ref = expect_qualified_name()
+                # Usage: interface x:Itf connect A to B;
+                if peek() and peek().value == "connect":
+                    take()
+                    source_ref = read_endpoint()
+                    if not (peek() and peek().value == "to"):
+                        state.warnings.append(
+                            f"line {line}: interface usage missing 'to'"
+                        )
+                        skip_until_semicolon_or_brace()
+                        continue
+                    take()  # to
+                    target_ref = read_endpoint()
+                    if not source_ref or not target_ref:
+                        state.warnings.append(
+                            f"line {line}: interface usage missing endpoints"
+                        )
+                        skip_until_semicolon_or_brace()
+                        continue
+                    if peek() and peek().value == ";":
+                        take()
+                    element_id = state.qualify(name)
+                    el = SemanticElement(
+                        id=element_id,
+                        kind=ArtifactKind.INTERFACE,
+                        name=name,
+                        parent_id=state.current_parent(),
+                        type_ref=type_ref,
+                        source_id=resolve_ref(source_ref),
+                        target_id=resolve_ref(target_ref),
+                        file_id=file_id,
+                    )
+                    state.add_child(el.parent_id, element_id)
+                    state.elements[element_id] = el
+                    continue
                 element_id = state.qualify(name)
                 el = SemanticElement(
                     id=element_id,

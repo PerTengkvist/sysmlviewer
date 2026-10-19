@@ -29,9 +29,12 @@ const EDGE_KINDS = new Set([
   'succession',
   'include',
   'satisfy',
+  'interface',
 ])
 
+/** Prefer edge classification for interface (usages); defs rarely need format paint. */
 function isNodeKind(kind: string): boolean {
+  if (kind === 'interface') return false
   return NODE_KINDS.has(kind)
 }
 
