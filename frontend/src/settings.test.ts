@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_REQUIREMENT_DISPLAY } from './features/diagram/requirementDisplay'
-import { DEFAULT_SETTINGS, EDGE_LABEL_TEXT_HEIGHT_PX, loadSettings } from './settings'
+import {
+  DEFAULT_ICON_LIBRARIES,
+  DEFAULT_SETTINGS,
+  EDGE_LABEL_TEXT_HEIGHT_PX,
+  loadSettings,
+} from './settings'
 
 const store = new Map<string, string>()
 
@@ -93,5 +98,34 @@ describe('settings requirementDisplay', () => {
       name: 'summary',
     })
     expect(s.requirementDisplay.documentationPanelAttribute).toBeNull()
+  })
+})
+
+describe('settings iconLibraries', () => {
+  it('defaults to iconmind + iconoven enabled', () => {
+    expect(DEFAULT_SETTINGS.iconLibraries).toEqual(DEFAULT_ICON_LIBRARIES)
+    expect(loadSettings().iconLibraries).toEqual(DEFAULT_ICON_LIBRARIES)
+  })
+
+  it('loads valid iconoven style and ignores unknown libs', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({
+        iconLibraries: {
+          iconoven: { enabled: false, style: 'sharp' },
+          evil: { enabled: true, style: 'x' },
+          iconmind: { style: 'nope' },
+        },
+      }),
+    )
+    const s = loadSettings()
+    expect(s.iconLibraries.iconoven).toEqual({
+      enabled: false,
+      style: 'sharp',
+    })
+    expect(s.iconLibraries.iconmind.style).toBe('outline-regular')
+    expect(
+      (s.iconLibraries as Record<string, unknown>).evil,
+    ).toBeUndefined()
   })
 })

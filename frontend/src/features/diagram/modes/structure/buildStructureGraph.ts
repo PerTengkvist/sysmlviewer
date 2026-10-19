@@ -428,17 +428,21 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     'interface',
     'actor',
   ])
+  const isStructureNode = (el: SemanticElement) => {
+    if (el.kind === 'interface') return !(el.sourceId && el.targetId)
+    return STRUCTURE_NODE_KINDS.has(el.kind)
+  }
   {
     const walk = (id: string, depth: number) => {
       if (depth > levels) return
       const el = semantic[id]
       if (!el) return
-      if (STRUCTURE_NODE_KINDS.has(el.kind)) partDepth.set(id, depth)
+      if (isStructureNode(el)) partDepth.set(id, depth)
       if (depth >= levels) return
       for (const cid of el.children || []) {
         const child = semantic[cid]
         if (!child) continue
-        if (STRUCTURE_NODE_KINDS.has(child.kind)) {
+        if (isStructureNode(child)) {
           walk(cid, depth + 1)
         }
       }
@@ -449,7 +453,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     Object.values(semantic)
       .filter(
         (el) =>
-          STRUCTURE_NODE_KINDS.has(el.kind) &&
+          isStructureNode(el) &&
           el.parentId === parentId &&
           partDepth.has(el.id),
       )
@@ -654,7 +658,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       .filter(
         (el) =>
           el.id !== rootId &&
-          STRUCTURE_NODE_KINDS.has(el.kind) &&
+          isStructureNode(el) &&
           partDepth.has(el.id) &&
           (el.parentId === rootId ||
             !el.parentId ||
@@ -868,7 +872,11 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       : undefined
 
   const builtEdges: Edge[] = Object.values(semantic)
-    .filter((el) => STRUCTURE_EDGE_KINDS.includes(el.kind))
+    .filter((el) => {
+      if (!STRUCTURE_EDGE_KINDS.includes(el.kind)) return false
+      if (el.kind === 'interface') return Boolean(el.sourceId && el.targetId)
+      return true
+    })
     .map((conn) => {
       const relationKind = conn.kind as ArtifactKind
       const edgeViz: VisualizationEdge | undefined = visualization.edges[conn.id]

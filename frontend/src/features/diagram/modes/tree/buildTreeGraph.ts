@@ -2,7 +2,7 @@ import type { Edge, Node } from '@xyflow/react'
 import type { SemanticElement, ViewPayload } from '../../../api'
 import type { ViewMode } from '../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
-import { isRelationKind } from '../../relationKinds'
+import { isRelationElement } from '../../relationKinds'
 import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import type { TreeNodeData } from './TreeNode'
 
@@ -22,8 +22,12 @@ const SKIP_KINDS = new Set([
   'view',
 ])
 
-function showInTree(kind: string): boolean {
-  return !SKIP_KINDS.has(kind) && !isRelationKind(kind)
+function showInTree(el: {
+  kind: string
+  sourceId?: string | null
+  targetId?: string | null
+}): boolean {
+  return !SKIP_KINDS.has(el.kind) && !isRelationElement(el)
 }
 
 export function buildTreeGraph(
@@ -46,7 +50,7 @@ export function buildTreeGraph(
     if (!el) return []
     return (el.children || [])
       .map((cid) => semantic[cid])
-      .filter((c): c is SemanticElement => !!c && showInTree(c.kind))
+      .filter((c): c is SemanticElement => !!c && showInTree(c))
       .sort((a, b) => a.id.localeCompare(b.id))
   }
 
@@ -82,7 +86,7 @@ export function buildTreeGraph(
         ? false
         : (el.children || []).some((cid) => {
             const c = semantic[cid]
-            return c && showInTree(c.kind)
+            return c && showInTree(c)
           })),
       formatStyle: viz?.style,
       viewMode,
@@ -91,7 +95,7 @@ export function buildTreeGraph(
     // Fix hasChildren when collapsed: still show toggle if element has structural children
     data.hasChildren = (el.children || []).some((cid) => {
       const c = semantic[cid]
-      return c && showInTree(c.kind)
+      return c && showInTree(c)
     })
 
     return {

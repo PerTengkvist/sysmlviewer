@@ -8954,15 +8954,15 @@
       "documentation": "Mechanical traction motor. Consumes EnergySupply. The engine computer commands it.",
       "shortId": null,
       "children": [
-        "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon",
+        "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon_body",
         "PhysicalArchitecture::VehiclePhysical::electricMotor::energyIn"
       ],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
-    "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon": {
-      "id": "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon",
+    "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon_body": {
+      "id": "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon_body",
       "kind": "attribute",
-      "name": "_icon",
+      "name": "_icon_body",
       "parentId": "PhysicalArchitecture::VehiclePhysical::electricMotor",
       "typeRef": null,
       "sourceId": null,
@@ -8970,7 +8970,7 @@
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
-      "defaultValue": "\"zap\"",
+      "defaultValue": "\"IconOven/electric-motor\"",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -9015,6 +9015,28 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "Mechanical battery pack. Implements the logical battery. The battery computer manages it.",
+      "shortId": null,
+      "children": [
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body"
+      ],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body",
+      "kind": "attribute",
+      "name": "_icon_body",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "\"iconmind/battery\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
@@ -11228,6 +11250,76 @@
         "side": null,
         "offset": null
       },
+      "LogicalArchitecture::DirectionCommand": {
+        "artifactId": "LogicalArchitecture::DirectionCommand",
+        "x": 640.0,
+        "y": 4580.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::GearCommand": {
+        "artifactId": "LogicalArchitecture::GearCommand",
+        "x": 80.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::TorqueRequest": {
+        "artifactId": "LogicalArchitecture::TorqueRequest",
+        "x": 360.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::BrakeRequest": {
+        "artifactId": "LogicalArchitecture::BrakeRequest",
+        "x": 640.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::EnergySupply": {
+        "artifactId": "LogicalArchitecture::EnergySupply",
+        "x": 80.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::ChargeFeed": {
+        "artifactId": "LogicalArchitecture::ChargeFeed",
+        "x": 360.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "LogicalArchitecture::WindshieldClear": {
+        "artifactId": "LogicalArchitecture::WindshieldClear",
+        "x": 640.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "LogicalArchitecture::Car": {
         "artifactId": "LogicalArchitecture::Car",
         "x": 80.0,
@@ -12245,6 +12337,76 @@
         "width": 320.0,
         "height": 220.0,
         "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::DirectionCommand": {
+        "artifactId": "PhysicalArchitecture::DirectionCommand",
+        "x": 80.0,
+        "y": 11240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::GearCommand": {
+        "artifactId": "PhysicalArchitecture::GearCommand",
+        "x": 360.0,
+        "y": 11240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::TorqueRequest": {
+        "artifactId": "PhysicalArchitecture::TorqueRequest",
+        "x": 640.0,
+        "y": 11240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::BrakeRequest": {
+        "artifactId": "PhysicalArchitecture::BrakeRequest",
+        "x": 80.0,
+        "y": 11420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::EnergySupply": {
+        "artifactId": "PhysicalArchitecture::EnergySupply",
+        "x": 360.0,
+        "y": 11420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::ChargeFeed": {
+        "artifactId": "PhysicalArchitecture::ChargeFeed",
+        "x": 640.0,
+        "y": 11420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::WindshieldClear": {
+        "artifactId": "PhysicalArchitecture::WindshieldClear",
+        "x": 80.0,
+        "y": 11600.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
         "side": null,
         "offset": null
       },

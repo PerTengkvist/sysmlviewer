@@ -126,6 +126,20 @@ def _emit_element(
             lines.append(f"{pad}connection {el.name} connect {src} to {tgt};")
         return
 
+    if el.kind == ArtifactKind.INTERFACE:
+        if el.source_id and el.target_id:
+            src = _endpoint_ref(semantic, el, el.source_id)
+            tgt = _endpoint_ref(semantic, el, el.target_id)
+            if src and tgt:
+                type_bit = f":{el.type_ref}" if el.type_ref else ""
+                lines.append(
+                    f"{pad}interface {el.name}{type_bit} connect {src} to {tgt};"
+                )
+            return
+        type_bit = f" : {el.type_ref}" if el.type_ref else ""
+        lines.append(f"{pad}interface {el.name}{type_bit};")
+        return
+
     if el.kind == ArtifactKind.DEPENDENCY:
         src = _endpoint_ref(semantic, el, el.source_id)
         tgt = _endpoint_ref(semantic, el, el.target_id)

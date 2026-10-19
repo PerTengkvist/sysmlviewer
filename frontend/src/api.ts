@@ -217,6 +217,22 @@ export interface SessionPayload {
   project: Project | null
 }
 
+export type IconLibraryInfo = {
+  id: string
+  label: string
+  prefix: string
+  description: string
+  styleKey: string
+  styles: string[]
+  enabled: boolean
+  style: string
+}
+
+export type IconLibrariesPayload = {
+  workspaceRoot: string | null
+  libraries: IconLibraryInfo[]
+}
+
 export interface ViewFilterRow {
   id: string
   kind: string
@@ -531,5 +547,14 @@ export const api = {
       `/projects/${projectId}/relation-todos/${todoId}`,
       { method: 'DELETE' },
     ),
+  getIconLibraries: () => request<IconLibrariesPayload>('/icon-libraries'),
+  putIconLibraries: (
+    libraries: Record<string, { enabled?: boolean; style?: string }>,
+  ) =>
+    request<IconLibrariesPayload>('/icon-libraries', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ libraries }),
+    }),
 }
 

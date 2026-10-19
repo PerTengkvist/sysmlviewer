@@ -1,4 +1,4 @@
-import { isRelationKind } from '../diagram/relationKinds'
+import { isRelationElement } from '../diagram/relationKinds'
 
 /** Sibling lists in the Views tree. Keys never mix folders or packages. */
 export type ViewTreeOrder = {
@@ -44,10 +44,14 @@ export const UNGROUPED_GROUP_KEY = 'ungrouped'
 
 export function defaultChildOrder(
   childIds: string[],
-  byId: Record<string, { kind: string } | undefined>,
+  byId: Record<
+    string,
+    | { kind: string; sourceId?: string | null; targetId?: string | null }
+    | undefined
+  >,
 ): string[] {
   return childIds
-    .filter((cid) => byId[cid] && !isRelationKind(byId[cid]!.kind))
+    .filter((cid) => byId[cid] && !isRelationElement(byId[cid]!))
     .sort((a, b) => {
       const ka = byId[a]!.kind === 'view' ? 0 : 1
       const kb = byId[b]!.kind === 'view' ? 0 : 1

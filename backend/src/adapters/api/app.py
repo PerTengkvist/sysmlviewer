@@ -123,6 +123,15 @@ class FrameBody(BaseModel):
     visible: bool = True
 
 
+class IconLibrarySettingBody(BaseModel):
+    enabled: bool | None = None
+    style: str | None = None
+
+
+class IconLibrariesPutBody(BaseModel):
+    libraries: dict[str, IconLibrarySettingBody]
+
+
 def create_api_app(
     data_dir: Path | None = None,
     *,
@@ -215,13 +224,14 @@ def create_api_app(
     def get_icon(icon_path: str):
         """Serve SVG icons.
 
-        - `user.svg` → default library (carbon)
-        - `iconmind/agent.svg` → icons/iconmind/agent.svg
+        - `user.svg` → default library (carbon) under viewer icons
+        - `iconmind/agent.svg` → project icons, then viewer, then remote vendor
         """
         from fastapi.responses import FileResponse
 
         from adapters.api.static_paths import resolve_repo_root
-        from domain.icon_library import resolve_icon_library
+        from domain.icon_resolve import resolve_icon_file
+        from domain.icon_vendor import ensure_icon
 
         raw = icon_path.strip()
         if not raw.endswith(".svg"):
@@ -231,19 +241,66 @@ def create_api_app(
         if not parts or any(".." in p or p.startswith("/") for p in parts):
             raise HTTPException(status_code=404, detail="Icon not found")
 
-        icons_root = (resolve_repo_root() / "icons").resolve()
-        if len(parts) >= 2:
-            # library/name.svg under icons/<library>/
-            file_path = (icons_root.joinpath(*parts).with_suffix(".svg")).resolve()
-        else:
-            _, lib_path = resolve_icon_library()
-            file_path = (lib_path / f"{parts[0]}.svg").resolve()
+        repo_root = resolve_repo_root()
+        repo_icons = (repo_root / "icons").resolve()
+        workspace: Path | None = session["workspace_root"]
 
-        if not str(file_path).startswith(str(icons_root)):
-            raise HTTPException(status_code=404, detail="Icon not found")
-        if not file_path.is_file():
+        if len(parts) >= 2:
+            library, name = parts[0], parts[1]
+            if len(parts) > 2:
+                raise HTTPException(status_code=404, detail="Icon not found")
+            file_path = ensure_icon(
+                library,
+                name,
+                workspace=workspace,
+                repo_icons=repo_icons,
+            )
+        else:
+            file_path = resolve_icon_file(
+                None,
+                parts[0],
+                workspace=workspace,
+                repo_icons=repo_icons,
+                repo_root=repo_root,
+            )
+
+        if file_path is None or not file_path.is_file():
             raise HTTPException(status_code=404, detail="Icon not found")
         return FileResponse(file_path, media_type="image/svg+xml")
+
+    @app.get("/icon-libraries")
+    def get_icon_libraries() -> dict:
+        """Curated icon libraries with workspace enable/style settings."""
+        from domain.icon_catalog import catalog_payload
+        from domain.icon_libraries_store import load_library_settings
+
+        workspace: Path | None = session["workspace_root"]
+        settings = load_library_settings(workspace)
+        return {
+            "workspaceRoot": str(workspace) if workspace else None,
+            "libraries": catalog_payload(settings),
+        }
+
+    @app.put("/icon-libraries")
+    def put_icon_libraries(
+        payload: Annotated[IconLibrariesPutBody, Body()],
+    ) -> dict:
+        """Save enable/style overrides under workspace icons/libraries.json."""
+        from domain.icon_catalog import catalog_payload
+        from domain.icon_libraries_store import save_library_settings
+
+        workspace: Path | None = session["workspace_root"]
+        if workspace is None:
+            raise HTTPException(status_code=400, detail="No workspace open")
+        overrides = {
+            lib_id: entry.model_dump(exclude_none=True)
+            for lib_id, entry in payload.libraries.items()
+        }
+        saved = save_library_settings(workspace, overrides)
+        return {
+            "workspaceRoot": str(workspace),
+            "libraries": catalog_payload(saved),
+        }
 
     @app.get("/session")
     def get_session() -> dict:

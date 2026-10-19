@@ -40,6 +40,17 @@ view def CarLogicalView : GeneralView {
 connect engine.powerOut to motor.powerIn;
 ```
 
+## Interface usages
+
+Typed port-to-port links (shown as edges in GeneralView, like connections):
+
+```sysml
+interface def itf_y;
+interface x:itf_y connect part1.a to part2.b;
+```
+
+In Details, Kind is the interface class (`itf_y`); use **Locate in Model** to jump to the def in the Model tree.
+
 ## Dependencies / associations
 
 ```sysml

@@ -5,7 +5,7 @@ import type {
   VisualizationNode,
 } from '../../api'
 import { matchName } from './namePattern'
-import { isRelationKind } from './relationKinds'
+import { isRelationElement, isRelationKind } from './relationKinds'
 
 export type ViewFilterMatchField = 'name' | 'stereotype' | 'any'
 
@@ -94,6 +94,7 @@ export function applyViewFilters(
   for (const el of Object.values(semantic)) {
     if (hidden.has(el.id)) continue
     if (
+      !isRelationElement(el) &&
       !isRelationKind(el.kind) &&
       el.kind !== 'message' &&
       el.kind !== 'transition' &&

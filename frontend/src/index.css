@@ -1335,6 +1335,37 @@ body.port-dragging * {
   word-break: break-word;
 }
 
+.kind-with-locate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+button.linkish {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent, #2563eb);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.locate-in-model-btn {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.locate-in-model-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .mono {
   font-family: "IBM Plex Mono", ui-monospace, monospace;
   font-size: 0.8rem;

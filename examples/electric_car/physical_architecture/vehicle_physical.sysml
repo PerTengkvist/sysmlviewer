@@ -164,11 +164,12 @@ package PhysicalArchitecture {
 
     part electricMotor {
       doc /* Mechanical traction motor. Consumes EnergySupply. The engine computer commands it. */
-      attribute _icon = "zap";
+      attribute _icon_body = "IconOven/electric-motor";
       port energyIn : EnergySupply;
     }
 
     part batteryPack {
+      attribute _icon_body = "iconmind/battery";
       doc /* Mechanical battery pack. Implements the logical battery. The battery computer manages it. */
     }
 

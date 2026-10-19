@@ -67,6 +67,7 @@ _STRUCTURE_EDGE_KINDS = {
     ArtifactKind.REDEFINITION,
     ArtifactKind.SATISFY,
     ArtifactKind.INCLUDE,
+    ArtifactKind.INTERFACE,
 }
 
 

@@ -79,6 +79,7 @@ EDGE_KINDS = {
     ArtifactKind.SUCCESSION,
     ArtifactKind.INCLUDE,
     ArtifactKind.SATISFY,
+    ArtifactKind.INTERFACE,
 }
 
 DEFAULT_EDGE_STYLE: dict[ArtifactKind, dict[str, str | None]] = {
@@ -132,6 +133,11 @@ DEFAULT_EDGE_STYLE: dict[ArtifactKind, dict[str, str | None]] = {
         "marker_end": "openArrow",
         "marker_start": None,
     },
+    ArtifactKind.INTERFACE: {
+        "line_style": "solid",
+        "marker_end": None,
+        "marker_start": None,
+    },
 }
 
 STRUCTURE_EDGE_KINDS = {
@@ -145,6 +151,7 @@ STRUCTURE_EDGE_KINDS = {
     ArtifactKind.REDEFINITION,
     ArtifactKind.INCLUDE,
     ArtifactKind.SATISFY,
+    ArtifactKind.INTERFACE,
 }
 
 
@@ -173,6 +180,7 @@ NODE_KINDS = {
     ArtifactKind.USE_CASE,
     ArtifactKind.CASE,
     ArtifactKind.ACTOR,
+    ArtifactKind.INTERFACE,
 }
 
 
@@ -304,39 +312,45 @@ def merge_visualization(
 
     for element in semantic.values():
         if element.kind in EDGE_KINDS:
-            if element.id in existing.edges:
-                edges[element.id] = existing.edges[element.id]
+            # Interface defs (no ends) are nodes, not edges.
+            if element.kind == ArtifactKind.INTERFACE and not (
+                element.source_id and element.target_id
+            ):
+                pass
             else:
-                routing = (
-                    RoutingType.DIRECT
-                    if element.kind
-                    in {
-                        ArtifactKind.MESSAGE,
-                        ArtifactKind.SUCCESSION,
-                        ArtifactKind.DEPENDENCY,
-                        ArtifactKind.ALLOCATION,
-                        ArtifactKind.BINDING,
-                        ArtifactKind.FLOW,
-                        ArtifactKind.SPECIALIZATION,
-                        ArtifactKind.SUBSETTING,
-                        ArtifactKind.REDEFINITION,
-                        ArtifactKind.INCLUDE,
-                        ArtifactKind.SATISFY,
-                    }
-                    else RoutingType.ANGULAR
-                )
-                style = (
-                    get_default_edge_style(element.kind)
-                    if element.kind in STRUCTURE_EDGE_KINDS
-                    else None
-                )
-                edges[element.id] = VisualizationEdge(
-                    artifact_id=element.id,
-                    routing=routing,
-                    waypoints=[],
-                    style=style,
-                )
-            continue
+                if element.id in existing.edges:
+                    edges[element.id] = existing.edges[element.id]
+                else:
+                    routing = (
+                        RoutingType.DIRECT
+                        if element.kind
+                        in {
+                            ArtifactKind.MESSAGE,
+                            ArtifactKind.SUCCESSION,
+                            ArtifactKind.DEPENDENCY,
+                            ArtifactKind.ALLOCATION,
+                            ArtifactKind.BINDING,
+                            ArtifactKind.FLOW,
+                            ArtifactKind.SPECIALIZATION,
+                            ArtifactKind.SUBSETTING,
+                            ArtifactKind.REDEFINITION,
+                            ArtifactKind.INCLUDE,
+                            ArtifactKind.SATISFY,
+                        }
+                        else RoutingType.ANGULAR
+                    )
+                    style = (
+                        get_default_edge_style(element.kind)
+                        if element.kind in STRUCTURE_EDGE_KINDS
+                        else None
+                    )
+                    edges[element.id] = VisualizationEdge(
+                        artifact_id=element.id,
+                        routing=routing,
+                        waypoints=[],
+                        style=style,
+                    )
+                continue
 
         if element.kind not in NODE_KINDS:
             continue

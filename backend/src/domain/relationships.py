@@ -12,13 +12,20 @@ def is_relation_edge(kind: ArtifactKind) -> bool:
     return kind in RELATION_EDGE_KINDS
 
 
+def is_relation_element(el: SemanticElement) -> bool:
+    """True for structure relations. Interface usages need both ends; defs do not count."""
+    if el.kind == ArtifactKind.INTERFACE:
+        return bool(el.source_id and el.target_id)
+    return is_relation_edge(el.kind)
+
+
 def collect_related_edges(
     semantic: dict[str, SemanticElement], included: set[str]
 ) -> set[str]:
     """Include relationship edges whose endpoints fall within `included`."""
     extra: set[str] = set()
     for el in semantic.values():
-        if not is_relation_edge(el.kind):
+        if not is_relation_element(el):
             continue
         if el.id in included:
             continue
