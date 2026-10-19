@@ -8954,15 +8954,15 @@
       "documentation": "Mechanical traction motor. Consumes EnergySupply. The engine computer commands it.",
       "shortId": null,
       "children": [
-        "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon",
+        "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon_body",
         "PhysicalArchitecture::VehiclePhysical::electricMotor::energyIn"
       ],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
-    "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon": {
-      "id": "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon",
+    "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon_body": {
+      "id": "PhysicalArchitecture::VehiclePhysical::electricMotor::_icon_body",
       "kind": "attribute",
-      "name": "_icon",
+      "name": "_icon_body",
       "parentId": "PhysicalArchitecture::VehiclePhysical::electricMotor",
       "typeRef": null,
       "sourceId": null,
@@ -8970,7 +8970,7 @@
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
-      "defaultValue": "\"zap\"",
+      "defaultValue": "\"IconOven/electric-motor\"",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -9032,7 +9032,7 @@
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
-      "defaultValue": "\"battery\"",
+      "defaultValue": "\"iconmind/battery\"",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],

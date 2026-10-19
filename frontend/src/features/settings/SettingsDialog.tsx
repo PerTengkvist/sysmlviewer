@@ -1,13 +1,23 @@
+import { useEffect, useState } from 'react'
+import { api } from '../../api'
 import type {
   AppSettings,
+  IconLibraryId,
   RequirementDisplaySettings,
-} from '../settings'
+} from '../../settings'
+import {
+  ICON_LIBRARY_META,
+} from '../../settings'
 import type { RequirementSlotSource } from '../diagram/requirementDisplay'
 
 type Props = {
   open: boolean
   settings: AppSettings
-  onChange: (next: AppSettings) => void
+  /** When true, enable/style are persisted to workspace icons/libraries.json. */
+  workspaceOpen?: boolean
+  onChange: (
+    next: AppSettings | ((prev: AppSettings) => AppSettings),
+  ) => void
   onClose: () => void
 }
 
@@ -30,11 +40,68 @@ function slotFromChoice(
   return { kind: 'sysml', field: choice }
 }
 
-export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
+export function SettingsDialog({
+  open,
+  settings,
+  workspaceOpen = false,
+  onChange,
+  onClose,
+}: Props) {
+  const [libSyncError, setLibSyncError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open || !workspaceOpen) return
+    let cancelled = false
+    void api
+      .getIconLibraries()
+      .then((payload) => {
+        if (cancelled) return
+        onChange((prev) => {
+          const next = { ...prev.iconLibraries }
+          for (const lib of payload.libraries) {
+            const id = lib.id as IconLibraryId
+            if (!(id in next)) continue
+            next[id] = { enabled: lib.enabled, style: lib.style }
+          }
+          return { ...prev, iconLibraries: next }
+        })
+        setLibSyncError(null)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setLibSyncError(err instanceof Error ? err.message : String(err))
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, workspaceOpen, onChange])
+
   if (!open) return null
 
   const patch = (partial: Partial<AppSettings>) => {
     onChange({ ...settings, ...partial })
+  }
+
+  const patchIconLibrary = (
+    id: IconLibraryId,
+    partial: Partial<AppSettings['iconLibraries'][IconLibraryId]>,
+  ) => {
+    onChange((prev) => {
+      const iconLibraries = {
+        ...prev.iconLibraries,
+        [id]: { ...prev.iconLibraries[id], ...partial },
+      }
+      if (workspaceOpen) {
+        void api
+          .putIconLibraries(iconLibraries)
+          .then(() => setLibSyncError(null))
+          .catch((err: unknown) =>
+            setLibSyncError(err instanceof Error ? err.message : String(err)),
+          )
+      }
+      return { ...prev, iconLibraries }
+    })
   }
 
   const patchDetails = (
@@ -318,6 +385,68 @@ export function SettingsDialog({ open, settings, onChange, onClose }: Props) {
                 title="Min gap between unrelated connections. Related nets (shared port) may overlap."
               />
             </label>
+          </fieldset>
+          <fieldset className="settings-fieldset">
+            <legend>Icon libraries</legend>
+            <p className="muted settings-note">
+              Curated SVG libraries for{' '}
+              <code>attribute _icon = &quot;lib/name&quot;</code>. Missing icons
+              are vendored into <code>icons/&lt;lib&gt;/</code> in the open
+              project.
+              {!workspaceOpen
+                ? ' Open a project to persist these choices for vendoring.'
+                : null}
+            </p>
+            {(Object.keys(ICON_LIBRARY_META) as IconLibraryId[]).map((id) => {
+              const meta = ICON_LIBRARY_META[id]
+              const conf = settings.iconLibraries[id]
+              return (
+                <div key={id}>
+                  <label className="settings-row">
+                    <span>
+                      {meta.label}{' '}
+                      <code className="muted">{meta.prefix}…</code>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={conf.enabled}
+                      aria-label={`Enable ${meta.label}`}
+                      onChange={(e) =>
+                        patchIconLibrary(id, { enabled: e.target.checked })
+                      }
+                    />
+                  </label>
+                  {meta.styles.length > 1 ? (
+                    <label className="settings-row">
+                      <span>{meta.styleKey}</span>
+                      <select
+                        value={conf.style}
+                        aria-label={`${meta.label} ${meta.styleKey}`}
+                        disabled={!conf.enabled}
+                        onChange={(e) =>
+                          patchIconLibrary(id, { style: e.target.value })
+                        }
+                      >
+                        {meta.styles.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <p className="muted settings-note">
+                      Style: {conf.style}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+            {libSyncError ? (
+              <p className="muted settings-note" role="alert">
+                Could not sync icon libraries: {libSyncError}
+              </p>
+            ) : null}
           </fieldset>
         </div>
       </div>

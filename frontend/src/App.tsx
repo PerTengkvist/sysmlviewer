@@ -1379,6 +1379,7 @@ export default function App() {
       <SettingsDialog
         open={settingsOpen}
         settings={settings}
+        workspaceOpen={!!workspaceRoot}
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
       />

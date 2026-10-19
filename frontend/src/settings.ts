@@ -14,6 +14,15 @@ export type StructureNotation = 'sysmlv2' | 'arcadia'
 
 export type { RequirementDisplaySettings }
 
+/** Curated remote SVG libraries (allowlist — not free-form CDN URLs). */
+export type IconLibraryId = 'iconmind' | 'iconoven'
+
+export type IconLibrarySetting = {
+  enabled: boolean
+  /** IconMind: outline-regular; IconOven: round | sharp */
+  style: string
+}
+
 export type AppSettings = {
   mode: AppMode
   viewMode: ViewMode
@@ -42,6 +51,55 @@ export type AppSettings = {
   horizontalPanelSizes: [number, number, number]
   /** Right sidebar split [details, documentation] percentages. */
   rightPanelSizes: [number, number]
+  /** Curated icon libraries: enable + default style for vendoring. */
+  iconLibraries: Record<IconLibraryId, IconLibrarySetting>
+}
+
+export const ICON_LIBRARY_META: Record<
+  IconLibraryId,
+  { label: string; prefix: string; styles: string[]; styleKey: string }
+> = {
+  iconmind: {
+    label: 'IconMind',
+    prefix: 'iconmind/',
+    styles: ['outline-regular'],
+    styleKey: 'variant',
+  },
+  iconoven: {
+    label: 'IconOven',
+    prefix: 'iconoven/',
+    styles: ['round', 'sharp'],
+    styleKey: 'corners',
+  },
+}
+
+export const DEFAULT_ICON_LIBRARIES: Record<IconLibraryId, IconLibrarySetting> =
+  {
+    iconmind: { enabled: true, style: 'outline-regular' },
+    iconoven: { enabled: true, style: 'round' },
+  }
+
+function normalizeIconLibraries(
+  raw: unknown,
+): Record<IconLibraryId, IconLibrarySetting> {
+  const base: Record<IconLibraryId, IconLibrarySetting> = {
+    iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
+    iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+  }
+  if (!raw || typeof raw !== 'object') return base
+  const obj = raw as Record<string, Partial<IconLibrarySetting> | undefined>
+  for (const id of Object.keys(base) as IconLibraryId[]) {
+    const entry = obj[id]
+    if (!entry || typeof entry !== 'object') continue
+    if (typeof entry.enabled === 'boolean') base[id].enabled = entry.enabled
+    if (
+      typeof entry.style === 'string' &&
+      ICON_LIBRARY_META[id].styles.includes(entry.style)
+    ) {
+      base[id].style = entry.style
+    }
+  }
+  return base
 }
 
 function cloneRequirementDisplay(): RequirementDisplaySettings {
@@ -72,6 +130,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
+  iconLibraries: {
+    iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
+    iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+  },
 }
 
 const KEY = 'sysmlviewer.settings'
@@ -84,6 +146,10 @@ export function loadSettings(): AppSettings {
         ...DEFAULT_SETTINGS,
         showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
         requirementDisplay: cloneRequirementDisplay(),
+        iconLibraries: {
+          iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
+          iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+        },
       }
     const parsed = JSON.parse(raw) as Partial<AppSettings> & {
       selectedConnectionLinewidth?: number
@@ -136,12 +202,17 @@ export function loadSettings(): AppSettings {
         parsed.rightPanelSizes,
         DEFAULT_SETTINGS.rightPanelSizes,
       ),
+      iconLibraries: normalizeIconLibraries(parsed.iconLibraries),
     }
   } catch {
     return {
       ...DEFAULT_SETTINGS,
       showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
       requirementDisplay: cloneRequirementDisplay(),
+      iconLibraries: {
+        iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
+        iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+      },
     }
   }
 }
