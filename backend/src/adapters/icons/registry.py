@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Callable, Protocol
 
+from adapters.icons.energy import DEFAULT_STYLE as ENERGY_DEFAULT_STYLE
+from adapters.icons.energy import EnergyIconsFetcher
 from adapters.icons.iconmind import IconMindFetcher
 from adapters.icons.iconoven import DEFAULT_STYLE as ICONOVEN_DEFAULT_STYLE
 from adapters.icons.iconoven import IconOvenFetcher
@@ -28,6 +30,10 @@ def _iconoven_factory(style: str) -> IconOvenFetcher:
     return IconOvenFetcher(style=style or ICONOVEN_DEFAULT_STYLE)
 
 
+def _energy_factory(style: str) -> EnergyIconsFetcher:
+    return EnergyIconsFetcher(style=style or ENERGY_DEFAULT_STYLE)
+
+
 def register_fetcher(library: str, factory: FetcherFactory) -> None:
     _REGISTRY[library.strip().lower()] = factory
 
@@ -48,6 +54,7 @@ def clear_registry() -> None:
     _REGISTRY.clear()
     register_fetcher("iconmind", _iconmind_factory)
     register_fetcher("iconoven", _iconoven_factory)
+    register_fetcher("energy", _energy_factory)
 
 
 # Built-in registration

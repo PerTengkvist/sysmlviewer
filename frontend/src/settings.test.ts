@@ -102,17 +102,19 @@ describe('settings requirementDisplay', () => {
 })
 
 describe('settings iconLibraries', () => {
-  it('defaults to iconmind + iconoven enabled', () => {
+  it('defaults to iconmind + iconoven + energy enabled', () => {
     expect(DEFAULT_SETTINGS.iconLibraries).toEqual(DEFAULT_ICON_LIBRARIES)
     expect(loadSettings().iconLibraries).toEqual(DEFAULT_ICON_LIBRARIES)
+    expect(DEFAULT_SETTINGS.iconLibraries.energy.style).toBe('20')
   })
 
-  it('loads valid iconoven style and ignores unknown libs', () => {
+  it('loads valid iconoven/energy styles and ignores unknown libs', () => {
     localStorage.setItem(
       'sysmlviewer.settings',
       JSON.stringify({
         iconLibraries: {
           iconoven: { enabled: false, style: 'sharp' },
+          energy: { enabled: true, style: '48-bold' },
           evil: { enabled: true, style: 'x' },
           iconmind: { style: 'nope' },
         },
@@ -122,6 +124,10 @@ describe('settings iconLibraries', () => {
     expect(s.iconLibraries.iconoven).toEqual({
       enabled: false,
       style: 'sharp',
+    })
+    expect(s.iconLibraries.energy).toEqual({
+      enabled: true,
+      style: '48-bold',
     })
     expect(s.iconLibraries.iconmind.style).toBe('outline-regular')
     expect(
