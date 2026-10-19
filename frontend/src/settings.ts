@@ -15,11 +15,11 @@ export type StructureNotation = 'sysmlv2' | 'arcadia'
 export type { RequirementDisplaySettings }
 
 /** Curated remote SVG libraries (allowlist — not free-form CDN URLs). */
-export type IconLibraryId = 'iconmind' | 'iconoven'
+export type IconLibraryId = 'iconmind' | 'iconoven' | 'energy'
 
 export type IconLibrarySetting = {
   enabled: boolean
-  /** IconMind: outline-regular; IconOven: round | sharp */
+  /** IconMind: outline-regular; IconOven: round|sharp; Energy: 20|48|…-bold */
   style: string
 }
 
@@ -71,12 +71,19 @@ export const ICON_LIBRARY_META: Record<
     styles: ['round', 'sharp'],
     styleKey: 'corners',
   },
+  energy: {
+    label: 'Energy Icons',
+    prefix: 'energy/',
+    styles: ['20', '48', '20-bold', '48-bold'],
+    styleKey: 'master',
+  },
 }
 
 export const DEFAULT_ICON_LIBRARIES: Record<IconLibraryId, IconLibrarySetting> =
   {
     iconmind: { enabled: true, style: 'outline-regular' },
     iconoven: { enabled: true, style: 'round' },
+    energy: { enabled: true, style: '20' },
   }
 
 function normalizeIconLibraries(
@@ -85,6 +92,7 @@ function normalizeIconLibraries(
   const base: Record<IconLibraryId, IconLibrarySetting> = {
     iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
     iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+    energy: { ...DEFAULT_ICON_LIBRARIES.energy },
   }
   if (!raw || typeof raw !== 'object') return base
   const obj = raw as Record<string, Partial<IconLibrarySetting> | undefined>
@@ -133,7 +141,16 @@ export const DEFAULT_SETTINGS: AppSettings = {
   iconLibraries: {
     iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
     iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+    energy: { ...DEFAULT_ICON_LIBRARIES.energy },
   },
+}
+
+function cloneIconLibraries(): Record<IconLibraryId, IconLibrarySetting> {
+  return {
+    iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
+    iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
+    energy: { ...DEFAULT_ICON_LIBRARIES.energy },
+  }
 }
 
 const KEY = 'sysmlviewer.settings'
@@ -146,10 +163,7 @@ export function loadSettings(): AppSettings {
         ...DEFAULT_SETTINGS,
         showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
         requirementDisplay: cloneRequirementDisplay(),
-        iconLibraries: {
-          iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
-          iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
-        },
+        iconLibraries: cloneIconLibraries(),
       }
     const parsed = JSON.parse(raw) as Partial<AppSettings> & {
       selectedConnectionLinewidth?: number
@@ -209,10 +223,7 @@ export function loadSettings(): AppSettings {
       ...DEFAULT_SETTINGS,
       showDiagramDetails: { ...DEFAULT_SETTINGS.showDiagramDetails },
       requirementDisplay: cloneRequirementDisplay(),
-      iconLibraries: {
-        iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
-        iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
-      },
+      iconLibraries: cloneIconLibraries(),
     }
   }
 }

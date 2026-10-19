@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from adapters.icons.energy import EnergyIconsFetcher
 from adapters.icons.iconmind import IconMindFetcher
 from adapters.icons.iconoven import IconOvenFetcher
 from adapters.icons.registry import clear_registry, get_fetcher, register_fetcher
@@ -30,6 +31,13 @@ def test_iconoven_is_registered():
     assert fetcher is not None
     assert isinstance(fetcher, IconOvenFetcher)
     assert fetcher.style == "sharp"
+
+
+def test_energy_is_registered():
+    fetcher = get_fetcher("energy", style="48-bold")
+    assert fetcher is not None
+    assert isinstance(fetcher, EnergyIconsFetcher)
+    assert fetcher.style == "48-bold"
 
 
 def test_unknown_lib_returns_none():

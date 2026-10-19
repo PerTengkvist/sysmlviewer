@@ -37,6 +37,16 @@ CURATED_LIBRARIES: dict[str, IconLibraryDef] = {
         "prefix": "iconoven/",
         "description": "UI Stroke icons via @iconoven/svg (round or sharp).",
     },
+    "energy": {
+        "id": "energy",
+        "label": "Energy Icons",
+        "enabled_default": True,
+        "style_key": "master",
+        "styles": ["20", "48", "20-bold", "48-bold"],
+        "default_style": "20",
+        "prefix": "energy/",
+        "description": "Energy/climate/infrastructure icons via energy-icons (optical masters).",
+    },
 }
 
 

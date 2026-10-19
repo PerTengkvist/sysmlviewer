@@ -18,10 +18,12 @@ def test_get_icon_libraries_defaults(tmp_path: Path, monkeypatch):
     assert res.status_code == 200
     body = res.json()
     ids = {lib["id"] for lib in body["libraries"]}
-    assert ids == {"iconmind", "iconoven"}
+    assert ids == {"iconmind", "iconoven", "energy"}
     by_id = {lib["id"]: lib for lib in body["libraries"]}
     assert by_id["iconoven"]["enabled"] is True
     assert by_id["iconoven"]["style"] == "round"
+    assert by_id["energy"]["enabled"] is True
+    assert by_id["energy"]["style"] == "20"
 
 
 def test_put_icon_libraries_persists(tmp_path: Path, monkeypatch):
