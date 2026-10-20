@@ -8744,8 +8744,29 @@
       "documentation": "Mechanical gear selector for park, reverse, neutral and drive. Provides GearCommand.",
       "shortId": null,
       "children": [
+        "PhysicalArchitecture::VehiclePhysical::gearStickMech::_icon_body",
         "PhysicalArchitecture::VehiclePhysical::gearStickMech::gearOut"
       ],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::gearStickMech::_icon_body": {
+      "id": "PhysicalArchitecture::VehiclePhysical::gearStickMech::_icon_body",
+      "kind": "attribute",
+      "name": "_icon_body",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::gearStickMech",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "\"energy/busbar\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
     "PhysicalArchitecture::VehiclePhysical::gearStickMech::gearOut": {

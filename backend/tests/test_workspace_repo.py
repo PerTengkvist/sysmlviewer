@@ -61,7 +61,7 @@ def test_nested_sysml_path(tmp_path: Path):
     project = Project.create("Nested")
     project.files.append(
         SysmlFile(
-            id=new_id(),
+            id="lib/main.sysml",
             name="main.sysml",
             content="package Lib { part X; }\n",
             path="lib/main.sysml",
@@ -73,6 +73,86 @@ def test_nested_sysml_path(tmp_path: Path):
     loaded = repo.get(saved.id)
     assert loaded is not None
     assert loaded.files[0].path == "lib/main.sysml"
+    assert loaded.files[0].id == "lib/main.sysml"
+
+
+def test_load_discovers_disk_without_sysmlfiles(tmp_path: Path):
+    import json
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).isoformat()
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "x.sysml").write_text(
+        "package X { part A; }\n", encoding="utf-8"
+    )
+    (tmp_path / "project.json").write_text(
+        json.dumps(
+            {
+                "id": "proj-1",
+                "projektnamn": "Scan",
+                "created": now,
+                "updated": now,
+            }
+        ),
+        encoding="utf-8",
+    )
+    repo = WorkspaceProjectRepository(tmp_path)
+    loaded = repo.get("proj-1")
+    assert loaded is not None
+    assert len(loaded.files) == 1
+    assert loaded.files[0].id == "lib/x.sysml"
+    assert loaded.files[0].path == "lib/x.sysml"
+    assert "package X" in loaded.files[0].content
+
+
+def test_load_ignores_sysmlfiles_manifest_disk_wins(tmp_path: Path):
+    import json
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).isoformat()
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "x.sysml").write_text(
+        "package X {}\n", encoding="utf-8"
+    )
+    (tmp_path / "project.json").write_text(
+        json.dumps(
+            {
+                "id": "proj-2",
+                "projektnamn": "DiskWins",
+                "created": now,
+                "updated": now,
+                "sysmlfiles": ["other.sysml"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    repo = WorkspaceProjectRepository(tmp_path)
+    loaded = repo.get("proj-2")
+    assert loaded is not None
+    assert [f.path for f in loaded.files] == ["lib/x.sysml"]
+
+
+def test_orphan_sysmlfiles_entry_not_loaded(tmp_path: Path):
+    import json
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).isoformat()
+    (tmp_path / "project.json").write_text(
+        json.dumps(
+            {
+                "id": "proj-3",
+                "projektnamn": "Orphan",
+                "created": now,
+                "updated": now,
+                "sysmlfiles": ["missing.sysml"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    repo = WorkspaceProjectRepository(tmp_path)
+    loaded = repo.get("proj-3")
+    assert loaded is not None
+    assert loaded.files == []
 
 
 def test_list_summaries_single_workspace(tmp_path: Path):
