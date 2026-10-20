@@ -45,7 +45,10 @@ CURATED_LIBRARIES: dict[str, IconLibraryDef] = {
         "styles": ["20", "48", "20-bold", "48-bold"],
         "default_style": "20",
         "prefix": "energy/",
-        "description": "Energy/climate/infrastructure icons via energy-icons (optical masters).",
+        "description": (
+            "Energy/climate/infrastructure icons via Iconify "
+            "(energy-icons; optical masters 20/48/bold)."
+        ),
     },
 }
 
