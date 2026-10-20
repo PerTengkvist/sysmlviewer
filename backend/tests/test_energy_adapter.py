@@ -1,4 +1,4 @@
-"""Energy Icons fetcher: CDN URL, optical masters, failure modes."""
+"""Energy Icons fetcher via Iconify API."""
 
 from __future__ import annotations
 
@@ -7,10 +7,11 @@ import pytest
 
 from adapters.icons.energy import (
     DEFAULT_STYLE,
-    ENERGY_PACKAGE,
-    ENERGY_VERSION,
+    ICONIFY_API,
+    ICONIFY_PREFIX,
     EnergyIconsError,
     EnergyIconsFetcher,
+    resolve_iconify_name,
 )
 
 
@@ -37,18 +38,33 @@ def _fetcher(
     return EnergyIconsFetcher(client=client, style=style), transport
 
 
-def test_svg_url_uses_pinned_package_and_default_master():
+def test_resolve_appends_master_suffix():
+    assert resolve_iconify_name("busbar", "20") == "busbar-20"
+    assert resolve_iconify_name("busbar", "48-bold") == "busbar-48-bold"
+
+
+def test_resolve_keeps_existing_master_suffix():
+    assert resolve_iconify_name("busbar-20", "48") == "busbar-20"
+    assert resolve_iconify_name("pylon-48-bold", "20") == "pylon-48-bold"
+
+
+def test_svg_url_uses_iconify_api():
     fetcher, _ = _fetcher()
-    url = fetcher.svg_url("pylon")
-    assert ENERGY_VERSION in url
-    assert ENERGY_PACKAGE in url
-    assert url.endswith("/svg/pylon/20.svg")
-    assert url.startswith("https://cdn.jsdelivr.net/npm/")
+    url = fetcher.svg_url("busbar")
+    assert url.startswith(ICONIFY_API)
+    assert f"/{ICONIFY_PREFIX}/busbar-20.svg" in url
+
+
+def test_svg_url_accepts_iconify_style_slug():
+    fetcher, _ = _fetcher(style="20")
+    assert fetcher.svg_url("busbar-20").endswith("/energy-icons/busbar-20.svg")
 
 
 def test_svg_url_bold_48_master():
     fetcher, _ = _fetcher(style="48-bold")
-    assert fetcher.svg_url("wind-turbine").endswith("/svg/wind-turbine/48-bold.svg")
+    assert fetcher.svg_url("wind-turbine").endswith(
+        "/energy-icons/wind-turbine-48-bold.svg"
+    )
 
 
 def test_invalid_style_rejected():
@@ -58,23 +74,23 @@ def test_invalid_style_rejected():
 
 def test_fetch_returns_trimmed_svg():
     fetcher, transport = _fetcher()
-    url = fetcher.svg_url("pylon")
+    url = fetcher.svg_url("busbar")
     transport.routes[url] = (200, "  <svg xmlns='http://www.w3.org/2000/svg'></svg>\n")
-    assert fetcher.fetch("pylon").startswith("<svg")
+    assert fetcher.fetch("busbar").startswith("<svg")
 
 
 def test_fetch_http_404_raises():
     fetcher, transport = _fetcher()
-    transport.routes[fetcher.svg_url("pylon")] = (404, "missing")
+    transport.routes[fetcher.svg_url("missing")] = (404, "missing")
     with pytest.raises(EnergyIconsError):
-        fetcher.fetch("pylon")
+        fetcher.fetch("missing")
 
 
 def test_fetch_non_svg_raises():
     fetcher, transport = _fetcher()
-    transport.routes[fetcher.svg_url("pylon")] = (200, "not-svg")
+    transport.routes[fetcher.svg_url("busbar")] = (200, "not-svg")
     with pytest.raises(EnergyIconsError):
-        fetcher.fetch("pylon")
+        fetcher.fetch("busbar")
 
 
 def test_fetch_network_error_raises():
@@ -84,4 +100,4 @@ def test_fetch_network_error_raises():
 
     fetcher = EnergyIconsFetcher(client=httpx.Client(transport=BoomTransport()))
     with pytest.raises(EnergyIconsError):
-        fetcher.fetch("pylon")
+        fetcher.fetch("busbar")

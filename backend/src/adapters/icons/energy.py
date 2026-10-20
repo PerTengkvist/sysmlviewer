@@ -1,4 +1,8 @@
-"""Fetch Energy Icons SVGs from the pinned jsDelivr npm mirror."""
+"""Fetch Energy Icons SVGs via the Iconify API.
+
+Iconify publishes this set as ``energy-icons:<slug>-<master>`` (e.g.
+``energy-icons:busbar-20``). See https://icon-sets.iconify.design/energy-icons/
+"""
 
 from __future__ import annotations
 
@@ -6,19 +10,31 @@ from typing import Callable
 
 import httpx
 
-ENERGY_PACKAGE = "energy-icons"
-ENERGY_VERSION = "1"
+ICONIFY_API = "https://api.iconify.design"
+ICONIFY_PREFIX = "energy-icons"
 ENERGY_STYLES = frozenset({"20", "48", "20-bold", "48-bold"})
 DEFAULT_STYLE = "20"
-CDN_ROOT = f"https://cdn.jsdelivr.net/npm/{ENERGY_PACKAGE}@{ENERGY_VERSION}"
 
 
 class EnergyIconsError(Exception):
     """Energy Icons fetch or configuration failed."""
 
 
+def resolve_iconify_name(slug: str, style: str) -> str:
+    """Map SysML slug + settings master to an Iconify icon name.
+
+    ``busbar`` + ``20`` → ``busbar-20``
+    ``busbar-20`` + any style → ``busbar-20`` (suffix already present)
+    """
+    cleaned = slug.strip()
+    for suffix in sorted(ENERGY_STYLES, key=len, reverse=True):
+        if cleaned.endswith(f"-{suffix}"):
+            return cleaned
+    return f"{cleaned}-{style}"
+
+
 class EnergyIconsFetcher:
-    """Download an MIT Energy Icons SVG by slug and optical master."""
+    """Download Energy Icons from Iconify by slug and optical master."""
 
     def __init__(
         self,
@@ -50,8 +66,12 @@ class EnergyIconsFetcher:
             self._owns_client = True
         return self._client.get(url)
 
+    def iconify_name(self, slug: str) -> str:
+        return resolve_iconify_name(slug, self.style)
+
     def svg_url(self, slug: str) -> str:
-        return f"{CDN_ROOT}/svg/{slug}/{self.style}.svg"
+        name = self.iconify_name(slug)
+        return f"{ICONIFY_API}/{ICONIFY_PREFIX}/{name}.svg"
 
     def fetch(self, slug: str) -> str:
         url = self.svg_url(slug)
