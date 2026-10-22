@@ -102,6 +102,25 @@ kill_tree() {
   fi
 }
 
+# Drop unreadable/corrupt session files left behind by crashes or interrupted writes.
+discard_invalid_session() {
+  [[ -f "$SESSION_FILE" ]] || return 0
+  if python3 - "$SESSION_FILE" <<'PY'
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        data = json.load(f)
+except (json.JSONDecodeError, OSError):
+    sys.exit(1)
+sys.exit(0 if isinstance(data, dict) else 1)
+PY
+  then
+    return 0
+  fi
+  echo "warning: discarding invalid $SESSION_FILE" >&2
+  rm -f "$SESSION_FILE"
+}
+
 read_session_field() {
   local field="$1"
   python3 - "$SESSION_FILE" "$field" <<'PY'
@@ -184,6 +203,7 @@ cmd_start() {
     die "--build and --dev cannot be combined"
   fi
 
+  discard_invalid_session
   if [[ -f "$SESSION_FILE" ]]; then
     local server_pid backend_pid frontend_pid
     server_pid="$(read_session_field serverPid)"
@@ -279,6 +299,7 @@ kill_port_listeners() {
 cmd_stop() {
   local stopped_session=0
 
+  discard_invalid_session
   if [[ -f "$SESSION_FILE" ]]; then
     local mode server_pid backend_pid frontend_pid
     mode="$(read_session_field mode)"
@@ -319,6 +340,7 @@ cmd_stop() {
 }
 
 cmd_status() {
+  discard_invalid_session
   if [[ ! -f "$SESSION_FILE" ]]; then
     echo "status: stopped (no session file)"
     exit 0

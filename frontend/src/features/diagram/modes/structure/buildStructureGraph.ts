@@ -387,6 +387,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     id: string,
     el: SemanticElement,
     isBoundary: boolean,
+    childrenVisible = false,
   ): PartNodeData => ({
     label: el.name,
     artifactId: id,
@@ -402,6 +403,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     menuItems: menus[id] || [],
     portMoveMode,
     isBoundary,
+    childrenVisible,
     showAttributes,
     attributeNames: attrNames(id),
     iconName: readPartIconName(semantic, id),
@@ -483,7 +485,8 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       if (!el || el.kind !== 'part') return
       const viz = visualization.nodes[id]
       const childStyle = nodeInlineStyle(formatFor(id), viewMode)
-      const data = partData(id, el, false)
+      // Arcadia peers are siblings — child parts are never drawn inside.
+      const data = partData(id, el, false, false)
       const box = sizedPartBox(
         id,
         el,
@@ -589,7 +592,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         ...rootStyle,
       },
       zIndex: 0,
-      data: partData(rootId, root, true),
+      data: partData(rootId, root, true, rootKids.length > 0),
     })
 
     const placeUnder = (
@@ -623,7 +626,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         const childStyle = nodeInlineStyle(formatFor(id), viewMode, {
           isBoundary: isContainer,
         })
-        const data = partData(id, el, isContainer)
+        const data = partData(id, el, isContainer, isContainer)
         const box = sizedPartBox(
           id,
           el,
@@ -712,7 +715,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
                 viewMode,
                 anchors: resolveAnchors(viz?.anchors),
               }
-            : partData(id, el, isContainer)
+            : partData(id, el, isContainer, isContainer)
       const box = sizedPartBox(
         id,
         el,
@@ -811,7 +814,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
                   viewMode,
                   anchors: resolveAnchors(viz?.anchors),
                 }
-              : partData(id, el, isContainer)
+              : partData(id, el, isContainer, isContainer)
         const box = sizedPartBox(
           id,
           el,

@@ -1726,7 +1726,8 @@ button.linkish {
 .part-node-body-icon-box {
   height: 50%;
   aspect-ratio: 1;
-  max-width: 90%;
+  max-height: var(--part-body-icon-max, none);
+  max-width: min(90%, var(--part-body-icon-max, 90%));
   display: flex;
   align-items: center;
   justify-content: center;

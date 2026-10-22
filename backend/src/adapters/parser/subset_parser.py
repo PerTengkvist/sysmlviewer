@@ -2176,12 +2176,25 @@ class SubsetSysmlParser:
         for el in state.elements.values():
             if el.kind == ArtifactKind.PART and el.type_ref is None:
                 defs_by_name[el.name] = el
+        # `part def X :> Base` keeps type_ref but remains a type definition.
+        specialized_def_ids = {
+            el.source_id
+            for el in state.elements.values()
+            if el.kind == ArtifactKind.SPECIALIZATION and el.source_id
+        }
 
         def resolve_type_def(type_ref: str | None) -> SemanticElement | None:
             if not type_ref:
                 return None
             for el in state.elements.values():
                 if el.kind == ArtifactKind.PART and el.name == type_ref and el.type_ref is None:
+                    return el
+            for el in state.elements.values():
+                if (
+                    el.kind == ArtifactKind.PART
+                    and el.name == type_ref
+                    and el.id in specialized_def_ids
+                ):
                     return el
             return defs_by_name.get(type_ref)
 
@@ -2238,26 +2251,31 @@ class SubsetSysmlParser:
         def inherit_from_def(
             usage: SemanticElement,
             type_def: SemanticElement,
-            seen: set[str] | None = None,
+            branch: list[str] | None = None,
         ) -> None:
-            if seen is None:
-                seen = set()
-            if type_def.id in seen:
+            # Per-branch stack: siblings of the same type each expand, but a
+            # type already on this path (recursive nesting) still stops.
+            if branch is None:
+                branch = []
+            if type_def.id in branch:
                 return
-            seen.add(type_def.id)
-            for child_id in type_def.children:
-                child = state.elements.get(child_id)
-                if not child:
-                    continue
-                if child.kind == ArtifactKind.PORT:
-                    copy_port(usage, child)
-                elif child.kind == ArtifactKind.ATTRIBUTE:
-                    copy_attribute(usage, child)
-                elif child.kind == ArtifactKind.PART:
-                    nested = copy_nested_part(usage, child)
-                    nested_def = resolve_type_def(child.type_ref)
-                    if nested_def:
-                        inherit_from_def(nested, nested_def, seen)
+            branch.append(type_def.id)
+            try:
+                for child_id in type_def.children:
+                    child = state.elements.get(child_id)
+                    if not child:
+                        continue
+                    if child.kind == ArtifactKind.PORT:
+                        copy_port(usage, child)
+                    elif child.kind == ArtifactKind.ATTRIBUTE:
+                        copy_attribute(usage, child)
+                    elif child.kind == ArtifactKind.PART:
+                        nested = copy_nested_part(usage, child)
+                        nested_def = resolve_type_def(child.type_ref)
+                        if nested_def:
+                            inherit_from_def(nested, nested_def, branch)
+            finally:
+                branch.pop()
 
         usages = [
             el
