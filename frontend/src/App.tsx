@@ -1663,6 +1663,7 @@ export default function App() {
               settings.showDiagramDetails.hierarchicalLevels
             }
             selectedId={selectedId}
+            selectedIds={selectedIds}
             relationTodos={relationTodos}
             editorMode={editorMode}
             viewMode={settings.viewMode}
@@ -1712,6 +1713,13 @@ export default function App() {
             }}
             onPositionChange={(id, x, y) =>
               void onNodesMoved({ [id]: { x, y } })
+            }
+            onSizeChange={(ids, size) =>
+              void onNodesMoved(
+                Object.fromEntries(
+                  ids.map((id) => [id, { artifactId: id, ...size }]),
+                ),
+              )
             }
             onEditLockChange={(id, locked) => {
               if (!viewPayload) return

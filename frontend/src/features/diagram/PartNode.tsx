@@ -32,6 +32,8 @@ import {
   partSvgIconUrl,
   resolveLucideIcon,
 } from './partIcon'
+import { partMinSize } from './partSizeLimits'
+import { applyPortGroupDelta } from './layout/portGroupMove'
 
 /** Header icon from `_icon` — Lucide component or SVG library img. */
 export function PartHeaderIcon({
@@ -198,6 +200,10 @@ export type PartNodeData = {
   viewMode?: ViewMode
   onOpenView?: (viewId: string, opts?: { ctrlKey?: boolean; metaKey?: boolean }) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
+  /** Batch commit when Option-dragging a multi-selected port group (same part). */
+  onPortsDrag?: (
+    moves: { portId: string; side: PortSide; offset: number }[],
+  ) => void
   /** Option+Shift click — multi-select ports for distribute. */
   onPortSelect?: (portId: string) => void
   /** Live drag of a relation endpoint along this part's boundary. */
@@ -386,42 +392,31 @@ export function PartNode({ data, selected }: NodeProps) {
     if (nodeId) updateNodeInternals(nodeId)
   }, [portSig, d.relationHandles, nodeId, updateNodeInternals, moveMode])
 
-  const updatePortFromPointer = useCallback((portId: string, clientX: number, clientY: number) => {
-    const el = rootRef.current
-    if (!el) return null
-    const rect = el.getBoundingClientRect()
-    const flow = flowSizeFromScreenRect(rect.width, rect.height, zoom)
-    const isBoundary = !!d.isBoundary
-    const anchor = nearestBorderAnchor(
-      clientX - rect.left,
-      clientY - rect.top,
-      rect.width,
-      rect.height,
-      { isBoundary },
-    )
-    const offset = clampPortOffset(anchor.offset, anchor.side, flow.height, {
-      isBoundary,
-    })
-    const clamped = { side: anchor.side, offset }
-    setLocalPorts((prev) =>
-      prev.map((p) =>
-        p.id === portId ? { ...p, side: clamped.side, offset: clamped.offset } : p,
-      ),
-    )
-    return clamped
-  }, [d.isBoundary, zoom])
-
-  const endPortDrag = useCallback(
-    (portId: string, clientX: number, clientY: number) => {
-      const anchor = updatePortFromPointer(portId, clientX, clientY)
-      draggingPortId.current = null
-      if (anchor) {
-        d.onPortDrag?.(portId, anchor.side, anchor.offset)
-        if (nodeId) updateNodeInternals(nodeId)
+  const anchorFromPointer = useCallback(
+    (clientX: number, clientY: number) => {
+      const el = rootRef.current
+      if (!el) return null
+      const rect = el.getBoundingClientRect()
+      const flow = flowSizeFromScreenRect(rect.width, rect.height, zoom)
+      const isBoundary = !!d.isBoundary
+      const anchor = nearestBorderAnchor(
+        clientX - rect.left,
+        clientY - rect.top,
+        rect.width,
+        rect.height,
+        { isBoundary },
+      )
+      const offset = clampPortOffset(anchor.offset, anchor.side, flow.height, {
+        isBoundary,
+      })
+      return {
+        side: anchor.side,
+        offset,
+        partHeight: flow.height,
+        isBoundary,
       }
-      document.body.classList.remove('port-dragging')
     },
-    [d, nodeId, updateNodeInternals, updatePortFromPointer],
+    [d.isBoundary, zoom],
   )
 
   const stopPortPointer = (e: ReactPointerEvent) => {
@@ -456,21 +451,71 @@ export function PartNode({ data, selected }: NodeProps) {
 
     stopPortPointer(e)
 
+    // Group move: selected ports on this part when the grabbed one is selected.
+    const groupStarts =
+      selectedPorts.has(port.id) && selectedPorts.size > 1
+        ? localPorts
+            .filter((p) => selectedPorts.has(p.id))
+            .map((p) => ({ id: p.id, side: p.side, offset: p.offset }))
+        : null
+
     draggingPortId.current = port.id
     document.body.classList.add('port-dragging')
-    updatePortFromPointer(port.id, e.clientX, e.clientY)
+
+    const applyGroupOrSingle = (clientX: number, clientY: number) => {
+      const anchor = anchorFromPointer(clientX, clientY)
+      if (!anchor) return null
+      if (groupStarts && groupStarts.length > 1) {
+        const moves = applyPortGroupDelta(
+          groupStarts,
+          port.id,
+          { side: anchor.side, offset: anchor.offset },
+          anchor.partHeight,
+          { isBoundary: anchor.isBoundary },
+        )
+        const byId = new Map(moves.map((m) => [m.portId, m]))
+        setLocalPorts((prev) =>
+          prev.map((p) => {
+            const m = byId.get(p.id)
+            return m ? { ...p, side: m.side, offset: m.offset } : p
+          }),
+        )
+        return moves
+      }
+      setLocalPorts((prev) =>
+        prev.map((p) =>
+          p.id === port.id
+            ? { ...p, side: anchor.side, offset: anchor.offset }
+            : p,
+        ),
+      )
+      return [
+        { portId: port.id, side: anchor.side, offset: anchor.offset },
+      ]
+    }
+
+    applyGroupOrSingle(e.clientX, e.clientY)
 
     const onMove = (ev: PointerEvent) => {
       if (draggingPortId.current !== port.id) return
-      updatePortFromPointer(port.id, ev.clientX, ev.clientY)
+      applyGroupOrSingle(ev.clientX, ev.clientY)
     }
 
     const onUp = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      if (draggingPortId.current === port.id) {
-        endPortDrag(port.id, ev.clientX, ev.clientY)
+      if (draggingPortId.current !== port.id) return
+      const moves = applyGroupOrSingle(ev.clientX, ev.clientY)
+      draggingPortId.current = null
+      document.body.classList.remove('port-dragging')
+      if (!moves?.length) return
+      if (moves.length > 1 && d.onPortsDrag) {
+        d.onPortsDrag(moves)
+      } else {
+        const m = moves[0]!
+        d.onPortDrag?.(m.portId, m.side, m.offset)
       }
+      if (nodeId) updateNodeInternals(nodeId)
     }
 
     window.addEventListener('pointermove', onMove)
@@ -488,8 +533,8 @@ export function PartNode({ data, selected }: NodeProps) {
       style={regions.root}
     >
       <NodeResizer
-        minWidth={d.isBoundary ? 280 : 120}
-        minHeight={d.isBoundary ? 160 : 72}
+        minWidth={partMinSize(!!d.isBoundary).width}
+        minHeight={partMinSize(!!d.isBoundary).height}
         isVisible={!!selected && !moveMode && !d.editLocked}
         lineClassName="part-resize-line"
         handleClassName="part-resize-handle"

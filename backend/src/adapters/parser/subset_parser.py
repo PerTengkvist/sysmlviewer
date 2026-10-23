@@ -2171,7 +2171,7 @@ class SubsetSysmlParser:
             )
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:
-        """Copy ports, attributes, and nested parts from part definitions onto usages."""
+        """Copy ports, attributes, nested parts, and relations from defs onto usages."""
         defs_by_name: dict[str, SemanticElement] = {}
         for el in state.elements.values():
             if el.kind == ArtifactKind.PART and el.type_ref is None:
@@ -2248,6 +2248,61 @@ class SubsetSysmlParser:
             state.add_child(usage.id, usage_child_id)
             return nested
 
+        _INHERITABLE_RELATIONS = {
+            ArtifactKind.CONNECTION,
+            ArtifactKind.BINDING,
+            ArtifactKind.FLOW,
+            ArtifactKind.INTERFACE,
+        }
+
+        def _retarget_endpoint(
+            endpoint: str | None, type_def_id: str, usage_id: str
+        ) -> str | None:
+            if not endpoint:
+                return None
+            prefix = type_def_id + "::"
+            if not endpoint.startswith(prefix) and endpoint != type_def_id:
+                return None
+            if endpoint == type_def_id:
+                return usage_id
+            return usage_id + endpoint[len(type_def_id) :]
+
+        def copy_relation(
+            usage: SemanticElement,
+            type_def: SemanticElement,
+            child: SemanticElement,
+        ) -> None:
+            """Copy a connection/interface/binding/flow onto a usage with retargeted ends."""
+            if child.kind not in _INHERITABLE_RELATIONS:
+                return
+            # Interface defs (no ends) are not diagram edges — skip.
+            if not child.source_id or not child.target_id:
+                return
+            usage_child_id = f"{usage.id}::{child.name}"
+            if usage_child_id in state.elements:
+                return
+            new_source = _retarget_endpoint(child.source_id, type_def.id, usage.id)
+            new_target = _retarget_endpoint(child.target_id, type_def.id, usage.id)
+            # Skip when either end lies outside the general part, or the
+            # retargeted ports were not copied onto this usage (external /
+            # unresolved ends).
+            if new_source is None or new_target is None:
+                return
+            if new_source not in state.elements or new_target not in state.elements:
+                return
+            rel = SemanticElement(
+                id=usage_child_id,
+                kind=child.kind,
+                name=child.name,
+                parent_id=usage.id,
+                type_ref=child.type_ref,
+                source_id=new_source,
+                target_id=new_target,
+                file_id=usage.file_id or state.file_id,
+            )
+            state.elements[usage_child_id] = rel
+            state.add_child(usage.id, usage_child_id)
+
         def inherit_from_def(
             usage: SemanticElement,
             type_def: SemanticElement,
@@ -2261,7 +2316,8 @@ class SubsetSysmlParser:
                 return
             branch.append(type_def.id)
             try:
-                for child_id in type_def.children:
+                # Features first so nested ports exist before relation ends are rewritten.
+                for child_id in list(type_def.children):
                     child = state.elements.get(child_id)
                     if not child:
                         continue
@@ -2274,15 +2330,52 @@ class SubsetSysmlParser:
                         nested_def = resolve_type_def(child.type_ref)
                         if nested_def:
                             inherit_from_def(nested, nested_def, branch)
+                for child_id in list(type_def.children):
+                    child = state.elements.get(child_id)
+                    if not child:
+                        continue
+                    if child.kind in _INHERITABLE_RELATIONS:
+                        copy_relation(usage, type_def, child)
             finally:
                 branch.pop()
 
-        usages = [
-            el
-            for el in list(state.elements.values())
-            if el.kind == ArtifactKind.PART and el.type_ref
-        ]
-        for usage in usages:
-            type_def = resolve_type_def(usage.type_ref)
-            if type_def:
-                inherit_from_def(usage, type_def)
+        def recursive_seed_branch(
+            usage: SemanticElement, type_def: SemanticElement
+        ) -> list[str]:
+            """Seed branch when an ancestor is already typed as type_def (nested recursion)."""
+            parent_id = usage.parent_id
+            while parent_id:
+                parent = state.elements.get(parent_id)
+                if not parent:
+                    break
+                if parent.kind == ArtifactKind.PART:
+                    parent_def = resolve_type_def(parent.type_ref)
+                    if parent_def and parent_def.id == type_def.id:
+                        return [type_def.id]
+                parent_id = parent.parent_id
+            return []
+
+        # Fixpoint: specialized defs may gain copied relations in an earlier
+        # pass that later usages need. Re-expand a usage only when its type
+        # def has gained children since the last expansion.
+        expanded_child_count: dict[str, int] = {}
+        for _ in range(32):
+            before = len(state.elements)
+            usages = [
+                el
+                for el in list(state.elements.values())
+                if el.kind == ArtifactKind.PART and el.type_ref
+            ]
+            for usage in usages:
+                type_def = resolve_type_def(usage.type_ref)
+                if not type_def:
+                    continue
+                child_count = len(type_def.children)
+                if expanded_child_count.get(usage.id) == child_count:
+                    continue
+                inherit_from_def(
+                    usage, type_def, recursive_seed_branch(usage, type_def)
+                )
+                expanded_child_count[usage.id] = child_count
+            if len(state.elements) == before:
+                break

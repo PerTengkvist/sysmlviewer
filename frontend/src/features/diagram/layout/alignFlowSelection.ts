@@ -1,6 +1,7 @@
 import type { Node } from '@xyflow/react'
 import type { VisualizationNode } from '../../../api'
 import { absoluteNodeOrigin } from '../modes/structure/buildStructureGraph'
+import { nodeBoxSize } from '../resizeSync'
 import {
   alignSelection,
   type AlignableNode,
@@ -18,12 +19,13 @@ export function flowNodesToAlignable(nodes: Node[]): AlignableNode[] {
           return parent ? absoluteNodeOrigin(parent, byId) : undefined
         })()
       : undefined
+    const size = nodeBoxSize(n, { width: 100, height: 40 })
     return {
       id: n.id,
       x: n.position.x,
       y: n.position.y,
-      width: Number(n.style?.width) || 100,
-      height: Number(n.style?.height) || 40,
+      width: size.width,
+      height: size.height,
       parentAbs,
     }
   })

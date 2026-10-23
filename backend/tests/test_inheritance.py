@@ -103,3 +103,130 @@ package P {
     assert "P::Box::n::child" in result.elements
     assert "P::Box::n::child::p" not in result.elements
     assert "P::Box::n::child::child" not in result.elements
+
+
+def test_inherited_relations_follow_port_copies():
+    """Connections/interfaces declared on a general part must copy onto usages."""
+    content = """
+package Rack {
+  part def PDU {
+    port pwrIn;
+    port pwrOut;
+    interface loop connect pwrIn to pwrOut;
+  }
+  part def GenericRack {
+    part pduA : PDU;
+    part pduB : PDU;
+    connection bus connect pduA.pwrOut to pduB.pwrIn;
+  }
+  part def ComputeRack :> GenericRack;
+  part def Room {
+    part rack1 : ComputeRack;
+    part rack2 : ComputeRack;
+  }
+}
+"""
+    result = SubsetSysmlParser().parse(content, "rack.sysml")
+    els = result.elements
+
+    # Original on the general definition is unchanged.
+    bus = els["Rack::GenericRack::bus"]
+    assert bus.kind == ArtifactKind.CONNECTION
+    assert bus.source_id == "Rack::GenericRack::pduA::pwrOut"
+    assert bus.target_id == "Rack::GenericRack::pduB::pwrIn"
+
+    # Specialization inherits the connection with retargeted ends.
+    cr_bus = els["Rack::ComputeRack::bus"]
+    assert cr_bus.kind == ArtifactKind.CONNECTION
+    assert cr_bus.parent_id == "Rack::ComputeRack"
+    assert cr_bus.source_id == "Rack::ComputeRack::pduA::pwrOut"
+    assert cr_bus.target_id == "Rack::ComputeRack::pduB::pwrIn"
+
+    # Each usage of the specialization gets its own copy.
+    for rack in ("rack1", "rack2"):
+        copy = els[f"Rack::Room::{rack}::bus"]
+        assert copy.kind == ArtifactKind.CONNECTION
+        assert copy.parent_id == f"Rack::Room::{rack}"
+        assert copy.source_id == f"Rack::Room::{rack}::pduA::pwrOut"
+        assert copy.target_id == f"Rack::Room::{rack}::pduB::pwrIn"
+
+        # Nested interface declared on PDU follows each nested PDU usage.
+        loop = els[f"Rack::Room::{rack}::pduA::loop"]
+        assert loop.kind == ArtifactKind.INTERFACE
+        assert loop.parent_id == f"Rack::Room::{rack}::pduA"
+        assert loop.source_id == f"Rack::Room::{rack}::pduA::pwrIn"
+        assert loop.target_id == f"Rack::Room::{rack}::pduA::pwrOut"
+
+
+def test_external_endpoint_relation_is_not_copied():
+    """A relation with an end outside the type def is not inherited."""
+    content = """
+package P {
+  part def Other { port q; }
+  part def Box {
+    port p;
+    part other : Other;
+  }
+  part def Host {
+    part peer : Other;
+    part box : Box;
+    // Declared on Host, ends span box + peer — not a child of Box to copy.
+  }
+  part def Typed {
+    port p;
+    // Connects typed port to an external name that is not under Typed.
+    connection cross connect p to peer.q;
+  }
+  part usage : Typed;
+}
+"""
+    result = SubsetSysmlParser().parse(content, "ext.sysml")
+    # cross is a child of Typed but target is outside Typed → not copied.
+    assert "P::Typed::cross" in result.elements
+    assert "P::usage::cross" not in result.elements
+
+
+def test_inherited_relations_across_files_regardless_of_order():
+    """Fixpoint inheritance copies relations even when the def file is last."""
+    from domain.models import SysmlFile
+
+    usages = SysmlFile(
+        id="f-usages",
+        name="usages.sysml",
+        content=(
+            "private import Types::*;\n"
+            "package Main {\n"
+            "  part rack : GenericRack;\n"
+            "}\n"
+        ),
+        path="usages.sysml",
+    )
+    types = SysmlFile(
+        id="f-types",
+        name="types.sysml",
+        content=(
+            "package Types {\n"
+            "  part def PDU {\n"
+            "    port pwrIn;\n"
+            "    port pwrOut;\n"
+            "    interface loop connect pwrIn to pwrOut;\n"
+            "  }\n"
+            "  part def GenericRack {\n"
+            "    part pduA : PDU;\n"
+            "    part pduB : PDU;\n"
+            "    connection bus connect pduA.pwrOut to pduB.pwrIn;\n"
+            "  }\n"
+            "}\n"
+        ),
+        path="types.sysml",
+    )
+    # Usage file first — inheritance must still expand after both are merged.
+    result = SubsetSysmlParser().parse_project([usages, types])
+    bus = result.elements["Main::rack::bus"]
+    assert bus.kind == ArtifactKind.CONNECTION
+    assert bus.source_id == "Main::rack::pduA::pwrOut"
+    assert bus.target_id == "Main::rack::pduB::pwrIn"
+    loop = result.elements["Main::rack::pduA::loop"]
+    assert loop.kind == ArtifactKind.INTERFACE
+    assert loop.source_id == "Main::rack::pduA::pwrIn"
+    assert loop.target_id == "Main::rack::pduA::pwrOut"

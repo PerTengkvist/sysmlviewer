@@ -65,22 +65,23 @@ import {
 import { bulkOp, type BulkCommand } from './bulkOps'
 import { isEditLocked, lockTargets } from './editLock'
 import {
-  simplifyOrtho,
   translateFlowBounds,
   translatePoints,
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
+import { computeUpdateJumpers } from './layout/updateJumpers'
 import {
-  updateJumpersFromRoutes,
-  type RoutedPoly,
-} from './layout/connectionSeparation'
+  applyPortMovesToNodes,
+  type PortMove,
+} from './layout/portGroupMove'
 import { IconToolbarButton } from './IconToolbarButton'
 import { TOOLBAR_ICONS } from './iconRef'
 import { PortMarqueeLayer } from './PortMarqueeLayer'
 import { VizHistory } from './vizHistory'
 import { flipPortList } from './layout/flipPortPlacement'
 import { distributePortPlacements } from './layout/distributePorts'
+import { distributeFlowSelection } from './layout/distributeNodes'
 import { allDiagramIds, handleCanvasShortcut } from './canvasShortcuts'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
 import {
@@ -120,6 +121,11 @@ import { asAngularForLayout } from './layout/elkStructureLayout'
 import { planStructureRoutes } from './layout/layoutRouter'
 import { flowViewportBounds } from './layout/layoutNormalize'
 import { preserveExistingGeometry } from './preserveDiagramGeometry'
+import {
+  applyDimensionChangesToStyle,
+  nodeBoxSize,
+  nodeExtentSize,
+} from './resizeSync'
 import { applyRelationTodos, type RelationTodo } from './applyRelationTodos'
 import {
   diagramElementToPngBlob,
@@ -359,23 +365,6 @@ function viewHasSavedConnectionLayout(
   edges: Record<string, VisualizationEdge>,
 ): boolean {
   return Object.values(edges).some((e) => (e.waypoints?.length ?? 0) > 0)
-}
-
-function readPx(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string') {
-    const n = parseFloat(value)
-    return Number.isFinite(n) ? n : undefined
-  }
-  return undefined
-}
-
-function nodeExtentSize(n: Node): { width?: number; height?: number } {
-  const width =
-    readPx(n.style?.width) ?? readPx(n.width) ?? readPx(n.measured?.width)
-  const height =
-    readPx(n.style?.height) ?? readPx(n.height) ?? readPx(n.measured?.height)
-  return { width, height }
 }
 
 function DiagramEditToolbar({
@@ -633,6 +622,7 @@ export function DiagramCanvas({
   const handlePortMovedRef = useRef<
     (portId: string, side: PortSide, offset: number) => void
   >(() => {})
+  const handlePortsMovedRef = useRef<(moves: PortMove[]) => void>(() => {})
   const handlePortSelectRef = useRef<(portId: string) => void>(() => {})
   const handleRelationEndDragRef = useRef<
     (
@@ -929,6 +919,8 @@ export function DiagramCanvas({
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
             handlePortMovedRef.current(portId, side, offset),
+          onPortsDrag: (moves: PortMove[]) =>
+            handlePortsMovedRef.current(moves),
           onPortSelect: (portId: string) => handlePortSelectRef.current(portId),
           onRelationEndDrag: (
             artifactId: string,
@@ -1163,6 +1155,8 @@ export function DiagramCanvas({
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
             handlePortMovedRef.current(portId, side, offset),
+          onPortsDrag: (moves: PortMove[]) =>
+            handlePortsMovedRef.current(moves),
           onPortSelect: (portId: string) => handlePortSelectRef.current(portId),
           onRelationEndDrag: (
             artifactId: string,
@@ -1218,7 +1212,8 @@ export function DiagramCanvas({
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
       setNodes((nds) => {
-        const next = applyNodeChanges(changes, nds)
+        const applied = applyNodeChanges(changes, nds)
+        const next = applyDimensionChangesToStyle(applied, changes)
         const boundaryResized = changes.some((c) => {
           if (c.type !== 'dimensions' || !c.dimensions) return false
           const node = next.find((n) => n.id === c.id)
@@ -1678,16 +1673,10 @@ export function DiagramCanvas({
             side: p.side,
             offset: p.offset,
           })),
-          width:
-            Number(node.style?.width) ||
-            node.width ||
-            viewRef.current?.visualization.nodes[node.id]?.width ||
-            180,
-          height:
-            Number(node.style?.height) ||
-            node.height ||
-            viewRef.current?.visualization.nodes[node.id]?.height ||
-            120,
+          ...nodeBoxSize(node, {
+            width: viewRef.current?.visualization.nodes[node.id]?.width,
+            height: viewRef.current?.visualization.nodes[node.id]?.height,
+          }),
           isBoundary: !!data.isBoundary,
         })
       }
@@ -1739,25 +1728,7 @@ export function DiagramCanvas({
     })
     if (!routeEdges.length) return
     pushVizHistory()
-    const polys: RoutedPoly[] = []
-    for (const edge of routeEdges) {
-      const data = (edge.data || {}) as SysmlEdgeData
-      const wps = data.waypoints || []
-      if (wps.length < 2) continue
-      const points = simplifyOrtho(wps.map((w) => ({ x: w.x, y: w.y })))
-      if (points.length < 2) continue
-      const src =
-        (edge.sourceHandle || '').replace(/^target:/, '') || edge.source
-      const tgt =
-        (edge.targetHandle || '').replace(/^target:/, '') || edge.target
-      polys.push({
-        id: edge.id,
-        points,
-        sourcePort: src,
-        targetPort: tgt,
-      })
-    }
-    const jumpsById = updateJumpersFromRoutes(polys)
+    const jumpsById = computeUpdateJumpers(nodesRef.current, routeEdges)
     setEdges((current) =>
       current.map((edge) => {
         const jumps = jumpsById.get(edge.id)
@@ -1780,46 +1751,53 @@ export function DiagramCanvas({
 
   const handlePortMoved = useCallback(
     (portId: string, side: PortSide, offset: number) => {
-      let nextNodes: Node[] = []
-      setNodes((current) => {
-        nextNodes = current.map((node) => {
-          const data = node.data as PartNodeData | undefined
-          if (!data?.ports?.some((p) => p.id === portId)) return node
-          return {
-            ...node,
-            data: {
-              ...data,
-              ports: data.ports.map((p) =>
-                p.id === portId ? { ...p, side, offset } : p,
-              ),
-            },
-          }
-        })
-        return nextNodes
-      })
-      const connected = edgesRef.current.filter((edge) => {
-        const src = edge.sourceHandle || ''
-        const tgt = (edge.targetHandle || '').replace(/^target:/, '')
-        return src === portId || tgt === portId
-      })
-      const angular = connected.filter((edge) => {
-        const data = (edge.data || {}) as SysmlEdgeData
-        return (data.routing || 'angular') === 'angular'
-      })
-      if (angular.length) {
-        // Wait for React Flow to re-measure moved handles before rerouting.
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const nodesForRoute =
-              nodesRef.current.length > 0 ? nodesRef.current : nextNodes
-            applyRedrawConnectionsRef.current(nodesForRoute, angular)
-          })
-        })
-      }
-      onPortMovedRef.current(portId, side, offset)
+      handlePortsMovedRef.current([{ portId, side, offset }])
     },
     [],
   )
+
+  const handlePortsMoved = useCallback((moves: PortMove[]) => {
+    if (!moves.length) return
+    let nextNodes: Node[] = []
+    setNodes((current) => {
+      nextNodes = applyPortMovesToNodes(current, moves)
+      return nextNodes
+    })
+    const movedIds = new Set(moves.map((m) => m.portId))
+    const connected = edgesRef.current.filter((edge) => {
+      const src = edge.sourceHandle || ''
+      const tgt = (edge.targetHandle || '').replace(/^target:/, '')
+      return movedIds.has(src) || movedIds.has(tgt)
+    })
+    const angular = connected.filter((edge) => {
+      const data = (edge.data || {}) as SysmlEdgeData
+      return (data.routing || 'angular') === 'angular'
+    })
+    if (angular.length) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const nodesForRoute =
+            nodesRef.current.length > 0 ? nodesRef.current : nextNodes
+          applyRedrawConnectionsRef.current(nodesForRoute, angular)
+        })
+      })
+    }
+    if (moves.length === 1) {
+      const m = moves[0]!
+      onPortMovedRef.current(m.portId, m.side, m.offset)
+      return
+    }
+    // Batch persist via the multi-node visualization patch.
+    const patch: Record<string, Partial<VisualizationNode>> = {}
+    for (const m of moves) {
+      patch[m.portId] = {
+        artifactId: m.portId,
+        side: m.side,
+        offset: m.offset,
+      }
+    }
+    onNodesMovedRef.current(patch)
+  }, [])
 
   const handleRelationEndDrag = useCallback(
     (
@@ -2024,6 +2002,7 @@ export function DiagramCanvas({
 
   applyRedrawConnectionsRef.current = applyRedrawConnections
   handlePortMovedRef.current = handlePortMoved
+  handlePortsMovedRef.current = handlePortsMoved
   handleRelationEndDragRef.current = handleRelationEndDrag
   handleAnchorDragRef.current = handleAnchorDrag
   handleAddAnchorRef.current = handleAddAnchor
@@ -2110,8 +2089,14 @@ export function DiagramCanvas({
             height: patch.height ?? node.height,
             style: {
               ...node.style,
-              width: patch.width ?? readPx(node.style?.width) ?? node.width,
-              height: patch.height ?? readPx(node.style?.height) ?? node.height,
+              width:
+                patch.width ??
+                nodeExtentSize(node).width ??
+                node.width,
+              height:
+                patch.height ??
+                nodeExtentSize(node).height ??
+                node.height,
             },
             data: data?.ports
               ? {
@@ -2520,17 +2505,57 @@ export function DiagramCanvas({
                   }
                   onClick={() => handleFlipPorts('vertical')}
                 />
-                {selectedPortIds.length >= 2 ? (
+                {selectedPortIds.length >= 2 || selectedIds.length >= 3 ? (
                   <>
                     <IconToolbarButton
                       icon={TOOLBAR_ICONS.distributeH}
-                      title="Distribute selected ports horizontally (even spacing between extremes)"
-                      onClick={() => handleDistributePorts('horizontal')}
+                      title={
+                        selectedPortIds.length >= 2
+                          ? 'Distribute selected ports horizontally (even spacing between extremes)'
+                          : 'Distribute selected parts horizontally (even center spacing)'
+                      }
+                      onClick={() => {
+                        if (selectedPortIds.length >= 2) {
+                          handleDistributePorts('horizontal')
+                          return
+                        }
+                        const { patch } = distributeFlowSelection(
+                          nodes,
+                          selectedIds,
+                          'horizontal',
+                        )
+                        if (!Object.keys(patch).length) return
+                        pushVizHistory()
+                        setNodes((current) =>
+                          applyAlignPatchToFlowNodes(current, patch),
+                        )
+                        onNodesMoved(patch)
+                      }}
                     />
                     <IconToolbarButton
                       icon={TOOLBAR_ICONS.distributeV}
-                      title="Distribute selected ports vertically (even spacing between extremes)"
-                      onClick={() => handleDistributePorts('vertical')}
+                      title={
+                        selectedPortIds.length >= 2
+                          ? 'Distribute selected ports vertically (even spacing between extremes)'
+                          : 'Distribute selected parts vertically (even center spacing)'
+                      }
+                      onClick={() => {
+                        if (selectedPortIds.length >= 2) {
+                          handleDistributePorts('vertical')
+                          return
+                        }
+                        const { patch } = distributeFlowSelection(
+                          nodes,
+                          selectedIds,
+                          'vertical',
+                        )
+                        if (!Object.keys(patch).length) return
+                        pushVizHistory()
+                        setNodes((current) =>
+                          applyAlignPatchToFlowNodes(current, patch),
+                        )
+                        onNodesMoved(patch)
+                      }}
                     />
                   </>
                 ) : null}
