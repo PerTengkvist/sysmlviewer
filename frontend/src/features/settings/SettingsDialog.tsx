@@ -385,6 +385,15 @@ export function SettingsDialog({
                 title="Min gap between unrelated connections. Related nets (shared port) may overlap."
               />
             </label>
+            <label className="settings-row">
+              <span>Show jumpers</span>
+              <input
+                type="checkbox"
+                checked={settings.showJumpers}
+                onChange={(e) => patch({ showJumpers: e.target.checked })}
+                title="When off, crossing jumpers are hidden and not computed on redraw."
+              />
+            </label>
           </fieldset>
           <fieldset className="settings-fieldset">
             <legend>Icon libraries</legend>

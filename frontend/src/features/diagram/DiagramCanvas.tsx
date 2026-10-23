@@ -65,11 +65,23 @@ import {
 import { bulkOp, type BulkCommand } from './bulkOps'
 import { isEditLocked, lockTargets } from './editLock'
 import {
+  simplifyOrtho,
   translateFlowBounds,
   translatePoints,
   type FlowBounds,
   type Pt,
 } from './edgeRouting'
+import {
+  updateJumpersFromRoutes,
+  type RoutedPoly,
+} from './layout/connectionSeparation'
+import { IconToolbarButton } from './IconToolbarButton'
+import { TOOLBAR_ICONS } from './iconRef'
+import { PortMarqueeLayer } from './PortMarqueeLayer'
+import { VizHistory } from './vizHistory'
+import { flipPortList } from './layout/flipPortPlacement'
+import { distributePortPlacements } from './layout/distributePorts'
+import { allDiagramIds, handleCanvasShortcut } from './canvasShortcuts'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
 import {
   absoluteNodeOrigin,
@@ -370,11 +382,13 @@ function DiagramEditToolbar({
   view,
   selectedIds,
   onNodesMoved,
+  beforeMutation,
   children,
 }: {
   view: ViewPayload
   selectedIds: string[]
   onNodesMoved: Props['onNodesMoved']
+  beforeMutation?: () => void
   children?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
@@ -382,6 +396,7 @@ function DiagramEditToolbar({
   const applyLock = (locked: boolean, ids: string[]) => {
     const patch = lockTargets(ids, viz.nodes, viz.edges, locked)
     if (!Object.keys(patch.nodes).length && !Object.keys(patch.edges).length) return
+    beforeMutation?.()
     onNodesMoved(
       patch.nodes,
       Object.keys(patch.edges).length ? patch.edges : undefined,
@@ -395,6 +410,7 @@ function DiagramEditToolbar({
     setOpen(false)
     const patch = bulkOp(command, selectedIds, viz.nodes, viz.edges)
     if (!Object.keys(patch.nodes).length && !Object.keys(patch.edges).length) return
+    beforeMutation?.()
     onNodesMoved(
       patch.nodes,
       Object.keys(patch.edges).length ? patch.edges : undefined,
@@ -402,20 +418,16 @@ function DiagramEditToolbar({
   }
   return (
     <>
-      <button
-        type="button"
+      <IconToolbarButton
+        icon={TOOLBAR_ICONS.lockAll}
         title="Lock every artifact and connection in this diagram"
         onClick={() => applyLock(true, allIds)}
-      >
-        Lock all
-      </button>
-      <button
-        type="button"
+      />
+      <IconToolbarButton
+        icon={TOOLBAR_ICONS.unlockAll}
         title="Unlock every artifact and connection in this diagram"
         onClick={() => applyLock(false, allIds)}
-      >
-        Unlock all
-      </button>
+      />
       <div className="bulk-ops">
         <button
           type="button"
@@ -470,6 +482,8 @@ type Props = {
   selectedConnectionColor?: string
   selectedConnectionLinewidthFactor?: number
   connectionSeparation?: number
+  /** When false, hide and skip computing crossing jumpers. */
+  showJumpers?: boolean
   selectedIds?: string[]
   relationTodos?: RelationTodo[]
   pendingChangeColor?: string
@@ -527,6 +541,7 @@ export function DiagramCanvas({
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidthFactor = 3,
   connectionSeparation = EDGE_LABEL_TEXT_HEIGHT_PX,
+  showJumpers = true,
   selectedIds = [],
   relationTodos = [],
   pendingChangeColor = '#dc2626',
@@ -551,6 +566,8 @@ export function DiagramCanvas({
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
   const [portMoveMode, setPortMoveMode] = useState(false)
+  const [shiftHeld, setShiftHeld] = useState(false)
+  const suppressPortMarqueePaneClickRef = useRef(false)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
   const [reqTableMode, setReqTableMode] = useState<'flat' | 'hierarchical'>(
     'hierarchical',
@@ -561,6 +578,8 @@ export function DiagramCanvas({
   /** Temporarily force light styling while exporting an image to the clipboard. */
   const [captureLight, setCaptureLight] = useState(false)
   const [copyState, setCopyState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle')
+  const [historyTick, setHistoryTick] = useState(0)
+  const [selectedPortIds, setSelectedPortIds] = useState<string[]>([])
   const [autoLayoutOpen, setAutoLayoutOpen] = useState(false)
   const [autoLayoutBusy, setAutoLayoutBusy] = useState(false)
   const [autoLayoutDirectives, setAutoLayoutDirectives] =
@@ -575,11 +594,14 @@ export function DiagramCanvas({
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
   const nodesRef = useRef<Node[]>([])
+  const vizHistoryRef = useRef(new VizHistory())
+  const showJumpersRef = useRef(showJumpers)
   /** Viewport per view, kept in memory for the session only. */
   const viewportCache = useRef(new Map<string, { x: number; y: number; zoom: number }>())
   viewRef.current = view
   edgesRef.current = edges
   nodesRef.current = nodes
+  showJumpersRef.current = showJumpers
   const onOpenViewRef = useRef(onOpenView)
   const onPortMovedRef = useRef(onPortMoved)
   const onRelationEndMovedRef = useRef(onRelationEndMoved)
@@ -611,6 +633,7 @@ export function DiagramCanvas({
   const handlePortMovedRef = useRef<
     (portId: string, side: PortSide, offset: number) => void
   >(() => {})
+  const handlePortSelectRef = useRef<(portId: string) => void>(() => {})
   const handleRelationEndDragRef = useRef<
     (
       artifactId: string,
@@ -664,14 +687,21 @@ export function DiagramCanvas({
   useEffect(() => {
     const isOption = (e: KeyboardEvent) =>
       e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight'
+    const isShift = (e: KeyboardEvent) =>
+      e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight'
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (isOption(e)) setPortMoveMode(true)
+      if (isShift(e)) setShiftHeld(true)
     }
     const onKeyUp = (e: KeyboardEvent) => {
       if (isOption(e)) setPortMoveMode(false)
+      if (isShift(e)) setShiftHeld(false)
     }
-    const clear = () => setPortMoveMode(false)
+    const clear = () => {
+      setPortMoveMode(false)
+      setShiftHeld(false)
+    }
 
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
@@ -895,9 +925,11 @@ export function DiagramCanvas({
           ...(node.data as PartNodeData),
           editLocked: isEditLocked(view.visualization.nodes[node.id]),
           portMoveMode,
+          selectedPortIds,
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
             handlePortMovedRef.current(portId, side, offset),
+          onPortSelect: (portId: string) => handlePortSelectRef.current(portId),
           onRelationEndDrag: (
             artifactId: string,
             end: 'source' | 'target',
@@ -1127,9 +1159,11 @@ export function DiagramCanvas({
           ...(node.data as PartNodeData),
           editLocked: isEditLocked(v.visualization.nodes[node.id]),
           portMoveMode,
+          selectedPortIds,
           onOpenView: (id: string) => onOpenViewRef.current(id),
           onPortDrag: (portId: string, side: PortSide, offset: number) =>
             handlePortMovedRef.current(portId, side, offset),
+          onPortSelect: (portId: string) => handlePortSelectRef.current(portId),
           onRelationEndDrag: (
             artifactId: string,
             end: 'source' | 'target',
@@ -1179,7 +1213,7 @@ export function DiagramCanvas({
         },
       })),
     )
-  }, [portMoveMode, syncRelationGeometry, lockSig])
+  }, [portMoveMode, syncRelationGeometry, lockSig, selectedPortIds])
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -1431,6 +1465,7 @@ export function DiagramCanvas({
         existingRoutes: existing,
         portLayout: viewRef.current?.visualization.nodes,
         separation: connectionSeparation,
+        computeJumpers: showJumpersRef.current,
         viewBounds,
       }).then((planned) => {
         const outside = planned.skipped.filter(
@@ -1498,8 +1533,250 @@ export function DiagramCanvas({
         onNodesMovedRef.current({}, edgePatch)
       })
     },
-    [nodes, edges, connectionSeparation, currentViewBounds],
+    [nodes, edges, connectionSeparation, currentViewBounds, showJumpers],
   )
+
+  const pushVizHistory = useCallback(() => {
+    const viz = viewRef.current?.visualization
+    if (!viz) return
+    vizHistoryRef.current.push({ nodes: viz.nodes, edges: viz.edges })
+    setHistoryTick((n) => n + 1)
+  }, [])
+
+  const restoreVizSnapshot = useCallback(
+    (snap: {
+      nodes: Record<string, VisualizationNode>
+      edges: Record<string, VisualizationEdge>
+    }) => {
+      const nodePatch: Record<string, Partial<VisualizationNode>> = {}
+      for (const [id, node] of Object.entries(snap.nodes)) {
+        nodePatch[id] = { ...node }
+      }
+      const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
+      for (const [id, edge] of Object.entries(snap.edges)) {
+        edgePatch[id] = { ...edge }
+      }
+      onNodesMovedRef.current(nodePatch, edgePatch)
+      setLayoutEpoch((n) => n + 1)
+      setHistoryTick((n) => n + 1)
+    },
+    [],
+  )
+
+  const handleUndo = useCallback(() => {
+    const viz = viewRef.current?.visualization
+    if (!viz) return
+    const prev = vizHistoryRef.current.undo({
+      nodes: viz.nodes,
+      edges: viz.edges,
+    })
+    if (prev) restoreVizSnapshot(prev)
+  }, [restoreVizSnapshot])
+
+  const handleRedo = useCallback(() => {
+    const viz = viewRef.current?.visualization
+    if (!viz) return
+    const next = vizHistoryRef.current.redo({
+      nodes: viz.nodes,
+      edges: viz.edges,
+    })
+    if (next) restoreVizSnapshot(next)
+  }, [restoreVizSnapshot])
+
+  const handleFlipPorts = useCallback(
+    (axis: 'horizontal' | 'vertical') => {
+      const semantic = viewRef.current?.semantic
+      if (!semantic) return
+      const partIds = new Set(
+        selectedIdsRef.current.filter((id) => semantic[id]?.kind === 'part'),
+      )
+      if (!partIds.size) return
+      pushVizHistory()
+      const patch: Record<string, Partial<VisualizationNode>> = {}
+      setNodes((current) =>
+        current.map((node) => {
+          if (!partIds.has(node.id)) return node
+          const data = node.data as PartNodeData
+          if (!data.ports?.length) return node
+          const partH =
+            Number(node.style?.height) ||
+            node.height ||
+            viewRef.current?.visualization.nodes[node.id]?.height ||
+            120
+          const flipped = flipPortList(data.ports, axis, partH, {
+            isBoundary: !!data.isBoundary,
+          })
+          for (const p of flipped) {
+            patch[p.id] = {
+              artifactId: p.id,
+              side: p.side,
+              offset: p.offset,
+            }
+          }
+          return {
+            ...node,
+            data: {
+              ...data,
+              ports: data.ports.map((p) => {
+                const next = flipped.find((f) => f.id === p.id)
+                return next
+                  ? { ...p, side: next.side, offset: next.offset }
+                  : p
+              }),
+            },
+          }
+        }),
+      )
+      if (!Object.keys(patch).length) return
+      onNodesMovedRef.current(patch)
+    },
+    [pushVizHistory],
+  )
+
+  const handlePortSelect = useCallback((portId: string) => {
+    setSelectedPortIds((prev) =>
+      prev.includes(portId)
+        ? prev.filter((id) => id !== portId)
+        : [...prev, portId],
+    )
+  }, [])
+  handlePortSelectRef.current = handlePortSelect
+
+  const handlePortsBoxed = useCallback((portIds: string[]) => {
+    setSelectedPortIds((prev) => {
+      const next = new Set(prev)
+      for (const id of portIds) next.add(id)
+      return [...next]
+    })
+  }, [])
+
+  /** Listeners always on in structure; Option+Shift checked on the pointer event. */
+  const portMarqueeEnabled = !printMode && isStructure
+
+  const handleDistributePorts = useCallback(
+    (axis: 'horizontal' | 'vertical') => {
+      if (selectedPortIds.length < 2) return
+      const wanted = new Set(selectedPortIds)
+      // Group selected ports by owning part node.
+      type Group = {
+        nodeId: string
+        ports: { id: string; side: PortSide; offset: number }[]
+        width: number
+        height: number
+        isBoundary: boolean
+      }
+      const groups = new Map<string, Group>()
+      for (const node of nodesRef.current) {
+        const data = node.data as PartNodeData | undefined
+        if (!data?.ports?.length) continue
+        const picked = data.ports.filter((p) => wanted.has(p.id))
+        if (!picked.length) continue
+        groups.set(node.id, {
+          nodeId: node.id,
+          ports: picked.map((p) => ({
+            id: p.id,
+            side: p.side,
+            offset: p.offset,
+          })),
+          width:
+            Number(node.style?.width) ||
+            node.width ||
+            viewRef.current?.visualization.nodes[node.id]?.width ||
+            180,
+          height:
+            Number(node.style?.height) ||
+            node.height ||
+            viewRef.current?.visualization.nodes[node.id]?.height ||
+            120,
+          isBoundary: !!data.isBoundary,
+        })
+      }
+      if (!groups.size) return
+      pushVizHistory()
+      const patch: Record<string, Partial<VisualizationNode>> = {}
+      setNodes((current) =>
+        current.map((node) => {
+          const group = groups.get(node.id)
+          if (!group) return node
+          const data = node.data as PartNodeData
+          const distributed = distributePortPlacements(group.ports, axis, {
+            width: group.width,
+            height: group.height,
+            isBoundary: group.isBoundary,
+          })
+          if (!Object.keys(distributed).length) return node
+          for (const [id, next] of Object.entries(distributed)) {
+            patch[id] = {
+              artifactId: id,
+              side: next.side,
+              offset: next.offset,
+            }
+          }
+          return {
+            ...node,
+            data: {
+              ...data,
+              ports: data.ports.map((p) => {
+                const next = distributed[p.id]
+                return next
+                  ? { ...p, side: next.side, offset: next.offset }
+                  : p
+              }),
+            },
+          }
+        }),
+      )
+      if (Object.keys(patch).length) onNodesMovedRef.current(patch)
+    },
+    [selectedPortIds, pushVizHistory],
+  )
+
+  const handleUpdateJumpers = useCallback(() => {
+    if (!showJumpersRef.current) return
+    const routeEdges = edgesRef.current.filter((edge) => {
+      const data = (edge.data || {}) as SysmlEdgeData
+      return data.routing === 'angular' || !data.routing
+    })
+    if (!routeEdges.length) return
+    pushVizHistory()
+    const polys: RoutedPoly[] = []
+    for (const edge of routeEdges) {
+      const data = (edge.data || {}) as SysmlEdgeData
+      const wps = data.waypoints || []
+      if (wps.length < 2) continue
+      const points = simplifyOrtho(wps.map((w) => ({ x: w.x, y: w.y })))
+      if (points.length < 2) continue
+      const src =
+        (edge.sourceHandle || '').replace(/^target:/, '') || edge.source
+      const tgt =
+        (edge.targetHandle || '').replace(/^target:/, '') || edge.target
+      polys.push({
+        id: edge.id,
+        points,
+        sourcePort: src,
+        targetPort: tgt,
+      })
+    }
+    const jumpsById = updateJumpersFromRoutes(polys)
+    setEdges((current) =>
+      current.map((edge) => {
+        const jumps = jumpsById.get(edge.id)
+        if (!jumps) {
+          const data = (edge.data || {}) as SysmlEdgeData
+          if (!data.jumps?.length) return edge
+          return {
+            ...edge,
+            data: { ...data, jumps: [] } satisfies SysmlEdgeData,
+          }
+        }
+        const data = (edge.data || {}) as SysmlEdgeData
+        return {
+          ...edge,
+          data: { ...data, jumps } satisfies SysmlEdgeData,
+        }
+      }),
+    )
+  }, [pushVizHistory])
 
   const handlePortMoved = useCallback(
     (portId: string, side: PortSide, offset: number) => {
@@ -1794,6 +2071,7 @@ export function DiagramCanvas({
       edges: structureEdges,
       existingRoutes: existing,
       separation: connectionSeparation,
+      computeJumpers: showJumpersRef.current,
       directives,
     })
     if (!Object.keys(planned.nodes).length && !planned.routes.length) return
@@ -1894,7 +2172,47 @@ export function DiagramCanvas({
     } finally {
       setAutoLayoutBusy(false)
     }
-  }, [nodes, edges, connectionSeparation])
+  }, [nodes, edges, connectionSeparation, showJumpers])
+
+  // Hide jumpers immediately when the setting turns off (keep waypoints).
+  useEffect(() => {
+    if (showJumpers) return
+    setEdges((current) =>
+      current.map((edge) => {
+        const data = (edge.data || {}) as SysmlEdgeData
+        if (!data.jumps?.length) return edge
+        return {
+          ...edge,
+          data: { ...data, jumps: [] } satisfies SysmlEdgeData,
+        }
+      }),
+    )
+  }, [showJumpers])
+
+  // Clear undo stack and port multi-select when switching views.
+  useEffect(() => {
+    const key = view?.view.id ?? null
+    if (viewKeyRef.current && key && viewKeyRef.current !== key) {
+      vizHistoryRef.current.clear()
+      setHistoryTick((n) => n + 1)
+      setSelectedPortIds([])
+    }
+  }, [view?.view.id])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      handleCanvasShortcut(e, {
+        undo: handleUndo,
+        redo: handleRedo,
+        selectAll: () => {
+          const ids = allDiagramIds(nodesRef.current, edgesRef.current)
+          onSelectionFromFlowRef.current?.(ids)
+        },
+      })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [handleUndo, handleRedo])
 
   const selectedDirectAlign = useMemo(() => {
     if (selectedIds.length !== 1) return null
@@ -2044,6 +2362,7 @@ export function DiagramCanvas({
                 view={view}
                 selectedIds={selectedIds}
                 onNodesMoved={onNodesMoved}
+                beforeMutation={pushVizHistory}
               />
               <button
                 type="button"
@@ -2126,52 +2445,106 @@ export function DiagramCanvas({
                 Back
               </button>
             ) : null}
+            <IconToolbarButton
+              icon={TOOLBAR_ICONS.undo}
+              title="Undo (Ctrl/Cmd+Z)"
+              disabled={historyTick >= 0 && !vizHistoryRef.current.canUndo()}
+              onClick={handleUndo}
+            />
+            <IconToolbarButton
+              icon={TOOLBAR_ICONS.redo}
+              title="Redo (Ctrl/Cmd+Y)"
+              disabled={historyTick >= 0 && !vizHistoryRef.current.canRedo()}
+              onClick={handleRedo}
+            />
             <DiagramEditToolbar
               view={view}
               selectedIds={selectedIds}
               onNodesMoved={onNodesMoved}
+              beforeMutation={pushVizHistory}
             />
-            <button
-              type="button"
-              onClick={onCopyImage}
-              disabled={copyState === 'busy'}
+            <IconToolbarButton
+              icon={TOOLBAR_ICONS.copy}
               title="Copy diagram image to clipboard (always light theme, white background)"
-            >
-              {copyState === 'busy'
-                ? 'Copying…'
-                : copyState === 'ok'
-                  ? 'Copied'
-                  : copyState === 'err'
-                    ? 'Copy failed'
-                    : 'Copy'}
-            </button>
+              disabled={copyState === 'busy'}
+              statusLabel={
+                copyState === 'busy'
+                  ? 'Copying…'
+                  : copyState === 'ok'
+                    ? 'Copied'
+                    : copyState === 'err'
+                      ? 'Copy failed'
+                      : undefined
+              }
+              onClick={onCopyImage}
+            />
             {isStructure ? (
               <>
-                <button
-                  type="button"
+                <IconToolbarButton
+                  icon={TOOLBAR_ICONS.layoutRules}
+                  title="Layout Rules"
                   onClick={() => setLayoutWizardOpen(true)}
-                  title="Set relative placement rules"
-                >
-                  LayoutWizard
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAutoLayoutOpen(true)}
+                />
+                <IconToolbarButton
+                  icon={TOOLBAR_ICONS.autoLayout}
                   title="Open AutoLayout directives, then place parts/ports and route connections"
-                >
-                  AutoLayout
-                </button>
+                  onClick={() => setAutoLayoutOpen(true)}
+                />
                 <button
                   type="button"
-                  onClick={() => applyRedrawConnections()}
+                  onClick={() => {
+                    pushVizHistory()
+                    applyRedrawConnections()
+                  }}
                   title="Reroute connections around parts using current port placement (does not move parts or ports)"
                 >
                   Redraw: Connections
                 </button>
+                <IconToolbarButton
+                  icon={TOOLBAR_ICONS.flipH}
+                  title="Flip port placement horizontal"
+                  disabled={
+                    !selectedIds.some(
+                      (id) => view.semantic[id]?.kind === 'part',
+                    )
+                  }
+                  onClick={() => handleFlipPorts('horizontal')}
+                />
+                <IconToolbarButton
+                  icon={TOOLBAR_ICONS.flipV}
+                  title="Flip port placement vertical"
+                  disabled={
+                    !selectedIds.some(
+                      (id) => view.semantic[id]?.kind === 'part',
+                    )
+                  }
+                  onClick={() => handleFlipPorts('vertical')}
+                />
+                {selectedPortIds.length >= 2 ? (
+                  <>
+                    <IconToolbarButton
+                      icon={TOOLBAR_ICONS.distributeH}
+                      title="Distribute selected ports horizontally (even spacing between extremes)"
+                      onClick={() => handleDistributePorts('horizontal')}
+                    />
+                    <IconToolbarButton
+                      icon={TOOLBAR_ICONS.distributeV}
+                      title="Distribute selected ports vertically (even spacing between extremes)"
+                      onClick={() => handleDistributePorts('vertical')}
+                    />
+                  </>
+                ) : null}
+                {showJumpers ? (
+                  <IconToolbarButton
+                    icon={TOOLBAR_ICONS.updateJumpers}
+                    title="Update jumpers"
+                    onClick={handleUpdateJumpers}
+                  />
+                ) : null}
                 {selectedIds.length >= 2 || selectedDirectAlign ? (
                   <>
-                    <button
-                      type="button"
+                    <IconToolbarButton
+                      icon={TOOLBAR_ICONS.alignH}
                       title={
                         selectedDirectAlign
                           ? 'Align target port to source port X (vertical line)'
@@ -2190,6 +2563,7 @@ export function DiagramCanvas({
                       }
                       onClick={() => {
                         if (selectedDirectAlign) {
+                          pushVizHistory()
                           applyDirectConnectionAlign('sameX')
                           return
                         }
@@ -2199,16 +2573,15 @@ export function DiagramCanvas({
                           'horizontal',
                         )
                         if (!Object.keys(patch).length) return
+                        pushVizHistory()
                         setNodes((current) =>
                           applyAlignPatchToFlowNodes(current, patch),
                         )
                         onNodesMoved(patch)
                       }}
-                    >
-                      Align H
-                    </button>
-                    <button
-                      type="button"
+                    />
+                    <IconToolbarButton
+                      icon={TOOLBAR_ICONS.alignV}
                       title={
                         selectedDirectAlign
                           ? 'Align target port to source port Y (horizontal line)'
@@ -2227,6 +2600,7 @@ export function DiagramCanvas({
                       }
                       onClick={() => {
                         if (selectedDirectAlign) {
+                          pushVizHistory()
                           applyDirectConnectionAlign('sameY')
                           return
                         }
@@ -2236,14 +2610,13 @@ export function DiagramCanvas({
                           'vertical',
                         )
                         if (!Object.keys(patch).length) return
+                        pushVizHistory()
                         setNodes((current) =>
                           applyAlignPatchToFlowNodes(current, patch),
                         )
                         onNodesMoved(patch)
                       }}
-                    >
-                      Align V
-                    </button>
+                    />
                   </>
                 ) : null}
               </>
@@ -2255,13 +2628,11 @@ export function DiagramCanvas({
                 <button type="button" onClick={() => applyRedraw('LR')} title="Redraw left-right">
                   Redraw: LR
                 </button>
-                <button
-                  type="button"
+                <IconToolbarButton
+                  icon={TOOLBAR_ICONS.layoutRules}
+                  title="Layout Rules"
                   onClick={() => setLayoutWizardOpen(true)}
-                  title="Set relative placement rules"
-                >
-                  LayoutWizard
-                </button>
+                />
               </>
             )}
           </div>
@@ -2325,7 +2696,9 @@ export function DiagramCanvas({
       <div className="diagram-sheet-host" ref={sheetHostRef}>
         {!printMode && portMoveMode && isStructure && (
           <div className="tool-banner" role="status">
-            Move ports — dra längs partens kant
+            {shiftHeld
+              ? 'Markera portar — klicka eller dra en rektangel'
+              : 'Move ports — dra längs partens kant (Option+Shift = markera)'}
           </div>
         )}
         {!printMode && formatPaintMode && (
@@ -2406,14 +2779,20 @@ export function DiagramCanvas({
           onPaneClick={
             printMode
               ? undefined
-              : () =>
+              : () => {
+                  if (suppressPortMarqueePaneClickRef.current) {
+                    suppressPortMarqueePaneClickRef.current = false
+                    return
+                  }
+                  setSelectedPortIds([])
                   onSelectArtifact(
                     selectionIdForPaneClick(view?.view.id ?? null),
                   )
+                }
           }
           onSelectionChange={printMode ? undefined : handleSelectionChange}
           multiSelectionKeyCode="Shift"
-          selectionKeyCode="Shift"
+          selectionKeyCode={portMoveMode ? null : 'Shift'}
           fitView={!printMode && !viewportCache.current.has(view.view.id)}
           fitViewOptions={
             printMode
@@ -2439,7 +2818,7 @@ export function DiagramCanvas({
           elevateEdgesOnSelect
           nodesFocusable={!printMode}
           edgesFocusable={!printMode}
-          panOnDrag={!printMode}
+          panOnDrag={!printMode && !portMoveMode}
           zoomOnScroll={!printMode}
           zoomOnPinch={!printMode}
           zoomOnDoubleClick={!printMode}
@@ -2450,6 +2829,12 @@ export function DiagramCanvas({
         >
           <EdgeMarkerDefs />
           <ViewportApiBridge apiRef={viewportApiRef} />
+          <PortMarqueeLayer
+            enabled={portMarqueeEnabled}
+            nodesRef={nodesRef}
+            onPortsBoxed={handlePortsBoxed}
+            suppressPaneClickRef={suppressPortMarqueePaneClickRef}
+          />
           <FitViewOnViewKey
             viewKey={viewKey}
             layoutEpoch={layoutEpoch}
@@ -2469,7 +2854,10 @@ export function DiagramCanvas({
         onCancel={() => {
           if (!autoLayoutBusy) setAutoLayoutOpen(false)
         }}
-        onConfirm={(d) => void applyAutoLayout(d)}
+        onConfirm={(d) => {
+          pushVizHistory()
+          void applyAutoLayout(d)
+        }}
       />
     </div>
   )

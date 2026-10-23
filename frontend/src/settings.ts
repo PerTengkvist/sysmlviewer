@@ -47,6 +47,8 @@ export type AppSettings = {
    * Related nets (shared port) may still coincide.
    */
   connectionSeparation: number
+  /** When false, crossing jumpers are hidden and not computed on redraw. */
+  showJumpers: boolean
   /** Panel sizes as percentages [left, center, right]. */
   horizontalPanelSizes: [number, number, number]
   /** Right sidebar split [details, documentation] percentages. */
@@ -62,7 +64,7 @@ export const ICON_LIBRARY_META: Record<
   iconmind: {
     label: 'IconMind',
     prefix: 'iconmind/',
-    styles: ['outline-regular'],
+    styles: ['outline-regular', 'outline-thin', 'duotone-regular'],
     styleKey: 'variant',
   },
   iconoven: {
@@ -136,6 +138,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pendingChangeColor: '#dc2626',
   pendingAddColor: '#16a34a',
   connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
+  showJumpers: true,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
   iconLibraries: {
@@ -208,6 +211,10 @@ export function loadSettings(): AppSettings {
         Number(parsed.connectionSeparation) ||
           DEFAULT_SETTINGS.connectionSeparation,
       ),
+      showJumpers:
+        typeof parsed.showJumpers === 'boolean'
+          ? parsed.showJumpers
+          : DEFAULT_SETTINGS.showJumpers,
       horizontalPanelSizes: normalizeTriple(
         parsed.horizontalPanelSizes,
         DEFAULT_SETTINGS.horizontalPanelSizes,

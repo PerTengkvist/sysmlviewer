@@ -5,10 +5,48 @@ import {
   PartBodyIcon,
   PartHeaderIcon,
   PART_HEADER_HEIGHT_FALLBACK,
+  isPortMultiSelectGesture,
   partBodyIconMaxPx,
   partStereotypeKeyword,
   resolvePartIconPlacement,
 } from './PartNode'
+
+describe('isPortMultiSelectGesture', () => {
+  it('requires Shift plus Option or move-mode', () => {
+    expect(
+      isPortMultiSelectGesture({
+        altKey: true,
+        shiftKey: true,
+        moveMode: false,
+        editLocked: false,
+      }),
+    ).toBe(true)
+    expect(
+      isPortMultiSelectGesture({
+        altKey: false,
+        shiftKey: true,
+        moveMode: true,
+        editLocked: false,
+      }),
+    ).toBe(true)
+    expect(
+      isPortMultiSelectGesture({
+        altKey: true,
+        shiftKey: false,
+        moveMode: false,
+        editLocked: false,
+      }),
+    ).toBe(false)
+    expect(
+      isPortMultiSelectGesture({
+        altKey: true,
+        shiftKey: true,
+        moveMode: false,
+        editLocked: true,
+      }),
+    ).toBe(false)
+  })
+})
 
 describe('partStereotypeKeyword', () => {
   it('defaults to part or package', () => {

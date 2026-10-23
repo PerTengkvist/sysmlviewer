@@ -9,6 +9,13 @@ import httpx
 ICONMIND_PACKAGE = "@iconmind/icons"
 ICONMIND_VERSION = "0.8.1"
 ICONMIND_VARIANT = "outline-regular"
+ICONMIND_VARIANTS = frozenset(
+    {
+        "outline-regular",
+        "outline-thin",
+        "duotone-regular",
+    }
+)
 CDN_ROOT = f"https://cdn.jsdelivr.net/npm/{ICONMIND_PACKAGE}@{ICONMIND_VERSION}"
 
 
@@ -17,15 +24,23 @@ class IconMindError(Exception):
 
 
 class IconMindFetcher:
-    """Resolve slug → category via metadata, then download outline-regular SVG."""
+    """Resolve slug → category via metadata, then download an SVG variant."""
 
     def __init__(
         self,
         *,
+        style: str = ICONMIND_VARIANT,
         client: httpx.Client | None = None,
         metadata: dict[str, Any] | None = None,
         get: Callable[[str], httpx.Response] | None = None,
     ) -> None:
+        cleaned = (style or ICONMIND_VARIANT).strip().lower()
+        if cleaned not in ICONMIND_VARIANTS:
+            raise IconMindError(
+                f"invalid IconMind style {style!r}; expected one of "
+                f"{sorted(ICONMIND_VARIANTS)}"
+            )
+        self.style = cleaned
         self._client = client
         self._owns_client = client is None and get is None
         self._get = get
@@ -87,7 +102,7 @@ class IconMindFetcher:
 
     def svg_url(self, slug: str) -> str:
         category = self.category_for(slug)
-        return f"{CDN_ROOT}/icons/{category}/{slug}/{ICONMIND_VARIANT}.svg"
+        return f"{CDN_ROOT}/icons/{category}/{slug}/{self.style}.svg"
 
     def fetch(self, slug: str) -> str:
         url = self.svg_url(slug)

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../api'
-import { iconNameForElement, iconUrl } from './iconRef'
+import {
+  iconNameForElement,
+  iconUrl,
+  iconmindCdnUrl,
+  TOOLBAR_ICONS,
+} from './iconRef'
 
 function el(
   partial: Partial<SemanticElement> & Pick<SemanticElement, 'id' | 'kind' | 'name'>,
@@ -76,5 +81,28 @@ describe('iconUrl', () => {
   it('builds default and library-prefixed URLs', () => {
     expect(iconUrl('user')).toBe('/api/icons/user.svg')
     expect(iconUrl('iconmind/agent')).toBe('/api/icons/iconmind/agent.svg')
+  })
+
+  it('appends style query for variants', () => {
+    expect(iconUrl('iconmind/lock', { style: 'outline-thin' })).toBe(
+      '/api/icons/iconmind/lock.svg?style=outline-thin',
+    )
+    expect(iconUrl('iconmind/flip-h', { style: 'duotone-regular' })).toBe(
+      '/api/icons/iconmind/flip-h.svg?style=duotone-regular',
+    )
+  })
+})
+
+describe('iconmindCdnUrl / TOOLBAR_ICONS', () => {
+  it('builds CDN paths with category and variant', () => {
+    expect(iconmindCdnUrl(TOOLBAR_ICONS.lockAll)).toContain(
+      '/icons/security/lock/outline-thin.svg',
+    )
+    expect(iconmindCdnUrl(TOOLBAR_ICONS.layoutRules)).toContain(
+      '/icons/interface/layout-dashboard/outline-thin.svg',
+    )
+    expect(iconmindCdnUrl(TOOLBAR_ICONS.flipH)).toContain(
+      '/icons/interface/flip-h/duotone-regular.svg',
+    )
   })
 })

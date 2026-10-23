@@ -5,6 +5,7 @@ import {
   keepLockedWaypoints,
   separateUnrelatedRoutes,
   sharePort,
+  updateJumpersFromRoutes,
   waypointsAttachToEnds,
   type RoutedPoly,
 } from './connectionSeparation'
@@ -153,33 +154,49 @@ describe('separateUnrelatedRoutes', () => {
 })
 
 describe('computeJumpers / angularPathDWithJumps', () => {
+  const crossingRoutes: RoutedPoly[] = [
+    {
+      id: 'a',
+      sourcePort: 'p1',
+      targetPort: 'p2',
+      points: [
+        { x: 0, y: 50 },
+        { x: 100, y: 50 },
+      ],
+    },
+    {
+      id: 'b',
+      sourcePort: 'p3',
+      targetPort: 'p4',
+      points: [
+        { x: 50, y: 0 },
+        { x: 50, y: 100 },
+      ],
+    },
+  ]
+
   it('adds a jumper on the overlying wire at an unrelated crossing', () => {
-    const routes: RoutedPoly[] = [
-      {
-        id: 'a',
-        sourcePort: 'p1',
-        targetPort: 'p2',
-        points: [
-          { x: 0, y: 50 },
-          { x: 100, y: 50 },
-        ],
-      },
-      {
-        id: 'b',
-        sourcePort: 'p3',
-        targetPort: 'p4',
-        points: [
-          { x: 50, y: 0 },
-          { x: 50, y: 100 },
-        ],
-      },
-    ]
-    const jumps = computeJumpers(routes)
+    const jumps = computeJumpers(crossingRoutes)
     // overlying = max(id) = 'b'
     expect(jumps.get('b')?.some((j) => j.x === 50 && j.y === 50)).toBe(true)
     expect(jumps.has('a')).toBe(false)
 
-    const path = angularPathDWithJumps(routes[1].points, jumps.get('b') || [], 5)
+    const path = angularPathDWithJumps(
+      crossingRoutes[1].points,
+      jumps.get('b') || [],
+      5,
+    )
     expect(path).toContain('A ')
+  })
+
+  it('updateJumpersFromRoutes returns the same jumps without mutating points', () => {
+    const before = crossingRoutes.map((r) => ({
+      ...r,
+      points: r.points.map((p) => ({ ...p })),
+    }))
+    const jumps = updateJumpersFromRoutes(before)
+    expect(jumps.get('b')?.some((j) => j.x === 50 && j.y === 50)).toBe(true)
+    expect(before[0].points).toEqual(crossingRoutes[0].points)
+    expect(before[1].points).toEqual(crossingRoutes[1].points)
   })
 })

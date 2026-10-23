@@ -45,6 +45,8 @@ export type PlanStructureRoutesInput = {
   edgeId?: string
   layoutNodes?: boolean
   separation?: number
+  /** When false, skip crossing jumpers. Default true. */
+  computeJumpers?: boolean
   /** From AutoLayout dialog; only used when layoutNodes is true. */
   directives?: AutoLayoutDirectives
   existingRoutes?: ExistingEdgeRoute[]
@@ -61,6 +63,7 @@ export type PlanStructureRoutesInput = {
       edges: Edge[]
       layoutNodes: boolean
       separation: number
+      computeJumpers?: boolean
       directives?: AutoLayoutDirectives
     }) => Promise<{
       nodes: ElkStructureLayoutResult['nodes']
@@ -73,6 +76,7 @@ export type PlanStructureRoutesInput = {
       existingRoutes?: ExistingEdgeRoute[]
       portLayout?: Record<string, Partial<VisualizationNode>>
       separation: number
+      computeJumpers?: boolean
       contextEdges: Edge[]
       viewBounds?: Rect
       skipped?: SkippedRoute[]
@@ -107,6 +111,7 @@ async function defaultRunElk(args: {
   edges: Edge[]
   layoutNodes: boolean
   separation: number
+  computeJumpers?: boolean
   directives?: AutoLayoutDirectives
 }): Promise<{
   nodes: ElkStructureLayoutResult['nodes']
@@ -140,6 +145,7 @@ async function defaultRunElk(args: {
     {
       separation: args.separation,
       contextEdges: args.edges,
+      computeJumpers: args.computeJumpers,
     },
   )
   return { nodes: nodePatch, routes }
@@ -151,6 +157,7 @@ function defaultRunOwn(args: {
   existingRoutes?: ExistingEdgeRoute[]
   portLayout?: Record<string, Partial<VisualizationNode>>
   separation: number
+  computeJumpers?: boolean
   contextEdges: Edge[]
   viewBounds?: Rect
   skipped?: SkippedRoute[]
@@ -165,6 +172,7 @@ function defaultRunOwn(args: {
       contextEdges: args.contextEdges,
       viewBounds: args.viewBounds,
       skipped: args.skipped,
+      computeJumpers: args.computeJumpers,
     },
   )
 }
@@ -173,6 +181,7 @@ export async function planStructureRoutes(
   input: PlanStructureRoutesInput,
 ): Promise<PlanStructureRoutesResult> {
   const separation = input.separation ?? 5
+  const computeJumpers = input.computeJumpers
   const runElk = input.deps?.runElk ?? defaultRunElk
   const runOwn = input.deps?.runOwn ?? defaultRunOwn
   const angular = input.edges.filter(isAngular)
@@ -191,6 +200,7 @@ export async function planStructureRoutes(
       existingRoutes: input.existingRoutes,
       portLayout: input.portLayout,
       separation,
+      computeJumpers,
       contextEdges,
       viewBounds,
       skipped,
@@ -210,6 +220,7 @@ export async function planStructureRoutes(
       existingRoutes: input.existingRoutes,
       portLayout: input.portLayout,
       separation,
+      computeJumpers,
       contextEdges,
       viewBounds,
       skipped,
@@ -222,6 +233,7 @@ export async function planStructureRoutes(
     edges: involved,
     layoutNodes: true,
     separation,
+    computeJumpers,
     directives: input.directives,
   })
   return {

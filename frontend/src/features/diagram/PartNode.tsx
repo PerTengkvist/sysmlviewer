@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import type { PortSide, ElementStyle } from '../../api'
@@ -180,6 +179,8 @@ export type PartNodeData = {
   menuItems: { viewId: string; name: string }[]
   /** Option/Alt held — port drag (move) mode */
   portMoveMode?: boolean
+  /** Port ids selected via Option+Shift click. */
+  selectedPortIds?: string[]
   /** Whitebox boundary (composite part frame) */
   isBoundary?: boolean
   /** Child parts are drawn inside this node (whitebox with visible children). */
@@ -197,6 +198,8 @@ export type PartNodeData = {
   viewMode?: ViewMode
   onOpenView?: (viewId: string, opts?: { ctrlKey?: boolean; metaKey?: boolean }) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
+  /** Option+Shift click — multi-select ports for distribute. */
+  onPortSelect?: (portId: string) => void
   /** Live drag of a relation endpoint along this part's boundary. */
   onRelationEndDrag?: (
     artifactId: string,
@@ -320,6 +323,17 @@ export function pointerInsideNodeBox(
   return px >= 0 && px <= width && py >= 0 && py <= height
 }
 
+/** Option+Shift (or port-move mode + Shift) selects ports for distribute. */
+export function isPortMultiSelectGesture(opts: {
+  altKey: boolean
+  shiftKey: boolean
+  moveMode: boolean
+  editLocked: boolean
+}): boolean {
+  if (opts.editLocked || !opts.shiftKey) return false
+  return opts.altKey || opts.moveMode
+}
+
 function portLabelStyle(side: PortSide, offset: number, outside = false): CSSProperties {
   return {
     color: 'var(--ink)',
@@ -341,6 +355,7 @@ export function PartNode({ data, selected }: NodeProps) {
   const keyword = partStereotypeKeyword(d)
   const typeTag = d.typeRef ? typeShortTag(d.typeRef) : null
   const moveMode = !!d.portMoveMode
+  const selectedPorts = new Set(d.selectedPortIds || [])
   const { headerIcon, bodyIcon } = resolvePartIconPlacement(d)
   const bodyIconMaxPx = partBodyIconMaxPx(headerHeight)
 
@@ -409,32 +424,50 @@ export function PartNode({ data, selected }: NodeProps) {
     [d, nodeId, updateNodeInternals, updatePortFromPointer],
   )
 
-  const onPortMouseDown = (
+  const stopPortPointer = (e: ReactPointerEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.nativeEvent.stopImmediatePropagation()
+  }
+
+  const onPortPointerDown = (
     port: PartPort,
-    e: ReactMouseEvent | ReactPointerEvent,
+    e: ReactPointerEvent,
   ) => {
+    // Option+Shift — multi-select ports (no drag). Only pointerdown —
+    // a paired mousedown would toggle select twice and cancel.
+    if (
+      isPortMultiSelectGesture({
+        altKey: e.altKey,
+        shiftKey: e.shiftKey,
+        moveMode,
+        editLocked: !!d.editLocked,
+      })
+    ) {
+      stopPortPointer(e)
+      d.onPortSelect?.(port.id)
+      return
+    }
+
     // Option (macOS) / Alt — move port along parent border
     if (d.editLocked || (!e.altKey && !moveMode)) {
       return
     }
 
-    e.preventDefault()
-    e.stopPropagation()
+    stopPortPointer(e)
 
     draggingPortId.current = port.id
     document.body.classList.add('port-dragging')
     updatePortFromPointer(port.id, e.clientX, e.clientY)
 
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
       if (draggingPortId.current !== port.id) return
       updatePortFromPointer(port.id, ev.clientX, ev.clientY)
     }
 
-    const onUp = (ev: MouseEvent) => {
+    const onUp = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
       if (draggingPortId.current === port.id) {
         endPortDrag(port.id, ev.clientX, ev.clientY)
       }
@@ -442,8 +475,6 @@ export function PartNode({ data, selected }: NodeProps) {
 
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
   }
 
   const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light', {
@@ -571,16 +602,20 @@ export function PartNode({ data, selected }: NodeProps) {
           isConnectable={!moveMode}
           title={
             moveMode
-              ? `${port.name} — dra längs kanten`
-              : `${port.name} — dra till annan port (Option = flytta)`
+              ? `${port.name} — dra längs kanten (Option+Shift = markera)`
+              : `${port.name} — dra till annan port (Option = flytta, Option+Shift = markera)`
           }
           className={
-            moveMode
-              ? 'port-handle-move nodrag nopan'
-              : 'port-handle-connect nodrag nopan'
+            [
+              moveMode ? 'port-handle-move' : 'port-handle-connect',
+              'nodrag',
+              'nopan',
+              selectedPorts.has(port.id) ? 'port-handle-selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')
           }
-          onPointerDown={(e) => onPortMouseDown(port, e)}
-          onMouseDown={(e) => onPortMouseDown(port, e)}
+          onPointerDown={(e) => onPortPointerDown(port, e)}
         />
         )
       })}

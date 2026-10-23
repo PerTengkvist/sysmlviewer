@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   EDGE_LABEL_TEXT_HEIGHT_PX,
   loadSettings,
+  saveSettings,
 } from './settings'
 
 const store = new Map<string, string>()
@@ -133,5 +134,17 @@ describe('settings iconLibraries', () => {
     expect(
       (s.iconLibraries as Record<string, unknown>).evil,
     ).toBeUndefined()
+  })
+})
+
+describe('settings showJumpers', () => {
+  it('defaults to true', () => {
+    expect(DEFAULT_SETTINGS.showJumpers).toBe(true)
+    expect(loadSettings().showJumpers).toBe(true)
+  })
+
+  it('round-trips false through save/load', () => {
+    saveSettings({ ...DEFAULT_SETTINGS, showJumpers: false })
+    expect(loadSettings().showJumpers).toBe(false)
   })
 })

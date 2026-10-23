@@ -47,6 +47,8 @@ export type RedrawOptions = {
   viewBounds?: Rect
   /** Filled with edges that were not routed (mutated when provided). */
   skipped?: SkippedRoute[]
+  /** When false, skip crossing jumpers (empty jumps on each route). Default true. */
+  computeJumpers?: boolean
 }
 
 /** Base grid step (px). Larger whiteboxes use a coarser step — see gridCellSize. */
@@ -1160,7 +1162,10 @@ export function redrawStructureConnections(
   // tracks already taken so unrelated wires stay a label-height apart.
   separated = assignFreeLanes(separated, drafts, separation, bounds)
 
-  const jumpsById = computeJumpers(separated)
+  const wantJumpers = options?.computeJumpers !== false
+  const jumpsById = wantJumpers
+    ? computeJumpers(separated)
+    : new Map<string, { x: number; y: number; along: 'h' | 'v' }[]>()
 
   const contextAngularIds = new Set(
     contextEdges.filter((e) => edgeRoutingKind(e) === 'angular').map((e) => e.id),

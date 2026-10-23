@@ -866,10 +866,28 @@ input {
   cursor: pointer;
 }
 
+.diagram-canvas-header .redraw-actions button.icon-toolbar-btn {
+  padding: 4px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.diagram-canvas-header .redraw-actions .icon-toolbar-btn__img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .diagram-canvas-header .redraw-actions button:hover {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--surface-raised);
+}
+
+.diagram-canvas-header .redraw-actions button.icon-toolbar-btn:hover .icon-toolbar-btn__img {
+  opacity: 0.85;
 }
 
 .diagram-view-name {
@@ -1189,6 +1207,22 @@ input {
   background: #c45c26;
   z-index: 5;
   pointer-events: all !important;
+}
+
+.react-flow__handle.port-handle-selected {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  z-index: 6;
+}
+
+.port-marquee-rect {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  border: 1px solid #2563eb;
+  background: rgba(37, 99, 235, 0.12);
+  box-sizing: border-box;
 }
 
 .tool-banner {
