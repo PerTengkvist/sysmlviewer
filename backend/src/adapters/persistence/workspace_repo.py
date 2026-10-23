@@ -31,6 +31,42 @@ def sanitize_rel_path(raw: str | None, fallback_name: str) -> str:
     return "/".join(parts)
 
 
+# Path segments that must not contribute SysML sources when scanning the workspace.
+SYSML_SCAN_EXCLUDE_SEGMENTS = frozenset(
+    {
+        "views",
+        "icons",
+        ".sysmlviewer",
+        "docs",
+        ".git",
+        "node_modules",
+    }
+)
+
+
+def list_sysml_paths(root: Path) -> list[str]:
+    """Return sorted project-relative ``*.sysml`` paths under ``root``.
+
+    Skips any path containing an excluded segment (views, icons, docs, …).
+    """
+    base = Path(root)
+    if not base.is_dir():
+        return []
+    paths: list[str] = []
+    for path in base.rglob("*.sysml"):
+        if not path.is_file():
+            continue
+        try:
+            rel = path.relative_to(base).as_posix()
+        except ValueError:
+            continue
+        parts = Path(rel).parts
+        if any(part in SYSML_SCAN_EXCLUDE_SEGMENTS for part in parts):
+            continue
+        paths.append(rel)
+    return sorted(paths)
+
+
 class WorkspaceProjectRepository:
     """Persist one project whose root is ``root`` (manifest at root/project.json)."""
 
@@ -115,6 +151,13 @@ class WorkspaceProjectRepository:
             raise FileExistsError(new_rel)
         src.rename(dst)
 
+    def delete_sysml(self, rel: str) -> None:
+        """Remove a SysML source from disk (membership is scan-based)."""
+        disk = self._resolve_under_root(rel)
+        if not disk.is_file():
+            raise FileNotFoundError(rel)
+        disk.unlink()
+
     def list_summaries(self) -> list[dict[str, str]]:
         project = self._load_any()
         if not project:
@@ -153,25 +196,23 @@ class WorkspaceProjectRepository:
             except (json.JSONDecodeError, OSError):
                 state = {}
 
-        sysmlfiles = list(manifest.get("sysmlfiles") or [])
+        # Disk is source of truth; ignore legacy manifest sysmlfiles.
         file_metas = {
             (f.get("path") or f.get("name")): f
             for f in (state.get("files") or [])
             if isinstance(f, dict)
         }
         files: list[SysmlFile] = []
-        for rel in sysmlfiles:
+        for rel in list_sysml_paths(self.root):
             meta = file_metas.get(rel) or {}
             content = ""
             try:
-                disk = self._resolve_under_root(rel)
-                if disk.exists():
-                    content = disk.read_text(encoding="utf-8")
-            except (ValueError, OSError):
+                content = self.read_sysml(rel)
+            except (FileNotFoundError, OSError, ValueError):
                 content = ""
             files.append(
                 SysmlFile(
-                    id=meta.get("id") or rel,
+                    id=rel,
                     name=meta.get("name") or Path(rel).name,
                     content=content,
                     warnings=list(meta.get("warnings") or []),
@@ -269,30 +310,29 @@ class WorkspaceProjectRepository:
                     )
                     view_file_store.write_one(self.root, view_id, view_name, layout)
 
-        sysmlfiles: list[str] = []
         file_metas: list[dict] = []
         for sysml_file in project.files:
             rel = sanitize_rel_path(
                 sysml_file.path or sysml_file.name, sysml_file.name or "untitled.sysml"
             )
             sysml_file.path = rel
+            sysml_file.id = rel
             sysml_file.source_path = None
-            sysmlfiles.append(rel)
             file_metas.append(
                 {
-                    "id": sysml_file.id,
+                    "id": rel,
                     "name": sysml_file.name,
                     "path": rel,
                     "warnings": list(sysml_file.warnings),
                 }
             )
 
+        # SysML membership comes from disk scan; do not persist sysmlfiles.
         manifest = {
             "id": project.id,
             "projektnamn": project.name,
             "created": project.created_at.isoformat(),
             "updated": project.updated_at.isoformat(),
-            "sysmlfiles": sysmlfiles,
         }
         sheet: dict[str, Any]
         if project.sheet is not None:

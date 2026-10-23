@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import type { PortSide, ElementStyle } from '../../api'
@@ -69,20 +68,63 @@ export function PartHeaderIcon({
   )
 }
 
+/** Default leaf part height (px) — body icon “normal” size is 50% of body at this height. */
+export const PART_DEFAULT_HEIGHT = 110
+
+/** Fallback header height before layout measurement (px). */
+export const PART_HEADER_HEIGHT_FALLBACK = 40
+
 /**
- * Body icon from `_icon_body` — centered, height = 50% of body, aspect preserved.
+ * Max body-icon size: 1.5 × (50% of body at PART_DEFAULT_HEIGHT).
+ * `headerHeight` is the measured header; fallback keeps the formula usable in tests.
+ */
+export function partBodyIconMaxPx(
+  headerHeight = PART_HEADER_HEIGHT_FALLBACK,
+): number {
+  const bodyAtDefault = Math.max(0, PART_DEFAULT_HEIGHT - headerHeight)
+  return 1.5 * 0.5 * bodyAtDefault
+}
+
+/**
+ * Which icon refs go in header vs body.
+ * Whitebox (children visible): `_icon` wins; else `_icon_body` in header; no body icon.
+ * Blackbox: `_icon` in header, `_icon_body` in body.
+ */
+export function resolvePartIconPlacement(d: {
+  childrenVisible?: boolean
+  iconName?: string | null
+  iconBodyName?: string | null
+}): { headerIcon: string | null; bodyIcon: string | null } {
+  const icon = d.iconName?.trim() || null
+  const body = d.iconBodyName?.trim() || null
+  if (d.childrenVisible) {
+    return { headerIcon: icon || body, bodyIcon: null }
+  }
+  return { headerIcon: icon, bodyIcon: body }
+}
+
+/**
+ * Body icon from `_icon_body` — centered, height = 50% of body (capped), aspect preserved.
  */
 export function PartBodyIcon({
   iconName,
+  maxPx,
 }: {
   iconName?: string | null
+  maxPx?: number
 }) {
   const ref = parsePartIconRef(iconName)
   if (!ref) return null
+  const boxStyle =
+    maxPx != null
+      ? ({
+          ['--part-body-icon-max' as string]: `${maxPx}px`,
+        } as CSSProperties)
+      : undefined
   if (ref.kind === 'svg') {
     return (
       <div className="part-node-body-icon-wrap" data-testid="part-body-icon-wrap">
-        <div className="part-node-body-icon-box">
+        <div className="part-node-body-icon-box" style={boxStyle}>
           <img
             className="part-node-body-icon"
             src={partSvgIconUrl(ref.path)}
@@ -99,7 +141,7 @@ export function PartBodyIcon({
   if (!Icon) return null
   return (
     <div className="part-node-body-icon-wrap" data-testid="part-body-icon-wrap">
-      <div className="part-node-body-icon-box">
+      <div className="part-node-body-icon-box" style={boxStyle}>
         <Icon
           className="part-node-body-icon"
           width="100%"
@@ -137,14 +179,18 @@ export type PartNodeData = {
   menuItems: { viewId: string; name: string }[]
   /** Option/Alt held — port drag (move) mode */
   portMoveMode?: boolean
+  /** Port ids selected via Option+Shift click. */
+  selectedPortIds?: string[]
   /** Whitebox boundary (composite part frame) */
   isBoundary?: boolean
+  /** Child parts are drawn inside this node (whitebox with visible children). */
+  childrenVisible?: boolean
   /** Show attribute names inside the part */
   showAttributes?: boolean
   attributeNames?: string[]
   /** From `attribute _icon` — Lucide name or `iconmind/<name>` / `carbon/<name>` */
   iconName?: string | null
-  /** From `attribute _icon_body` — centered in body at 50% body height */
+  /** From `attribute _icon_body` — centered in body at 50% body height (blackbox) */
   iconBodyName?: string | null
   formatStyle?: ElementStyle | null
   /** Diagram edit lock — no resize or port move. */
@@ -152,6 +198,8 @@ export type PartNodeData = {
   viewMode?: ViewMode
   onOpenView?: (viewId: string, opts?: { ctrlKey?: boolean; metaKey?: boolean }) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
+  /** Option+Shift click — multi-select ports for distribute. */
+  onPortSelect?: (portId: string) => void
   /** Live drag of a relation endpoint along this part's boundary. */
   onRelationEndDrag?: (
     artifactId: string,
@@ -275,6 +323,17 @@ export function pointerInsideNodeBox(
   return px >= 0 && px <= width && py >= 0 && py <= height
 }
 
+/** Option+Shift (or port-move mode + Shift) selects ports for distribute. */
+export function isPortMultiSelectGesture(opts: {
+  altKey: boolean
+  shiftKey: boolean
+  moveMode: boolean
+  editLocked: boolean
+}): boolean {
+  if (opts.editLocked || !opts.shiftKey) return false
+  return opts.altKey || opts.moveMode
+}
+
 function portLabelStyle(side: PortSide, offset: number, outside = false): CSSProperties {
   return {
     color: 'var(--ink)',
@@ -286,7 +345,9 @@ export function PartNode({ data, selected }: NodeProps) {
   const d = data as PartNodeData
   const [menuOpen, setMenuOpen] = useState(false)
   const [localPorts, setLocalPorts] = useState<PartPort[]>(d.ports ?? [])
+  const [headerHeight, setHeaderHeight] = useState(PART_HEADER_HEIGHT_FALLBACK)
   const rootRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
   const draggingPortId = useRef<string | null>(null)
   const nodeId = useNodeId()
   const updateNodeInternals = useUpdateNodeInternals()
@@ -294,12 +355,28 @@ export function PartNode({ data, selected }: NodeProps) {
   const keyword = partStereotypeKeyword(d)
   const typeTag = d.typeRef ? typeShortTag(d.typeRef) : null
   const moveMode = !!d.portMoveMode
+  const selectedPorts = new Set(d.selectedPortIds || [])
+  const { headerIcon, bodyIcon } = resolvePartIconPlacement(d)
+  const bodyIconMaxPx = partBodyIconMaxPx(headerHeight)
 
   useEffect(() => {
     if (!draggingPortId.current) {
       setLocalPorts(d.ports ?? [])
     }
   }, [d.ports])
+
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const measure = () => {
+      const h = el.offsetHeight
+      if (h > 0) setHeaderHeight(h)
+    }
+    measure()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null
+    ro?.observe(el)
+    return () => ro?.disconnect()
+  }, [d.label, d.typeRef, d.metadataKeywords, d.isBoundary, headerIcon])
 
   // Keep React Flow handle bounds in sync when ports move (drag or Align).
   const portSig = (localPorts ?? [])
@@ -347,32 +424,50 @@ export function PartNode({ data, selected }: NodeProps) {
     [d, nodeId, updateNodeInternals, updatePortFromPointer],
   )
 
-  const onPortMouseDown = (
+  const stopPortPointer = (e: ReactPointerEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.nativeEvent.stopImmediatePropagation()
+  }
+
+  const onPortPointerDown = (
     port: PartPort,
-    e: ReactMouseEvent | ReactPointerEvent,
+    e: ReactPointerEvent,
   ) => {
+    // Option+Shift — multi-select ports (no drag). Only pointerdown —
+    // a paired mousedown would toggle select twice and cancel.
+    if (
+      isPortMultiSelectGesture({
+        altKey: e.altKey,
+        shiftKey: e.shiftKey,
+        moveMode,
+        editLocked: !!d.editLocked,
+      })
+    ) {
+      stopPortPointer(e)
+      d.onPortSelect?.(port.id)
+      return
+    }
+
     // Option (macOS) / Alt — move port along parent border
     if (d.editLocked || (!e.altKey && !moveMode)) {
       return
     }
 
-    e.preventDefault()
-    e.stopPropagation()
+    stopPortPointer(e)
 
     draggingPortId.current = port.id
     document.body.classList.add('port-dragging')
     updatePortFromPointer(port.id, e.clientX, e.clientY)
 
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
       if (draggingPortId.current !== port.id) return
       updatePortFromPointer(port.id, ev.clientX, ev.clientY)
     }
 
-    const onUp = (ev: MouseEvent) => {
+    const onUp = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
       if (draggingPortId.current === port.id) {
         endPortDrag(port.id, ev.clientX, ev.clientY)
       }
@@ -380,8 +475,6 @@ export function PartNode({ data, selected }: NodeProps) {
 
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
   }
 
   const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light', {
@@ -401,7 +494,7 @@ export function PartNode({ data, selected }: NodeProps) {
         lineClassName="part-resize-line"
         handleClassName="part-resize-handle"
       />
-      <div className="part-node-header" style={regions.header}>
+      <div ref={headerRef} className="part-node-header" style={regions.header}>
         <div className="part-node-heading">
           <div className="part-stereotypes">
             <span className="stereotype">{guillemets(keyword)}</span>
@@ -413,7 +506,7 @@ export function PartNode({ data, selected }: NodeProps) {
             {d.isBoundary && <span className="stereotype">«whitebox»</span>}
           </div>
           <div className="part-node-title-row">
-            <PartHeaderIcon iconName={d.iconName} />
+            <PartHeaderIcon iconName={headerIcon} />
             <span className="part-node-title">
               {d.label}
               {d.multiplicity ? ` [${d.multiplicity}]` : ''}
@@ -458,7 +551,7 @@ export function PartNode({ data, selected }: NodeProps) {
         ) : null}
       </div>
       <div className="part-node-body" style={regions.body}>
-        <PartBodyIcon iconName={d.iconBodyName} />
+        <PartBodyIcon iconName={bodyIcon} maxPx={bodyIconMaxPx} />
         {d.showAttributes && d.attributeNames && d.attributeNames.length > 0 && (
           <ul className="part-attr-list">
             {d.attributeNames.map((n) => (
@@ -509,16 +602,20 @@ export function PartNode({ data, selected }: NodeProps) {
           isConnectable={!moveMode}
           title={
             moveMode
-              ? `${port.name} — dra längs kanten`
-              : `${port.name} — dra till annan port (Option = flytta)`
+              ? `${port.name} — dra längs kanten (Option+Shift = markera)`
+              : `${port.name} — dra till annan port (Option = flytta, Option+Shift = markera)`
           }
           className={
-            moveMode
-              ? 'port-handle-move nodrag nopan'
-              : 'port-handle-connect nodrag nopan'
+            [
+              moveMode ? 'port-handle-move' : 'port-handle-connect',
+              'nodrag',
+              'nopan',
+              selectedPorts.has(port.id) ? 'port-handle-selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')
           }
-          onPointerDown={(e) => onPortMouseDown(port, e)}
-          onMouseDown={(e) => onPortMouseDown(port, e)}
+          onPointerDown={(e) => onPortPointerDown(port, e)}
         />
         )
       })}

@@ -57,6 +57,28 @@ def test_svg_url_uses_pinned_version_and_outline_regular():
     assert url.startswith("https://cdn.jsdelivr.net/npm/")
 
 
+def test_svg_url_uses_configured_style_variant():
+    transport = FakeTransport({})
+    client = httpx.Client(transport=transport)
+    fetcher = IconMindFetcher(
+        client=client,
+        metadata=SAMPLE_METADATA,
+        style="outline-thin",
+    )
+    assert fetcher.svg_url("agent").endswith("/icons/agents/agent/outline-thin.svg")
+    duo = IconMindFetcher(
+        client=client,
+        metadata=SAMPLE_METADATA,
+        style="duotone-regular",
+    )
+    assert duo.svg_url("agent").endswith("/icons/agents/agent/duotone-regular.svg")
+
+
+def test_invalid_style_raises():
+    with pytest.raises(IconMindError):
+        IconMindFetcher(metadata=SAMPLE_METADATA, style="not-a-variant")
+
+
 def test_fetch_returns_trimmed_svg():
     fetcher, transport = _fetcher()
     url = fetcher.svg_url("agent")

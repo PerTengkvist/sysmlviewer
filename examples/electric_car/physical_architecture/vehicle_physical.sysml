@@ -138,6 +138,7 @@ package PhysicalArchitecture {
     }
 
     part gearStickMech {
+      attribute _icon_body = "energy/busbar";
       doc /* Mechanical gear selector for park, reverse, neutral and drive. Provides GearCommand. */
       port gearOut : GearCommand;
     }

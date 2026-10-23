@@ -33,7 +33,7 @@ Viewer-only attributes (hidden from the attribute list on the diagram):
 | Attribute | Placement |
 |---|---|
 | `_icon` | Header / title row |
-| `_icon_body` | Centered in the part body |
+| `_icon_body` | Centered in the part body (blackbox). When child parts are visible (whitebox), same as `_icon` in the header. Scales with the part up to 150% of the normal body-icon size. |
 
 ### Lucide (default)
 

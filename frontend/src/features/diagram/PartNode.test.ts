@@ -4,8 +4,49 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import {
   PartBodyIcon,
   PartHeaderIcon,
+  PART_HEADER_HEIGHT_FALLBACK,
+  isPortMultiSelectGesture,
+  partBodyIconMaxPx,
   partStereotypeKeyword,
+  resolvePartIconPlacement,
 } from './PartNode'
+
+describe('isPortMultiSelectGesture', () => {
+  it('requires Shift plus Option or move-mode', () => {
+    expect(
+      isPortMultiSelectGesture({
+        altKey: true,
+        shiftKey: true,
+        moveMode: false,
+        editLocked: false,
+      }),
+    ).toBe(true)
+    expect(
+      isPortMultiSelectGesture({
+        altKey: false,
+        shiftKey: true,
+        moveMode: true,
+        editLocked: false,
+      }),
+    ).toBe(true)
+    expect(
+      isPortMultiSelectGesture({
+        altKey: true,
+        shiftKey: false,
+        moveMode: false,
+        editLocked: false,
+      }),
+    ).toBe(false)
+    expect(
+      isPortMultiSelectGesture({
+        altKey: true,
+        shiftKey: true,
+        moveMode: false,
+        editLocked: true,
+      }),
+    ).toBe(false)
+  })
+})
 
 describe('partStereotypeKeyword', () => {
   it('defaults to part or package', () => {
@@ -81,5 +122,56 @@ describe('PartBodyIcon', () => {
       createElement(PartBodyIcon, { iconName: 'not-a-real-icon' }),
     )
     expect(html).toBe('')
+  })
+
+  it('sets --part-body-icon-max when maxPx is provided', () => {
+    const html = renderToStaticMarkup(
+      createElement(PartBodyIcon, { iconName: 'cloud', maxPx: 52.5 }),
+    )
+    expect(html).toContain('--part-body-icon-max:52.5px')
+  })
+})
+
+describe('partBodyIconMaxPx', () => {
+  it('is 1.5 × 50% of body at default part height', () => {
+    expect(partBodyIconMaxPx(PART_HEADER_HEIGHT_FALLBACK)).toBe(52.5)
+    expect(partBodyIconMaxPx(40)).toBe(52.5)
+  })
+})
+
+describe('resolvePartIconPlacement', () => {
+  it('uses _icon_body in header when children are visible and no _icon', () => {
+    expect(
+      resolvePartIconPlacement({
+        childrenVisible: true,
+        iconBodyName: 'cloud',
+      }),
+    ).toEqual({ headerIcon: 'cloud', bodyIcon: null })
+  })
+
+  it('keeps _icon in header when both attrs exist on whitebox', () => {
+    expect(
+      resolvePartIconPlacement({
+        childrenVisible: true,
+        iconName: 'battery',
+        iconBodyName: 'cloud',
+      }),
+    ).toEqual({ headerIcon: 'battery', bodyIcon: null })
+  })
+
+  it('keeps body icon on blackbox / leaf', () => {
+    expect(
+      resolvePartIconPlacement({
+        childrenVisible: false,
+        iconName: 'battery',
+        iconBodyName: 'cloud',
+      }),
+    ).toEqual({ headerIcon: 'battery', bodyIcon: 'cloud' })
+
+    expect(
+      resolvePartIconPlacement({
+        iconBodyName: 'cloud',
+      }),
+    ).toEqual({ headerIcon: null, bodyIcon: 'cloud' })
   })
 })

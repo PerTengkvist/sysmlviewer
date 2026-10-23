@@ -263,6 +263,14 @@ export function separateUnrelatedRoutes(
   }))
 }
 
+/** Recompute jumpers for existing routes without changing their points. */
+export function updateJumpersFromRoutes(
+  routes: RoutedPoly[],
+  minDistFromEnds = 8,
+): Map<string, PathJump[]> {
+  return computeJumpers(routes, minDistFromEnds)
+}
+
 /**
  * For each unrelated crossing, put a jumper on the overlying route
  * (lexicographically greater id).

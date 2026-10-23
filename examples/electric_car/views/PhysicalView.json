@@ -3,6 +3,7 @@
   "viewId": "PhysicalArchitecture::PhysicalView",
   "name": "PhysicalView",
   "structureNotation": "sysmlv2",
+  "hierarchicalLevelsOverride": 3,
   "nodes": {
     "PhysicalArchitecture::VehiclePhysical": {
       "x": -308.4231717897994,

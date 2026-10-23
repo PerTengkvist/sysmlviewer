@@ -237,12 +237,12 @@ class ProjectService:
         if not project:
             return None
 
-        file_id = new_id()
         existing_paths = {f.relative_path() for f in project.files}
         rel = self._resolve_file_path(name, source_path, existing_paths)
         display_name = Path(rel).name
+        # File id is the relative path so Model-tree folders follow the filesystem.
         sysml_file = SysmlFile(
-            id=file_id,
+            id=rel,
             name=display_name,
             content=content,
             warnings=[],
@@ -277,8 +277,6 @@ class ProjectService:
 
         rel = sanitize_rel_path(path, "untitled.sysml")
         existing_paths = {f.relative_path() for f in project.files}
-        if rel in existing_paths:
-            raise ValueError(f"File already in project: {rel}")
 
         text = content
         if text is None:
@@ -295,6 +293,10 @@ class ProjectService:
             write_fn = getattr(self.repo, "write_sysml", None)
             if write_fn is not None:
                 write_fn(rel, text)
+
+        # Already discovered via disk scan — refresh content instead of duplicating.
+        if rel in existing_paths:
+            return self.refresh_file(project_id, rel, text)
 
         return self.add_file(project_id, Path(rel).name, text, source_path=rel)
 
@@ -407,6 +409,13 @@ class ProjectService:
         target = next((f for f in project.files if f.id == file_id), None)
         if not target:
             return None
+        rel = target.relative_path()
+        unlink_fn = getattr(self.repo, "delete_sysml", None)
+        if unlink_fn is not None:
+            try:
+                unlink_fn(rel)
+            except FileNotFoundError:
+                pass
         project.files = [f for f in project.files if f.id != file_id]
         self._reparse_all_files(project)
         return self.repo.save(project)
@@ -456,6 +465,7 @@ class ProjectService:
                 except FileExistsError:
                     return None
             target.path = new_rel
+            target.id = new_rel
             target.name = Path(new_rel).name
 
         project.updated_at = utc_now()

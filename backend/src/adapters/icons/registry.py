@@ -6,7 +6,7 @@ from typing import Callable, Protocol
 
 from adapters.icons.energy import DEFAULT_STYLE as ENERGY_DEFAULT_STYLE
 from adapters.icons.energy import EnergyIconsFetcher
-from adapters.icons.iconmind import IconMindFetcher
+from adapters.icons.iconmind import ICONMIND_VARIANT, IconMindFetcher
 from adapters.icons.iconoven import DEFAULT_STYLE as ICONOVEN_DEFAULT_STYLE
 from adapters.icons.iconoven import IconOvenFetcher
 from domain.icon_catalog import curated_ids
@@ -22,8 +22,7 @@ _REGISTRY: dict[str, FetcherFactory] = {}
 
 
 def _iconmind_factory(style: str) -> IconMindFetcher:
-    # IconMind currently exposes one cell; style is accepted for API symmetry.
-    return IconMindFetcher()
+    return IconMindFetcher(style=style or ICONMIND_VARIANT)
 
 
 def _iconoven_factory(style: str) -> IconOvenFetcher:

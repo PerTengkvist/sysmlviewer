@@ -6,10 +6,10 @@ One open workspace folder. The project file lives at the **folder root**:
 
 ```
 {workspace}/
-  project.json     # id, projektnamn, created, updated, sysmlfiles
+  project.json     # id, projektnamn/name, created, updated
   state.json       # files metadata, semantic, visualization, views, sheet
   views/*.json     # per-view node/edge geometry overlays
-  **/*.sysml       # source files (paths listed in project.json sysmlfiles)
+  **/*.sysml       # source files (discovered from disk on every load)
 ```
 
 Open / create via:
@@ -19,7 +19,17 @@ Open / create via:
 
 Without `-f`/`-p` the session starts empty (no catalog under `data/projects`).
 
-SysML on disk is read-only for the viewer. Sheet and semantic cache live in `state.json`. Per-view layout lives under `views/`.
+### SysML discovery
+
+Every `*.sysml` under the workspace root is part of the project. Membership is scanned on load (`get` / `GET /projects/{id}`); there is no `sysmlfiles` list in `project.json`. Legacy `sysmlfiles` keys are ignored if present.
+
+File `id` equals the relative path (e.g. `lib/main.sysml`), so Model and Files trees mirror folders without extra frontend wiring.
+
+Scan skips path segments: `views`, `icons`, `.sysmlviewer`, `docs`, `.git`, `node_modules`.
+
+Deleting a file via the API removes the `.sysml` from disk. Adding a file writes (or refreshes) content at that relative path.
+
+SysML on disk is otherwise treated as source of truth for parsing. Sheet and semantic cache live in `state.json`. Per-view layout lives under `views/`.
 
 `state.json` → `visualization`: global style, port anchors, and edge routing keyed by artifact id.
 

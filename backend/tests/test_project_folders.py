@@ -26,7 +26,7 @@ def test_project_folder_layout_on_disk(tmp_path: Path):
     assert (tmp_path / "project.json").exists()
     manifest = (tmp_path / "project.json").read_text(encoding="utf-8")
     assert '"projektnamn": "Folder"' in manifest
-    assert '"sysmlfiles"' in manifest
+    assert '"sysmlfiles"' not in manifest
     assert (tmp_path / "lib" / "main.sysml").exists()
     assert (tmp_path / "state.json").exists()
     assert not (tmp_path / project_id).exists()
@@ -41,6 +41,7 @@ def test_delete_and_rename_file(tmp_path: Path):
         client, project_id, tmp_path, "a.sysml", "package A { part X; }\n"
     )
     file_id = uploaded["files"][0]["id"]
+    assert file_id == "a.sysml"
     assert (tmp_path / "a.sysml").exists()
 
     renamed = client.patch(api_url(f"/projects/{project_id}/files/item/{file_id}"),
@@ -48,17 +49,20 @@ def test_delete_and_rename_file(tmp_path: Path):
     ).json()
     assert renamed["files"][0]["name"] == "renamed.sysml"
     assert renamed["files"][0]["path"] == "renamed.sysml"
+    assert renamed["files"][0]["id"] == "renamed.sysml"
     assert (tmp_path / "renamed.sysml").exists()
     assert not (tmp_path / "a.sysml").exists()
     assert (tmp_path / "renamed.sysml").read_text(encoding="utf-8") == (
         "package A { part X; }\n"
     )
 
-    deleted = client.delete(api_url(f"/projects/{project_id}/files/item/{file_id}")).json()
+    deleted = client.delete(
+        api_url(f"/projects/{project_id}/files/item/renamed.sysml")
+    ).json()
     assert deleted["files"] == []
     assert deleted["semantic"] == {}
-    # SysML sources are not deleted from disk when removed from the project.
-    assert (tmp_path / "renamed.sysml").exists()
+    # Delete removes the SysML source from disk (disk is membership source of truth).
+    assert not (tmp_path / "renamed.sysml").exists()
 
 
 def test_parse_project_cross_file_import_and_inheritance():

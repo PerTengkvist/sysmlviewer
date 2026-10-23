@@ -29,7 +29,9 @@ def test_project_crud_and_add_file_from_path(tmp_path: Path):
 
     assert len(uploaded["files"]) == 1
     assert uploaded["files"][0]["path"] == "vehicle.sysml"
+    assert uploaded["files"][0]["id"] == "vehicle.sysml"
     assert "Example::Vehicle" in uploaded["semantic"]
+    assert uploaded["semantic"]["Example::Vehicle"]["fileId"] == "vehicle.sysml"
     assert "Example::Vehicle" in uploaded["visualization"]["nodes"]
     assert uploaded["views"] == []
 
@@ -44,6 +46,21 @@ def test_project_crud_and_add_file_from_path(tmp_path: Path):
     refreshed = client.post(api_url(f"/projects/{project_id}/files/refresh/{file_id}"),
     ).json()
     assert refreshed["visualization"]["nodes"]["Example::Vehicle"]["x"] == 777
+
+
+def test_add_nested_file_uses_path_as_id(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    (tmp_path / "subdir").mkdir()
+    (tmp_path / "subdir" / "n.sysml").write_text(
+        "package Nested { part P; }\n", encoding="utf-8"
+    )
+    uploaded = client.post(
+        api_url(f"/projects/{project_id}/files"),
+        json={"path": "subdir/n.sysml"},
+    ).json()
+    assert uploaded["files"][0]["id"] == "subdir/n.sysml"
+    assert uploaded["files"][0]["path"] == "subdir/n.sysml"
+    assert uploaded["semantic"]["Nested"]["fileId"] == "subdir/n.sysml"
 
 
 def test_delete_project_removes_manifest(tmp_path: Path):
@@ -88,6 +105,39 @@ def test_add_file_path_escape_returns_400(tmp_path: Path):
         json={"path": "../outside.sysml"},
     )
     assert res.status_code == 400
+
+
+def test_delete_file_removes_from_disk(tmp_path: Path):
+    client, project_id = _client(tmp_path)
+    (tmp_path / "gone.sysml").write_text(
+        "package Gone { part X; }\n", encoding="utf-8"
+    )
+    uploaded = client.post(
+        api_url(f"/projects/{project_id}/files"),
+        json={"path": "gone.sysml"},
+    ).json()
+    file_id = uploaded["files"][0]["id"]
+    assert (tmp_path / "gone.sysml").exists()
+
+    deleted = client.delete(
+        api_url(f"/projects/{project_id}/files/item/{file_id}")
+    ).json()
+    assert deleted["files"] == []
+    assert not (tmp_path / "gone.sysml").exists()
+
+
+def test_external_sysml_appears_on_get_project(tmp_path: Path):
+    """Files dropped on disk without API add are discovered on reload."""
+    client, project_id = _client(tmp_path)
+    (tmp_path / "extra").mkdir()
+    (tmp_path / "extra" / "new.sysml").write_text(
+        "package Extra { part E; }\n", encoding="utf-8"
+    )
+    loaded = client.get(api_url(f"/projects/{project_id}")).json()
+    paths = [f["path"] for f in loaded["files"]]
+    assert "extra/new.sysml" in paths
+    assert "Extra" in loaded["semantic"]
+    assert loaded["semantic"]["Extra"]["fileId"] == "extra/new.sysml"
 
 
 def test_refresh_from_disk_reparses(tmp_path: Path):

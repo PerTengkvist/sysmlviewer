@@ -22,10 +22,10 @@ CURATED_LIBRARIES: dict[str, IconLibraryDef] = {
         "label": "IconMind",
         "enabled_default": True,
         "style_key": "variant",
-        "styles": ["outline-regular"],
+        "styles": ["outline-regular", "outline-thin", "duotone-regular"],
         "default_style": "outline-regular",
         "prefix": "iconmind/",
-        "description": "AI-era icons via @iconmind/icons (outline-regular).",
+        "description": "AI-era icons via @iconmind/icons (outline/duotone variants).",
     },
     "iconoven": {
         "id": "iconoven",

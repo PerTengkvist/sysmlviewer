@@ -126,4 +126,55 @@ describe('buildStructureGraph _icon', () => {
     expect((plain!.data as PartNodeData).iconName ?? null).toBeNull()
     expect((plain!.data as PartNodeData).iconBodyName ?? null).toBeNull()
   })
+
+  it('marks whitebox root with children as childrenVisible', () => {
+    const whiteboxView: ViewPayload = {
+      ...view,
+      diagramMode: 'whitebox',
+    }
+    const { nodes } = buildStructureGraph({
+      view: whiteboxView,
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+      structureNotation: 'sysmlv2',
+    })
+    const car = nodes.find((n) => n.id === 'P::Car')
+    const ecu = nodes.find((n) => n.id === 'P::Car::ecu')
+    const plain = nodes.find((n) => n.id === 'P::Car::plain')
+    expect((car!.data as PartNodeData).childrenVisible).toBe(true)
+    expect((ecu!.data as PartNodeData).childrenVisible).toBe(false)
+    expect((plain!.data as PartNodeData).childrenVisible).toBe(false)
+  })
+
+  it('marks nested container parts as childrenVisible', () => {
+    const nested: Record<string, SemanticElement> = {
+      ...semantic,
+      'P::Car::ecu': part('P::Car::ecu', 'ecu', 'P::Car', [
+        'P::Car::ecu::_icon',
+        'P::Car::ecu::_icon_body',
+        'P::Car::ecu::voltage',
+        'P::Car::ecu::sw',
+      ]),
+      'P::Car::ecu::sw': part('P::Car::ecu::sw', 'sw', 'P::Car::ecu'),
+    }
+    const { nodes } = buildStructureGraph({
+      view: { ...view, diagramMode: 'whitebox', semantic: nested },
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+      structureNotation: 'sysmlv2',
+    })
+    const ecu = nodes.find((n) => n.id === 'P::Car::ecu')
+    expect((ecu!.data as PartNodeData).childrenVisible).toBe(true)
+    expect((ecu!.data as PartNodeData).iconBodyName).toBe('cloud')
+  })
 })

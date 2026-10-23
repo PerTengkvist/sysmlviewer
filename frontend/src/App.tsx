@@ -1602,6 +1602,7 @@ export default function App() {
                   settings.selectedConnectionLinewidthFactor
                 }
                 connectionSeparation={settings.connectionSeparation}
+                showJumpers={settings.showJumpers}
                 sheet={sheet}
                 selectedIds={selectedIds}
                 relationTodos={relationTodos}
