@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  collectDistributePortMoves,
   distributePortPlacements,
   portPointOnPart,
 } from './distributePorts'
@@ -57,5 +58,23 @@ describe('distributePortPlacements', () => {
     expect(patch.a?.offset).toBeCloseTo(0.1, 5)
     expect(patch.c?.offset).toBeCloseTo(0.9, 5)
     expect(patch.b?.offset).toBeCloseTo(0.5, 5)
+  })
+})
+
+describe('collectDistributePortMoves', () => {
+  it('returns sync PortMove list ready to persist', () => {
+    const moves = collectDistributePortMoves(
+      [
+        { id: 'top', side: 'left', offset: 0.2 },
+        { id: 'mid', side: 'left', offset: 0.25 },
+        { id: 'bot', side: 'left', offset: 0.8 },
+      ],
+      'vertical',
+      { width: 100, height: 100, isBoundary: true },
+    )
+    expect(moves.map((m) => m.portId).sort()).toEqual(['bot', 'mid', 'top'])
+    const mid = moves.find((m) => m.portId === 'mid')
+    expect(mid?.side).toBe('left')
+    expect(mid?.offset).toBeCloseTo(0.5, 5)
   })
 })

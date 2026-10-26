@@ -155,6 +155,62 @@ describe('asAngularForLayout', () => {
     expect(out.map((e) => e.id)).toEqual(['c1'])
     expect((out[0]!.data as { routing: string }).routing).toBe('angular')
   })
+
+  it('includes port-port bindings by default and promotes to angular', () => {
+    const edges: Edge[] = [
+      {
+        id: 'b1',
+        source: 'ecu',
+        target: 'sw',
+        sourceHandle: 'ecu::in',
+        targetHandle: 'target:sw::in',
+        data: { routing: 'direct', relationKind: 'binding' },
+      },
+    ]
+    const out = asAngularForLayout(edges)
+    expect(out.map((e) => e.id)).toEqual(['b1'])
+    expect((out[0]!.data as { routing: string }).routing).toBe('angular')
+  })
+
+  it('excludes bindings when includeBindings is false', () => {
+    const edges: Edge[] = [
+      {
+        id: 'c1',
+        source: 'a',
+        target: 'b',
+        sourceHandle: 'a::out',
+        targetHandle: 'target:b::in',
+        data: { routing: 'direct', relationKind: 'connection' },
+      },
+      {
+        id: 'b1',
+        source: 'ecu',
+        target: 'sw',
+        sourceHandle: 'ecu::in',
+        targetHandle: 'target:sw::in',
+        data: { routing: 'direct', relationKind: 'binding' },
+      },
+    ]
+    const out = asAngularForLayout(edges, { includeBindings: false })
+    expect(out.map((e) => e.id)).toEqual(['c1'])
+  })
+
+  it('excludes rel-handle bindings even when includeBindings is true', () => {
+    const edges: Edge[] = [
+      {
+        id: 'b1',
+        source: 'a',
+        target: 'b',
+        sourceHandle: 'rel-src-b1',
+        targetHandle: 'rel-tgt-b1',
+        data: { routing: 'direct', relationKind: 'binding' },
+      },
+    ]
+    expect(asAngularForLayout(edges).map((e) => e.id)).toEqual([])
+    expect(
+      asAngularForLayout(edges, { includeBindings: true }).map((e) => e.id),
+    ).toEqual([])
+  })
 })
 
 describe('portFromElk', () => {

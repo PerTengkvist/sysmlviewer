@@ -251,12 +251,12 @@ package PhysicalArchitecture {
     #implements dependency from chargeInletMech to LogicalCounterparts::chargeInlet;
 
     // Internal ECU↔SW bindings (proxy faces on the parent).
-    connection maneuvrabilityDirectionIn connect maneuvrabilityEcu.directionIn to maneuvrabilityEcu.maneuvrabilityControlSw.directionIn;
-    connection maneuvrabilityDirectionOut connect maneuvrabilityEcu.maneuvrabilityControlSw.directionOut to maneuvrabilityEcu.directionOut;
-    connection engineGearIn connect engineEcu.gearIn to engineEcu.engineControlSw.gearIn;
-    connection engineTorqueIn connect engineEcu.torqueIn to engineEcu.engineControlSw.torqueIn;
-    connection batteryEnergyOut connect batteryEcu.batteryControlSw.energyOut to batteryEcu.energyOut;
-    connection batteryChargeIn connect batteryEcu.chargeIn to batteryEcu.batteryControlSw.chargeIn;
+    bind maneuvrabilityEcu.directionIn = maneuvrabilityEcu.maneuvrabilityControlSw.directionIn;
+    bind maneuvrabilityEcu.directionOut = maneuvrabilityEcu.maneuvrabilityControlSw.directionOut;
+    bind engineEcu.gearIn = engineEcu.engineControlSw.gearIn;
+    bind engineEcu.torqueIn = engineEcu.engineControlSw.torqueIn;
+    bind batteryEcu.energyOut = batteryEcu.batteryControlSw.energyOut;
+    bind batteryEcu.chargeIn = batteryEcu.batteryControlSw.chargeIn;
 
     // External peer connections (ECU proxy ports ↔ mechanical peers).
     connection direction connect maneuvrabilityEcu.directionOut to wheelSet.directionIn;
@@ -275,7 +275,7 @@ package PhysicalArchitecture {
   view def PhysicalView : GeneralView {
     doc /* Physical whitebox. Software nested in its computer, mechanical parts beside them, provider and consumer ports with their connections. Climate and entertainment share infotainmentEcu. */
     expose VehiclePhysical;
-    filter @PartUsage or @PortUsage or @ConnectionUsage;
+    filter @PartUsage or @PortUsage or @ConnectionUsage or @BindingConnectorAsUsage;
   }
 
   view def PhysicalDependenciesView : GeneralView {

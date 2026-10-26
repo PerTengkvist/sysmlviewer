@@ -323,13 +323,24 @@ function collectLinks(edges: Edge[]): ConnLink[] {
   return out
 }
 
+export type StructureEdgesForLayoutOpts = {
+  /** When false, exclude binding edges from redraw / AutoLayout. Default true. */
+  includeBindings?: boolean
+}
+
 /**
  * Edges that participate in structure AutoLayout / angular redraw:
  * port-to-port connections (and connection relationKind), including `direct`.
+ * Port–port bindings are included unless `includeBindings` is false.
  */
-export function structureEdgesForLayout(edges: Edge[]): Edge[] {
+export function structureEdgesForLayout(
+  edges: Edge[],
+  opts?: StructureEdgesForLayoutOpts,
+): Edge[] {
+  const includeBindings = opts?.includeBindings !== false
   return edges.filter((e) => {
     const data = (e.data || {}) as { relationKind?: string; routing?: string }
+    if (data.relationKind === 'binding' && !includeBindings) return false
     if (data.relationKind === 'connection') return true
     const sp = e.sourceHandle || ''
     const tp = e.targetHandle || ''
@@ -340,8 +351,11 @@ export function structureEdgesForLayout(edges: Edge[]): Edge[] {
 }
 
 /** Promote structure edges to angular so the layout router includes them. */
-export function asAngularForLayout(edges: Edge[]): Edge[] {
-  return structureEdgesForLayout(edges).map((e) => ({
+export function asAngularForLayout(
+  edges: Edge[],
+  opts?: StructureEdgesForLayoutOpts,
+): Edge[] {
+  return structureEdgesForLayout(edges, opts).map((e) => ({
     ...e,
     data: {
       ...((e.data || {}) as Record<string, unknown>),

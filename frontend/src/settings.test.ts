@@ -148,3 +148,24 @@ describe('settings showJumpers', () => {
     expect(loadSettings().showJumpers).toBe(false)
   })
 })
+
+describe('settings includeBindingsInRouting', () => {
+  it('defaults to true', () => {
+    expect(DEFAULT_SETTINGS.includeBindingsInRouting).toBe(true)
+    expect(loadSettings().includeBindingsInRouting).toBe(true)
+  })
+
+  it('round-trips false through save/load', () => {
+    saveSettings({ ...DEFAULT_SETTINGS, includeBindingsInRouting: false })
+    expect(loadSettings().includeBindingsInRouting).toBe(false)
+  })
+
+  it('falls back to true when missing from stored JSON', () => {
+    const { includeBindingsInRouting: _omit, ...rest } = DEFAULT_SETTINGS
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify(rest),
+    )
+    expect(loadSettings().includeBindingsInRouting).toBe(true)
+  })
+})

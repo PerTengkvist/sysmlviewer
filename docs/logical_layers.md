@@ -73,7 +73,7 @@ Use the right relation for the semantics you need in `GeneralView`:
 | **connection** | `connection … connect portA to portB` | Structural/interface coupling between ports (control, data, power). Used throughout layers 1–4, e.g. orchestrator → cluster in `data_center_logical.sysml`. |
 | **dependency** | `dependency from A to B` | Soft “depends on” between parts without port wiring — e.g. a workload part that requires a platform service but does not expose a dedicated port pair. |
 | **allocation** | `allocate logicalPart to physicalPart` | Maps logical capacity or workload to physical realization. Layer 4 uses port-level `connection` with `alloc*` names today; prefer explicit `allocate` for new logical→physical links. |
-| **binding** | `bind attrA = attrB` | Same value/reference on two features (e.g. aggregate temperature equals sensor reading). |
+| **binding** | `bind attrA = attrB` / `bind parentPort = child.port` | Same value/reference on two features — e.g. aggregate temperature equals sensor reading, or a parent proxy port identical to a nested child port. |
 | **flow** | `flow … from portA to portB` | Directed item/energy flow distinct from a generic connection. |
 | **specialization** | `part def X :> Y` | Type hierarchy between part definitions (shown as a diagram edge plus `typeRef`). |
 | **subsetting / redefinition** | `part x subsets y` / `part x redefines y` | Restrict or replace inherited features between part usages. |

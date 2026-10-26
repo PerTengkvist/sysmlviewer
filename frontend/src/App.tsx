@@ -1603,6 +1603,7 @@ export default function App() {
                 }
                 connectionSeparation={settings.connectionSeparation}
                 showJumpers={settings.showJumpers}
+                includeBindingsInRouting={settings.includeBindingsInRouting}
                 sheet={sheet}
                 selectedIds={selectedIds}
                 relationTodos={relationTodos}

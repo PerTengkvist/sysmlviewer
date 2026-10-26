@@ -394,6 +394,17 @@ export function SettingsDialog({
                 title="When off, crossing jumpers are hidden and not computed on redraw."
               />
             </label>
+            <label className="settings-row">
+              <span>Include bindings in Redraw / AutoLayout</span>
+              <input
+                type="checkbox"
+                checked={settings.includeBindingsInRouting}
+                onChange={(e) =>
+                  patch({ includeBindingsInRouting: e.target.checked })
+                }
+                title="When off, Redraw: Connections and AutoLayout skip binding edges."
+              />
+            </label>
           </fieldset>
           <fieldset className="settings-fieldset">
             <legend>Icon libraries</legend>

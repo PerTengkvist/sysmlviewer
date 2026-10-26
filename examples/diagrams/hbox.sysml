@@ -27,7 +27,7 @@ package hbox {
     port event : EventPort;
     attribute eventlog : List;
     attribute status : String;
-    connection conn1 connect EventBroker.event to event;
+    bind event = EventBroker.event;
     connection conn2 connect BoxB.event to EventBroker.event;
     connection conn3 connect BoxC.event to EventBroker.event;
     connection conn4 connect BoxA.event to EventBroker.event;

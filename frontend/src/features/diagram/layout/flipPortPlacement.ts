@@ -74,6 +74,42 @@ export function flipPortList(
   })
 }
 
+export type FlipNodeInput = {
+  id: string
+  height?: number | null
+  styleHeight?: number | null
+  ports: FlippablePort[]
+  isBoundary?: boolean
+}
+
+/**
+ * Compute port moves for Flip from live node port lists (sync; safe to persist).
+ * Does not read React state updaters.
+ */
+export function collectFlipPortMoves(
+  nodes: FlipNodeInput[],
+  partIds: Set<string>,
+  axis: FlipAxis,
+  heightFallback: (nodeId: string) => number = () => 120,
+): Array<{ portId: string; side: PortSide; offset: number }> {
+  const moves: Array<{ portId: string; side: PortSide; offset: number }> = []
+  for (const node of nodes) {
+    if (!partIds.has(node.id) || !node.ports.length) continue
+    const partH =
+      Number(node.styleHeight) ||
+      Number(node.height) ||
+      heightFallback(node.id) ||
+      120
+    const flipped = flipPortList(node.ports, axis, partH, {
+      isBoundary: !!node.isBoundary,
+    })
+    for (const p of flipped) {
+      moves.push({ portId: p.id, side: p.side, offset: p.offset })
+    }
+  }
+  return moves
+}
+
 /**
  * Build a viz node patch for ports belonging to `partIds` that already have
  * saved side/offset in visualization (legacy helper).

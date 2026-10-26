@@ -69,6 +69,7 @@ export function usesPortHandles(
   if (relationKind === 'connection') return true
   if (relationKind === 'interface') return true
   if (relationKind === 'flow') return sourceKind === 'port' && targetKind === 'port'
+  if (relationKind === 'binding') return sourceKind === 'port' && targetKind === 'port'
   return false
 }
 

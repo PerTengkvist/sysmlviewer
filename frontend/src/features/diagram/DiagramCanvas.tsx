@@ -79,8 +79,8 @@ import { IconToolbarButton } from './IconToolbarButton'
 import { TOOLBAR_ICONS } from './iconRef'
 import { PortMarqueeLayer } from './PortMarqueeLayer'
 import { VizHistory } from './vizHistory'
-import { flipPortList } from './layout/flipPortPlacement'
-import { distributePortPlacements } from './layout/distributePorts'
+import { collectFlipPortMoves } from './layout/flipPortPlacement'
+import { collectDistributePortMoves } from './layout/distributePorts'
 import { distributeFlowSelection } from './layout/distributeNodes'
 import { allDiagramIds, handleCanvasShortcut } from './canvasShortcuts'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
@@ -473,6 +473,10 @@ type Props = {
   connectionSeparation?: number
   /** When false, hide and skip computing crossing jumpers. */
   showJumpers?: boolean
+  /**
+   * When true (default), include port–port bindings in Redraw / AutoLayout.
+   */
+  includeBindingsInRouting?: boolean
   selectedIds?: string[]
   relationTodos?: RelationTodo[]
   pendingChangeColor?: string
@@ -531,6 +535,7 @@ export function DiagramCanvas({
   selectedConnectionLinewidthFactor = 3,
   connectionSeparation = EDGE_LABEL_TEXT_HEIGHT_PX,
   showJumpers = true,
+  includeBindingsInRouting = true,
   selectedIds = [],
   relationTodos = [],
   pendingChangeColor = '#dc2626',
@@ -585,12 +590,14 @@ export function DiagramCanvas({
   const nodesRef = useRef<Node[]>([])
   const vizHistoryRef = useRef(new VizHistory())
   const showJumpersRef = useRef(showJumpers)
+  const includeBindingsRef = useRef(includeBindingsInRouting)
   /** Viewport per view, kept in memory for the session only. */
   const viewportCache = useRef(new Map<string, { x: number; y: number; zoom: number }>())
   viewRef.current = view
   edgesRef.current = edges
   nodesRef.current = nodes
   showJumpersRef.current = showJumpers
+  includeBindingsRef.current = includeBindingsInRouting
   const onOpenViewRef = useRef(onOpenView)
   const onPortMovedRef = useRef(onPortMoved)
   const onRelationEndMovedRef = useRef(onRelationEndMoved)
@@ -1441,8 +1448,11 @@ export function DiagramCanvas({
       const contextEdges = edges
       const routeEdges = Array.isArray(overrideEdges) ? overrideEdges : contextEdges
       if (!routeNodes.length || !routeEdges.length) return
-      const angularContext = asAngularForLayout(contextEdges)
-      const angularRoute = asAngularForLayout(routeEdges)
+      const layoutOpts = {
+        includeBindings: includeBindingsRef.current,
+      }
+      const angularContext = asAngularForLayout(contextEdges, layoutOpts)
+      const angularRoute = asAngularForLayout(routeEdges, layoutOpts)
       const existing = angularContext.map((edge) => {
         const data = (edge.data || {}) as SysmlEdgeData
         return { id: edge.id, waypoints: data.waypoints || [] }
@@ -1528,7 +1538,14 @@ export function DiagramCanvas({
         onNodesMovedRef.current({}, edgePatch)
       })
     },
-    [nodes, edges, connectionSeparation, currentViewBounds, showJumpers],
+    [
+      nodes,
+      edges,
+      connectionSeparation,
+      currentViewBounds,
+      showJumpers,
+      includeBindingsInRouting,
+    ],
   )
 
   const pushVizHistory = useCallback(() => {
@@ -1586,44 +1603,27 @@ export function DiagramCanvas({
         selectedIdsRef.current.filter((id) => semantic[id]?.kind === 'part'),
       )
       if (!partIds.size) return
-      pushVizHistory()
-      const patch: Record<string, Partial<VisualizationNode>> = {}
-      setNodes((current) =>
-        current.map((node) => {
-          if (!partIds.has(node.id)) return node
+      // Compute moves sync from live nodes — never build the persist patch
+      // inside a setState updater (React may defer it; patch stayed empty).
+      const moves = collectFlipPortMoves(
+        nodesRef.current.map((node) => {
           const data = node.data as PartNodeData
-          if (!data.ports?.length) return node
-          const partH =
-            Number(node.style?.height) ||
-            node.height ||
-            viewRef.current?.visualization.nodes[node.id]?.height ||
-            120
-          const flipped = flipPortList(data.ports, axis, partH, {
-            isBoundary: !!data.isBoundary,
-          })
-          for (const p of flipped) {
-            patch[p.id] = {
-              artifactId: p.id,
-              side: p.side,
-              offset: p.offset,
-            }
-          }
           return {
-            ...node,
-            data: {
-              ...data,
-              ports: data.ports.map((p) => {
-                const next = flipped.find((f) => f.id === p.id)
-                return next
-                  ? { ...p, side: next.side, offset: next.offset }
-                  : p
-              }),
-            },
+            id: node.id,
+            height: node.height,
+            styleHeight: Number(node.style?.height) || null,
+            ports: data.ports || [],
+            isBoundary: !!data.isBoundary,
           }
         }),
+        partIds,
+        axis,
+        (nodeId) =>
+          viewRef.current?.visualization.nodes[nodeId]?.height ?? 120,
       )
-      if (!Object.keys(patch).length) return
-      onNodesMovedRef.current(patch)
+      if (!moves.length) return
+      pushVizHistory()
+      handlePortsMovedRef.current(moves)
     },
     [pushVizHistory],
   )
@@ -1652,70 +1652,35 @@ export function DiagramCanvas({
     (axis: 'horizontal' | 'vertical') => {
       if (selectedPortIds.length < 2) return
       const wanted = new Set(selectedPortIds)
-      // Group selected ports by owning part node.
-      type Group = {
-        nodeId: string
-        ports: { id: string; side: PortSide; offset: number }[]
-        width: number
-        height: number
-        isBoundary: boolean
-      }
-      const groups = new Map<string, Group>()
+      const moves: PortMove[] = []
       for (const node of nodesRef.current) {
         const data = node.data as PartNodeData | undefined
         if (!data?.ports?.length) continue
         const picked = data.ports.filter((p) => wanted.has(p.id))
         if (!picked.length) continue
-        groups.set(node.id, {
-          nodeId: node.id,
-          ports: picked.map((p) => ({
-            id: p.id,
-            side: p.side,
-            offset: p.offset,
-          })),
-          ...nodeBoxSize(node, {
-            width: viewRef.current?.visualization.nodes[node.id]?.width,
-            height: viewRef.current?.visualization.nodes[node.id]?.height,
-          }),
-          isBoundary: !!data.isBoundary,
+        const size = nodeBoxSize(node, {
+          width: viewRef.current?.visualization.nodes[node.id]?.width,
+          height: viewRef.current?.visualization.nodes[node.id]?.height,
         })
-      }
-      if (!groups.size) return
-      pushVizHistory()
-      const patch: Record<string, Partial<VisualizationNode>> = {}
-      setNodes((current) =>
-        current.map((node) => {
-          const group = groups.get(node.id)
-          if (!group) return node
-          const data = node.data as PartNodeData
-          const distributed = distributePortPlacements(group.ports, axis, {
-            width: group.width,
-            height: group.height,
-            isBoundary: group.isBoundary,
-          })
-          if (!Object.keys(distributed).length) return node
-          for (const [id, next] of Object.entries(distributed)) {
-            patch[id] = {
-              artifactId: id,
-              side: next.side,
-              offset: next.offset,
-            }
-          }
-          return {
-            ...node,
-            data: {
-              ...data,
-              ports: data.ports.map((p) => {
-                const next = distributed[p.id]
-                return next
-                  ? { ...p, side: next.side, offset: next.offset }
-                  : p
-              }),
+        moves.push(
+          ...collectDistributePortMoves(
+            picked.map((p) => ({
+              id: p.id,
+              side: p.side,
+              offset: p.offset,
+            })),
+            axis,
+            {
+              width: size.width,
+              height: size.height,
+              isBoundary: !!data.isBoundary,
             },
-          }
-        }),
-      )
-      if (Object.keys(patch).length) onNodesMovedRef.current(patch)
+          ),
+        )
+      }
+      if (!moves.length) return
+      pushVizHistory()
+      handlePortsMovedRef.current(moves)
     },
     [selectedPortIds, pushVizHistory],
   )
@@ -2038,7 +2003,9 @@ export function DiagramCanvas({
     // every part in one vertical column, and routing stays "direct".
     setAutoLayoutBusy(true)
     try {
-    const structureEdges = asAngularForLayout(edges)
+    const structureEdges = asAngularForLayout(edges, {
+      includeBindings: includeBindingsRef.current,
+    })
     const existing = structureEdges.map((edge) => {
       const data = (edge.data || {}) as SysmlEdgeData
       return { id: edge.id, waypoints: data.waypoints || [] }
@@ -2157,7 +2124,7 @@ export function DiagramCanvas({
     } finally {
       setAutoLayoutBusy(false)
     }
-  }, [nodes, edges, connectionSeparation, showJumpers])
+  }, [nodes, edges, connectionSeparation, showJumpers, includeBindingsInRouting])
 
   // Hide jumpers immediately when the setting turns off (keep waypoints).
   useEffect(() => {
