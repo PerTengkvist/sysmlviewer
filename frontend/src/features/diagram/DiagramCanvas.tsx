@@ -500,6 +500,10 @@ type Props = {
   ) => void
   onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
+  /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
+  onPortsMoved?: (
+    moves: { portId: string; side: PortSide; offset: number }[],
+  ) => void
   onRelationEndMoved?: (
     artifactId: string,
     end: 'source' | 'target',
@@ -549,6 +553,7 @@ export function DiagramCanvas({
   onNodesMoved,
   onLayoutRulesChange,
   onPortMoved,
+  onPortsMoved,
   onRelationEndMoved,
   onConnectPorts,
   onWaypointsMoved,
@@ -600,6 +605,7 @@ export function DiagramCanvas({
   includeBindingsRef.current = includeBindingsInRouting
   const onOpenViewRef = useRef(onOpenView)
   const onPortMovedRef = useRef(onPortMoved)
+  const onPortsMovedRef = useRef(onPortsMoved)
   const onRelationEndMovedRef = useRef(onRelationEndMoved)
   const onConnectPortsRef = useRef(onConnectPorts)
   const onWaypointsMovedRef = useRef(onWaypointsMoved)
@@ -624,7 +630,11 @@ export function DiagramCanvas({
     (overrideNodes?: Node[], overrideEdges?: Edge[]) => void
   >(() => {})
   const applyRedrawConnectionsRef = useRef<
-    (overrideNodes?: Node[], overrideEdges?: Edge[]) => void
+    (
+      overrideNodes?: Node[],
+      overrideEdges?: Edge[],
+      opts?: { includeBindings?: boolean },
+    ) => void
   >(() => {})
   const handlePortMovedRef = useRef<
     (portId: string, side: PortSide, offset: number) => void
@@ -649,6 +659,7 @@ export function DiagramCanvas({
   } | null>(null)
   onOpenViewRef.current = onOpenView
   onPortMovedRef.current = onPortMoved
+  onPortsMovedRef.current = onPortsMoved
   onRelationEndMovedRef.current = onRelationEndMoved
   onConnectPortsRef.current = onConnectPorts
   onWaypointsMovedRef.current = onWaypointsMoved
@@ -1441,7 +1452,11 @@ export function DiagramCanvas({
   }, [view])
 
   const applyRedrawConnections = useCallback(
-    (overrideNodes?: Node[], overrideEdges?: Edge[]) => {
+    (
+      overrideNodes?: Node[],
+      overrideEdges?: Edge[],
+      opts?: { includeBindings?: boolean },
+    ) => {
       // Only re-route edges — never patch part/port positions or sizes.
       // Routes stay inside the current viewport; off-screen endpoints are skipped.
       const routeNodes = Array.isArray(overrideNodes) ? overrideNodes : nodes
@@ -1449,7 +1464,10 @@ export function DiagramCanvas({
       const routeEdges = Array.isArray(overrideEdges) ? overrideEdges : contextEdges
       if (!routeNodes.length || !routeEdges.length) return
       const layoutOpts = {
-        includeBindings: includeBindingsRef.current,
+        // Port-move callers pass includeBindings: true so attached binds follow
+        // the port even when Settings excludes bindings from bulk Redraw.
+        includeBindings:
+          opts?.includeBindings ?? includeBindingsRef.current,
       }
       const angularContext = asAngularForLayout(contextEdges, layoutOpts)
       const angularRoute = asAngularForLayout(routeEdges, layoutOpts)
@@ -1727,6 +1745,7 @@ export function DiagramCanvas({
       const tgt = (edge.targetHandle || '').replace(/^target:/, '')
       return movedIds.has(src) || movedIds.has(tgt)
     })
+    // Include angular bindings and connections attached to moved ports.
     const angular = connected.filter((edge) => {
       const data = (edge.data || {}) as SysmlEdgeData
       return (data.routing || 'angular') === 'angular'
@@ -1736,16 +1755,23 @@ export function DiagramCanvas({
         requestAnimationFrame(() => {
           const nodesForRoute =
             nodesRef.current.length > 0 ? nodesRef.current : nextNodes
-          applyRedrawConnectionsRef.current(nodesForRoute, angular)
+          // Always include bindings so proxy binds follow the port after Flip /
+          // Distribute / drag (Settings toggle still gates bulk Redraw).
+          applyRedrawConnectionsRef.current(nodesForRoute, angular, {
+            includeBindings: true,
+          })
         })
       })
+    }
+    if (onPortsMovedRef.current) {
+      onPortsMovedRef.current(moves)
+      return
     }
     if (moves.length === 1) {
       const m = moves[0]!
       onPortMovedRef.current(m.portId, m.side, m.offset)
       return
     }
-    // Batch persist via the multi-node visualization patch.
     const patch: Record<string, Partial<VisualizationNode>> = {}
     for (const m of moves) {
       patch[m.portId] = {

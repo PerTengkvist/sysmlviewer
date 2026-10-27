@@ -36,6 +36,8 @@ import {
   type AppSettings,
 } from './settings'
 import { structureNotationForPatch } from './features/diagram/structureNotationForPatch'
+import { clampPartSize } from './features/diagram/partSizeLimits'
+import { clampPortOffset } from './features/diagram/layout/portPlacement'
 import { copyStyle } from './features/diagram/formatPainter'
 import { getBrowserSessionId } from './features/session/browserSessionId'
 import {
@@ -632,38 +634,47 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
-  const onPortMoved = useCallback(
-    async (portId: string, side: PortSide, offset: number) => {
-      if (!project) return
+  const onPortsMoved = useCallback(
+    async (
+      moves: { portId: string; side: PortSide; offset: number }[],
+    ) => {
+      if (!project || !moves.length) return
       try {
         const viewId = viewPayload?.view.id
+        const nodes = Object.fromEntries(
+          moves.map((m) => [
+            m.portId,
+            { artifactId: m.portId, side: m.side, offset: m.offset },
+          ]),
+        )
         const patched = await api.patchVisualization(project.id, {
-          nodes: { [portId]: { artifactId: portId, side, offset } },
+          nodes,
           ...(viewId ? { viewId } : {}),
           structureNotation,
         })
         setProject(patched)
         setViewPayload((prev) => {
           if (!prev) return prev
-          const existing = prev.visualization.nodes[portId]
+          const nextNodes = { ...prev.visualization.nodes }
+          for (const m of moves) {
+            const existing = nextNodes[m.portId]
+            nextNodes[m.portId] = {
+              artifactId: m.portId,
+              x: existing?.x ?? 0,
+              y: existing?.y ?? 0,
+              width: existing?.width ?? 12,
+              height: existing?.height ?? 12,
+              symbolRef: existing?.symbolRef ?? 'default-port',
+              side: m.side,
+              offset: m.offset,
+              style: existing?.style,
+            }
+          }
           return {
             ...prev,
             visualization: {
               ...prev.visualization,
-              nodes: {
-                ...prev.visualization.nodes,
-                [portId]: {
-                  artifactId: portId,
-                  x: existing?.x ?? 0,
-                  y: existing?.y ?? 0,
-                  width: existing?.width ?? 12,
-                  height: existing?.height ?? 12,
-                  symbolRef: existing?.symbolRef ?? 'default-port',
-                  side,
-                  offset,
-                  style: existing?.style,
-                },
-              },
+              nodes: nextNodes,
             },
           }
         })
@@ -672,6 +683,13 @@ export default function App() {
       }
     },
     [project, viewPayload?.view.id, structureNotation],
+  )
+
+  const onPortMoved = useCallback(
+    async (portId: string, side: PortSide, offset: number) => {
+      await onPortsMoved([{ portId, side, offset }])
+    },
+    [onPortsMoved],
   )
 
   const onRelationEndMoved = useCallback(
@@ -904,64 +922,77 @@ export default function App() {
     [project, viewPayload?.view.id, structureNotation],
   )
 
-  const onStyleChange = useCallback(
-    async (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => {
-      if (!project) return
+  const onStylesChange = useCallback(
+    async (
+      styles: Record<string, ElementStyle>,
+      kind: 'node' | 'edge' = 'node',
+    ) => {
+      if (!project || !Object.keys(styles).length) return
       try {
         const patch =
           kind === 'edge'
-            ? { edges: { [artifactId]: { artifactId, style } } }
-            : { nodes: { [artifactId]: { artifactId, style } } }
+            ? {
+                edges: Object.fromEntries(
+                  Object.entries(styles).map(([id, style]) => [
+                    id,
+                    { artifactId: id, style },
+                  ]),
+                ),
+              }
+            : {
+                nodes: Object.fromEntries(
+                  Object.entries(styles).map(([id, style]) => [
+                    id,
+                    { artifactId: id, style },
+                  ]),
+                ),
+              }
         const patched = await api.patchVisualization(project.id, patch)
         setProject(patched)
         setViewPayload((prev) => {
           if (!prev) return prev
           if (kind === 'edge') {
-            const existing = prev.visualization.edges[artifactId]
+            const nextEdges = { ...prev.visualization.edges }
+            for (const [id, style] of Object.entries(styles)) {
+              const existing = nextEdges[id]
+              nextEdges[id] = {
+                artifactId: id,
+                routing: existing?.routing ?? 'direct',
+                waypoints: existing?.waypoints ?? [],
+                labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
+                style,
+                sourceSide: existing?.sourceSide,
+                sourceOffset: existing?.sourceOffset,
+                targetSide: existing?.targetSide,
+                targetOffset: existing?.targetOffset,
+                sourceAnchorId: existing?.sourceAnchorId,
+                targetAnchorId: existing?.targetAnchorId,
+                editLocked: existing?.editLocked,
+              }
+            }
             return {
               ...prev,
-              visualization: {
-                ...prev.visualization,
-                edges: {
-                  ...prev.visualization.edges,
-                [artifactId]: {
-                  artifactId,
-                  routing: existing?.routing ?? 'direct',
-                  waypoints: existing?.waypoints ?? [],
-                  labelOffset: existing?.labelOffset ?? { x: 0, y: 0 },
-                  style,
-                  sourceSide: existing?.sourceSide,
-                  sourceOffset: existing?.sourceOffset,
-                  targetSide: existing?.targetSide,
-                  targetOffset: existing?.targetOffset,
-                  sourceAnchorId: existing?.sourceAnchorId,
-                  targetAnchorId: existing?.targetAnchorId,
-                  editLocked: existing?.editLocked,
-                },
-                },
-              },
+              visualization: { ...prev.visualization, edges: nextEdges },
             }
           }
-          const existing = prev.visualization.nodes[artifactId]
+          const nextNodes = { ...prev.visualization.nodes }
+          for (const [id, style] of Object.entries(styles)) {
+            const existing = nextNodes[id]
+            nextNodes[id] = {
+              artifactId: id,
+              x: existing?.x ?? 0,
+              y: existing?.y ?? 0,
+              width: existing?.width ?? 180,
+              height: existing?.height ?? 100,
+              symbolRef: existing?.symbolRef ?? 'default-part',
+              side: existing?.side ?? null,
+              offset: existing?.offset ?? null,
+              style,
+            }
+          }
           return {
             ...prev,
-            visualization: {
-              ...prev.visualization,
-              nodes: {
-                ...prev.visualization.nodes,
-                [artifactId]: {
-                  artifactId,
-                  x: existing?.x ?? 0,
-                  y: existing?.y ?? 0,
-                  width: existing?.width ?? 180,
-                  height: existing?.height ?? 100,
-                  symbolRef: existing?.symbolRef ?? 'default-part',
-                  side: existing?.side ?? null,
-                  offset: existing?.offset ?? null,
-                  style,
-                },
-              },
-            },
+            visualization: { ...prev.visualization, nodes: nextNodes },
           }
         })
       } catch (e) {
@@ -969,6 +1000,13 @@ export default function App() {
       }
     },
     [project],
+  )
+
+  const onStyleChange = useCallback(
+    async (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => {
+      await onStylesChange({ [artifactId]: style }, kind)
+    },
+    [onStylesChange],
   )
 
   const vizFormatKind = useCallback(
@@ -1641,6 +1679,7 @@ export default function App() {
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
+                onPortsMoved={(moves) => void onPortsMoved(moves)}
                 onRelationEndMoved={(id, end, side, offset, companion) =>
                   void onRelationEndMoved(id, end, side, offset, companion)
                 }
@@ -1676,6 +1715,7 @@ export default function App() {
             onAutoroute={(id) => void onAutorouteConnection(id)}
             onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}
             onStyleChange={(id, style, kind) => void onStyleChange(id, style, kind)}
+            onStylesChange={(styles, kind) => void onStylesChange(styles, kind)}
             onFormatPaint={onFormatPaint}
             paintModeActive={!!paintMode}
             onRename={(id, name) =>
@@ -1715,13 +1755,43 @@ export default function App() {
             onPositionChange={(id, x, y) =>
               void onNodesMoved({ [id]: { x, y } })
             }
-            onSizeChange={(ids, size) =>
-              void onNodesMoved(
-                Object.fromEntries(
-                  ids.map((id) => [id, { artifactId: id, ...size }]),
-                ),
-              )
-            }
+            onSizeChange={(ids, size) => {
+              const semantic =
+                viewPayload?.semantic ?? project?.semantic ?? {}
+              const vizNodes =
+                viewPayload?.visualization.nodes ??
+                project?.visualization.nodes ??
+                {}
+              const rootId = viewPayload?.view.rootArtifactId
+              const isWhitebox = viewPayload?.diagramMode === 'whitebox'
+              const patch: Record<string, Partial<VisualizationNode>> = {}
+              for (const id of ids) {
+                const isBoundary = isWhitebox && rootId === id
+                const clamped = clampPartSize(size, { isBoundary })
+                patch[id] = { artifactId: id, ...clamped }
+                if (clamped.height == null) continue
+                const part = semantic[id]
+                for (const childId of part?.children || []) {
+                  const child = semantic[childId]
+                  if (child?.kind !== 'port') continue
+                  const portViz = vizNodes[childId]
+                  if (portViz?.side == null || portViz.offset == null) continue
+                  const nextOffset = clampPortOffset(
+                    Number(portViz.offset),
+                    portViz.side as PortSide,
+                    clamped.height,
+                    { isBoundary },
+                  )
+                  if (nextOffset === portViz.offset) continue
+                  patch[childId] = {
+                    artifactId: childId,
+                    side: portViz.side,
+                    offset: nextOffset,
+                  }
+                }
+              }
+              void onNodesMoved(patch)
+            }}
             onEditLockChange={(id, locked) => {
               if (!viewPayload) return
               const patch = lockTargets(

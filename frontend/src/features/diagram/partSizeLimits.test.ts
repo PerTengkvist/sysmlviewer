@@ -51,9 +51,21 @@ describe('sizeFieldChange', () => {
     expect(sizeFieldChange('height', 'abc', current)).toBeNull()
   })
 
+  it('applies when force even if value matches current', () => {
+    expect(
+      sizeFieldChange('width', '180', current, { force: true }),
+    ).toEqual({ width: 180 })
+  })
+
   it('clamps the new value', () => {
     expect(sizeFieldChange('width', '10', current)).toEqual({
       width: PART_MIN_WIDTH,
     })
+  })
+
+  it('uses boundary minima when isBoundary', () => {
+    expect(
+      sizeFieldChange('width', '10', current, { isBoundary: true }),
+    ).toEqual({ width: BOUNDARY_MIN_WIDTH })
   })
 })

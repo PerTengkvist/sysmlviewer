@@ -51,6 +51,11 @@ type Props = {
     waypoints: { x: number; y: number; locked?: boolean }[],
   ) => void
   onStyleChange?: (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => void
+  /** Batch style patch for multi-select (one viz write). */
+  onStylesChange?: (
+    styles: Record<string, ElementStyle>,
+    kind?: 'node' | 'edge',
+  ) => void
   onFormatPaint?: () => void
   paintModeActive?: boolean
   onRename?: (artifactId: string, name: string) => void
@@ -542,6 +547,7 @@ export function DetailsPanel({
   onAutoroute,
   onWaypointsChange,
   onStyleChange,
+  onStylesChange,
   onFormatPaint,
   paintModeActive,
   onRename,
@@ -605,7 +611,8 @@ export function DetailsPanel({
         width: sample?.width ?? 180,
         height: sample?.height ?? 120,
       }
-      const patch = sizeFieldChange(field, raw, current)
+      // force: typing the first part's size must still apply to siblings.
+      const patch = sizeFieldChange(field, raw, current, { force: true })
       if (patch) onSizeChange(multiParts, patch)
     }
     return (
@@ -646,20 +653,27 @@ export function DetailsPanel({
             )}
           </dd>
         </dl>
-        {onStyleChange && (
+        {(onStylesChange || onStyleChange) && (
           <fieldset disabled={!multiUnlocked} className="plain-fieldset">
             <FormatControls
               style={primaryStyle}
               isEdge={false}
               onChange={() => {}}
               onPatch={(mode, patch) => {
+                const styles: Record<string, ElementStyle> = {}
                 for (const id of multiParts) {
-                  const existing = vizNodes[id]?.style
-                  onStyleChange(
-                    id,
-                    mergeStylePatch(existing, mode, patch),
-                    'node',
+                  styles[id] = mergeStylePatch(
+                    vizNodes[id]?.style,
+                    mode,
+                    patch,
                   )
+                }
+                if (onStylesChange) {
+                  onStylesChange(styles, 'node')
+                  return
+                }
+                for (const [id, style] of Object.entries(styles)) {
+                  onStyleChange?.(id, style, 'node')
                 }
               }}
               onPaint={onFormatPaint}
@@ -1075,10 +1089,14 @@ export function DetailsPanel({
                     aria-label="Width"
                     min={1}
                     onBlur={(e) => {
+                      const isBoundary =
+                        viewPayload?.diagramMode === 'whitebox' &&
+                        viewPayload?.view.rootArtifactId === el.id
                       const patch = sizeFieldChange(
                         'width',
                         e.target.value,
                         { width: node.width, height: node.height },
+                        { isBoundary },
                       )
                       if (patch) onSizeChange([el.id], patch)
                     }}
@@ -1092,10 +1110,14 @@ export function DetailsPanel({
                     aria-label="Height"
                     min={1}
                     onBlur={(e) => {
+                      const isBoundary =
+                        viewPayload?.diagramMode === 'whitebox' &&
+                        viewPayload?.view.rootArtifactId === el.id
                       const patch = sizeFieldChange(
                         'height',
                         e.target.value,
                         { width: node.width, height: node.height },
+                        { isBoundary },
                       )
                       if (patch) onSizeChange([el.id], patch)
                     }}

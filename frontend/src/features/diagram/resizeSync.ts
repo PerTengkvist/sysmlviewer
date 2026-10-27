@@ -34,9 +34,19 @@ export function nodeBoxSize(
 }
 
 /**
+ * True when a dimensions change comes from NodeResizer (or setAttributes),
+ * not from a content-driven measurement pass.
+ */
+export function isResizerDimensionChange(c: NodeChange): boolean {
+  if (c.type !== 'dimensions' || !c.dimensions) return false
+  return c.setAttributes != null || c.resizing !== undefined
+}
+
+/**
  * After React Flow `applyNodeChanges` writes `node.width`/`height` on a
- * dimensions change, also mirror those into `style` so consumers that still
- * read `style.width` (preserve geometry, align, distribute) see the new box.
+ * *resizer* dimensions change, also mirror those into `style` so consumers
+ * that still read `style.width` (preserve geometry, align, distribute) see
+ * the new box. Pure measurement updates are left alone.
  */
 export function applyDimensionChangesToStyle<N extends Node>(
   nodes: N[],
@@ -44,7 +54,9 @@ export function applyDimensionChangesToStyle<N extends Node>(
 ): N[] {
   const dims = new Map<string, { width: number; height: number }>()
   for (const c of changes) {
-    if (c.type !== 'dimensions' || !c.dimensions) continue
+    if (!isResizerDimensionChange(c) || c.type !== 'dimensions' || !c.dimensions) {
+      continue
+    }
     dims.set(c.id, {
       width: c.dimensions.width,
       height: c.dimensions.height,

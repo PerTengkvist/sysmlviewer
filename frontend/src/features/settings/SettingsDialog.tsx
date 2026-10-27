@@ -402,7 +402,7 @@ export function SettingsDialog({
                 onChange={(e) =>
                   patch({ includeBindingsInRouting: e.target.checked })
                 }
-                title="When off, Redraw: Connections and AutoLayout skip all binding edges (including port–port). Connections and interfaces are always included."
+                title="When off, Redraw: Connections and AutoLayout skip binding edges. Port move / Flip / Distribute still reroute binds attached to moved ports. Connections and interfaces are always included in bulk redraw."
               />
             </label>
           </fieldset>

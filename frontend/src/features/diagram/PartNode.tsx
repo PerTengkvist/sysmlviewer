@@ -200,7 +200,11 @@ export type PartNodeData = {
   viewMode?: ViewMode
   onOpenView?: (viewId: string, opts?: { ctrlKey?: boolean; metaKey?: boolean }) => void
   onPortDrag?: (portId: string, side: PortSide, offset: number) => void
-  /** Batch commit when Option-dragging a multi-selected port group (same part). */
+  /**
+   * Batch commit when Option-dragging a multi-selected port group.
+   * Scope: selected ports on *this* part only — ports selected on other parts
+   * stay put.
+   */
   onPortsDrag?: (
     moves: { portId: string; side: PortSide; offset: number }[],
   ) => void
@@ -647,8 +651,8 @@ export function PartNode({ data, selected }: NodeProps) {
           isConnectable={!moveMode}
           title={
             moveMode
-              ? `${port.name} — dra längs kanten (Option+Shift = markera)`
-              : `${port.name} — dra till annan port (Option = flytta, Option+Shift = markera)`
+              ? `${port.name} — drag along edge (Option+Shift = select; group drag moves selected ports on this part only)`
+              : `${port.name} — drag to another port (Option = move, Option+Shift = select)`
           }
           className={
             [

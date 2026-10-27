@@ -28,15 +28,17 @@ export function clampPartSize(
 
 /**
  * Parse a blurred size field. Returns null when the value is unchanged or invalid.
+ * Pass `force: true` for multi-select so typing the first part's size still
+ * applies the clamped value to siblings.
  */
 export function sizeFieldChange(
   field: 'width' | 'height',
   raw: string,
   current: PartSize,
-  opts?: { isBoundary?: boolean },
+  opts?: { isBoundary?: boolean; force?: boolean },
 ): { width?: number; height?: number } | null {
   const n = Number(raw)
   if (!Number.isFinite(n)) return null
-  if (Math.round(n) === Math.round(current[field])) return null
+  if (!opts?.force && Math.round(n) === Math.round(current[field])) return null
   return clampPartSize({ [field]: n }, opts)
 }

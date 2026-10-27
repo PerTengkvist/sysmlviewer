@@ -64,7 +64,7 @@ describe('nodeBoxSize', () => {
 })
 
 describe('applyDimensionChangesToStyle', () => {
-  it('mirrors dimensions into style.width/height', () => {
+  it('mirrors resizer dimensions into style.width/height', () => {
     const nodes = [part('a', { styleW: 180, styleH: 120, width: 180, height: 120 })]
     const changes: NodeChange[] = [
       {
@@ -80,6 +80,34 @@ describe('applyDimensionChangesToStyle', () => {
     expect(next[0].style).toMatchObject({ width: 400, height: 300 })
   })
 
+  it('leaves style untouched for measurement-only dimension changes', () => {
+    const nodes = [part('a', { styleW: 180, styleH: 120, width: 180, height: 120 })]
+    const changes: NodeChange[] = [
+      {
+        type: 'dimensions',
+        id: 'a',
+        dimensions: { width: 200, height: 160 },
+      },
+    ]
+    const next = applyDimensionChangesToStyle(nodes, changes)
+    expect(next).toBe(nodes)
+    expect(next[0].style).toMatchObject({ width: 180, height: 120 })
+  })
+
+  it('mirrors when setAttributes is set (programmatic size)', () => {
+    const nodes = [part('a', { styleW: 100, styleH: 80 })]
+    const changes: NodeChange[] = [
+      {
+        type: 'dimensions',
+        id: 'a',
+        dimensions: { width: 200, height: 160 },
+        setAttributes: true,
+      },
+    ]
+    const next = applyDimensionChangesToStyle(nodes, changes)
+    expect(next[0].style).toMatchObject({ width: 200, height: 160 })
+  })
+
   it('leaves unrelated nodes unchanged', () => {
     const nodes = [
       part('a', { styleW: 100, styleH: 80 }),
@@ -90,6 +118,7 @@ describe('applyDimensionChangesToStyle', () => {
         type: 'dimensions',
         id: 'a',
         dimensions: { width: 200, height: 160 },
+        resizing: false,
       },
     ]
     const next = applyDimensionChangesToStyle(nodes, changes)
