@@ -181,3 +181,21 @@ describe('settings removed relation-todo colors', () => {
     expect('pendingAddColor' in s).toBe(false)
   })
 })
+
+describe('settings right panel collapse', () => {
+  it('defaults rightPanelCollapsed to false and accepts only booleans', () => {
+    expect(DEFAULT_SETTINGS.rightPanelCollapsed).toBe(false)
+    localStorage.setItem('sysmlviewer.settings', JSON.stringify({ rightPanelCollapsed: 'yes' }))
+    expect(loadSettings().rightPanelCollapsed).toBe(false)
+    localStorage.setItem('sysmlviewer.settings', JSON.stringify({ rightPanelCollapsed: true }))
+    expect(loadSettings().rightPanelCollapsed).toBe(true)
+  })
+
+  it('falls back to default sizes when the stored right panel is zero', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({ horizontalPanelSizes: [18, 82, 0] }),
+    )
+    expect(loadSettings().horizontalPanelSizes).toEqual(DEFAULT_SETTINGS.horizontalPanelSizes)
+  })
+})

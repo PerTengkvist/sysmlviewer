@@ -19,6 +19,7 @@ import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
 import { TutorialMarkdown } from './features/docs/TutorialMarkdown'
 import { WorkspaceLayout } from './features/layout/WorkspaceLayout'
 import { WorkspaceLabel } from './features/layout/WorkspaceLabel'
+import { applyLayoutChange } from './features/layout/rightPanelState'
 import { WorkspaceDialog } from './features/files/WorkspaceDialog'
 import { normalizeRelSysmlPath } from './features/files/workspacePaths'
 import { PrintDialog } from './features/print/PrintDialog'
@@ -292,7 +293,29 @@ export default function App() {
 
   const updateHorizontalLayout = useCallback((sizes: [number, number, number]) => {
     setSettings((prev) => {
-      const next = { ...prev, horizontalPanelSizes: sizes }
+      const state = applyLayoutChange(
+        { collapsed: prev.rightPanelCollapsed, sizes: prev.horizontalPanelSizes },
+        sizes,
+      )
+      if (
+        state.collapsed === prev.rightPanelCollapsed &&
+        state.sizes === prev.horizontalPanelSizes
+      ) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        horizontalPanelSizes: state.sizes,
+        rightPanelCollapsed: state.collapsed,
+      }
+      saveSettings(next)
+      return next
+    })
+  }, [])
+
+  const toggleRightPanel = useCallback(() => {
+    setSettings((prev) => {
+      const next = { ...prev, rightPanelCollapsed: !prev.rightPanelCollapsed }
       saveSettings(next)
       return next
     })
@@ -1431,6 +1454,8 @@ export default function App() {
       <WorkspaceLayout
         layout={settings}
         onLayoutChange={updateHorizontalLayout}
+        rightCollapsed={settings.rightPanelCollapsed}
+        onToggleRight={toggleRightPanel}
         left={
           <LeftSidebar
             project={project}
@@ -1648,6 +1673,7 @@ export default function App() {
           <RightSidebar
             layout={settings}
             onLayoutChange={updateRightLayout}
+            onToggle={toggleRightPanel}
             requirementDisplay={settings.requirementDisplay}
             project={project}
             viewVisualization={viewPayload?.visualization}

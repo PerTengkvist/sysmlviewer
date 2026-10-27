@@ -55,6 +55,8 @@ export type AppSettings = {
   horizontalPanelSizes: [number, number, number]
   /** Right sidebar split [details, documentation] percentages. */
   rightPanelSizes: [number, number]
+  /** Right sidebar hidden to give the canvas the full width. */
+  rightPanelCollapsed: boolean
   /** Curated icon libraries: enable + default style for vendoring. */
   iconLibraries: Record<IconLibraryId, IconLibrarySetting>
 }
@@ -142,6 +144,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   includeBindingsInRouting: true,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
+  rightPanelCollapsed: false,
   iconLibraries: {
     iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
     iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
@@ -220,6 +223,7 @@ export function loadSettings(): AppSettings {
         parsed.rightPanelSizes,
         DEFAULT_SETTINGS.rightPanelSizes,
       ),
+      rightPanelCollapsed: parsed.rightPanelCollapsed === true,
       iconLibraries: normalizeIconLibraries(parsed.iconLibraries),
     }
   } catch {
@@ -249,7 +253,9 @@ function normalizeTriple(
 ): [number, number, number] {
   if (!Array.isArray(raw) || raw.length !== 3) return fallback
   const nums = raw.map(Number)
-  if (nums.some((n) => !Number.isFinite(n)) || nums.reduce((s, n) => s + n, 0) <= 0) {
+  // Every panel must have a visible share; a stored 0 (collapsed) would
+  // otherwise hide a panel at startup with no way to drag it back.
+  if (nums.some((n) => !Number.isFinite(n) || n < 1)) {
     return fallback
   }
   return nums as [number, number, number]
