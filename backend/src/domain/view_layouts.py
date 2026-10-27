@@ -260,6 +260,8 @@ class ViewLayout:
     hierarchical_levels_override: int | None = None
     view_filters: list[dict[str, Any]] = field(default_factory=list)
     layout_rules: list[dict[str, Any]] = field(default_factory=list)
+    # Layered layout config (enabled/direction/layers); None when never set.
+    layered_layout: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
@@ -271,6 +273,8 @@ class ViewLayout:
             out["viewFilters"] = list(self.view_filters)
         if self.layout_rules:
             out["layoutRules"] = list(self.layout_rules)
+        if self.layered_layout is not None:
+            out["layeredLayout"] = dict(self.layered_layout)
         return out
 
     @classmethod
@@ -294,12 +298,14 @@ class ViewLayout:
                 override = None
         filters = _normalize_view_filters(data.get("viewFilters"))
         rules = _normalize_layout_rules(data.get("layoutRules"))
+        layered = _normalize_layered_layout(data.get("layeredLayout"))
         return cls(
             nodes=nodes,
             edges=edges,
             hierarchical_levels_override=override,
             view_filters=filters,
             layout_rules=rules,
+            layered_layout=layered,
         )
 
 
@@ -356,6 +362,69 @@ def _normalize_layout_rules(raw: Any) -> list[dict[str, Any]]:
             }
         )
     return out
+
+
+LAYER_DIRECTIONS = ("top-down", "bottom-up", "left-right", "right-left")
+
+
+def _normalize_layers(raw_layers: Any) -> list[dict[str, str]]:
+    layers: list[dict[str, str]] = []
+    if isinstance(raw_layers, list):
+        for index, item in enumerate(raw_layers):
+            if not isinstance(item, dict):
+                continue
+            layer_id = str(item.get("id") or "").strip() or f"layer-{index + 1}"
+            name = str(item.get("name") or "").strip() or str(len(layers) + 1)
+            layers.append({"id": layer_id, "name": name})
+    return layers
+
+
+def _normalize_scope(raw: dict[str, Any], index: int, used_ids: set[str]) -> dict[str, Any]:
+    direction = str(raw.get("direction") or "").strip().lower()
+    if direction not in LAYER_DIRECTIONS:
+        direction = "top-down"
+    scope_id = str(raw.get("id") or "").strip() or f"scope-{index + 1}"
+    while scope_id in used_ids:
+        scope_id = f"{scope_id}-{index + 1}"
+    used_ids.add(scope_id)
+    pattern = str(raw.get("scopePattern") or "").strip() or "*"
+    return {
+        "id": scope_id,
+        "scopePattern": pattern,
+        "direction": direction,
+        "layers": _normalize_layers(raw.get("layers")),
+    }
+
+
+def _normalize_layered_layout(raw: Any) -> dict[str, Any] | None:
+    """Normalize `{enabled, scopes:[{id, scopePattern, direction, layers}]}`.
+
+    The legacy single-scope shape `{enabled, direction, layers}` is migrated to
+    one scope with pattern `*` (the view boundary). None when absent.
+    """
+    if not isinstance(raw, dict):
+        return None
+    used: set[str] = set()
+    scopes: list[dict[str, Any]] = []
+    raw_scopes = raw.get("scopes")
+    if isinstance(raw_scopes, list):
+        for index, item in enumerate(raw_scopes):
+            if not isinstance(item, dict):
+                continue
+            scopes.append(_normalize_scope(item, len(scopes), used))
+    else:
+        scopes.append(
+            _normalize_scope(
+                {
+                    "scopePattern": "*",
+                    "direction": raw.get("direction"),
+                    "layers": raw.get("layers"),
+                },
+                0,
+                used,
+            )
+        )
+    return {"enabled": bool(raw.get("enabled")), "scopes": scopes}
 
 
 @dataclass
@@ -486,11 +555,15 @@ def _copy_view_layout(
     hierarchical_levels_override: int | None | object = ...,
     view_filters: list[dict[str, Any]] | None = None,
     layout_rules: list[dict[str, Any]] | None = None,
+    layered_layout: dict[str, Any] | None | object = ...,
 ) -> ViewLayout:
     """Rebuild ViewLayout while preserving fields not explicitly overridden."""
     override = view_layout.hierarchical_levels_override
     if hierarchical_levels_override is not ...:
         override = hierarchical_levels_override  # type: ignore[assignment]
+    layered = view_layout.layered_layout
+    if layered_layout is not ...:
+        layered = layered_layout  # type: ignore[assignment]
     return ViewLayout(
         nodes=nodes if nodes is not None else dict(view_layout.nodes),
         edges=edges if edges is not None else dict(view_layout.edges),
@@ -505,6 +578,7 @@ def _copy_view_layout(
             if layout_rules is not None
             else list(view_layout.layout_rules)
         ),
+        layered_layout=dict(layered) if layered is not None else None,
     )
 
 
@@ -581,5 +655,20 @@ def apply_layout_rules(
     by_view[view_id] = _copy_view_layout(
         view_layout,
         layout_rules=_normalize_layout_rules(rules or []),
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_layered_layout(
+    layouts: ViewLayouts,
+    view_id: str,
+    raw: dict[str, Any] | None,
+) -> ViewLayouts:
+    """Replace per-view layeredLayout config (None clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        layered_layout=_normalize_layered_layout(raw),
     )
     return ViewLayouts(by_view=by_view)

@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import {
+  clampHierarchicOptions,
   clampLevelWeights,
   DEFAULT_AUTO_LAYOUT_DIRECTIVES,
   LAYOUT_LEVELS,
   LAYOUT_WEIGHT_KEYS,
   layoutLevelLabel,
   layoutWeightLabel,
+  PORT_PLACEMENT_MODES,
+  portPlacementLabel,
+  portPlacementNote,
   SUGGESTED_LEVEL_WEIGHTS,
   type AutoLayoutDirectives,
   type AutoLayoutUiMode,
+  type HierarchicOptions,
   type LayoutLevel,
   type LayoutWeightKey,
   type PlacementAlgorithm,
@@ -56,6 +61,11 @@ export function AutoLayoutDialog({
   const uiMode: AutoLayoutUiMode = directives.mode || 'simple'
   const resolved = resolvePlacementPipeline(directives)
   const isCustom = uiMode === 'advanced' && resolved.id === 'custom'
+  const isHierarchic = uiMode === 'advanced' && resolved.id === 'hierarchic'
+  const hierarchic = clampHierarchicOptions(directives.hierarchic)
+  const portsRestricted = directives.portPlacement !== 'optimized'
+  const patchHierarchic = (partial: Partial<HierarchicOptions>) =>
+    patch({ hierarchic: { ...hierarchic, ...partial } })
   const customWeights = clampLevelWeights(directives.customWeights)
   const isCompositionAlgo =
     directives.algorithm === 'clustered' ||
@@ -111,6 +121,7 @@ export function AutoLayoutDialog({
             <label className="settings-row">
               <span>UI</span>
               <select
+                data-testid="al-mode"
                 value={uiMode}
                 onChange={(e) =>
                   patch({ mode: e.target.value as AutoLayoutUiMode })
@@ -127,6 +138,7 @@ export function AutoLayoutDialog({
             <label className="settings-row">
               <span>Mode</span>
               <select
+                data-testid="al-port-placement"
                 value={directives.portPlacement}
                 onChange={(e) =>
                   patch({
@@ -134,16 +146,16 @@ export function AutoLayoutDialog({
                   })
                 }
               >
-                <option value="inputsLeftOutputsRight">
-                  Inputs left, outputs right
-                </option>
-                <option value="optimized">Optimized placement</option>
+                {PORT_PLACEMENT_MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {portPlacementLabel(m)}
+                  </option>
+                ))}
               </select>
             </label>
             <p className="muted settings-note">
-              {directives.portPlacement === 'inputsLeftOutputsRight'
-                ? 'Consumer ports (…In) on the left, provider ports (…Out) on the right. Unclear ports follow connection direction.'
-                : 'Ports face connected peers to shorten routes and reduce crossings.'}
+              {portPlacementNote(directives.portPlacement)} Every placement
+              algorithm follows this mode.
             </p>
           </fieldset>
 
@@ -153,6 +165,7 @@ export function AutoLayoutDialog({
               <label className="settings-row">
                 <span>Algorithm</span>
                 <select
+                  data-testid="al-algorithm"
                   value={directives.algorithm}
                   onChange={(e) =>
                     patch({
@@ -164,7 +177,7 @@ export function AutoLayoutDialog({
                     Favour grid (matrix at N≥4)
                   </option>
                   <option value="clustered">
-                    Clustered (onion-leaning at N≥4)
+                    Clustered (packed core at N≥4)
                   </option>
                   <option value="stress">
                     Stress (2D, hubs toward center)
@@ -175,6 +188,7 @@ export function AutoLayoutDialog({
               <label className="settings-row">
                 <span>Spacing</span>
                 <select
+                  data-testid="al-spacing"
                   value={directives.spacing}
                   onChange={(e) =>
                     patch({ spacing: e.target.value as SpacingPreset })
@@ -203,7 +217,7 @@ export function AutoLayoutDialog({
                 {directives.algorithm === 'favour-grid'
                   ? 'Favour grid: 1→center+25%, 2→stack, 3→onion, 4+→matrix (orphans fill grid). Combines with port mode above.'
                   : directives.algorithm === 'clustered'
-                    ? 'Clustered: same as favour-grid for N≤3; at N≥4 prefers onion around hubs. Combines with port mode above.'
+                    ? 'Clustered: same as favour-grid for N≤3; at N≥4 a dense core of 1–4 parts with the rest packed in rings around it, leaving channels for connections. Combines with port mode above.'
                     : `Runs pipeline “${pipelineLabel(resolved.id)}” with nest-fit and hard non-overlap. Routing is always orthogonal after placement.`}
               </p>
             </fieldset>
@@ -213,6 +227,7 @@ export function AutoLayoutDialog({
               <label className="settings-row">
                 <span>Pipeline</span>
                 <select
+                  data-testid="al-pipeline"
                   value={directives.pipeline || resolved.id}
                   onChange={(e) =>
                     patch({
@@ -230,6 +245,7 @@ export function AutoLayoutDialog({
               <label className="settings-row">
                 <span>Spacing</span>
                 <select
+                  data-testid="al-spacing"
                   value={directives.spacing}
                   onChange={(e) =>
                     patch({ spacing: e.target.value as SpacingPreset })
@@ -258,6 +274,156 @@ export function AutoLayoutDialog({
                 Steps: {resolved.steps.join(' → ')}. Routing is always
                 orthogonal (angular) around parts after placement.
               </p>
+            </fieldset>
+          )}
+
+          {isHierarchic && (
+            <fieldset className="settings-fieldset">
+              <legend>Hierarchic options</legend>
+              <p className="muted settings-note">
+                Sugiyama phases via ELK layered: cycle breaking → layering →
+                crossing minimisation → node placement → orthogonal routing.
+                Ports take part in placement (connections are port-to-port),
+                nested groups are laid out recursively, and Layout Rules
+                (layers, “belong to”, above/below, left/right) apply as hard
+                constraints. Port sides are iterated toward their peers.
+              </p>
+              <label className="settings-row">
+                <span>Direction</span>
+                <select
+                  data-testid="al-h-direction"
+                  value={hierarchic.direction}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      direction: e.target.value as HierarchicOptions['direction'],
+                    })
+                  }
+                >
+                  <option value="RIGHT">Left → right</option>
+                  <option value="DOWN">Top → down</option>
+                  <option value="LEFT">Right → left</option>
+                  <option value="UP">Bottom → up</option>
+                </select>
+              </label>
+              <label className="settings-row">
+                <span>Cycle breaking</span>
+                <select
+                  data-testid="al-h-cycle"
+                  value={hierarchic.cycleBreaking}
+                  disabled={hierarchic.incremental}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      cycleBreaking: e.target
+                        .value as HierarchicOptions['cycleBreaking'],
+                    })
+                  }
+                >
+                  <option value="GREEDY">Greedy (heuristic)</option>
+                  <option value="DEPTH_FIRST">Depth-first</option>
+                  <option value="MODEL_ORDER">Model order</option>
+                </select>
+              </label>
+              <label className="settings-row">
+                <span>Layering</span>
+                <select
+                  data-testid="al-h-layering"
+                  value={hierarchic.layering}
+                  disabled={hierarchic.incremental}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      layering: e.target.value as HierarchicOptions['layering'],
+                    })
+                  }
+                >
+                  <option value="NETWORK_SIMPLEX">Network simplex</option>
+                  <option value="LONGEST_PATH">Longest path</option>
+                  <option value="COFFMAN_GRAHAM">Coffman–Graham</option>
+                </select>
+              </label>
+              <label className="settings-row">
+                <span>Crossing effort</span>
+                <input
+                  type="number"
+                  data-testid="al-h-thoroughness"
+                  min={1}
+                  max={50}
+                  value={hierarchic.crossingThoroughness}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      crossingThoroughness: Number(e.target.value) || 10,
+                    })
+                  }
+                />
+              </label>
+              <label className="settings-row">
+                <span>Node placement</span>
+                <select
+                  data-testid="al-h-placement"
+                  value={hierarchic.nodePlacement}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      nodePlacement: e.target
+                        .value as HierarchicOptions['nodePlacement'],
+                    })
+                  }
+                >
+                  <option value="BRANDES_KOEPF">Brandes–Köpf</option>
+                  <option value="NETWORK_SIMPLEX">Network simplex</option>
+                  <option value="LINEAR_SEGMENTS">Linear segments</option>
+                  <option value="SIMPLE">Simple</option>
+                </select>
+              </label>
+              <label className="settings-row">
+                <span>Port constraints</span>
+                <select
+                  data-testid="al-h-ports"
+                  value={hierarchic.portConstraints}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      portConstraints: e.target
+                        .value as HierarchicOptions['portConstraints'],
+                    })
+                  }
+                >
+                  <option value="FIXED_SIDE">Fixed side (candidates)</option>
+                  <option value="FIXED_ORDER">Fixed side + order</option>
+                  <option value="FREE" disabled={portsRestricted}>
+                    Free
+                  </option>
+                </select>
+              </label>
+              {portsRestricted ? (
+                <p className="muted settings-note">
+                  The port placement mode restricts port sides, so ports keep
+                  their side (Free is treated as Fixed side).
+                </p>
+              ) : null}
+              <label className="settings-row">
+                <span>Incremental (keep arrangement)</span>
+                <input
+                  type="checkbox"
+                  data-testid="al-h-incremental"
+                  checked={hierarchic.incremental}
+                  onChange={(e) =>
+                    patchHierarchic({ incremental: e.target.checked })
+                  }
+                />
+              </label>
+              <label className="settings-row">
+                <span>Port iterations</span>
+                <input
+                  type="number"
+                  data-testid="al-h-iterations"
+                  min={1}
+                  max={10}
+                  value={hierarchic.maxIterations}
+                  onChange={(e) =>
+                    patchHierarchic({
+                      maxIterations: Number(e.target.value) || 1,
+                    })
+                  }
+                />
+              </label>
             </fieldset>
           )}
 
@@ -325,6 +491,7 @@ export function AutoLayoutDialog({
           <button
             type="button"
             className="primary"
+            data-testid="al-run"
             disabled={busy}
             onClick={() => onConfirm(directives)}
           >

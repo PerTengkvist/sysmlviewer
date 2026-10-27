@@ -252,6 +252,38 @@ export type PlacementRule =
   | 'beside'
   | 'above'
   | 'top'
+  /** Subject belongs to a named layer (peerKind 'layer', peerNamePattern = layer name). */
+  | 'belong to'
+
+export type LayerDirection =
+  | 'top-down'
+  | 'bottom-up'
+  | 'left-right'
+  | 'right-left'
+
+export interface LayerDef {
+  id: string
+  /** Display name; defaults to the layer's ordinal (1-based) when empty. */
+  name: string
+}
+
+/**
+ * One layered-layout scope: the children of every part whose name matches
+ * `scopePattern` are arranged in these layers. Pattern `*` is the view
+ * boundary (top-level parts).
+ */
+export interface LayeredScope {
+  id: string
+  scopePattern: string
+  direction: LayerDirection
+  layers: LayerDef[]
+}
+
+/** Per-view "Layered layout" configuration (Layout Rules dialog). */
+export interface LayeredLayoutConfig {
+  enabled: boolean
+  scopes: LayeredScope[]
+}
 
 export interface LayoutRuleRow {
   id: string
@@ -270,6 +302,8 @@ export interface ViewPayload {
   hierarchicalLevelsOverride?: number | null
   viewFilters?: ViewFilterRow[]
   layoutRules?: LayoutRuleRow[]
+  /** null/undefined → layered layout never configured for this view. */
+  layeredLayout?: LayeredLayoutConfig | null
   modeError?: string | null
   semantic: Record<string, SemanticElement>
   visualization: {
@@ -420,6 +454,8 @@ export const api = {
       /** Replaces the whole list when present. */
       viewFilters?: ViewFilterRow[]
       layoutRules?: LayoutRuleRow[]
+      /** Replaces the config when present; null clears. */
+      layeredLayout?: LayeredLayoutConfig | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {

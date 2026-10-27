@@ -2638,3 +2638,21 @@ button.linkish {
 .requirement-table tr {
   cursor: pointer;
 }
+
+/* Layout Rules: layered layout section */
+.layered-layout-fieldset {
+  margin-bottom: 0.75rem;
+}
+
+.layer-name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.25rem 0.75rem;
+  margin: 0.35rem 0;
+}
+
+.layered-scope-controls {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
