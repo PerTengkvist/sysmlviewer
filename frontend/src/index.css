@@ -2222,11 +2222,24 @@ button.linkish {
 }
 
 .workspace-label {
-  max-width: 280px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 360px;
+  min-width: 0;
   white-space: nowrap;
   font-size: 0.85rem;
+}
+
+.workspace-name {
+  flex-shrink: 0;
+}
+
+/* Safety net: the visible text is already a character-budgeted path tail. */
+.workspace-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
 }
 
 .projects-menu {

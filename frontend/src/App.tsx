@@ -18,6 +18,7 @@ import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
 import { TutorialMarkdown } from './features/docs/TutorialMarkdown'
 import { WorkspaceLayout } from './features/layout/WorkspaceLayout'
+import { WorkspaceLabel } from './features/layout/WorkspaceLabel'
 import { WorkspaceDialog } from './features/files/WorkspaceDialog'
 import { normalizeRelSysmlPath } from './features/files/workspacePaths'
 import { PrintDialog } from './features/print/PrintDialog'
@@ -1235,10 +1236,7 @@ export default function App() {
       <header className="app-header no-print">
         <div className="brand">SysML Viewer</div>
         <div className="header-actions">
-          <span className="workspace-label muted" title={workspaceRoot || undefined}>
-            {project ? project.name : 'No project'}
-            {workspaceRoot ? ` — ${workspaceRoot}` : ''}
-          </span>
+          <WorkspaceLabel name={project?.name} root={workspaceRoot} />
           {exampleProjects.length > 0 && (
             <select
               className="projects-menu"
