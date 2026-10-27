@@ -13,7 +13,7 @@ describe('WorkspaceLabel', () => {
     expect(html).toContain('>Car<')
     expect(html).toContain('class="workspace-path"')
     expect(html).toContain(`title="${root}"`)
-    expect(html).toContain('…/examples/car')
+    expect(html).toContain('<bdi dir="ltr">…/examples/car</bdi>')
     expect(html).not.toContain('/Users/per/Coding/In2ition/sysmlviewer/examples/car<')
   })
 

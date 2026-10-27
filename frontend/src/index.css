@@ -2401,11 +2401,22 @@ button.linkish {
   flex-shrink: 0;
 }
 
-/* Safety net: the visible text is already a character-budgeted path tail. */
+/*
+ * The path is a character-budgeted tail; when it still overflows, the RTL
+ * box clips from the LEFT so the end of the path stays visible. The inner
+ * <bdi dir="ltr"> keeps the characters in normal order.
+ */
 .workspace-path {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
+.workspace-sep {
+  flex-shrink: 0;
   white-space: pre;
 }
 
