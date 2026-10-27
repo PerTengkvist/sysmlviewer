@@ -28,6 +28,7 @@ import {
   type ReactNode,
 } from 'react'
 import type {
+  ArtifactKind,
   DiagramMode,
   LayoutRuleRow,
   PortSide,
@@ -489,7 +490,8 @@ type Props = {
     opts?: { ctrlKey?: boolean; metaKey?: boolean },
   ) => void
   onBackView?: () => void
-  onUseCaseDoubleClick?: (useCaseId: string) => void
+  /** Double-click on a node; the caller decides what the kind opens. */
+  onNodeDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -542,7 +544,7 @@ export function DiagramCanvas({
   onSelectionFromFlow,
   onOpenView,
   onBackView,
-  onUseCaseDoubleClick,
+  onNodeDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
   onPortMoved,
@@ -2765,11 +2767,11 @@ export function DiagramCanvas({
                   onSelectArtifact(node.id, { shift: e.shiftKey })
           }
           onNodeDoubleClick={
-            printMode || !onUseCaseDoubleClick
+            printMode || !onNodeDoubleClick
               ? undefined
               : (_e, node) => {
                   const el = view?.semantic[node.id]
-                  if (el?.kind === 'useCase') onUseCaseDoubleClick(node.id)
+                  if (el) onNodeDoubleClick(node.id, el.kind)
                 }
           }
           onEdgeClick={

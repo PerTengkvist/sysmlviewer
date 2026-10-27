@@ -14,6 +14,14 @@ import { DiagramCanvas } from './features/diagram/DiagramCanvas'
 import { lockTargets } from './features/diagram/editLock'
 import { nextSelection, selectionFromFlow } from './features/diagram/selection'
 import { RightSidebar } from './features/details/RightSidebar'
+import type { DetailsPanelProps } from './features/details/DetailsPanel'
+import { ElementDialog } from './features/details/ElementDialog'
+import {
+  loadElementDialogSize,
+  saveElementDialogSize,
+  type ElementDialogSize,
+} from './features/details/elementDialogState'
+import { nodeDoubleClickAction } from './features/diagram/nodeDoubleClick'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
 import { TutorialMarkdown } from './features/docs/TutorialMarkdown'
@@ -90,6 +98,15 @@ export default function App() {
     y: number
   } | null>(null)
   const [useCaseDialogId, setUseCaseDialogId] = useState<string | null>(null)
+  const [elementDialogId, setElementDialogId] = useState<string | null>(null)
+  const [elementDialogSize, setElementDialogSize] = useState<ElementDialogSize>(
+    () => loadElementDialogSize(),
+  )
+  const onElementDialogSize = useCallback((next: ElementDialogSize) => {
+    setElementDialogSize(next)
+    saveElementDialogSize(next)
+  }, [])
+  const closeElementDialog = useCallback(() => setElementDialogId(null), [])
   const [viewPayload, setViewPayload] = useState<ViewPayload | null>(null)
   const [diagramEpoch, setDiagramEpoch] = useState(0)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -1254,6 +1271,105 @@ export default function App() {
     })
   }, [])
 
+  const detailsPanelProps: DetailsPanelProps = {
+    project,
+    viewVisualization: viewPayload?.visualization,
+    viewPayload,
+    globalHierarchicalLevels: settings.showDiagramDetails.hierarchicalLevels,
+    selectedId,
+    selectedIds,
+    editorMode,
+    viewMode: settings.viewMode,
+    onHierarchyOverrideChange: (override) =>
+      void onHierarchyOverrideChange(override),
+    onViewFiltersChange: (filters) => void onViewFiltersChange(filters),
+    onRoutingChange: (id, routing) => void onRoutingChange(id, routing),
+    onAutoroute: (id) => void onAutorouteConnection(id),
+    onWaypointsChange: (id, wps) => void onWaypointsMoved(id, wps),
+    onStyleChange: (id, style, kind) => void onStyleChange(id, style, kind),
+    onStylesChange: (styles, kind) => void onStylesChange(styles, kind),
+    onFormatPaint,
+    paintModeActive: !!paintMode,
+    onRename: (id, name) =>
+      void mutateAndSync(() => api.renameArtifact(project!.id, id, name)),
+    onMetadataKeywordsChange: (id, metadataKeywords) =>
+      void mutateAndSync(() =>
+        api.patchArtifact(project!.id, id, { metadataKeywords }),
+      ),
+    onAddPart: (parentId) =>
+      void mutateAndSync(() => api.addPart(project!.id, { parentId })),
+    onAddPort: (parentId) =>
+      void mutateAndSync(() => api.addPort(project!.id, { parentId })),
+    onAddAttribute: (parentId) =>
+      void mutateAndSync(() => api.addAttribute(project!.id, { parentId })),
+    onDelete: (id) => {
+      if (!window.confirm('Delete this element?')) return
+      void mutateAndSync(() => api.deleteArtifact(project!.id, id))
+    },
+    onRetargetRelation: (id, sourceId, targetId) => {
+      void mutateAndSync(() =>
+        api.updateRelationEnds(project!.id, id, sourceId, targetId),
+      )
+    },
+    onLocateInModelView: (artifactId) => {
+      setLeftTab('views')
+      setSelectedId(artifactId)
+      setLocateInModel((prev) => ({
+        artifactId,
+        seq: (prev?.seq ?? 0) + 1,
+      }))
+    },
+    onPositionChange: (id, x, y) =>
+      void onNodesMoved({ [id]: { x, y } }),
+    onSizeChange: (ids, size) => {
+      const semantic =
+        viewPayload?.semantic ?? project?.semantic ?? {}
+      const vizNodes =
+        viewPayload?.visualization.nodes ??
+        project?.visualization.nodes ??
+        {}
+      const rootId = viewPayload?.view.rootArtifactId
+      const isWhitebox = viewPayload?.diagramMode === 'whitebox'
+      const patch: Record<string, Partial<VisualizationNode>> = {}
+      for (const id of ids) {
+        const isBoundary = isWhitebox && rootId === id
+        const clamped = clampPartSize(size, { isBoundary })
+        patch[id] = { artifactId: id, ...clamped }
+        if (clamped.height == null) continue
+        const part = semantic[id]
+        for (const childId of part?.children || []) {
+          const child = semantic[childId]
+          if (child?.kind !== 'port') continue
+          const portViz = vizNodes[childId]
+          if (portViz?.side == null || portViz.offset == null) continue
+          const nextOffset = clampPortOffset(
+            Number(portViz.offset),
+            portViz.side as PortSide,
+            clamped.height,
+            { isBoundary },
+          )
+          if (nextOffset === portViz.offset) continue
+          patch[childId] = {
+            artifactId: childId,
+            side: portViz.side,
+            offset: nextOffset,
+          }
+        }
+      }
+      void onNodesMoved(patch)
+    },
+    onEditLockChange: (id, locked) => {
+      if (!viewPayload) return
+      const patch = lockTargets(
+        [id],
+        viewPayload.visualization.nodes,
+        viewPayload.visualization.edges,
+        locked,
+      )
+      void onNodesMoved(patch.nodes, patch.edges)
+    },
+  }
+
   return (
     <div className={`app-shell${printPages ? ' printing' : ''}`}>
       <header className="app-header no-print">
@@ -1357,6 +1473,17 @@ export default function App() {
             Dismiss
           </button>
         </div>
+      )}
+
+      {elementDialogId && project && project.semantic[elementDialogId] && (
+        <ElementDialog
+          elementId={elementDialogId}
+          size={elementDialogSize}
+          onSizeChange={onElementDialogSize}
+          onClose={closeElementDialog}
+          detailsProps={detailsPanelProps}
+          requirementDisplay={settings.requirementDisplay}
+        />
       )}
 
       {useCaseDialogId && project && (
@@ -1653,7 +1780,11 @@ export default function App() {
                 }}
                 onOpenView={onOpenView}
                 onBackView={() => void goBackView()}
-                onUseCaseDoubleClick={(id) => setUseCaseDialogId(id)}
+                onNodeDoubleClick={(id, kind) => {
+                  const action = nodeDoubleClickAction(kind)
+                  if (action === 'use-case-flow') setUseCaseDialogId(id)
+                  else if (action === 'element-dialog') setElementDialogId(id)
+                }}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
@@ -1675,111 +1806,7 @@ export default function App() {
             onLayoutChange={updateRightLayout}
             onToggle={toggleRightPanel}
             requirementDisplay={settings.requirementDisplay}
-            project={project}
-            viewVisualization={viewPayload?.visualization}
-            viewPayload={viewPayload}
-            globalHierarchicalLevels={
-              settings.showDiagramDetails.hierarchicalLevels
-            }
-            selectedId={selectedId}
-            selectedIds={selectedIds}
-            editorMode={editorMode}
-            viewMode={settings.viewMode}
-            onHierarchyOverrideChange={(override) =>
-              void onHierarchyOverrideChange(override)
-            }
-            onViewFiltersChange={(filters) => void onViewFiltersChange(filters)}
-            onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
-            onAutoroute={(id) => void onAutorouteConnection(id)}
-            onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}
-            onStyleChange={(id, style, kind) => void onStyleChange(id, style, kind)}
-            onStylesChange={(styles, kind) => void onStylesChange(styles, kind)}
-            onFormatPaint={onFormatPaint}
-            paintModeActive={!!paintMode}
-            onRename={(id, name) =>
-              void mutateAndSync(() => api.renameArtifact(project!.id, id, name))
-            }
-            onMetadataKeywordsChange={(id, metadataKeywords) =>
-              void mutateAndSync(() =>
-                api.patchArtifact(project!.id, id, { metadataKeywords }),
-              )
-            }
-            onAddPart={(parentId) =>
-              void mutateAndSync(() => api.addPart(project!.id, { parentId }))
-            }
-            onAddPort={(parentId) =>
-              void mutateAndSync(() => api.addPort(project!.id, { parentId }))
-            }
-            onAddAttribute={(parentId) =>
-              void mutateAndSync(() => api.addAttribute(project!.id, { parentId }))
-            }
-            onDelete={(id) => {
-              if (!window.confirm('Delete this element?')) return
-              void mutateAndSync(() => api.deleteArtifact(project!.id, id))
-            }}
-            onRetargetRelation={(id, sourceId, targetId) => {
-              void mutateAndSync(() =>
-                api.updateRelationEnds(project!.id, id, sourceId, targetId),
-              )
-            }}
-            onLocateInModelView={(artifactId) => {
-              setLeftTab('views')
-              setSelectedId(artifactId)
-              setLocateInModel((prev) => ({
-                artifactId,
-                seq: (prev?.seq ?? 0) + 1,
-              }))
-            }}
-            onPositionChange={(id, x, y) =>
-              void onNodesMoved({ [id]: { x, y } })
-            }
-            onSizeChange={(ids, size) => {
-              const semantic =
-                viewPayload?.semantic ?? project?.semantic ?? {}
-              const vizNodes =
-                viewPayload?.visualization.nodes ??
-                project?.visualization.nodes ??
-                {}
-              const rootId = viewPayload?.view.rootArtifactId
-              const isWhitebox = viewPayload?.diagramMode === 'whitebox'
-              const patch: Record<string, Partial<VisualizationNode>> = {}
-              for (const id of ids) {
-                const isBoundary = isWhitebox && rootId === id
-                const clamped = clampPartSize(size, { isBoundary })
-                patch[id] = { artifactId: id, ...clamped }
-                if (clamped.height == null) continue
-                const part = semantic[id]
-                for (const childId of part?.children || []) {
-                  const child = semantic[childId]
-                  if (child?.kind !== 'port') continue
-                  const portViz = vizNodes[childId]
-                  if (portViz?.side == null || portViz.offset == null) continue
-                  const nextOffset = clampPortOffset(
-                    Number(portViz.offset),
-                    portViz.side as PortSide,
-                    clamped.height,
-                    { isBoundary },
-                  )
-                  if (nextOffset === portViz.offset) continue
-                  patch[childId] = {
-                    artifactId: childId,
-                    side: portViz.side,
-                    offset: nextOffset,
-                  }
-                }
-              }
-              void onNodesMoved(patch)
-            }}
-            onEditLockChange={(id, locked) => {
-              if (!viewPayload) return
-              const patch = lockTargets(
-                [id],
-                viewPayload.visualization.nodes,
-                viewPayload.visualization.edges,
-                locked,
-              )
-              void onNodesMoved(patch.nodes, patch.edges)
-            }}
+            {...detailsPanelProps}
           />
         }
       />

@@ -28,6 +28,8 @@ import {
   sharedNumericField,
 } from './multiSelectDetails'
 
+export type DetailsPanelProps = Props
+
 type Props = {
   project: Project | null
   /** Merged per-view visualization from the active diagram (nodes/edges overlays). */
