@@ -46,7 +46,8 @@ exit /b 0
 
 :ensure_dist
 if not exist "%DIST_DIR%\index.html" (
-  call :die "frontend/dist missing. Run: %~nx0 start --build"
+  echo frontend/dist missing — building...
+  call :run_frontend_build
 )
 exit /b 0
 
@@ -62,7 +63,7 @@ echo building frontend...
 pushd "%FRONTEND_DIR%"
 call npm run build || (popd & call :die "npm run build failed")
 popd
-call :ensure_dist
+if not exist "%DIST_DIR%\index.html" call :die "frontend build finished but dist\index.html is still missing"
 exit /b 0
 
 :port_in_use
