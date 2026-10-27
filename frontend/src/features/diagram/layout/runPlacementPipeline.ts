@@ -9,6 +9,7 @@ import {
   type ElkStructureLayoutResult,
 } from './elkStructureLayout'
 import { resolvePlacementPipeline } from './placementPipelines'
+import { layoutHierarchic } from './hierarchicLayout'
 
 /**
  * Place parts/ports according to directives (Simple or Advanced pipeline).
@@ -20,6 +21,16 @@ export async function runPlacementPipeline(
   directives: AutoLayoutDirectives,
 ): Promise<ElkStructureLayoutResult> {
   const resolved = resolvePlacementPipeline(directives)
+  if (resolved.id === 'hierarchic') {
+    const r = await layoutHierarchic(nodes, edges, {
+      ...directives,
+      mode: 'advanced',
+      pipeline: 'hierarchic',
+      spacing: resolved.spacing,
+      portPlacement: resolved.portPlacement,
+    })
+    return { nodes: r.nodes }
+  }
   const effective: AutoLayoutDirectives = {
     ...directives,
     mode: directives.mode ?? 'simple',

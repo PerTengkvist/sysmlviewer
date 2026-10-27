@@ -3,6 +3,8 @@ import type { LayoutRuleRow } from '../../api'
 import {
   findLayoutConflicts,
   matchArtefacts,
+  needsPeer,
+  PLACEMENT_OPTIONS,
   solveLayoutRules,
   type LayoutArtefact,
 } from './layoutWizard'
@@ -297,5 +299,146 @@ describe('solveLayoutRules', () => {
     ]
     const positions = solveLayoutRules([engine, wheel], rules)
     expect(positions.e.x).toBeGreaterThan(positions.w.x + wheel.width)
+  })
+})
+
+describe('layered layout rules', () => {
+  const layered = {
+    enabled: true,
+    scopes: [
+      {
+        id: 's1',
+        scopePattern: '*',
+        direction: 'top-down' as const,
+        layers: [
+          { id: 'l1', name: 'Sensors' },
+          { id: 'l2', name: '2' },
+        ],
+      },
+    ],
+  }
+  const belong = (id: string, name: string, layer: string) =>
+    rule({
+      id,
+      namePattern: name,
+      placement: 'belong to',
+      peerKind: 'layer',
+      peerNamePattern: layer,
+    })
+
+  it('belong to needs a peer and is not absolute', () => {
+    expect(needsPeer('belong to')).toBe(true)
+    expect(PLACEMENT_OPTIONS).toContain('belong to')
+  })
+
+  it('a belong-to rule with a known layer is not a conflict', () => {
+    const c = findLayoutConflicts(
+      [belong('r1', 'Engine', 'Sensors')],
+      [engine, wheel],
+      layered,
+    )
+    expect(c.rowIds).toEqual([])
+  })
+
+  it('flags an unknown layer name', () => {
+    const c = findLayoutConflicts(
+      [belong('r1', 'Engine', 'Nope')],
+      [engine, wheel],
+      layered,
+    )
+    expect(c.rowIds).toEqual(['r1'])
+    expect(c.message).toMatch(/layer/i)
+  })
+
+  it('flags two belong-to rules sending one part to different layers', () => {
+    const c = findLayoutConflicts(
+      [belong('r1', 'Engine', 'Sensors'), belong('r2', 'Eng*', '2')],
+      [engine, wheel],
+      layered,
+    )
+    expect(c.rowIds).toEqual(['r1', 'r2'])
+  })
+
+  it('flags an in-layer order rule between parts in different layers', () => {
+    const c = findLayoutConflicts(
+      [
+        belong('r1', 'Engine', 'Sensors'),
+        belong('r2', 'Wheel', '2'),
+        rule({
+          id: 'r3',
+          namePattern: 'Engine',
+          placement: 'to the left of',
+          peerKind: 'part',
+          peerNamePattern: 'Wheel',
+        }),
+      ],
+      [engine, wheel],
+      layered,
+    )
+    expect(c.rowIds).toEqual(['r3'])
+  })
+
+  it('flags precedence contradicting explicit layers', () => {
+    const c = findLayoutConflicts(
+      [
+        belong('r1', 'Engine', '2'),
+        belong('r2', 'Wheel', 'Sensors'),
+        rule({
+          id: 'r3',
+          namePattern: 'Engine',
+          placement: 'above',
+          peerKind: 'part',
+          peerNamePattern: 'Wheel',
+        }),
+      ],
+      [engine, wheel],
+      layered,
+    )
+    expect(c.rowIds).toEqual(['r3'])
+  })
+
+  it('ignores belong-to rules when layered layout is disabled', () => {
+    const c = findLayoutConflicts(
+      [belong('r1', 'Engine', 'Nope')],
+      [engine, wheel],
+      { ...layered, enabled: false },
+    )
+    expect(c.rowIds).toEqual([])
+    // And the plain solver leaves positions untouched.
+    const pos = solveLayoutRules([engine, wheel], [belong('r1', 'Engine', 'Nope')])
+    expect(pos.e).toEqual({ x: 0, y: 0 })
+  })
+})
+
+describe('layered layout rules — scopes', () => {
+  const layered = {
+    enabled: true,
+    scopes: [
+      { id: 's1', scopePattern: '*', direction: 'top-down' as const, layers: [{ id: 'l1', name: 'A' }] },
+      { id: 's2', scopePattern: 'Ecu', direction: 'top-down' as const, layers: [{ id: 'l1', name: 'UI' }] },
+    ],
+  }
+  const car = { ...art('car', 'Car'), parentId: null }
+  const ecu = { ...art('ecu', 'Ecu'), parentId: 'car' }
+  const sw = { ...art('sw', 'Sw'), parentId: 'ecu' }
+  const other = { ...art('o', 'Other'), parentId: 'car' }
+  const belong = (id: string, name: string, layer: string) =>
+    rule({ id, namePattern: name, placement: 'belong to', peerKind: 'layer', peerNamePattern: layer })
+
+  it('resolves layer names in the subject\'s scope', () => {
+    expect(findLayoutConflicts([belong('r1', 'Sw', 'UI')], [car, ecu, sw, other], layered).rowIds).toEqual([])
+    const c = findLayoutConflicts([belong('r1', 'Sw', 'A')], [car, ecu, sw, other], layered)
+    expect(c.rowIds).toEqual(['r1'])
+    expect(c.message).toMatch(/scope/i)
+  })
+
+  it('flags order rules across containers', () => {
+    const c = findLayoutConflicts(
+      [rule({ id: 'r2', namePattern: 'Sw', placement: 'to the left of', peerKind: 'part', peerNamePattern: 'Other' })],
+      [car, ecu, sw, other],
+      layered,
+    )
+    expect(c.rowIds).toEqual(['r2'])
+    expect(c.message).toMatch(/container/i)
   })
 })

@@ -5,6 +5,7 @@ import { clampPortOffset } from './portPlacement'
 import {
   asAngularForLayout,
   buildElkGraph,
+  demoteNestedBoundaries,
   layoutStructureWithElk,
   portFromElk,
 } from './elkStructureLayout'
@@ -649,5 +650,54 @@ describe('buildElkGraph proxy-port edges', () => {
     ])
     expect(g.edges?.some((e) => e.id === 'energyMotor')).toBe(true)
     expect(g.edges?.some((e) => e.id === 'internal')).toBe(false)
+  })
+})
+
+describe('nested containers in AutoLayout', () => {
+  it('demotes nested boundaries but keeps the root boundary', () => {
+    const nodes = [
+      part('car', { isBoundary: true }),
+      part('ecu', { parentId: 'car', isBoundary: true }),
+      part('cpu', { parentId: 'ecu' }),
+    ]
+    const out = demoteNestedBoundaries(nodes)
+    expect((out[0].data as PartNodeData).isBoundary).toBe(true)
+    expect((out[1].data as PartNodeData).isBoundary).toBe(false)
+  })
+
+  it('places a nested container among its siblings without overlap', async () => {
+    const nodes = [
+      part('car', { isBoundary: true, w: 600, h: 400 }),
+      part('a', { parentId: 'car', x: 0, y: 0 }),
+      // Stale oversized box from an earlier layout must not survive.
+      part('ecu', { parentId: 'car', isBoundary: true, x: 0, y: 0, w: 900, h: 700 }),
+      part('cpu', { parentId: 'ecu', x: 20, y: 40 }),
+    ]
+    for (const algorithm of ['favour-grid', 'clustered', 'stress', 'layered'] as const) {
+      const r = await layoutStructureWithElk(nodes, [], {
+        includeEdges: false,
+        layoutNodes: true,
+        directives: {
+          mode: 'simple',
+          algorithm,
+          portPlacement: 'optimized',
+          spacing: 'normal',
+          aspectRatio: 1,
+        },
+      })
+      const a = r.nodes.a
+      const ecu = r.nodes.ecu
+      const overlap =
+        a.x! < ecu.x! + ecu.width! &&
+        ecu.x! < a.x! + a.width! &&
+        a.y! < ecu.y! + ecu.height! &&
+        ecu.y! < a.y! + a.height!
+      expect(overlap, algorithm).toBe(false)
+      const cpu = r.nodes.cpu
+      expect(cpu.x! + cpu.width!, algorithm).toBeLessThanOrEqual(ecu.width! + 1e-6)
+      expect(cpu.y! + cpu.height!, algorithm).toBeLessThanOrEqual(ecu.height! + 1e-6)
+      expect(ecu.width!, algorithm).toBeLessThan(600)
+      expect(ecu.height!, algorithm).toBeLessThan(500)
+    }
   })
 })

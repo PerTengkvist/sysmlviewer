@@ -1,10 +1,13 @@
-import type { LayoutRuleRow } from '../../api'
+import type { LayeredLayoutConfig, LayoutRuleRow } from '../../api'
+import { BELONG_TO, findLayeredConflicts } from './layout/layoutConstraints'
 import { matchName } from './namePattern'
 
 export type LayoutArtefact = {
   id: string
   name: string
   kind: string
+  /** Parent artefact id (null/undefined for top-level). */
+  parentId?: string | null
   x: number
   y: number
   width: number
@@ -33,6 +36,7 @@ export const PLACEMENT_OPTIONS = [
   'beside',
   'above',
   'top',
+  'belong to',
 ] as const
 
 export function needsPeer(placement: string): boolean {
@@ -95,6 +99,7 @@ function collectVerticalEdges(
   const allIds = artefacts.map((a) => a.id)
 
   for (const rule of rules) {
+    if (rule.placement === BELONG_TO) continue
     const { subjects, peers, emptyPeer } = expandRulePairs(rule, artefacts)
     if (!subjects.length) continue
     if (needsPeer(rule.placement) && emptyPeer) {
@@ -170,6 +175,7 @@ function collectHorizontalEdges(
   const allIds = artefacts.map((a) => a.id)
 
   for (const rule of rules) {
+    if (rule.placement === BELONG_TO) continue
     const { subjects, peers, emptyPeer } = expandRulePairs(rule, artefacts)
     if (!subjects.length) continue
     if (needsPeer(rule.placement) && emptyPeer) {
@@ -316,6 +322,7 @@ function findBesideConflicts(
 export function findLayoutConflicts(
   rules: LayoutRuleRow[],
   artefacts: LayoutArtefact[],
+  layered?: LayeredLayoutConfig | null,
 ): LayoutConflict {
   const nodeIds = artefacts.map((a) => a.id)
   const vert = collectVerticalEdges(rules, artefacts)
@@ -336,12 +343,18 @@ export function findLayoutConflicts(
   // empty peer for beside is also in emptyPeer via vertical? beside isn't in
   // vertical collector — handle here
   for (const rule of rules) {
-    if (!needsPeer(rule.placement)) continue
+    if (!needsPeer(rule.placement) || rule.placement === BELONG_TO) continue
     const { subjects, emptyPeer } = expandRulePairs(rule, artefacts)
     if (subjects.length && emptyPeer) bad.add(rule.id)
   }
 
+  const layeredConflict = findLayeredConflicts(rules, layered, artefacts)
+  for (const id of layeredConflict.rowIds) bad.add(id)
+
   if (!bad.size) return { message: '', rowIds: [] }
+  if (layeredConflict.rowIds.length && bad.size === layeredConflict.rowIds.length) {
+    return { message: layeredConflict.message, rowIds: [...bad].sort() }
+  }
 
   const rowIds = [...bad].sort()
   const emptyPeer = rules.some(
@@ -417,6 +430,7 @@ export function solveLayoutRules(
 
   const involved = new Set<string>()
   for (const rule of rules) {
+    if (rule.placement === BELONG_TO) continue
     const { subjects, peers, emptyPeer } = expandRulePairs(rule, artefacts)
     if (!subjects.length) continue
     if (needsPeer(rule.placement) && emptyPeer) continue

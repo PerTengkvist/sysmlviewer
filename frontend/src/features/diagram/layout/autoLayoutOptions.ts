@@ -2,7 +2,9 @@
  * User-facing AutoLayout directives (dialog → placement pipelines / ports).
  */
 
+import type { LayerDirection } from '../../../api'
 import type { PlacementPipelineId } from './placementPipelines'
+import type { LayoutConstraints } from './layoutConstraints'
 
 export type PortPlacementMode = 'inputsLeftOutputsRight' | 'optimized'
 
@@ -123,6 +125,84 @@ export function layoutLevelLabel(level: LayoutLevel): string {
   }
 }
 
+/** ELK layered direction. */
+export type HierarchicDirection = 'RIGHT' | 'DOWN' | 'LEFT' | 'UP'
+
+/** Advanced "Hierarchic (yEd-style)" pipeline options — the five Sugiyama phases. */
+export type HierarchicOptions = {
+  direction: HierarchicDirection
+  /** Phase 1: cycle breaking. */
+  cycleBreaking: 'GREEDY' | 'DEPTH_FIRST' | 'MODEL_ORDER'
+  /** Phase 2: layer assignment (ignored for incremental = INTERACTIVE). */
+  layering: 'NETWORK_SIMPLEX' | 'LONGEST_PATH' | 'COFFMAN_GRAHAM'
+  /** Phase 3: crossing minimisation effort (elk.layered.thoroughness, 1–50). */
+  crossingThoroughness: number
+  /** Phase 4: node placement. */
+  nodePlacement: 'BRANDES_KOEPF' | 'NETWORK_SIMPLEX' | 'LINEAR_SEGMENTS' | 'SIMPLE'
+  /** Port constraints handed to ELK (port candidates still bound the sides). */
+  portConstraints: 'FIXED_SIDE' | 'FIXED_ORDER' | 'FREE'
+  /** Keep the current arrangement (interactive layering / crossing min). */
+  incremental: boolean
+  /** Outer port-side iterations (ELK runs), ≥ 1. */
+  maxIterations: number
+}
+
+export const DEFAULT_HIERARCHIC_OPTIONS: HierarchicOptions = {
+  direction: 'RIGHT',
+  cycleBreaking: 'GREEDY',
+  layering: 'NETWORK_SIMPLEX',
+  crossingThoroughness: 10,
+  nodePlacement: 'BRANDES_KOEPF',
+  portConstraints: 'FIXED_SIDE',
+  incremental: false,
+  maxIterations: 3,
+}
+
+export function clampHierarchicOptions(
+  partial: Partial<HierarchicOptions> | undefined,
+): HierarchicOptions {
+  const o = { ...DEFAULT_HIERARCHIC_OPTIONS, ...(partial || {}) }
+  o.crossingThoroughness = Math.max(
+    1,
+    Math.min(50, Math.round(Number(o.crossingThoroughness) || 10)),
+  )
+  o.maxIterations = Math.max(
+    1,
+    Math.min(10, Math.round(Number(o.maxIterations) || 1)),
+  )
+  return o
+}
+
+export function hierarchicDirectionForLayers(
+  direction: LayerDirection,
+): HierarchicDirection {
+  switch (direction) {
+    case 'top-down':
+      return 'DOWN'
+    case 'bottom-up':
+      return 'UP'
+    case 'right-left':
+      return 'LEFT'
+    default:
+      return 'RIGHT'
+  }
+}
+
+export function layerDirectionForHierarchic(
+  direction: HierarchicDirection,
+): LayerDirection {
+  switch (direction) {
+    case 'DOWN':
+      return 'top-down'
+    case 'UP':
+      return 'bottom-up'
+    case 'LEFT':
+      return 'right-left'
+    default:
+      return 'left-right'
+  }
+}
+
 export type AutoLayoutDirectives = {
   /** Simple ≈ legacy controls; Advanced = named pipeline preset. */
   mode?: AutoLayoutUiMode
@@ -138,6 +218,10 @@ export type AutoLayoutDirectives = {
   aspectRatio: number
   /** Advanced custom pipeline: per-level aspect weights (0..1). */
   customWeights?: LevelWeights
+  /** Advanced hierarchic pipeline options. */
+  hierarchic?: HierarchicOptions
+  /** Layout Rules / layered layout as hard constraints (hierarchic pipeline). */
+  constraints?: LayoutConstraints
 }
 
 export const DEFAULT_AUTO_LAYOUT_DIRECTIVES: AutoLayoutDirectives = {

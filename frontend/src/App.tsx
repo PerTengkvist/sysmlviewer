@@ -634,6 +634,25 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
+  const onLayeredLayoutChange = useCallback(
+    async (layered: import('./api').LayeredLayoutConfig | null) => {
+      if (!project || !activeViewId) return
+      try {
+        await api.patchVisualization(project.id, {
+          viewId: activeViewId,
+          layeredLayout: layered,
+          structureNotation,
+        })
+        setViewPayload((prev) =>
+          prev ? { ...prev, layeredLayout: layered } : prev,
+        )
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
   const onPortsMoved = useCallback(
     async (
       moves: { portId: string; side: PortSide; offset: number }[],
@@ -1678,6 +1697,9 @@ export default function App() {
                 onUseCaseDoubleClick={(id) => setUseCaseDialogId(id)}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
+                onLayeredLayoutChange={(layered) =>
+                  void onLayeredLayoutChange(layered)
+                }
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
                 onPortsMoved={(moves) => void onPortsMoved(moves)}
                 onRelationEndMoved={(id, end, side, offset, companion) =>

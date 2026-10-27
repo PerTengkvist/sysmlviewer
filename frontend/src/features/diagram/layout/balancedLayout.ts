@@ -15,11 +15,12 @@ import {
   parentsOrderedDeepestFirst,
 } from './nestBottomUp'
 import { sizePartForPorts } from './structureAutoLayout'
+import { packAroundCore } from './clusteredPack'
 
 const MIN_W = 140
 const MIN_H = 72
 
-/** clustered = onion-leaning at N≥4; favour-grid = matrix-leaning at N≥4. */
+/** clustered = packed core + rings at N≥4; favour-grid = matrix-leaning at N≥4. */
 export type CompositionVariant = 'clustered' | 'favour-grid'
 
 export type BalancedBox = { id: string; w: number; h: number }
@@ -29,7 +30,7 @@ export type BalancedPlacement = {
   children: Record<string, { x: number; y: number; width: number; height: number }>
   parentWidth: number
   parentHeight: number
-  strategy: 'center' | 'stack-h' | 'stack-v' | 'onion' | 'matrix'
+  strategy: 'center' | 'stack-h' | 'stack-v' | 'onion' | 'matrix' | 'cluster-pack'
 }
 
 function isBoundary(node: Node): boolean {
@@ -256,13 +257,43 @@ export function placeBalancedSiblings(
     return placeMatrix(orderForGrid(boxes, deg), gapFrac, aspectRatio)
   }
 
-  // clustered: onion-leaning (previous Balanced behaviour)
-  const useOnion =
-    density >= 0.75 || (hubId != null && (deg.get(hubId) || 0) >= 3)
-  if (useOnion) {
-    return placeOnion(boxes, hubId, gapFrac)
+  // clustered: dense core + packed rings (matrix when nothing is connected)
+  if (eCount === 0) {
+    return placeMatrix(boxes, gapFrac, aspectRatio)
   }
-  return placeMatrix(boxes, gapFrac, aspectRatio)
+  return placeClusterPack(boxes, edges, gapFrac)
+}
+
+/** Core via the ≤3 composition rules, satellites in rectangular rings. */
+function placeClusterPack(
+  boxes: BalancedBox[],
+  edges: Edge[],
+  gapFrac: number,
+): BalancedPlacement {
+  const packEdges = edges
+    .filter((e) => e.source !== e.target)
+    .map((e) => ({ source: e.source, target: e.target }))
+  const avg = Math.max(
+    boxes.reduce((s, b) => s + b.w, 0) / boxes.length,
+    boxes.reduce((s, b) => s + b.h, 0) / boxes.length,
+  )
+  const packed = packAroundCore(
+    boxes,
+    packEdges,
+    { gapFraction: gapFrac, minChannel: avg * (0.35 + gapFrac) },
+    (core, coreEdges) =>
+      placeBalancedSiblings(
+        core,
+        coreEdges.map((e, i) => ({ id: `core-${i}`, ...e }) as Edge),
+        { gapFraction: gapFrac, variant: 'clustered' },
+      ),
+  )
+  return {
+    children: packed.children,
+    parentWidth: packed.parentWidth,
+    parentHeight: packed.parentHeight,
+    strategy: 'cluster-pack',
+  }
 }
 
 function placeOnion(
@@ -483,22 +514,13 @@ export function layoutBalancedBottomUp(
         ),
       }
     } else {
+      // Nested containers are sized from their content (no stale saved box).
       nodePatch[parentId] = {
         artifactId: parentId,
         x: parentPrev?.x ?? parentNode.position.x,
         y: parentPrev?.y ?? parentNode.position.y,
-        width: Math.max(
-          placed.parentWidth,
-          portSized.width,
-          parentPrev?.width ?? 0,
-          parentBase.width,
-        ),
-        height: Math.max(
-          placed.parentHeight,
-          portSized.height,
-          parentPrev?.height ?? 0,
-          parentBase.height,
-        ),
+        width: Math.max(placed.parentWidth, portSized.width),
+        height: Math.max(placed.parentHeight, portSized.height),
       }
     }
   }

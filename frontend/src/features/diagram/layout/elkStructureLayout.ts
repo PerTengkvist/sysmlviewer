@@ -419,7 +419,7 @@ function seedPortSideIoFixed(
   return 'right'
 }
 
-function seedPortSide(
+export function seedPortSide(
   port: PartPort,
   owner: Node,
   links: ConnLink[],
@@ -701,11 +701,32 @@ function collectLaidOutNodes(
  * Run ELK and return visualization patches for parts + ports.
  * Phase A: no `edges` in the result.
  */
+/**
+ * Nested containers are flagged `isBoundary` by buildStructureGraph; for
+ * placement only the root boundary is special. Demote the rest so they are
+ * placed among their siblings (and grown around their children) like parts.
+ */
+export function demoteNestedBoundaries(nodes: Node[]): Node[] {
+  const partIds = new Set(
+    nodes.filter((n) => !n.type || n.type === 'part').map((n) => n.id),
+  )
+  return nodes.map((n) => {
+    if (!isBoundary(n)) return n
+    if (!n.parentId || !partIds.has(n.parentId)) return n
+    return {
+      ...n,
+      data: { ...(n.data as PartNodeData), isBoundary: false },
+    }
+  })
+}
+
 export async function layoutStructureWithElk(
-  nodes: Node[],
+  inputNodes: Node[],
   edges: Edge[],
   options: ElkGraphBuildOptions = {},
 ): Promise<ElkStructureLayoutResult> {
+  const nodes =
+    options.layoutNodes !== false ? demoteNestedBoundaries(inputNodes) : inputNodes
   const includeEdges = options.includeEdges === true
   const layoutNodes = options.layoutNodes !== false
   const directives = options.directives || DEFAULT_AUTO_LAYOUT_DIRECTIVES

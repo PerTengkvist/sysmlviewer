@@ -206,7 +206,8 @@ export function layoutNestBottomUp(
       portsOf(parentNode).map((p) => ({ name: p.name, side: p.side })),
     )
     const parentPrev = nodePatch[parentId]
-    const parentBase = readSize(parentNode)
+    // Containers are sized from their content; a stale saved box must not win.
+    const parentBase = { width: 0, height: 0 }
     nodePatch[parentId] = {
       artifactId: parentId,
       x: parentPrev?.x ?? parentNode.position.x,
@@ -400,7 +401,8 @@ export async function layoutNestBottomUpAdaptive(
         portsOf(parentNode).map((p) => ({ name: p.name, side: p.side })),
       )
       const parentPrev = nodePatch[parentId]
-      const parentBase = readSize(parentNode)
+      // Containers are sized from their content; a stale saved box must not win.
+    const parentBase = { width: 0, height: 0 }
       nodePatch[parentId] = {
         artifactId: parentId,
         x: parentPrev?.x ?? parentNode.position.x,
@@ -446,7 +448,8 @@ export async function layoutNestBottomUpAdaptive(
       portsOf(parentNode).map((p) => ({ name: p.name, side: p.side })),
     )
     const parentPrev = nodePatch[parentId]
-    const parentBase = readSize(parentNode)
+    // Containers are sized from their content; a stale saved box must not win.
+    const parentBase = { width: 0, height: 0 }
     nodePatch[parentId] = {
       artifactId: parentId,
       x: parentPrev?.x ?? parentNode.position.x,

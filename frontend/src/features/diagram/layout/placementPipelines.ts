@@ -19,6 +19,7 @@ export const PIPELINE_IDS = [
   'custom',
   'clustered',
   'favour-grid',
+  'hierarchic',
 ] as const
 
 export type PlacementPipelineId = (typeof PIPELINE_IDS)[number]
@@ -60,6 +61,8 @@ const ELK_BY_PIPELINE: Record<PlacementPipelineId, PipelineElkAlgorithm> = {
   // Composition pipelines do not use ELK for primary placement.
   clustered: 'rectpacking',
   'favour-grid': 'rectpacking',
+  // yEd-style Sugiyama: ELK layered with ports, nesting, rules and iteration.
+  hierarchic: 'layered',
 }
 
 function isCompositionPipeline(id: PlacementPipelineId): boolean {
@@ -73,6 +76,11 @@ function stepsFor(
   if (isCompositionPipeline(id)) {
     // Composition owns H/V; ports still follow portPlacement after place.
     return ['nest-layout', 'nest-fit', 'non-overlap', 'fit-boundary']
+  }
+  if (id === 'hierarchic') {
+    // ELK layered places every nest level itself; no post-steps that could
+    // break the layer structure.
+    return ['primary-layout', 'fit-boundary']
   }
   const steps: PlacementPipelineStep[] = [
     'nest-layout',
@@ -146,8 +154,10 @@ export function pipelineLabel(id: PlacementPipelineId): string {
     case 'custom':
       return 'Custom (adaptive)'
     case 'clustered':
-      return 'Clustered (onion-leaning)'
+      return 'Clustered (packed core)'
     case 'favour-grid':
       return 'Favour grid (matrix-leaning)'
+    case 'hierarchic':
+      return 'Hierarchic (yEd-style Sugiyama)'
   }
 }

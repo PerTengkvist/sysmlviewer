@@ -7,6 +7,7 @@ Web service that visualizes SysML v2 textual files and projects. Alpha vertical 
 - [Requirements](docs/requirements.md)
 - [Use cases](docs/use-cases.md)
 - [Architecture](docs/architecture.md)
+- [AutoLayout, layout rules and e2e evaluation](docs/autolayout.md)
 
 ## Quick start
 
@@ -89,4 +90,12 @@ Electric-car example workspace: [`examples/electric_car/`](examples/electric_car
 ```bash
 cd backend && source .venv/bin/activate && pytest
 cd frontend && npm test
+```
+
+E2E layout evaluation (Playwright, Chromium; writes screenshots + metrics to
+`frontend/e2e/output/`):
+
+```bash
+cd frontend && npx playwright install chromium   # once
+npm run e2e
 ```

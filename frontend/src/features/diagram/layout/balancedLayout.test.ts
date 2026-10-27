@@ -89,7 +89,7 @@ describe('placeBalancedSiblings', () => {
     ).toBe('onion')
   })
 
-  it('clustered prefers onion when a hub has degree ≥ 3', () => {
+  it('clustered packs a core with satellites when a hub has degree ≥ 3', () => {
     const boxes = [
       { id: 'hub', w: 100, h: 80 },
       { id: 'a', w: 100, h: 80 },
@@ -122,7 +122,7 @@ describe('placeBalancedSiblings', () => {
     ] as Edge[]
     expect(
       placeBalancedSiblings(boxes, edges, { variant: 'clustered' }).strategy,
-    ).toBe('onion')
+    ).toBe('cluster-pack')
   })
 
   it('favour-grid prefers matrix for N≥4 with orphans', () => {
