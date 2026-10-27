@@ -32,7 +32,7 @@ export function WorkspaceLayout({ layout, onLayoutChange, left, center, right }:
           defaultSize={`${leftSize}%`}
           minSize="12%"
           maxSize="40%"
-          className="panel-scroll"
+          className="panel-fill"
         >
           {left}
         </Panel>

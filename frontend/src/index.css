@@ -467,6 +467,37 @@ input {
   padding: 0.75rem;
 }
 
+/* Left sidebar: fixed header (tabs + toolbar), scrolling body. */
+.left-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.sidebar-header {
+  flex-shrink: 0;
+  padding: 0.75rem 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.sidebar-header .tab-bar {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-header .model-tree-toolbar,
+.sidebar-header .upload-zone {
+  margin-bottom: 0;
+}
+
+.left-sidebar .sidebar-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
 .right-sidebar {
   border-right: none;
   border-left: 1px solid var(--panel-border);
@@ -607,9 +638,14 @@ input {
   font-size: 0.8rem;
 }
 
-.model-tree-toolbar button:hover {
+.model-tree-toolbar button:hover:not(:disabled) {
   background: var(--surface-raised);
   border-color: var(--accent);
+}
+
+.model-tree-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .model-tree-filter-all {
