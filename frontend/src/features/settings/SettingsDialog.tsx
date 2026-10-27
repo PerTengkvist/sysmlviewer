@@ -394,6 +394,17 @@ export function SettingsDialog({
                 title="When off, crossing jumpers are hidden and not computed on redraw."
               />
             </label>
+            <label className="settings-row">
+              <span>Include bindings in Redraw / AutoLayout</span>
+              <input
+                type="checkbox"
+                checked={settings.includeBindingsInRouting}
+                onChange={(e) =>
+                  patch({ includeBindingsInRouting: e.target.checked })
+                }
+                title="When off, Redraw: Connections and AutoLayout skip binding edges. Port move / Flip / Distribute still reroute binds attached to moved ports. Connections and interfaces are always included in bulk redraw."
+              />
+            </label>
           </fieldset>
           <fieldset className="settings-fieldset">
             <legend>Icon libraries</legend>

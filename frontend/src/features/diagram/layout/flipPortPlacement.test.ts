@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  collectFlipPortMoves,
   flipPortList,
   flipPortPlacement,
 } from './flipPortPlacement'
@@ -45,5 +46,44 @@ describe('flipPortList', () => {
       { id: 'a', side: 'right', offset: 0.3 },
       { id: 'b', side: 'left', offset: 0.7 },
     ])
+  })
+})
+
+describe('collectFlipPortMoves', () => {
+  it('returns sync moves for selected parts only (ready to persist)', () => {
+    const moves = collectFlipPortMoves(
+      [
+        {
+          id: 'partA',
+          height: 120,
+          isBoundary: true,
+          ports: [
+            { id: 'p1', side: 'left', offset: 0.3 },
+            { id: 'p2', side: 'right', offset: 0.6 },
+          ],
+        },
+        {
+          id: 'partB',
+          height: 120,
+          ports: [{ id: 'p3', side: 'left', offset: 0.5 }],
+        },
+      ],
+      new Set(['partA']),
+      'horizontal',
+    )
+    expect(moves).toEqual([
+      { portId: 'p1', side: 'right', offset: 0.3 },
+      { portId: 'p2', side: 'left', offset: 0.6 },
+    ])
+  })
+
+  it('returns empty when no selected parts have ports', () => {
+    expect(
+      collectFlipPortMoves(
+        [{ id: 'partA', ports: [] }],
+        new Set(['partA']),
+        'horizontal',
+      ),
+    ).toEqual([])
   })
 })

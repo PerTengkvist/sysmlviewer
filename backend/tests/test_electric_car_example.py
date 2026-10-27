@@ -115,8 +115,8 @@ def _assert_provider_and_consumer(package_id: str) -> None:
             and elements[c.target_id].type_ref == iface.name
         ]
         assert wired, iface.name
-        # Peer (non-nested) connections keep Out→In. Internal ECU↔SW bindings
-        # may be In→In / Out→Out when proxy ports forward the same face.
+        # Peer (non-nested) connections keep Out→In. Parent↔child proxy
+        # ports use bind (not connection).
         def _owner(port_id: str) -> str | None:
             return elements[port_id].parent_id
 
@@ -168,8 +168,14 @@ def test_physical_ecu_proxy_ports_and_connection_owners():
         for e in elements.values()
         if e.kind == ArtifactKind.CONNECTION and e.id.startswith(f"{vp}::")
     ]
+    binds = [
+        e
+        for e in elements.values()
+        if e.kind == ArtifactKind.BINDING and e.id.startswith(f"{vp}::")
+    ]
     # 11 external peer links + 6 internal ECU↔SW bindings
-    assert len(conns) == 17
+    assert len(conns) == 11
+    assert len(binds) == 6
 
     for c in conns:
         sp = elements[c.source_id]
@@ -177,15 +183,21 @@ def test_physical_ecu_proxy_ports_and_connection_owners():
         src_owner = sp.parent_id
         tgt_owner = tp.parent_id
         assert src_owner and tgt_owner
-        # Same ECU internal binding (port owner is ECU or its nested SW)
+        # External peers: both ends owned by VehiclePhysical direct children
+        assert src_owner in direct_children, (c.name, src_owner)
+        assert tgt_owner in direct_children, (c.name, tgt_owner)
+
+    for b in binds:
+        sp = elements[b.source_id]
+        tp = elements[b.target_id]
+        src_owner = sp.parent_id
+        tgt_owner = tp.parent_id
+        assert src_owner and tgt_owner
+        # Internal: ECU proxy port ↔ nested SW port
         same_ecu = src_owner == tgt_owner or src_owner.startswith(
             tgt_owner + "::"
         ) or tgt_owner.startswith(src_owner + "::")
-        if same_ecu:
-            continue
-        # External: both ends owned by VehiclePhysical direct children
-        assert src_owner in direct_children, (c.name, src_owner)
-        assert tgt_owner in direct_children, (c.name, tgt_owner)
+        assert same_ecu, (b.name, src_owner, tgt_owner)
 
 
 def test_user_stories_and_use_case_sequences():

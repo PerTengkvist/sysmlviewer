@@ -115,3 +115,20 @@ export function distributePortPlacements(
   }
   return out
 }
+
+/**
+ * Convert distributePortPlacements result to PortMove-shaped entries for
+ * persistence (sync; safe to call before setState).
+ */
+export function collectDistributePortMoves(
+  ports: DistributablePort[],
+  axis: DistributeAxis,
+  size: DistributePartSize,
+): Array<{ portId: string; side: PortSide; offset: number }> {
+  const placed = distributePortPlacements(ports, axis, size)
+  return Object.entries(placed).map(([portId, next]) => ({
+    portId,
+    side: next.side,
+    offset: next.offset,
+  }))
+}

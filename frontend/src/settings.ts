@@ -49,6 +49,12 @@ export type AppSettings = {
   connectionSeparation: number
   /** When false, crossing jumpers are hidden and not computed on redraw. */
   showJumpers: boolean
+  /**
+   * When true (default), binding edges participate in Redraw: Connections and
+   * AutoLayout routing (port–port bindings need handles; rel-* bindings stay
+   * excluded by the layout filter). When false, all bindings are skipped.
+   */
+  includeBindingsInRouting: boolean
   /** Panel sizes as percentages [left, center, right]. */
   horizontalPanelSizes: [number, number, number]
   /** Right sidebar split [details, documentation] percentages. */
@@ -139,6 +145,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pendingAddColor: '#16a34a',
   connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
   showJumpers: true,
+  includeBindingsInRouting: true,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
   iconLibraries: {
@@ -215,6 +222,10 @@ export function loadSettings(): AppSettings {
         typeof parsed.showJumpers === 'boolean'
           ? parsed.showJumpers
           : DEFAULT_SETTINGS.showJumpers,
+      includeBindingsInRouting:
+        typeof parsed.includeBindingsInRouting === 'boolean'
+          ? parsed.includeBindingsInRouting
+          : DEFAULT_SETTINGS.includeBindingsInRouting,
       horizontalPanelSizes: normalizeTriple(
         parsed.horizontalPanelSizes,
         DEFAULT_SETTINGS.horizontalPanelSizes,

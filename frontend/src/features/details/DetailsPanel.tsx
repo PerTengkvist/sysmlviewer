@@ -22,6 +22,12 @@ import {
   findInterfaceDefId,
   interfaceUsageKindLabel,
 } from './interfaceLocate'
+import { sizeFieldChange } from '../diagram/partSizeLimits'
+import {
+  mergeStylePatch,
+  multiPartSelection,
+  sharedNumericField,
+} from './multiSelectDetails'
 
 type Props = {
   project: Project | null
@@ -31,6 +37,8 @@ type Props = {
   viewPayload?: ViewPayload | null
   globalHierarchicalLevels?: number
   selectedId: string | null
+  /** Full multi-selection (details uses primaryId; multi-part mode uses this). */
+  selectedIds?: string[]
   relationTodos?: RelationTodoItem[]
   editorMode?: boolean
   viewMode?: ViewMode
@@ -43,6 +51,11 @@ type Props = {
     waypoints: { x: number; y: number; locked?: boolean }[],
   ) => void
   onStyleChange?: (artifactId: string, style: ElementStyle, kind: 'node' | 'edge') => void
+  /** Batch style patch for multi-select (one viz write). */
+  onStylesChange?: (
+    styles: Record<string, ElementStyle>,
+    kind?: 'node' | 'edge',
+  ) => void
   onFormatPaint?: () => void
   paintModeActive?: boolean
   onRename?: (artifactId: string, name: string) => void
@@ -57,6 +70,10 @@ type Props = {
   onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
   onEditLockChange?: (artifactId: string, locked: boolean) => void
   onPositionChange?: (artifactId: string, x: number, y: number) => void
+  onSizeChange?: (
+    ids: string[],
+    size: { width?: number; height?: number },
+  ) => void
   /** Reveal an artifact in the left Model tree. */
   onLocateInModelView?: (artifactId: string) => void
 }
@@ -337,18 +354,25 @@ function FormatControls({
   style,
   isEdge,
   onChange,
+  onPatch,
   onPaint,
   paintActive,
 }: {
   style: ElementStyle | null | undefined
   isEdge: boolean
   onChange: (next: ElementStyle) => void
+  /** When set, each control emits a mode patch instead of a full style. */
+  onPatch?: (mode: ViewMode, patch: Partial<ElementStyleMode>) => void
   onPaint?: () => void
   paintActive?: boolean
 }) {
   const modes: ViewMode[] = ['light', 'dark']
 
   const update = (mode: ViewMode, patch: Partial<ElementStyleMode>) => {
+    if (onPatch) {
+      onPatch(mode, patch)
+      return
+    }
     const prev = style || {}
     const current = (mode === 'dark' ? prev.dark : prev.light) || {}
     const merged: ElementStyleMode = { ...current, ...patch }
@@ -513,6 +537,7 @@ export function DetailsPanel({
   viewPayload,
   globalHierarchicalLevels = 2,
   selectedId,
+  selectedIds = [],
   relationTodos = [],
   editorMode,
   viewMode: _viewMode,
@@ -522,6 +547,7 @@ export function DetailsPanel({
   onAutoroute,
   onWaypointsChange,
   onStyleChange,
+  onStylesChange,
   onFormatPaint,
   paintModeActive,
   onRename,
@@ -533,6 +559,7 @@ export function DetailsPanel({
   onRetargetRelation,
   onEditLockChange,
   onPositionChange,
+  onSizeChange,
   onLocateInModelView,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
@@ -558,6 +585,101 @@ export function DetailsPanel({
         {hierarchyBlock}
         {!hierarchyBlock && (
           <p className="muted">Select an artifact in the diagram.</p>
+        )}
+      </div>
+    )
+  }
+
+  const idsForMulti =
+    selectedIds.length > 0 ? selectedIds : [selectedId]
+  const multiParts = multiPartSelection(idsForMulti, project.semantic)
+  if (multiParts) {
+    const vizNodes =
+      viewVisualization?.nodes ?? project.visualization.nodes
+    const sharedW = sharedNumericField(multiParts, vizNodes, 'width')
+    const sharedH = sharedNumericField(multiParts, vizNodes, 'height')
+    const primaryStyle =
+      vizNodes[selectedId]?.style ??
+      vizNodes[multiParts[0]!]?.style
+    const multiUnlocked = multiParts.every((id) =>
+      elementUnlocked(viewVisualization, id),
+    )
+    const applySize = (field: 'width' | 'height', raw: string) => {
+      if (!onSizeChange) return
+      const sample = vizNodes[multiParts[0]!]
+      const current = {
+        width: sample?.width ?? 180,
+        height: sample?.height ?? 120,
+      }
+      // force: typing the first part's size must still apply to siblings.
+      const patch = sizeFieldChange(field, raw, current, { force: true })
+      if (patch) onSizeChange(multiParts, patch)
+    }
+    return (
+      <div className="details-panel">
+        <h2>Details</h2>
+        {hierarchyBlock}
+        <p className="muted">{multiParts.length} parts selected</p>
+        <dl className="detail-list">
+          <dt>Size</dt>
+          <dd>
+            {onSizeChange ? (
+              <span className="position-inputs">
+                <input
+                  type="number"
+                  className="inline-edit"
+                  defaultValue={sharedW ?? ''}
+                  placeholder={sharedW == null ? 'mixed' : undefined}
+                  key={`multi-w-${multiParts.join(',')}-${sharedW}`}
+                  disabled={!multiUnlocked}
+                  aria-label="Width"
+                  min={1}
+                  onBlur={(e) => applySize('width', e.target.value)}
+                />
+                <input
+                  type="number"
+                  className="inline-edit"
+                  defaultValue={sharedH ?? ''}
+                  placeholder={sharedH == null ? 'mixed' : undefined}
+                  key={`multi-h-${multiParts.join(',')}-${sharedH}`}
+                  disabled={!multiUnlocked}
+                  aria-label="Height"
+                  min={1}
+                  onBlur={(e) => applySize('height', e.target.value)}
+                />
+              </span>
+            ) : (
+              '—'
+            )}
+          </dd>
+        </dl>
+        {(onStylesChange || onStyleChange) && (
+          <fieldset disabled={!multiUnlocked} className="plain-fieldset">
+            <FormatControls
+              style={primaryStyle}
+              isEdge={false}
+              onChange={() => {}}
+              onPatch={(mode, patch) => {
+                const styles: Record<string, ElementStyle> = {}
+                for (const id of multiParts) {
+                  styles[id] = mergeStylePatch(
+                    vizNodes[id]?.style,
+                    mode,
+                    patch,
+                  )
+                }
+                if (onStylesChange) {
+                  onStylesChange(styles, 'node')
+                  return
+                }
+                for (const [id, style] of Object.entries(styles)) {
+                  onStyleChange?.(id, style, 'node')
+                }
+              }}
+              onPaint={onFormatPaint}
+              paintActive={paintModeActive}
+            />
+          </fieldset>
         )}
       </div>
     )
@@ -955,8 +1077,57 @@ export function DetailsPanel({
               )}
             </dd>
             <dt>Size</dt>
-            <dd title="Select the part in the diagram and drag the corner handles to resize">
-              {Math.round(node.width)} × {Math.round(node.height)}
+            <dd>
+              {el.kind === 'part' && onSizeChange ? (
+                <span className="position-inputs">
+                  <input
+                    type="number"
+                    className="inline-edit"
+                    defaultValue={Math.round(node.width)}
+                    key={`${el.id}-w-${node.width}`}
+                    disabled={!unlocked}
+                    aria-label="Width"
+                    min={1}
+                    onBlur={(e) => {
+                      const isBoundary =
+                        viewPayload?.diagramMode === 'whitebox' &&
+                        viewPayload?.view.rootArtifactId === el.id
+                      const patch = sizeFieldChange(
+                        'width',
+                        e.target.value,
+                        { width: node.width, height: node.height },
+                        { isBoundary },
+                      )
+                      if (patch) onSizeChange([el.id], patch)
+                    }}
+                  />
+                  <input
+                    type="number"
+                    className="inline-edit"
+                    defaultValue={Math.round(node.height)}
+                    key={`${el.id}-h-${node.height}`}
+                    disabled={!unlocked}
+                    aria-label="Height"
+                    min={1}
+                    onBlur={(e) => {
+                      const isBoundary =
+                        viewPayload?.diagramMode === 'whitebox' &&
+                        viewPayload?.view.rootArtifactId === el.id
+                      const patch = sizeFieldChange(
+                        'height',
+                        e.target.value,
+                        { width: node.width, height: node.height },
+                        { isBoundary },
+                      )
+                      if (patch) onSizeChange([el.id], patch)
+                    }}
+                  />
+                </span>
+              ) : (
+                <span title="Select the part in the diagram and drag the corner handles to resize">
+                  {Math.round(node.width)} × {Math.round(node.height)}
+                </span>
+              )}
             </dd>
             {node.side && (
               <>

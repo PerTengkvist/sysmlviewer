@@ -12,6 +12,8 @@ export type RoutedPoly = {
   points: Pt[] // full polyline including endpoints
   sourcePort: string
   targetPort: string
+  /** Paint / stack order; higher draws on top and receives the jumper. */
+  z?: number
 }
 
 export type PathJump = {
@@ -271,9 +273,24 @@ export function updateJumpersFromRoutes(
   return computeJumpers(routes, minDistFromEnds)
 }
 
+function overlyingRoute(a: RoutedPoly, b: RoutedPoly): {
+  overlying: RoutedPoly
+  under: RoutedPoly
+} {
+  const za = a.z ?? 0
+  const zb = b.z ?? 0
+  if (za !== zb) {
+    return za > zb ? { overlying: a, under: b } : { overlying: b, under: a }
+  }
+  // Tie-break: lexicographically greater id (stable with historical behaviour).
+  return a.id >= b.id
+    ? { overlying: a, under: b }
+    : { overlying: b, under: a }
+}
+
 /**
  * For each unrelated crossing, put a jumper on the overlying route
- * (lexicographically greater id).
+ * (higher z, else lexicographically greater id).
  */
 export function computeJumpers(
   routes: RoutedPoly[],
@@ -285,8 +302,7 @@ export function computeJumpers(
       const a = routes[i]
       const b = routes[j]
       if (sharePort(a, b)) continue
-      const overlying = a.id >= b.id ? a : b
-      const under = a.id >= b.id ? b : a
+      const { overlying, under } = overlyingRoute(a, b)
       for (let ai = 0; ai < overlying.points.length - 1; ai++) {
         const a1 = overlying.points[ai]
         const a2 = overlying.points[ai + 1]

@@ -89,7 +89,7 @@ export function AutoLayoutDialog({
   return (
     <div className="modal-backdrop" role="presentation" onClick={onCancel}>
       <div
-        className="modal-dialog modal-autolayout"
+        className="modal-dialog"
         role="dialog"
         aria-label="AutoLayout directives"
         onClick={(e) => e.stopPropagation()}
