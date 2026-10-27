@@ -11,8 +11,8 @@ Web service that visualizes SysML v2 textual files and projects. Alpha vertical 
 ## Quick start
 
 ```bash
-./sysmlviewer.sh start                         # prod: UI + API on :5174 (uses frontend/dist/)
-./sysmlviewer.sh start --build                 # rebuild frontend, then start
+./sysmlviewer.sh start                         # prod: UI + API on :5174
+./sysmlviewer.sh start --build                 # force rebuild frontend, then start
 ./sysmlviewer.sh start -f /path/to/folder      # open workspace folder
 ./sysmlviewer.sh start -p /path/to/project.json
 ./sysmlviewer.sh start --dev                   # Vite :5173 + API :5174 (HMR)
@@ -27,6 +27,8 @@ Legacy wrapper: `./sysmlviewer` → `sysmlviewer.sh`
 UI (prod): http://127.0.0.1:5174/  
 API docs: http://127.0.0.1:5174/api/docs  
 
+**Prod vs `--dev`:** Production mode serves the Vite build from `frontend/dist/` (not tracked in git). If `dist` is missing, `start` runs `npm run build` automatically (requires Node/npm once). Use `--build` to force a rebuild when `dist` already exists. Use `--dev` for Vite HMR on `:5173` with the API on `:5174`.
+
 Use **New** / **Open** in the UI to bind a project folder (absolute path). Add `.sysml` files by relative path; the backend reads them from disk (SysML is read-only in the viewer). Persistence roles:
 
 - **`*.sysml`** — source of truth for the model
@@ -35,7 +37,7 @@ Use **New** / **Open** in the UI to bind a project folder (absolute path). Add `
 
 Legacy projects with `viewLayouts` inside `state.json` are migrated on open (or run `python scripts/migrate_view_layouts.py <project-folder>`).
 
-Requires Python venv in `backend/.venv` (see Manual below). Production start uses the pre-built `frontend/dist/` checked into the repo — no Node/npm needed unless you use `--build` or `--dev`.
+Requires Python venv in `backend/.venv` (see Manual below). First prod start (or `--build`) needs Node/npm to produce `frontend/dist/`.
 
 ### Manual (optional)
 
@@ -57,10 +59,11 @@ npm install
 npm run dev
 ```
 
-Rebuild static assets (updates `frontend/dist/`):
+Rebuild static assets (writes local `frontend/dist/`, gitignored):
 
 ```bash
 cd frontend && npm run build
+# or: ./sysmlviewer.sh start --build
 ```
 
 ### Sample projects

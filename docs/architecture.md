@@ -27,7 +27,7 @@ backend/src/
 - `GET/POST /api/...` — JSON API (session, projects, files, views, …)
 - OpenAPI: `/api/docs`
 
-Launchers: [`sysmlviewer.sh`](../sysmlviewer.sh) / [`sysmlviewer.bat`](../sysmlviewer.bat) — default prod on `:5174`; `--dev` runs Vite `:5173` with `/api` proxied to backend.
+Launchers: [`sysmlviewer.sh`](../sysmlviewer.sh) / [`sysmlviewer.bat`](../sysmlviewer.bat) — default prod on `:5174` (auto-builds `frontend/dist/` if missing); `--dev` runs Vite `:5173` with `/api` proxied to backend. `frontend/dist/` is gitignored — CI builds it as an artifact.
 
 ## Domain model
 

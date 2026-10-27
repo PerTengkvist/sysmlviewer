@@ -2,7 +2,7 @@
 # SysML Viewer process manager: start/stop backend (+ optional Vite dev).
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${SYSMLVIEWER_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 SESSION_FILE="$ROOT/running-session.json"
 LOG_DIR="$ROOT/logs"
 SERVER_PORT=5174
@@ -20,7 +20,7 @@ Usage: $(basename "$0") <start|stop|status> [options]
   start   Start SysML Viewer
           Default (prod): one server on :$SERVER_PORT (UI + /api)
           Options:
-            --build             Run npm run build before prod start
+            --build             Force npm run build before prod start
             --dev               Vite dev server (:$DEV_PORT) + API (:$SERVER_PORT)
             -f, --folder PATH   Open workspace folder
             -p, --project PATH  Open project.json (parent = workspace)
@@ -41,8 +41,10 @@ ensure_backend() {
 }
 
 ensure_dist() {
+  # Prod start must work after a clean clone (dist is not tracked).
   if [[ ! -f "$DIST_DIR/index.html" ]]; then
-    die "frontend/dist missing. Run: $(basename "$0") start --build  OR  cd frontend && npm run build"
+    echo "frontend/dist missing — building…"
+    run_frontend_build
   fi
 }
 
@@ -60,7 +62,9 @@ run_frontend_build() {
   ensure_node_for_build
   echo "building frontend → $DIST_DIR"
   (cd "$FRONTEND_DIR" && npm run build)
-  ensure_dist
+  if [[ ! -f "$DIST_DIR/index.html" ]]; then
+    die "frontend build finished but $DIST_DIR/index.html is still missing"
+  fi
 }
 
 ensure_node_for_dev() {
@@ -388,4 +392,6 @@ main() {
   esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
