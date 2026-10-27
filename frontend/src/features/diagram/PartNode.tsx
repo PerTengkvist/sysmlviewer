@@ -641,6 +641,10 @@ export function PartNode({ data, selected }: NodeProps) {
           id={port.id}
           type="source"
           position={sideToPosition(port.side)}
+          data-port-id={port.id}
+          data-port-name={port.name}
+          data-port-side={port.side}
+          data-port-boundary={d.isBoundary ? 'true' : undefined}
           style={{
             ...offsetStyle(port.side, port.offset, !!d.isBoundary),
             zIndex: 5,

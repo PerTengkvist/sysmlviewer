@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test'
+import type { PortPlacementMode } from '../../src/features/diagram/layout/autoLayoutOptions'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -33,13 +34,13 @@ export type AutoLayoutChoice =
   | {
       mode: 'simple'
       algorithm: 'stress' | 'layered' | 'clustered' | 'favour-grid'
-      portPlacement?: 'inputsLeftOutputsRight' | 'optimized'
+      portPlacement?: PortPlacementMode
       spacing?: 'compact' | 'normal' | 'spacious'
     }
   | {
       mode: 'advanced'
       pipeline: string
-      portPlacement?: 'inputsLeftOutputsRight' | 'optimized'
+      portPlacement?: PortPlacementMode
       spacing?: 'compact' | 'normal' | 'spacious'
       /** Hierarchic options (data-testid → value), applied when visible. */
       hierarchic?: Record<string, string | boolean>

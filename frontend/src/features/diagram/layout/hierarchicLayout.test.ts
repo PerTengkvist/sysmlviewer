@@ -144,16 +144,60 @@ describe('layoutHierarchic — basics', () => {
     expect(r.nodes['c.in'].side).toBe('top')
   })
 
-  it('keeps IO ports on the flow sides even when the peer sits elsewhere', async () => {
+  it('inputs left / outputs right holds literally even for a DOWN layout', async () => {
     const { nodes, edges } = chain()
     const r = await layoutHierarchic(
       nodes,
       edges,
       directives({ direction: 'DOWN' }, { portPlacement: 'inputsLeftOutputsRight' }),
     )
-    // Inputs enter from the top, outputs leave at the bottom for DOWN.
-    expect(r.nodes['b.in'].side).toBe('top')
-    expect(r.nodes['b.out'].side).toBe('bottom')
+    expect(r.nodes.a.y!).toBeLessThan(r.nodes.b.y!)
+    expect(r.nodes['a.out'].side).toBe('right')
+    expect(r.nodes['b.in'].side).toBe('left')
+    expect(r.nodes['b.out'].side).toBe('right')
+    expect(r.nodes['c.in'].side).toBe('left')
+  })
+
+  it('inputs left / outputs right survives FREE port constraints', async () => {
+    const { nodes, edges } = chain()
+    const r = await layoutHierarchic(
+      nodes,
+      edges,
+      directives(
+        { direction: 'DOWN', portConstraints: 'FREE' },
+        { portPlacement: 'inputsLeftOutputsRight' },
+      ),
+    )
+    expect(r.nodes['a.out'].side).toBe('right')
+    expect(r.nodes['b.in'].side).toBe('left')
+    expect(r.nodes['b.out'].side).toBe('right')
+    expect(r.nodes['c.in'].side).toBe('left')
+  })
+
+  it('optimized – no top: never top, bottom still used when the peer is below', async () => {
+    const { nodes, edges } = chain()
+    const r = await layoutHierarchic(
+      nodes,
+      edges,
+      directives({ direction: 'DOWN', portConstraints: 'FREE' }, { portPlacement: 'optimizedNoTop' }),
+    )
+    const sides = ['a.out', 'b.in', 'b.out', 'c.in'].map((id) => r.nodes[id].side)
+    expect(sides).not.toContain('top')
+    expect(r.nodes['a.out'].side).toBe('bottom')
+    expect(r.nodes['c.in'].side).not.toBe('bottom')
+  })
+
+  it('optimized – no top/bottom: only left and right, even for DOWN', async () => {
+    const { nodes, edges } = chain()
+    const r = await layoutHierarchic(
+      nodes,
+      edges,
+      directives({ direction: 'DOWN' }, { portPlacement: 'optimizedNoTopBottom' }),
+    )
+    for (const id of ['a.out', 'b.in', 'b.out', 'c.in']) {
+      expect(['left', 'right']).toContain(r.nodes[id].side)
+    }
+    expect(r.nodes.a.y!).toBeLessThan(r.nodes.b.y!)
   })
 
   it('respects the iteration budget', async () => {

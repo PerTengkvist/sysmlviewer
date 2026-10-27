@@ -11,9 +11,15 @@ import {
 } from './helpers/diagram'
 import {
   evaluateGeometry,
+  evaluatePortSides,
   readDiagramGeometry,
   readParentOf,
+  readPortSides,
 } from './helpers/geometry'
+import type { PortPlacementMode } from '../src/features/diagram/layout/autoLayoutOptions'
+
+/** The dialog's default mode when a case does not pick one. */
+const DEFAULT_PORT_MODE: PortPlacementMode = 'inputsLeftOutputsRight'
 
 const OUTPUT_DIR = path.resolve(
   process.env.E2E_OUTPUT_DIR || path.join('e2e', 'output', 'latest'),
@@ -66,6 +72,23 @@ const ALGORITHMS: { slug: string; choice: AutoLayoutChoice }[] = [
       hierarchic: { 'al-h-incremental': true },
     },
   },
+  {
+    slug: 'hierarchic-down-notop',
+    choice: {
+      mode: 'advanced',
+      pipeline: 'hierarchic',
+      portPlacement: 'optimizedNoTop',
+      hierarchic: { 'al-h-direction': 'DOWN', 'al-h-ports': 'FREE' },
+    },
+  },
+  {
+    slug: 'stress-notopbottom',
+    choice: { mode: 'simple', algorithm: 'stress', portPlacement: 'optimizedNoTopBottom' },
+  },
+  {
+    slug: 'clustered-optimized',
+    choice: { mode: 'simple', algorithm: 'clustered', portPlacement: 'optimized' },
+  },
 ]
 
 test.describe('AutoLayout evaluation', () => {
@@ -83,7 +106,12 @@ test.describe('AutoLayout evaluation', () => {
 
         const geo = await readDiagramGeometry(page)
         const parentOf = await readParentOf(page, projectId, view.viewId)
-        const report = evaluateGeometry(geo, parentOf)
+        const mode = algo.choice.portPlacement ?? DEFAULT_PORT_MODE
+        const report = {
+          ...evaluateGeometry(geo, parentOf),
+          ...evaluatePortSides(await readPortSides(page), mode),
+          portPlacement: mode,
+        }
         writeFileSync(`${base}.json`, JSON.stringify(report, null, 2))
         test.info().annotations.push({
           type: 'metrics',
@@ -96,12 +124,15 @@ test.describe('AutoLayout evaluation', () => {
             crossings: report.crossings,
             bends: report.bends,
             area: Math.round(report.boundingArea),
+            portSides: report.portSides,
+            portSideViolations: report.portSideViolations.length,
           }),
         })
 
         expect(report.parts, 'parts rendered').toBeGreaterThan(0)
         expect.soft(report.overlapPairs, 'overlapping parts').toEqual([])
         expect.soft(report.outsideParent, 'parts outside parent').toEqual([])
+        expect(report.portSideViolations, `port sides under ${mode}`).toEqual([])
       })
     }
   }
@@ -172,6 +203,11 @@ test.describe('Layout Rules — layered layout', () => {
     expect(rect('battery').maxX).toBeLessThanOrEqual(rect('engine').minX)
     expect.soft(report.overlapPairs, 'overlapping parts').toEqual([])
     expect.soft(report.outsideParent, 'parts outside parent').toEqual([])
+    // Apply runs hierarchic top-down with the dialog's default port mode:
+    // inputs left / outputs right must hold even though the flow is vertical.
+    const ports = evaluatePortSides(await readPortSides(page), DEFAULT_PORT_MODE)
+    expect(ports.portSideViolations, 'port sides under inputsLeftOutputsRight').toEqual([])
+    expect(ports.portSides.top + ports.portSides.bottom).toBe(0)
   })
 })
 

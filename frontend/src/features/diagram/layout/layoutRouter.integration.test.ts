@@ -108,15 +108,20 @@ describe('planStructureRoutes absolute waypoints', () => {
     const frame = boundaryFlowBounds(nextNodes)!
     expect(frame.maxX - frame.minX).toBeGreaterThan(200)
 
+    // AutoLayout pins the boundary to the origin (normalizeAutoLayoutCanvas),
+    // so the frame is the moved Car, not the original one at y≈5000.
+    expect(planned.nodes.Car?.x).toBe(0)
+    expect(planned.nodes.Car?.y).toBe(0)
+    expect(frame.minY).toBe(0)
+
     const route = planned.routes.find((r) => r.id === 'c1')
     expect(route).toBeTruthy()
     for (const w of route!.waypoints) {
+      // Absolute flow coordinates inside the (moved) boundary frame.
       expect(w.x).toBeGreaterThanOrEqual(frame.minX - 1)
       expect(w.x).toBeLessThanOrEqual(frame.maxX + 1)
       expect(w.y).toBeGreaterThanOrEqual(frame.minY - 1)
       expect(w.y).toBeLessThanOrEqual(frame.maxY + 1)
-      // Must be absolute (near Car at y≈5000), not parent-relative (y≈0–300).
-      expect(w.y).toBeGreaterThan(4000)
     }
   })
 

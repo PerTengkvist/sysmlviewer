@@ -2,11 +2,118 @@
  * User-facing AutoLayout directives (dialog → placement pipelines / ports).
  */
 
-import type { LayerDirection } from '../../../api'
+import type { LayerDirection, PortSide } from '../../../api'
 import type { PlacementPipelineId } from './placementPipelines'
 import type { LayoutConstraints } from './layoutConstraints'
+import { chooseSideAmong } from './portSideChoice'
 
-export type PortPlacementMode = 'inputsLeftOutputsRight' | 'optimized'
+/**
+ * Port placement mode. It is a hard contract that every placement pipeline
+ * follows: the mode (plus the port's flow role) yields the set of sides a
+ * port may sit on, independent of the layout direction.
+ */
+export type PortPlacementMode =
+  | 'inputsLeftOutputsRight'
+  | 'optimized'
+  | 'optimizedNoTop'
+  | 'optimizedNoTopBottom'
+
+export const PORT_PLACEMENT_MODES: PortPlacementMode[] = [
+  'inputsLeftOutputsRight',
+  'optimized',
+  'optimizedNoTop',
+  'optimizedNoTopBottom',
+]
+
+export function isPortPlacementMode(raw: unknown): raw is PortPlacementMode {
+  return (
+    typeof raw === 'string' &&
+    (PORT_PLACEMENT_MODES as string[]).includes(raw)
+  )
+}
+
+export function portPlacementLabel(mode: PortPlacementMode): string {
+  switch (mode) {
+    case 'inputsLeftOutputsRight':
+      return 'Inputs left, outputs right'
+    case 'optimized':
+      return 'Optimized placement'
+    case 'optimizedNoTop':
+      return 'Optimized placement – no top'
+    case 'optimizedNoTopBottom':
+      return 'Optimized placement – no top/bottom'
+  }
+}
+
+export function portPlacementNote(mode: PortPlacementMode): string {
+  switch (mode) {
+    case 'inputsLeftOutputsRight':
+      return 'Consumer ports (…In) on the left, provider ports (…Out) on the right. Unclear ports follow connection direction.'
+    case 'optimized':
+      return 'Ports face connected peers to shorten routes and reduce crossings.'
+    case 'optimizedNoTop':
+      return 'Ports face connected peers but never sit on the top edge.'
+    case 'optimizedNoTopBottom':
+      return 'Ports face connected peers using only the left and right edges.'
+  }
+}
+
+/** Sides a port may sit on under `mode`, given its flow role. */
+export function allowedPortSides(
+  mode: PortPlacementMode,
+  role: PortFlowRole,
+): PortSide[] {
+  switch (mode) {
+    case 'inputsLeftOutputsRight':
+      if (role === 'in') return ['left']
+      if (role === 'out') return ['right']
+      return ['left', 'right']
+    case 'optimized':
+      return ['left', 'right', 'top', 'bottom']
+    case 'optimizedNoTop':
+      return ['left', 'right', 'bottom']
+    case 'optimizedNoTopBottom':
+      return ['left', 'right']
+  }
+}
+
+/**
+ * Keep `side` when the mode allows it, otherwise the allowed side that best
+ * faces `peerVector`; without a vector a perpendicular side when allowed,
+ * then the opposite side, else the first allowed side.
+ */
+export function clampPortSideToMode(
+  mode: PortPlacementMode,
+  role: PortFlowRole,
+  side: PortSide,
+  peerVector?: { x: number; y: number },
+): PortSide {
+  const allowed = allowedPortSides(mode, role)
+  if (allowed.includes(side)) return side
+  if (peerVector && (peerVector.x !== 0 || peerVector.y !== 0)) {
+    return chooseSideAmong(allowed, peerVector)
+  }
+  // Without a peer vector a forbidden side most likely faced its peer, so a
+  // perpendicular side keeps the route short; the opposite side would make
+  // it wrap around the part.
+  for (const s of PERPENDICULAR_SIDES[side]) if (allowed.includes(s)) return s
+  const opposite = OPPOSITE_SIDE[side]
+  return allowed.includes(opposite) ? opposite : allowed[0]
+}
+
+const OPPOSITE_SIDE: Record<PortSide, PortSide> = {
+  left: 'right',
+  right: 'left',
+  top: 'bottom',
+  bottom: 'top',
+}
+
+const PERPENDICULAR_SIDES: Record<PortSide, PortSide[]> = {
+  left: ['top', 'bottom'],
+  right: ['top', 'bottom'],
+  top: ['left', 'right'],
+  bottom: ['left', 'right'],
+}
 
 /** How parts are arranged (Simple mode). */
 export type PlacementAlgorithm =

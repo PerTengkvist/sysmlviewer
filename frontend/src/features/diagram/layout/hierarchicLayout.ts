@@ -24,7 +24,9 @@ import type { Edge, Node } from '@xyflow/react'
 import type { PortSide, VisualizationNode } from '../../../api'
 import type { PartNodeData, PartPort } from '../PartNode'
 import {
+  allowedPortSides,
   clampHierarchicOptions,
+  clampPortSideToMode,
   hierarchicDirectionForLayers,
   inferPortFlowRole,
   spacingToDesiredEdgeLength,
@@ -32,7 +34,10 @@ import {
   type AutoLayoutDirectives,
   type HierarchicDirection,
   type HierarchicOptions,
+  type PortFlowRole,
+  type PortPlacementMode,
 } from './autoLayoutOptions'
+import { chooseSideAmong } from './portSideChoice'
 import {
   fullPolylineFromElkEdge,
   portFromElk,
@@ -124,42 +129,48 @@ function sideToElk(side: PortSide): string {
   }
 }
 
-const SIDE_NORMAL: Record<PortSide, { x: number; y: number }> = {
+const SIDE_VECTOR: Record<PortSide, { x: number; y: number }> = {
   left: { x: -1, y: 0 },
   right: { x: 1, y: 0 },
   top: { x: 0, y: -1 },
   bottom: { x: 0, y: 1 },
 }
 
-/** Allowed sides per port ("port candidates"). */
+/** Flow role of a port from its name and the port↔port links it takes part in. */
+export function portFlowRole(port: PartPort, links: ConnLink[]): PortFlowRole {
+  return inferPortFlowRole(
+    port,
+    links
+      .filter((l) => l.sourcePort && l.targetPort)
+      .map((l) => ({
+        sourcePort: l.sourcePort as string,
+        targetPort: l.targetPort as string,
+      })),
+  )
+}
+
+/**
+ * Allowed sides per port ("port candidates"): the port placement mode is a
+ * hard contract and does not depend on the layout direction.
+ */
 export function portCandidates(
   port: PartPort,
-  owner: Node,
   links: ConnLink[],
-  byId: Map<string, Node>,
-  root: Node | undefined,
-  portMode: AutoLayoutDirectives['portPlacement'],
-  direction: HierarchicDirection,
+  portMode: PortPlacementMode,
 ): PortSide[] {
-  void owner
-  void byId
-  void root
-  if (portMode === 'inputsLeftOutputsRight') {
-    const role = inferPortFlowRole(
-      port,
-      links
-        .filter((l) => l.sourcePort && l.targetPort)
-        .map((l) => ({
-          sourcePort: l.sourcePort as string,
-          targetPort: l.targetPort as string,
-        })),
-    )
-    const { inSide, outSide } = flowSides(direction)
-    if (role === 'in') return [inSide]
-    if (role === 'out') return [outSide]
-    return [inSide, outSide]
-  }
-  return ['left', 'right', 'top', 'bottom']
+  return allowedPortSides(portMode, portFlowRole(port, links))
+}
+
+/**
+ * ELK port constraint actually sent: the mode restricts sides, so ELK may
+ * only move ports freely in the plain optimized mode.
+ */
+function elkPortConstraints(
+  opts: HierarchicOptions,
+  portMode: PortPlacementMode,
+): HierarchicOptions['portConstraints'] {
+  if (portMode === 'optimized') return opts.portConstraints
+  return opts.portConstraints === 'FIXED_ORDER' ? 'FIXED_ORDER' : 'FIXED_SIDE'
 }
 
 function flowSides(direction: HierarchicDirection): { inSide: PortSide; outSide: PortSide } {
@@ -409,7 +420,7 @@ function rootLayoutOptions(args: BuildArgs): Record<string, string> {
     'elk.layered.thoroughness': String(opts.crossingThoroughness),
     'elk.layered.nodePlacement.strategy': opts.nodePlacement,
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
-    'elk.portConstraints': opts.portConstraints,
+    'elk.portConstraints': elkPortConstraints(opts, directives.portPlacement),
   }
   if (opts.incremental || args.positionHints.size) {
     lo['elk.layered.crossingMinimization.semiInteractive'] = 'true'
@@ -438,7 +449,7 @@ function topLevelAncestor(tree: Tree, id: string): string {
 }
 
 function buildGraph(args: BuildArgs): ElkNode {
-  const { tree, links, sides, sizes, opts, constraints, positionHints } = args
+  const { tree, links, sides, sizes, opts, directives, constraints, positionHints } = args
   const inScope = (id: string) =>
     !args.topLevel || args.topLevel.has(topLevelAncestor(tree, id))
   const edgesByContainer = new Map<string, ElkExtendedEdge[]>()
@@ -509,7 +520,7 @@ function buildGraph(args: BuildArgs): ElkNode {
       ? { width: fixed.width, height: fixed.height }
       : sizes.get(node.id) || readSize(node)
     const lo: Record<string, string> = {
-      'elk.portConstraints': opts.portConstraints,
+      'elk.portConstraints': elkPortConstraints(opts, directives.portPlacement),
     }
     if (kids.length) {
       lo['elk.padding'] =
@@ -561,6 +572,7 @@ function extractRun(
   laid: ElkNode,
   tree: Tree,
   links: ConnLink[],
+  sides: Map<string, PortSide>,
 ): RunResult {
   const nodePatch: Record<string, Partial<VisualizationNode>> = {}
   const absRects = new Map<string, QualityRect>()
@@ -590,11 +602,15 @@ function extractRun(
       })
     }
     for (const ep of en.ports || []) {
+      // The side is ours (port placement contract); ELK only supplies the
+      // offset along that side.
       const placed = portFromElk(ep, w, h)
+      const side = sides.get(ep.id) ?? placed.side
       nodePatch[ep.id] = {
         artifactId: ep.id,
-        side: placed.side,
-        offset: placed.offset,
+        side,
+        offset:
+          side === placed.side ? placed.offset : clampPortOffset(0.5, side, h),
       }
     }
     for (const e of en.edges || []) {
@@ -675,17 +691,9 @@ function proposeSides(
         n += 1
       }
       if (!n) continue
-      let best: PortSide = sides.get(p.id) || p.side
-      let bestDot = Number.NEGATIVE_INFINITY
-      for (const c of cands) {
-        const nrm = SIDE_NORMAL[c]
-        const dot = nrm.x * vx + nrm.y * vy
-        if (dot > bestDot + 1e-6) {
-          bestDot = dot
-          best = c
-        }
-      }
-      if (best !== (sides.get(p.id) || p.side)) {
+      const cur = sides.get(p.id) || p.side
+      const best = chooseSideAmong(cands, { x: vx, y: vy }, cur)
+      if (best !== cur) {
         next.set(p.id, best)
         changed += 1
       }
@@ -1026,8 +1034,10 @@ export async function layoutHierarchic(
   const portMode = directives.portPlacement
   const layout = deps.layout ?? ((g: ElkNode) => elk.layout(g))
 
-  // Port candidates and initial sides.
+  // Port candidates (allowed sides per the port placement mode), flow roles
+  // and initial sides.
   const candidates = new Map<string, PortSide[]>()
+  const roles = new Map<string, PortFlowRole>()
   const sides = new Map<string, PortSide>()
   const seedLinks = links
     .filter((l) => l.sourcePort && l.targetPort)
@@ -1045,15 +1055,9 @@ export async function layoutHierarchic(
         sides.set(p.id, p.side)
         continue
       }
-      const cands = portCandidates(
-        p,
-        node,
-        allLinks,
-        tree.byId,
-        tree.root,
-        portMode,
-        opts.direction,
-      )
+      const role = portFlowRole(p, allLinks)
+      roles.set(p.id, role)
+      const cands = portCandidates(p, allLinks, portMode)
       candidates.set(p.id, cands)
       const boundarySide = rootPortSideFor(p, allLinks, tree)
       const flow = flowSide(p, links, opts.direction)
@@ -1061,7 +1065,10 @@ export async function layoutHierarchic(
         boundarySide ??
         flow ??
         seedPortSide(p, node, seedLinks, tree.byId, tree.root, portMode)
-      sides.set(p.id, cands.includes(seeded) ? seeded : cands[0])
+      // When the seeded side is forbidden, the peer lies roughly in that
+      // direction (flow / boundary side), so clamp with that as the vector.
+      const toward = SIDE_VECTOR[seeded]
+      sides.set(p.id, clampPortSideToMode(portMode, role, seeded, toward))
     }
   }
 
@@ -1162,7 +1169,7 @@ export async function layoutHierarchic(
           preLaid,
         }),
       )
-      return extractRun(laid, tree, links)
+      return extractRun(laid, tree, links, current)
     }
     const subRuns: { ids: string[]; run: RunResult }[] = []
     for (const ids of components) {
@@ -1201,7 +1208,7 @@ export async function layoutHierarchic(
           rootPadding: 0,
         }),
       )
-      subRuns.push({ ids, run: extractRun(laid, tree, links) })
+      subRuns.push({ ids, run: extractRun(laid, tree, links, current) })
     }
     const packed = packComponents(
       subRuns.map((s, i) => ({
@@ -1319,6 +1326,25 @@ export async function layoutHierarchic(
         artifactId: p.id,
         side,
         offset: clampPortOffset(p.offset, side, h),
+      }
+    }
+  }
+
+  // Port placement contract: no port of a laid-out part may end up on a side
+  // its mode forbids (boundary ports are the user's and stay as they are).
+  for (const node of tree.byId.values()) {
+    if (node === tree.root) continue
+    const h = nodePatch[node.id]?.height ?? readSize(node).height
+    for (const p of portsOf(node)) {
+      const patch = nodePatch[p.id]
+      if (!patch?.side) continue
+      const side = clampPortSideToMode(
+        portMode,
+        roles.get(p.id) ?? 'unknown',
+        patch.side,
+      )
+      if (side !== patch.side) {
+        nodePatch[p.id] = { ...patch, side, offset: clampPortOffset(0.5, side, h) }
       }
     }
   }

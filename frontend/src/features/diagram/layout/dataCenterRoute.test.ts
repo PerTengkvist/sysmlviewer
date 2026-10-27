@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { Edge, Node } from '@xyflow/react'
@@ -117,7 +117,12 @@ function iaacAbsRect(state: StateFile): Rect {
   }
 }
 
-describe('DataCenterLogical real layout — routes must not cut through iaac', () => {
+// The data-center project is not shipped with the repo (replaced by the
+// electric-car example); the regression suite only runs where it exists.
+const HAS_FIXTURE = existsSync(STATE_PATH)
+
+describe.skipIf(!HAS_FIXTURE)('DataCenterLogical real layout — routes must not cut through iaac', () => {
+  if (!HAS_FIXTURE) return
   const state = loadState()
   const childIds = Object.values(state.semantic)
     .filter((el) => el.kind === 'part' && el.parentId === ROOT)

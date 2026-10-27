@@ -7,6 +7,9 @@ import {
   LAYOUT_WEIGHT_KEYS,
   layoutLevelLabel,
   layoutWeightLabel,
+  PORT_PLACEMENT_MODES,
+  portPlacementLabel,
+  portPlacementNote,
   SUGGESTED_LEVEL_WEIGHTS,
   type AutoLayoutDirectives,
   type AutoLayoutUiMode,
@@ -60,6 +63,7 @@ export function AutoLayoutDialog({
   const isCustom = uiMode === 'advanced' && resolved.id === 'custom'
   const isHierarchic = uiMode === 'advanced' && resolved.id === 'hierarchic'
   const hierarchic = clampHierarchicOptions(directives.hierarchic)
+  const portsRestricted = directives.portPlacement !== 'optimized'
   const patchHierarchic = (partial: Partial<HierarchicOptions>) =>
     patch({ hierarchic: { ...hierarchic, ...partial } })
   const customWeights = clampLevelWeights(directives.customWeights)
@@ -142,16 +146,16 @@ export function AutoLayoutDialog({
                   })
                 }
               >
-                <option value="inputsLeftOutputsRight">
-                  Inputs left, outputs right
-                </option>
-                <option value="optimized">Optimized placement</option>
+                {PORT_PLACEMENT_MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {portPlacementLabel(m)}
+                  </option>
+                ))}
               </select>
             </label>
             <p className="muted settings-note">
-              {directives.portPlacement === 'inputsLeftOutputsRight'
-                ? 'Consumer ports (…In) on the left, provider ports (…Out) on the right. Unclear ports follow connection direction.'
-                : 'Ports face connected peers to shorten routes and reduce crossings.'}
+              {portPlacementNote(directives.portPlacement)} Every placement
+              algorithm follows this mode.
             </p>
           </fieldset>
 
@@ -383,9 +387,17 @@ export function AutoLayoutDialog({
                 >
                   <option value="FIXED_SIDE">Fixed side (candidates)</option>
                   <option value="FIXED_ORDER">Fixed side + order</option>
-                  <option value="FREE">Free</option>
+                  <option value="FREE" disabled={portsRestricted}>
+                    Free
+                  </option>
                 </select>
               </label>
+              {portsRestricted ? (
+                <p className="muted settings-note">
+                  The port placement mode restricts port sides, so ports keep
+                  their side (Free is treated as Fixed side).
+                </p>
+              ) : null}
               <label className="settings-row">
                 <span>Incremental (keep arrangement)</span>
                 <input

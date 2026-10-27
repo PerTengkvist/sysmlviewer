@@ -6,6 +6,65 @@ import {
   type QualityPolyline,
   type QualityRect,
 } from '../../src/features/diagram/layout/layoutQuality'
+import {
+  allowedPortSides,
+  inferPortFlowRole,
+  type PortPlacementMode,
+} from '../../src/features/diagram/layout/autoLayoutOptions'
+import type { PortSide } from '../../src/api'
+
+export type DomPort = {
+  id: string
+  name: string
+  side: PortSide
+  boundary: boolean
+}
+
+/** Read every part port (id, name, side) from the rendered handles. */
+export async function readPortSides(page: Page): Promise<DomPort[]> {
+  return page.evaluate(() =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>('.react-flow__handle[data-port-id]'),
+    ).map((el) => ({
+      id: el.getAttribute('data-port-id') || '',
+      name: el.getAttribute('data-port-name') || '',
+      side: (el.getAttribute('data-port-side') || 'right') as
+        | 'left'
+        | 'right'
+        | 'top'
+        | 'bottom',
+      boundary: el.getAttribute('data-port-boundary') === 'true',
+    })),
+  )
+}
+
+export type PortSideReport = {
+  portSides: Record<PortSide, number>
+  /** Ports (id@side) on a side the port placement mode forbids. */
+  portSideViolations: string[]
+}
+
+/**
+ * Check the port placement contract. The flow role comes from the port name
+ * only (…In / …Out), so link-derived roles are treated as unknown, which is
+ * never stricter than the layout's own view.
+ */
+export function evaluatePortSides(
+  ports: DomPort[],
+  mode: PortPlacementMode,
+): PortSideReport {
+  const portSides: Record<PortSide, number> = { left: 0, right: 0, top: 0, bottom: 0 }
+  const portSideViolations: string[] = []
+  for (const p of ports) {
+    if (p.boundary) continue
+    portSides[p.side] += 1
+    const role = inferPortFlowRole({ id: p.id, name: p.name }, [])
+    if (!allowedPortSides(mode, role).includes(p.side)) {
+      portSideViolations.push(`${p.id}@${p.side}`)
+    }
+  }
+  return { portSides, portSideViolations }
+}
 
 export type DiagramGeometry = {
   rects: QualityRect[]

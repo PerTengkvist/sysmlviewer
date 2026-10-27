@@ -73,6 +73,15 @@ cd frontend && npm run build
 
 Electric-car example workspace: [`examples/electric_car/`](examples/electric_car/) (requirements, functions, use cases, logical architecture, sequences, and physical architecture). Interface naming notes: [`docs/interface_naming.md`](docs/interface_naming.md).
 
+### Documentation files
+
+Markdown documentation for an artifact lives in a `docs/` folder next to its SysML file and is named with the package chain as prefix: `<Package>[.<SubPackage>…].<name>.md` (part nesting is not part of the name). Example: `PhysicalArchitecture::VehiclePhysical::infotainmentEcu::entertainmentSw` → `physical_architecture/docs/PhysicalArchitecture.entertainmentSw.md`. The viewer falls back to the flat `docs/<name>.md` when no qualified file exists. Existing projects can be migrated with:
+
+```bash
+python scripts/migrate_docs_names.py path/to/project --dry-run   # show the plan
+python scripts/migrate_docs_names.py path/to/project --git       # rename with git mv
+```
+
 ## Alpha features
 
 - Open / create workspace projects (`project.json` at folder root)

@@ -1202,7 +1202,7 @@ export default function App() {
                 let documentation: string | null = null
                 if (options.includeDescriptions) {
                   const el = project.semantic[d.id]
-                  const path = docPathForArtifact(el)
+                  const path = docPathForArtifact(el, project.semantic, docPaths)
                   if (path) {
                     try {
                       const doc = await api.fetchDocumentation(project.id, path)
@@ -1718,6 +1718,7 @@ export default function App() {
             layout={settings}
             onLayoutChange={updateRightLayout}
             requirementDisplay={settings.requirementDisplay}
+            docPaths={docPaths}
             project={project}
             viewVisualization={viewPayload?.visualization}
             viewPayload={viewPayload}

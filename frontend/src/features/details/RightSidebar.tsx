@@ -10,12 +10,15 @@ type Props = DetailsProps & {
   layout: Pick<AppSettings, 'rightPanelSizes'>
   onLayoutChange: (sizes: [number, number]) => void
   requirementDisplay?: AppSettings['requirementDisplay']
+  /** Project documentation paths (markdown files in docs folders). */
+  docPaths?: readonly string[]
 }
 
 export function RightSidebar({
   layout,
   onLayoutChange,
   requirementDisplay,
+  docPaths,
   ...detailsProps
 }: Props) {
   const [detailsSize, docsSize] = layout.rightPanelSizes
@@ -46,6 +49,7 @@ export function RightSidebar({
           <DocumentationPanel
             project={detailsProps.project}
             selectedId={detailsProps.selectedId}
+            docPaths={docPaths}
             requirementDisplay={requirementDisplay}
           />
         </Panel>

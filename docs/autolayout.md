@@ -79,6 +79,37 @@ What is added around ELK:
   - when layered layout is enabled the top-level parts are snapped into
     exact bands (`layerBands.ts`).
 
+## Port placement modes
+
+The *Port placement* mode in the AutoLayout dialog is a hard contract that
+**every** placement pipeline follows (`allowedPortSides` in
+`autoLayoutOptions.ts`): the mode, together with the port's flow role
+(`…In` / `…Out` names, otherwise connection direction), yields the set of
+sides a port may sit on. It does not depend on the layout direction, so
+*Inputs left, outputs right* keeps ports on the left and right even in a
+top-down Hierarchic run.
+
+| Mode                               | in-port             | out-port  | unknown role |
+|------------------------------------|---------------------|-----------|--------------|
+| Inputs left, outputs right         | left                | right     | left, right  |
+| Optimized placement                | all four            | all four  | all four     |
+| Optimized placement – no top       | left, right, bottom | same      | same         |
+| Optimized placement – no top/bottom| left, right         | same      | same         |
+
+How it is enforced:
+
+- Hierarchic: the allowed sides are the port candidates; the ELK port
+  constraint is forced to `FIXED_SIDE` (or `FIXED_ORDER`) unless the mode is
+  plain *Optimized*; the side written back is the pipeline's own, ELK only
+  supplies the offset; a final guard clamps any leak.
+- Other pipelines (`elkStructureLayout.ts`): `seedPortSide` picks the best
+  allowed side from the peer vector (`portSideChoice.ts`), ELK ports are
+  `FIXED_SIDE` unless plain *Optimized*, and the same final guard runs.
+- Boundary ports are never moved by the mode.
+- `portPlacementContract.test.ts` runs every pipeline × mode and asserts the
+  contract; the Playwright suite reports `portSides` and
+  `portSideViolations` per case.
+
 ## Layout Rules and layered layout
 
 Toolbar → *Layout Rules*. The dialog has a **Layered layout** section above

@@ -6,7 +6,7 @@ import {
   DEFAULT_REQUIREMENT_DISPLAY,
   resolveRequirementDocPanel,
 } from '../diagram/requirementDisplay'
-import { docPathForArtifact } from '../docs/docPath'
+import { docPathCandidates, docPathForArtifact } from '../docs/docPath'
 import { markdownComponents } from '../docs/markdownComponents'
 import {
   documentationRemarkPlugins,
@@ -16,12 +16,15 @@ import {
 type Props = {
   project: Project | null
   selectedId: string | null
+  /** Known documentation paths (docs folders) used to pick the existing candidate. */
+  docPaths?: readonly string[]
   requirementDisplay?: RequirementDisplaySettings
 }
 
 export function DocumentationPanel({
   project,
   selectedId,
+  docPaths,
   requirementDisplay = DEFAULT_REQUIREMENT_DISPLAY,
 }: Props) {
   const [content, setContent] = useState<string | null>(null)
@@ -39,7 +42,7 @@ export function DocumentationPanel({
       return
     }
     const el = project.semantic[selectedId]
-    const path = docPathForArtifact(el)
+    const path = docPathForArtifact(el, project.semantic, docPaths)
     setDocPath(path)
 
     const applyRequirementFallback = (hasMd: boolean) => {
@@ -86,7 +89,14 @@ export function DocumentationPanel({
           setError(null)
         } else {
           setAttrFallback(null)
-          setError(`Documentation not found: ${path}`)
+          const others = docPathCandidates(el, project.semantic).filter(
+            (c) => c !== path,
+          )
+          setError(
+            others.length
+              ? `Documentation not found: ${path} (or ${others.join(', ')})`
+              : `Documentation not found: ${path}`,
+          )
         }
       })
       .finally(() => {
@@ -95,7 +105,7 @@ export function DocumentationPanel({
     return () => {
       cancelled = true
     }
-  }, [project, selectedId, requirementDisplay])
+  }, [project, selectedId, docPaths, requirementDisplay])
 
   return (
     <div className="documentation-panel">
