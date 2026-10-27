@@ -1538,14 +1538,7 @@ export function DiagramCanvas({
         onNodesMovedRef.current({}, edgePatch)
       })
     },
-    [
-      nodes,
-      edges,
-      connectionSeparation,
-      currentViewBounds,
-      showJumpers,
-      includeBindingsInRouting,
-    ],
+    [nodes, edges, connectionSeparation, currentViewBounds],
   )
 
   const pushVizHistory = useCallback(() => {
@@ -1608,18 +1601,18 @@ export function DiagramCanvas({
       const moves = collectFlipPortMoves(
         nodesRef.current.map((node) => {
           const data = node.data as PartNodeData
+          const size = nodeBoxSize(node, {
+            height: viewRef.current?.visualization.nodes[node.id]?.height,
+          })
           return {
             id: node.id,
-            height: node.height,
-            styleHeight: Number(node.style?.height) || null,
+            height: size.height,
             ports: data.ports || [],
             isBoundary: !!data.isBoundary,
           }
         }),
         partIds,
         axis,
-        (nodeId) =>
-          viewRef.current?.visualization.nodes[nodeId]?.height ?? 120,
       )
       if (!moves.length) return
       pushVizHistory()
@@ -2124,7 +2117,7 @@ export function DiagramCanvas({
     } finally {
       setAutoLayoutBusy(false)
     }
-  }, [nodes, edges, connectionSeparation, showJumpers, includeBindingsInRouting])
+  }, [nodes, edges, connectionSeparation])
 
   // Hide jumpers immediately when the setting turns off (keep waypoints).
   useEffect(() => {
@@ -2472,7 +2465,9 @@ export function DiagramCanvas({
                   }
                   onClick={() => handleFlipPorts('vertical')}
                 />
-                {selectedPortIds.length >= 2 || selectedIds.length >= 3 ? (
+                {selectedPortIds.length >= 2 ||
+                selectedIds.filter((id) => view.semantic[id]?.kind === 'part')
+                  .length >= 3 ? (
                   <>
                     <IconToolbarButton
                       icon={TOOLBAR_ICONS.distributeH}
@@ -2486,9 +2481,12 @@ export function DiagramCanvas({
                           handleDistributePorts('horizontal')
                           return
                         }
+                        const partIds = selectedIds.filter(
+                          (id) => view.semantic[id]?.kind === 'part',
+                        )
                         const { patch } = distributeFlowSelection(
                           nodes,
-                          selectedIds,
+                          partIds,
                           'horizontal',
                         )
                         if (!Object.keys(patch).length) return
@@ -2511,9 +2509,12 @@ export function DiagramCanvas({
                           handleDistributePorts('vertical')
                           return
                         }
+                        const partIds = selectedIds.filter(
+                          (id) => view.semantic[id]?.kind === 'part',
+                        )
                         const { patch } = distributeFlowSelection(
                           nodes,
-                          selectedIds,
+                          partIds,
                           'vertical',
                         )
                         if (!Object.keys(patch).length) return

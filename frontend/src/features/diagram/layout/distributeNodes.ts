@@ -58,14 +58,14 @@ export function distributeSelection(
     const targetCenter = start + (span * i) / (n - 1)
     const ox = item.parentAbs?.x ?? 0
     const oy = item.parentAbs?.y ?? 0
+    // Persist position only — never write width/height from layout helpers
+    // (unmeasured nodes may carry fallback sizes like 100×40).
     if (axis === 'horizontal') {
       const newAbsX = targetCenter - item.width / 2
       patch[item.id] = {
         artifactId: item.id,
         x: newAbsX - ox,
         y: item.y,
-        width: item.width,
-        height: item.height,
       }
     } else {
       const newAbsY = targetCenter - item.height / 2
@@ -73,8 +73,6 @@ export function distributeSelection(
         artifactId: item.id,
         x: item.x,
         y: newAbsY - oy,
-        width: item.width,
-        height: item.height,
       }
     }
   }

@@ -1902,6 +1902,8 @@ button.linkish {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   width: min(520px, 94vw);
+  /* Fallback first for browsers without dvh; then prefer dynamic viewport. */
+  max-height: 90vh;
   max-height: min(90vh, 100dvh - 2rem);
   display: flex;
   flex-direction: column;

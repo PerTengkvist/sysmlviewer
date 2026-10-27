@@ -50,8 +50,9 @@ export type AppSettings = {
   /** When false, crossing jumpers are hidden and not computed on redraw. */
   showJumpers: boolean
   /**
-   * When true (default), port–port bindings participate in Redraw: Connections
-   * and AutoLayout routing. When false, only connections/interfaces are routed.
+   * When true (default), binding edges participate in Redraw: Connections and
+   * AutoLayout routing (port–port bindings need handles; rel-* bindings stay
+   * excluded by the layout filter). When false, all bindings are skipped.
    */
   includeBindingsInRouting: boolean
   /** Panel sizes as percentages [left, center, right]. */

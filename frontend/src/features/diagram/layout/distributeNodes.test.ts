@@ -26,6 +26,8 @@ describe('distributeSelection', () => {
     // centers: a=20, c=220 → mid should be at 120 → x = 120 - 20 = 100
     expect(patch.b?.x).toBe(100)
     expect(patch.b?.y).toBe(10)
+    expect(patch.b?.width).toBeUndefined()
+    expect(patch.b?.height).toBeUndefined()
   })
 
   it('spaces along Y for vertical', () => {

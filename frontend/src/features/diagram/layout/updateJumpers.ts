@@ -40,7 +40,8 @@ export function buildJumperPolys(nodes: Node[], edges: Edge[]): RoutedPoly[] {
       points,
       sourcePort: portIdFromHandle(edge.sourceHandle) || edge.source,
       targetPort: portIdFromHandle(edge.targetHandle) || edge.target,
-      // Array index as fractional tie-break so later edges (painted later) win.
+      // Fractional tie-break: `edges` order must match React Flow paint order
+      // so later edges win crossings. Safe while edge count ≪ 1e6.
       z: zBase + index * 1e-6,
     })
   })

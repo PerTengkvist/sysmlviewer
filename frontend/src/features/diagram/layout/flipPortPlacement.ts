@@ -76,8 +76,8 @@ export function flipPortList(
 
 export type FlipNodeInput = {
   id: string
+  /** Part box height (prefer `nodeBoxSize` so Flip matches Distribute/align). */
   height?: number | null
-  styleHeight?: number | null
   ports: FlippablePort[]
   isBoundary?: boolean
 }
@@ -90,16 +90,11 @@ export function collectFlipPortMoves(
   nodes: FlipNodeInput[],
   partIds: Set<string>,
   axis: FlipAxis,
-  heightFallback: (nodeId: string) => number = () => 120,
 ): Array<{ portId: string; side: PortSide; offset: number }> {
   const moves: Array<{ portId: string; side: PortSide; offset: number }> = []
   for (const node of nodes) {
     if (!partIds.has(node.id) || !node.ports.length) continue
-    const partH =
-      Number(node.styleHeight) ||
-      Number(node.height) ||
-      heightFallback(node.id) ||
-      120
+    const partH = Number(node.height) || 120
     const flipped = flipPortList(node.ports, axis, partH, {
       isBoundary: !!node.isBoundary,
     })
