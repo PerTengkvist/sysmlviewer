@@ -2,9 +2,118 @@
  * User-facing AutoLayout directives (dialog → placement pipelines / ports).
  */
 
+import type { LayerDirection, PortSide } from '../../../api'
 import type { PlacementPipelineId } from './placementPipelines'
+import type { LayoutConstraints } from './layoutConstraints'
+import { chooseSideAmong } from './portSideChoice'
 
-export type PortPlacementMode = 'inputsLeftOutputsRight' | 'optimized'
+/**
+ * Port placement mode. It is a hard contract that every placement pipeline
+ * follows: the mode (plus the port's flow role) yields the set of sides a
+ * port may sit on, independent of the layout direction.
+ */
+export type PortPlacementMode =
+  | 'inputsLeftOutputsRight'
+  | 'optimized'
+  | 'optimizedNoTop'
+  | 'optimizedNoTopBottom'
+
+export const PORT_PLACEMENT_MODES: PortPlacementMode[] = [
+  'inputsLeftOutputsRight',
+  'optimized',
+  'optimizedNoTop',
+  'optimizedNoTopBottom',
+]
+
+export function isPortPlacementMode(raw: unknown): raw is PortPlacementMode {
+  return (
+    typeof raw === 'string' &&
+    (PORT_PLACEMENT_MODES as string[]).includes(raw)
+  )
+}
+
+export function portPlacementLabel(mode: PortPlacementMode): string {
+  switch (mode) {
+    case 'inputsLeftOutputsRight':
+      return 'Inputs left, outputs right'
+    case 'optimized':
+      return 'Optimized placement'
+    case 'optimizedNoTop':
+      return 'Optimized placement – no top'
+    case 'optimizedNoTopBottom':
+      return 'Optimized placement – no top/bottom'
+  }
+}
+
+export function portPlacementNote(mode: PortPlacementMode): string {
+  switch (mode) {
+    case 'inputsLeftOutputsRight':
+      return 'Consumer ports (…In) on the left, provider ports (…Out) on the right. Unclear ports follow connection direction.'
+    case 'optimized':
+      return 'Ports face connected peers to shorten routes and reduce crossings.'
+    case 'optimizedNoTop':
+      return 'Ports face connected peers but never sit on the top edge.'
+    case 'optimizedNoTopBottom':
+      return 'Ports face connected peers using only the left and right edges.'
+  }
+}
+
+/** Sides a port may sit on under `mode`, given its flow role. */
+export function allowedPortSides(
+  mode: PortPlacementMode,
+  role: PortFlowRole,
+): PortSide[] {
+  switch (mode) {
+    case 'inputsLeftOutputsRight':
+      if (role === 'in') return ['left']
+      if (role === 'out') return ['right']
+      return ['left', 'right']
+    case 'optimized':
+      return ['left', 'right', 'top', 'bottom']
+    case 'optimizedNoTop':
+      return ['left', 'right', 'bottom']
+    case 'optimizedNoTopBottom':
+      return ['left', 'right']
+  }
+}
+
+/**
+ * Keep `side` when the mode allows it, otherwise the allowed side that best
+ * faces `peerVector`; without a vector a perpendicular side when allowed,
+ * then the opposite side, else the first allowed side.
+ */
+export function clampPortSideToMode(
+  mode: PortPlacementMode,
+  role: PortFlowRole,
+  side: PortSide,
+  peerVector?: { x: number; y: number },
+): PortSide {
+  const allowed = allowedPortSides(mode, role)
+  if (allowed.includes(side)) return side
+  if (peerVector && (peerVector.x !== 0 || peerVector.y !== 0)) {
+    return chooseSideAmong(allowed, peerVector)
+  }
+  // Without a peer vector a forbidden side most likely faced its peer, so a
+  // perpendicular side keeps the route short; the opposite side would make
+  // it wrap around the part.
+  for (const s of PERPENDICULAR_SIDES[side]) if (allowed.includes(s)) return s
+  const opposite = OPPOSITE_SIDE[side]
+  return allowed.includes(opposite) ? opposite : allowed[0]
+}
+
+const OPPOSITE_SIDE: Record<PortSide, PortSide> = {
+  left: 'right',
+  right: 'left',
+  top: 'bottom',
+  bottom: 'top',
+}
+
+const PERPENDICULAR_SIDES: Record<PortSide, PortSide[]> = {
+  left: ['top', 'bottom'],
+  right: ['top', 'bottom'],
+  top: ['left', 'right'],
+  bottom: ['left', 'right'],
+}
 
 /** How parts are arranged (Simple mode). */
 export type PlacementAlgorithm =
@@ -123,6 +232,84 @@ export function layoutLevelLabel(level: LayoutLevel): string {
   }
 }
 
+/** ELK layered direction. */
+export type HierarchicDirection = 'RIGHT' | 'DOWN' | 'LEFT' | 'UP'
+
+/** Advanced "Hierarchic (yEd-style)" pipeline options — the five Sugiyama phases. */
+export type HierarchicOptions = {
+  direction: HierarchicDirection
+  /** Phase 1: cycle breaking. */
+  cycleBreaking: 'GREEDY' | 'DEPTH_FIRST' | 'MODEL_ORDER'
+  /** Phase 2: layer assignment (ignored for incremental = INTERACTIVE). */
+  layering: 'NETWORK_SIMPLEX' | 'LONGEST_PATH' | 'COFFMAN_GRAHAM'
+  /** Phase 3: crossing minimisation effort (elk.layered.thoroughness, 1–50). */
+  crossingThoroughness: number
+  /** Phase 4: node placement. */
+  nodePlacement: 'BRANDES_KOEPF' | 'NETWORK_SIMPLEX' | 'LINEAR_SEGMENTS' | 'SIMPLE'
+  /** Port constraints handed to ELK (port candidates still bound the sides). */
+  portConstraints: 'FIXED_SIDE' | 'FIXED_ORDER' | 'FREE'
+  /** Keep the current arrangement (interactive layering / crossing min). */
+  incremental: boolean
+  /** Outer port-side iterations (ELK runs), ≥ 1. */
+  maxIterations: number
+}
+
+export const DEFAULT_HIERARCHIC_OPTIONS: HierarchicOptions = {
+  direction: 'RIGHT',
+  cycleBreaking: 'GREEDY',
+  layering: 'NETWORK_SIMPLEX',
+  crossingThoroughness: 10,
+  nodePlacement: 'BRANDES_KOEPF',
+  portConstraints: 'FIXED_SIDE',
+  incremental: false,
+  maxIterations: 3,
+}
+
+export function clampHierarchicOptions(
+  partial: Partial<HierarchicOptions> | undefined,
+): HierarchicOptions {
+  const o = { ...DEFAULT_HIERARCHIC_OPTIONS, ...(partial || {}) }
+  o.crossingThoroughness = Math.max(
+    1,
+    Math.min(50, Math.round(Number(o.crossingThoroughness) || 10)),
+  )
+  o.maxIterations = Math.max(
+    1,
+    Math.min(10, Math.round(Number(o.maxIterations) || 1)),
+  )
+  return o
+}
+
+export function hierarchicDirectionForLayers(
+  direction: LayerDirection,
+): HierarchicDirection {
+  switch (direction) {
+    case 'top-down':
+      return 'DOWN'
+    case 'bottom-up':
+      return 'UP'
+    case 'right-left':
+      return 'LEFT'
+    default:
+      return 'RIGHT'
+  }
+}
+
+export function layerDirectionForHierarchic(
+  direction: HierarchicDirection,
+): LayerDirection {
+  switch (direction) {
+    case 'DOWN':
+      return 'top-down'
+    case 'UP':
+      return 'bottom-up'
+    case 'LEFT':
+      return 'right-left'
+    default:
+      return 'left-right'
+  }
+}
+
 export type AutoLayoutDirectives = {
   /** Simple ≈ legacy controls; Advanced = named pipeline preset. */
   mode?: AutoLayoutUiMode
@@ -138,6 +325,10 @@ export type AutoLayoutDirectives = {
   aspectRatio: number
   /** Advanced custom pipeline: per-level aspect weights (0..1). */
   customWeights?: LevelWeights
+  /** Advanced hierarchic pipeline options. */
+  hierarchic?: HierarchicOptions
+  /** Layout Rules / layered layout as hard constraints (hierarchic pipeline). */
+  constraints?: LayoutConstraints
 }
 
 export const DEFAULT_AUTO_LAYOUT_DIRECTIVES: AutoLayoutDirectives = {

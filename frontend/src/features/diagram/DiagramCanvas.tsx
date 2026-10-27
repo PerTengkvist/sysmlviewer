@@ -31,6 +31,7 @@ import type {
   ArtifactKind,
   DiagramMode,
   LayoutRuleRow,
+  LayeredLayoutConfig,
   PortSide,
   RoutingType,
   ViewPayload,
@@ -115,10 +116,15 @@ import {
 import { boundaryFlowBounds, syncInternalEdgeBounds } from './layout/connectionRouting'
 import { AutoLayoutDialog } from './AutoLayoutDialog'
 import {
+  clampHierarchicOptions,
   DEFAULT_AUTO_LAYOUT_DIRECTIVES,
+  hierarchicDirectionForLayers,
+  layerDirectionForHierarchic,
   type AutoLayoutDirectives,
 } from './layout/autoLayoutOptions'
 import { asAngularForLayout } from './layout/elkStructureLayout'
+import { buildLayoutConstraints } from './layout/layoutConstraints'
+import { normalizeLayeredLayout, rootScope } from './layeredLayoutConfig'
 import { planStructureRoutes } from './layout/layoutRouter'
 import { flowViewportBounds } from './layout/layoutNormalize'
 import { preserveExistingGeometry } from './preserveDiagramGeometry'
@@ -497,6 +503,7 @@ type Props = {
     edges?: Record<string, Partial<VisualizationEdge>>,
   ) => void
   onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
+  onLayeredLayoutChange?: (layered: LayeredLayoutConfig | null) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
   onPortsMoved?: (
@@ -547,6 +554,7 @@ export function DiagramCanvas({
   onNodeDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
+  onLayeredLayoutChange,
   onPortMoved,
   onPortsMoved,
   onRelationEndMoved,
@@ -772,8 +780,11 @@ export function DiagramCanvas({
   const filterSig = view?.viewFilters
     ? JSON.stringify(view.viewFilters)
     : ''
+  const layeredSig = view?.layeredLayout
+    ? JSON.stringify(view.layeredLayout)
+    : ''
   const layoutRulesSig = view?.layoutRules
-    ? JSON.stringify(view.layoutRules)
+    ? JSON.stringify(view.layoutRules) + layeredSig
     : ''
 
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
@@ -2005,11 +2016,82 @@ export function DiagramCanvas({
     )
   }, [viewKey, isStructure, nodes.length])
 
-  const applyAutoLayout = useCallback(async (directives: AutoLayoutDirectives) => {
+  /** Artefacts (absolute geometry) for Layout Rules / constraints. */
+  const layoutArtefacts = useCallback((): LayoutArtefact[] => {
+    if (!view) return []
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    return nodes
+      .filter((n) => view.semantic[n.id])
+      .map((n): LayoutArtefact => {
+        const el = view.semantic[n.id]
+        const origin = absoluteNodeOrigin(n, byId)
+        return {
+          id: n.id,
+          name: el.name,
+          kind: el.kind,
+          parentId: el.parentId ?? null,
+          x: origin.x,
+          y: origin.y,
+          width: Number(n.style?.width) || n.width || 100,
+          height: Number(n.style?.height) || n.height || 40,
+        }
+      })
+  }, [nodes, view])
+
+  /** Root boundary id (whitebox); null for package-style views. */
+  const boundaryIdForConstraints = useCallback((): string | null => {
+    const partIds = new Set(nodes.filter((n) => !n.type || n.type === 'part').map((n) => n.id))
+    const root = nodes.find(
+      (n) =>
+        (!n.type || n.type === 'part') &&
+        (n.data as PartNodeData | undefined)?.isBoundary &&
+        !(n.parentId && partIds.has(n.parentId)),
+    )
+    return root?.id ?? null
+  }, [nodes])
+
+  /** Hard constraints for the hierarchic pipeline from rules + layered config. */
+  const constraintsFor = useCallback(
+    (
+      rules: LayoutRuleRow[],
+      layered: LayeredLayoutConfig | null,
+      directives: AutoLayoutDirectives,
+    ) =>
+      buildLayoutConstraints(
+        rules,
+        layered,
+        layoutArtefacts(),
+        asAngularForLayout(edges, {
+          includeBindings: includeBindingsRef.current,
+        }).map((e) => ({ source: e.source, target: e.target })),
+        {
+          direction: layerDirectionForHierarchic(
+            clampHierarchicOptions(directives.hierarchic).direction,
+          ),
+          rootId: boundaryIdForConstraints(),
+        },
+      ),
+    [edges, layoutArtefacts, boundaryIdForConstraints],
+  )
+
+  const applyAutoLayout = useCallback(async (input: AutoLayoutDirectives) => {
     // Include direct connections too — otherwise ELK sees no edges and stacks
     // every part in one vertical column, and routing stays "direct".
     setAutoLayoutBusy(true)
     try {
+    const isHierarchic =
+      (input.mode ?? 'simple') === 'advanced' && input.pipeline === 'hierarchic'
+    const directives: AutoLayoutDirectives =
+      isHierarchic && !input.constraints
+        ? {
+            ...input,
+            constraints: constraintsFor(
+              view?.layoutRules || [],
+              view?.layeredLayout ?? null,
+              input,
+            ),
+          }
+        : input
     const structureEdges = asAngularForLayout(edges, {
       includeBindings: includeBindingsRef.current,
     })
@@ -2126,12 +2208,13 @@ export function DiagramCanvas({
     setEdges(nextEdges)
     onNodesMovedRef.current(layoutNodes, edgePatch)
     setLayoutEpoch((n) => n + 1)
-    setAutoLayoutDirectives(directives)
+    // Remember the choice without the per-run constraints snapshot.
+    setAutoLayoutDirectives({ ...directives, constraints: undefined })
     setAutoLayoutOpen(false)
     } finally {
       setAutoLayoutBusy(false)
     }
-  }, [nodes, edges, connectionSeparation])
+  }, [nodes, edges, connectionSeparation, constraintsFor, view?.layoutRules, view?.layeredLayout])
 
   // Hide jumpers immediately when the setting turns off (keep waypoints).
   useEffect(() => {
@@ -2649,26 +2732,30 @@ export function DiagramCanvas({
         <LayoutWizardDialog
           open={layoutWizardOpen}
           rules={view.layoutRules || []}
+          layered={view.layeredLayout ?? null}
+          onChangeLayered={(layered) => onLayeredLayoutChange?.(layered)}
           semantic={view.semantic}
-          artefacts={(() => {
-            const byId = new Map(nodes.map((n) => [n.id, n]))
-            return nodes
-              .filter((n) => view.semantic[n.id])
-              .map((n): LayoutArtefact => {
-                const el = view.semantic[n.id]
-                const origin = absoluteNodeOrigin(n, byId)
-                return {
-                  id: n.id,
-                  name: el.name,
-                  kind: el.kind,
-                  x: origin.x,
-                  y: origin.y,
-                  width: Number(n.style?.width) || n.width || 100,
-                  height: Number(n.style?.height) || n.height || 40,
-                }
-              })
-          })()}
+          artefacts={layoutArtefacts()}
           onChangeRules={(rules) => onLayoutRulesChange?.(rules)}
+          onApplyLayered={(layered, rules) => {
+            const base: AutoLayoutDirectives = {
+              ...autoLayoutDirectives,
+              mode: 'advanced',
+              pipeline: 'hierarchic',
+              hierarchic: {
+                ...clampHierarchicOptions(autoLayoutDirectives.hierarchic),
+                direction: hierarchicDirectionForLayers(
+                  rootScope(normalizeLayeredLayout(layered)).direction,
+                ),
+              },
+            }
+            pushVizHistory()
+            setLayoutWizardOpen(false)
+            void applyAutoLayout({
+              ...base,
+              constraints: constraintsFor(rules, layered, base),
+            })
+          }}
           onApplyPositions={(positions) => {
             const byId = new Map(nodes.map((n) => [n.id, n]))
             const patch: Record<string, Partial<VisualizationNode>> = {}

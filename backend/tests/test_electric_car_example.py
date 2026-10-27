@@ -238,7 +238,14 @@ def test_documentation_files_match_artifacts():
         if el.kind not in documented or not el.file_id or "/" not in el.file_id:
             continue
         folder = el.file_id.rsplit("/", 1)[0]
-        path = ROOT / folder / "docs" / f"{el.name}.md"
+        # Docs are named <Package>[.<SubPackage>…].<name>.md (package chain only).
+        packages = []
+        cur = elements.get(el.parent_id) if el.parent_id else None
+        while cur is not None:
+            if cur.kind == ArtifactKind.PACKAGE:
+                packages.insert(0, cur.name)
+            cur = elements.get(cur.parent_id) if cur.parent_id else None
+        path = ROOT / folder / "docs" / (".".join([*packages, el.name]) + ".md")
         if not path.is_file():
             missing.append(str(path.relative_to(ROOT)))
     assert missing == []

@@ -942,6 +942,7 @@ class ProjectService:
         from domain.view_layouts import (
             ViewLayout,
             ViewLayouts,
+            apply_layered_layout,
             apply_layout_rules,
             apply_view_filters,
             apply_view_hierarchy_override,
@@ -963,6 +964,7 @@ class ProjectService:
         hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
         view_filters_patch = "viewFilters" in patch
         layout_rules_patch = "layoutRules" in patch
+        layered_layout_patch = "layeredLayout" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1011,6 +1013,13 @@ class ProjectService:
             if layout_rules_patch:
                 working = apply_layout_rules(
                     working, view_id, patch.get("layoutRules")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if layered_layout_patch:
+                working = apply_layered_layout(
+                    working, view_id, patch.get("layeredLayout")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1087,6 +1096,7 @@ class ProjectService:
                 or hierarchy_override_patch
                 or view_filters_patch
                 or layout_rules_patch
+                or layered_layout_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -1688,6 +1698,11 @@ class ProjectService:
             "layoutRules": list(layout_for_view.layout_rules)
             if layout_for_view
             else [],
+            "layeredLayout": (
+                dict(layout_for_view.layered_layout)
+                if layout_for_view and layout_for_view.layered_layout is not None
+                else None
+            ),
             "semantic": semantic,
             "visualization": {"nodes": nodes, "edges": edges},
             "subdiagrams": subdiagrams,

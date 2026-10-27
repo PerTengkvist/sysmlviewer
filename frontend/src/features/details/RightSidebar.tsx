@@ -12,6 +12,8 @@ type Props = DetailsProps & {
   /** Hide the sidebar (canvas takes the space). */
   onToggle?: () => void
   requirementDisplay?: AppSettings['requirementDisplay']
+  /** Project documentation paths (markdown files in docs folders). */
+  docPaths?: readonly string[]
 }
 
 export function RightSidebar({
@@ -19,6 +21,7 @@ export function RightSidebar({
   onLayoutChange,
   onToggle,
   requirementDisplay,
+  docPaths,
   ...detailsProps
 }: Props) {
   const [detailsSize, docsSize] = layout.rightPanelSizes
@@ -60,6 +63,7 @@ export function RightSidebar({
           <DocumentationPanel
             project={detailsProps.project}
             selectedId={detailsProps.selectedId}
+            docPaths={docPaths}
             requirementDisplay={requirementDisplay}
           />
         </Panel>

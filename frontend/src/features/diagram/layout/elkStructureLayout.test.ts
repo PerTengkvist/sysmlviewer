@@ -5,8 +5,10 @@ import { clampPortOffset } from './portPlacement'
 import {
   asAngularForLayout,
   buildElkGraph,
+  demoteNestedBoundaries,
   layoutStructureWithElk,
   portFromElk,
+  seedPortSide,
 } from './elkStructureLayout'
 
 function part(
@@ -649,5 +651,103 @@ describe('buildElkGraph proxy-port edges', () => {
     ])
     expect(g.edges?.some((e) => e.id === 'energyMotor')).toBe(true)
     expect(g.edges?.some((e) => e.id === 'internal')).toBe(false)
+  })
+})
+
+describe('nested containers in AutoLayout', () => {
+  it('demotes nested boundaries but keeps the root boundary', () => {
+    const nodes = [
+      part('car', { isBoundary: true }),
+      part('ecu', { parentId: 'car', isBoundary: true }),
+      part('cpu', { parentId: 'ecu' }),
+    ]
+    const out = demoteNestedBoundaries(nodes)
+    expect((out[0].data as PartNodeData).isBoundary).toBe(true)
+    expect((out[1].data as PartNodeData).isBoundary).toBe(false)
+  })
+
+  it('places a nested container among its siblings without overlap', async () => {
+    const nodes = [
+      part('car', { isBoundary: true, w: 600, h: 400 }),
+      part('a', { parentId: 'car', x: 0, y: 0 }),
+      // Stale oversized box from an earlier layout must not survive.
+      part('ecu', { parentId: 'car', isBoundary: true, x: 0, y: 0, w: 900, h: 700 }),
+      part('cpu', { parentId: 'ecu', x: 20, y: 40 }),
+    ]
+    for (const algorithm of ['favour-grid', 'clustered', 'stress', 'layered'] as const) {
+      const r = await layoutStructureWithElk(nodes, [], {
+        includeEdges: false,
+        layoutNodes: true,
+        directives: {
+          mode: 'simple',
+          algorithm,
+          portPlacement: 'optimized',
+          spacing: 'normal',
+          aspectRatio: 1,
+        },
+      })
+      const a = r.nodes.a
+      const ecu = r.nodes.ecu
+      const overlap =
+        a.x! < ecu.x! + ecu.width! &&
+        ecu.x! < a.x! + a.width! &&
+        a.y! < ecu.y! + ecu.height! &&
+        ecu.y! < a.y! + a.height!
+      expect(overlap, algorithm).toBe(false)
+      const cpu = r.nodes.cpu
+      expect(cpu.x! + cpu.width!, algorithm).toBeLessThanOrEqual(ecu.width! + 1e-6)
+      expect(cpu.y! + cpu.height!, algorithm).toBeLessThanOrEqual(ecu.height! + 1e-6)
+      expect(ecu.width!, algorithm).toBeLessThan(600)
+      expect(ecu.height!, algorithm).toBeLessThan(500)
+    }
+  })
+})
+
+describe('seedPortSide honours the port placement mode', () => {
+  const mk = (id: string, x: number, y: number, ports: PartNodeData['ports']) =>
+    part(id, { x, y, ports })
+  const owner = mk('o', 0, 0, [{ id: 'o.p', name: 'p', side: 'right', offset: 0.5 }])
+  const below = mk('b', 0, 400, [{ id: 'b.q', name: 'q', side: 'top', offset: 0.5 }])
+  const above = mk('u', 0, -400, [{ id: 'u.q', name: 'q', side: 'bottom', offset: 0.5 }])
+  const byId = new Map([owner, below, above].map((n) => [n.id, n]))
+  const port = (owner.data as PartNodeData).ports[0]
+  const toBelow = [
+    { edgeId: 'e', sourcePart: 'o', targetPart: 'b', sourcePort: 'o.p', targetPort: 'b.q' },
+  ]
+  const toAbove = [
+    { edgeId: 'e', sourcePart: 'o', targetPart: 'u', sourcePort: 'o.p', targetPort: 'u.q' },
+  ]
+
+  it('optimized faces a peer straight below with the bottom side', () => {
+    expect(seedPortSide(port, owner, toBelow, byId, undefined, 'optimized')).toBe('bottom')
+    expect(seedPortSide(port, owner, toAbove, byId, undefined, 'optimized')).toBe('top')
+  })
+
+  it('optimized – no top uses bottom but never top', () => {
+    expect(seedPortSide(port, owner, toBelow, byId, undefined, 'optimizedNoTop')).toBe(
+      'bottom',
+    )
+    expect(['left', 'right']).toContain(
+      seedPortSide(port, owner, toAbove, byId, undefined, 'optimizedNoTop'),
+    )
+  })
+
+  it('optimized – no top/bottom only yields left or right', () => {
+    for (const links of [toBelow, toAbove]) {
+      expect(['left', 'right']).toContain(
+        seedPortSide(port, owner, links, byId, undefined, 'optimizedNoTopBottom'),
+      )
+    }
+  })
+
+  it('inputs left / outputs right follows the role, not the peer', () => {
+    const inPort = { id: 'o.p', name: 'dataIn', side: 'top' as const, offset: 0.5 }
+    expect(seedPortSide(inPort, owner, toBelow, byId, undefined, 'inputsLeftOutputsRight')).toBe(
+      'left',
+    )
+    const outPort = { id: 'o.p', name: 'dataOut', side: 'top' as const, offset: 0.5 }
+    expect(seedPortSide(outPort, owner, toAbove, byId, undefined, 'inputsLeftOutputsRight')).toBe(
+      'right',
+    )
   })
 })

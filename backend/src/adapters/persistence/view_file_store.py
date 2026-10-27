@@ -88,6 +88,8 @@ def layout_document(
         doc["viewFilters"] = list(layout.view_filters)
     if layout.layout_rules:
         doc["layoutRules"] = list(layout.layout_rules)
+    if layout.layered_layout is not None:
+        doc["layeredLayout"] = dict(layout.layered_layout)
     return doc
 
 
@@ -197,6 +199,7 @@ def read_all(
                 ),
                 "viewFilters": doc.get("viewFilters") or [],
                 "layoutRules": doc.get("layoutRules") or [],
+                "layeredLayout": doc.get("layeredLayout"),
             }
         )
     return ViewLayouts(by_view=by_view)

@@ -65,6 +65,8 @@ class VisualizationPatch(BaseModel):
     # Present replaces the whole list; omit to leave unchanged.
     viewFilters: list[dict[str, Any]] | None = None
     layoutRules: list[dict[str, Any]] | None = None
+    # Present replaces the config (null clears); omit to leave unchanged.
+    layeredLayout: dict[str, Any] | None = None
 
 
 class AddConnectionBody(BaseModel):

@@ -21,7 +21,9 @@ import type { PartNodeData, PartPort } from '../PartNode'
 import { sizePartForPorts } from './structureAutoLayout'
 import { clampPortOffset } from './portPlacement'
 import {
+  allowedPortSides,
   clampLevelWeights,
+  clampPortSideToMode,
   DEFAULT_AUTO_LAYOUT_DIRECTIVES,
   inferPortFlowRole,
   spacingToDesiredEdgeLength,
@@ -29,6 +31,7 @@ import {
   type AutoLayoutDirectives,
   type PortPlacementMode,
 } from './autoLayoutOptions'
+import { chooseSideAmong, peerVectorForPort } from './portSideChoice'
 import {
   enforceFlowLeftToRight,
   fitNestedChildrenInParents,
@@ -364,14 +367,21 @@ export function asAngularForLayout(
   }))
 }
 
-/** Optimized: match boundary peer; else face peer part horizontally. */
+/**
+ * Optimized variants: match a boundary peer's side when allowed, otherwise
+ * face the peers (centre-to-centre vector) using only the sides the mode
+ * allows for this port.
+ */
 function seedPortSideOptimized(
   port: PartPort,
   owner: Node,
   links: ConnLink[],
   byId: Map<string, Node>,
   boundary: Node | undefined,
+  mode: PortPlacementMode,
 ): PortSide {
+  const role = inferPortFlowRole(port, links)
+  const allowed = allowedPortSides(mode, role)
   const related = links.filter(
     (l) => l.sourcePort === port.id || l.targetPort === port.id,
   )
@@ -381,23 +391,18 @@ function seedPortSideOptimized(
       const otherPort = l.sourcePort === port.id ? l.targetPort : l.sourcePort
       if (otherPart !== boundary.id) continue
       const bp = portsOf(boundary).find((p) => p.id === otherPort)
-      if (bp && (bp.side === 'left' || bp.side === 'right')) return bp.side
+      if (bp && allowed.includes(bp.side)) return bp.side
     }
   }
-  let dx = 0
-  let n = 0
-  for (const l of related) {
-    const peerId = l.sourcePort === port.id ? l.targetPart : l.sourcePart
-    const peer = byId.get(peerId)
-    if (!peer || peer.id === owner.id) continue
-    dx +=
-      peer.position.x +
-      readSize(peer).width / 2 -
-      (owner.position.x + readSize(owner).width / 2)
-    n += 1
+  const rectOf = (id: string) => {
+    const n = byId.get(id)
+    if (!n || (boundary && id === boundary.id)) return null
+    const sz = readSize(n)
+    return { x: n.position.x, y: n.position.y, width: sz.width, height: sz.height }
   }
-  if (n > 0) return dx >= 0 ? 'right' : 'left'
-  return port.side === 'top' || port.side === 'bottom' ? 'right' : port.side
+  const v = peerVectorForPort(port.id, owner.id, related, rectOf)
+  if (v.n > 0) return chooseSideAmong(allowed, { x: v.x, y: v.y }, port.side)
+  return clampPortSideToMode(mode, role, port.side)
 }
 
 /** Inputs on left, outputs on right (name + connection heuristics). */
@@ -419,7 +424,7 @@ function seedPortSideIoFixed(
   return 'right'
 }
 
-function seedPortSide(
+export function seedPortSide(
   port: PartPort,
   owner: Node,
   links: ConnLink[],
@@ -430,7 +435,7 @@ function seedPortSide(
   if (mode === 'inputsLeftOutputsRight') {
     return seedPortSideIoFixed(port, links)
   }
-  return seedPortSideOptimized(port, owner, links, byId, boundary)
+  return seedPortSideOptimized(port, owner, links, byId, boundary, mode)
 }
 
 function makeElkPort(port: PartPort, side: PortSide): ElkPort {
@@ -596,10 +601,12 @@ export function buildElkGraph(
     const ports = portsOf(node).map((p) =>
       makeElkPort(p, portSideById.get(p.id) || p.side),
     )
+    // ELK may only move ports freely in the plain optimized mode; every
+    // other mode restricts the sides a port may use.
     const useFixedPorts =
       !layoutNodes ||
       resolved.elkAlgorithm === 'layered' ||
-      portMode === 'inputsLeftOutputsRight'
+      portMode !== 'optimized'
     return {
       id: node.id,
       width: sz.width,
@@ -701,11 +708,32 @@ function collectLaidOutNodes(
  * Run ELK and return visualization patches for parts + ports.
  * Phase A: no `edges` in the result.
  */
+/**
+ * Nested containers are flagged `isBoundary` by buildStructureGraph; for
+ * placement only the root boundary is special. Demote the rest so they are
+ * placed among their siblings (and grown around their children) like parts.
+ */
+export function demoteNestedBoundaries(nodes: Node[]): Node[] {
+  const partIds = new Set(
+    nodes.filter((n) => !n.type || n.type === 'part').map((n) => n.id),
+  )
+  return nodes.map((n) => {
+    if (!isBoundary(n)) return n
+    if (!n.parentId || !partIds.has(n.parentId)) return n
+    return {
+      ...n,
+      data: { ...(n.data as PartNodeData), isBoundary: false },
+    }
+  })
+}
+
 export async function layoutStructureWithElk(
-  nodes: Node[],
+  inputNodes: Node[],
   edges: Edge[],
   options: ElkGraphBuildOptions = {},
 ): Promise<ElkStructureLayoutResult> {
+  const nodes =
+    options.layoutNodes !== false ? demoteNestedBoundaries(inputNodes) : inputNodes
   const includeEdges = options.includeEdges === true
   const layoutNodes = options.layoutNodes !== false
   const directives = options.directives || DEFAULT_AUTO_LAYOUT_DIRECTIVES
@@ -990,6 +1018,29 @@ export async function layoutStructureWithElk(
               : clampPortOffset(0.15 + ((i + 0.5) / (n + 0.5)) * 0.7, side, h)
           nodePatch[p.id] = { artifactId: p.id, side, offset }
         })
+      }
+    }
+  }
+
+  // Port placement contract: no port of a laid-out part may sit on a side the
+  // mode forbids (the boundary's own ports are left as the user placed them).
+  if (layoutNodes) {
+    const links = collectLinks(edges)
+    for (const node of workingNodes) {
+      if (node.type && node.type !== 'part') continue
+      if (isBoundary(node)) continue
+      const h = nodePatch[node.id]?.height ?? readSize(node).height
+      for (const p of portsOf(node)) {
+        const patch = nodePatch[p.id]
+        if (!patch?.side) continue
+        const side = clampPortSideToMode(
+          directives.portPlacement,
+          inferPortFlowRole(p, links),
+          patch.side,
+        )
+        if (side !== patch.side) {
+          nodePatch[p.id] = { ...patch, side, offset: clampPortOffset(0.5, side, h) }
+        }
       }
     }
   }
