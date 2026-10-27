@@ -169,3 +169,15 @@ describe('settings includeBindingsInRouting', () => {
     expect(loadSettings().includeBindingsInRouting).toBe(true)
   })
 })
+
+describe('settings removed relation-todo colors', () => {
+  it('ignores legacy pending todo colors', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({ pendingChangeColor: '#f00', pendingAddColor: '#0f0' }),
+    )
+    const s = loadSettings()
+    expect('pendingChangeColor' in s).toBe(false)
+    expect('pendingAddColor' in s).toBe(false)
+  })
+})

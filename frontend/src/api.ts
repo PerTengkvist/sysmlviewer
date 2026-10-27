@@ -291,19 +291,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export type RelationTodoItem = {
-  id: number
-  action: 'add' | 'change' | 'delete'
-  original: string
-  filepath: string
-  rownumber: number
-  source: string
-  target: string
-  type: string
-  new_def: string
-  relationId?: string
-}
-
 export const api = {
   getSession: () => request<SessionPayload>('/session'),
   createSession: (name: string, folder: string) =>
@@ -537,15 +524,6 @@ export const api = {
   fetchDocumentation: (projectId: string, docPath: string) =>
     request<{ path: string; content: string }>(
       `/projects/${projectId}/documentation/${docPath.split('/').map(encodeURIComponent).join('/')}`,
-    ),
-  listRelationTodos: (projectId: string) =>
-    request<{ items: RelationTodoItem[] }>(
-      `/projects/${projectId}/relation-todos`,
-    ),
-  deleteRelationTodo: (projectId: string, todoId: number) =>
-    request<{ ok: boolean }>(
-      `/projects/${projectId}/relation-todos/${todoId}`,
-      { method: 'DELETE' },
     ),
   getIconLibraries: () => request<IconLibrariesPayload>('/icon-libraries'),
   putIconLibraries: (

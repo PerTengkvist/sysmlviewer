@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from adapters.parser.subset_parser import SubsetSysmlParser
@@ -7,10 +8,25 @@ from domain.models import ArtifactKind, Project, SemanticElement
 from domain.view_layouts import ViewEdgeLayout, ViewLayout, ViewLayouts
 
 
-def test_relation_todos_service(tmp_path: Path):
+def test_relation_todos_endpoints_are_gone(tmp_path: Path):
+    from fastapi.testclient import TestClient
+
+    from adapters.api.app import create_app
+    from helpers import api_url
+
+    repo = WorkspaceProjectRepository(tmp_path)
+    project = repo.save(Project.create(name="Todos"))
+    client = TestClient(create_app(workspace=tmp_path))
+    assert client.get(api_url(f"/projects/{project.id}/relation-todos")).status_code == 404
+    assert client.delete(
+        api_url(f"/projects/{project.id}/relation-todos/1")
+    ).status_code in (404, 405)
+
+
+def test_add_connection_still_records_todo_file(tmp_path: Path):
     repo = WorkspaceProjectRepository(tmp_path)
     service = ProjectService(repo, SubsetSysmlParser())
-    project = service.create_project("Todos")
+    service.create_project("Todos")
     service.record_relation_todo(
         {
             "action": "add",
@@ -23,13 +39,11 @@ def test_relation_todos_service(tmp_path: Path):
             "new_def": "connection c connect P::a::out to P::b::inn;",
         }
     )
-    items = service.list_relation_todos(project.id)
-    assert items is not None
+    todo_file = tmp_path / ".update_relations_todos.json"
+    assert todo_file.is_file()
+    items = json.loads(todo_file.read_text())
     assert len(items) == 1
     assert items[0]["type"] == "connection"
-    assert (tmp_path / ".update_relations_todos.json").is_file()
-    assert service.delete_relation_todo(project.id, items[0]["id"]) is True
-    assert service.list_relation_todos(project.id) == []
 
 
 def test_update_relation_ends_and_use_delete(tmp_path: Path):
@@ -69,7 +83,7 @@ def test_update_relation_ends_and_use_delete(tmp_path: Path):
     deleted = service.delete_artifact(project.id, "use:UC::Driver->UC")
     assert deleted is not None
     assert "UC::Driver" not in deleted.semantic
-    items = service.list_relation_todos(project.id) or []
+    items = json.loads((tmp_path / ".update_relations_todos.json").read_text())
     assert any(item["action"] == "change" and item["target"] == "C" for item in items)
     assert any(
         item["action"] == "delete" and item["relationId"] == "use:UC::Driver->UC"

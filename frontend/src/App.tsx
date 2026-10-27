@@ -5,7 +5,6 @@ import {
   type ExampleProject,
   type PortSide,
   type Project,
-  type RelationTodoItem,
   type RoutingType,
   type ViewPayload,
   type VisualizationEdge,
@@ -28,7 +27,6 @@ import { docPathForArtifact } from './features/docs/docPath'
 import { SheetDialog } from './features/sheet/SheetDialog'
 import { normalizeSheet, type ProjectSheet } from './features/sheet/sheet'
 import { SettingsDialog } from './features/settings/SettingsDialog'
-import { RelationTodosDialog } from './features/diagram/RelationTodosDialog'
 import {
   applyTheme,
   loadSettings,
@@ -110,8 +108,6 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [todosOpen, setTodosOpen] = useState(false)
-  const [relationTodos, setRelationTodos] = useState<RelationTodoItem[]>([])
   const [workspaceDialog, setWorkspaceDialog] = useState<'new' | 'open' | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
@@ -127,17 +123,6 @@ export default function App() {
   const structureNotation = structureNotationForPatch(
     settings.showDiagramDetails.structureNotation,
   )
-
-  useEffect(() => {
-    if (!project) {
-      setRelationTodos([])
-      return
-    }
-    void api
-      .listRelationTodos(project.id)
-      .then((r) => setRelationTodos(r.items))
-      .catch(() => setRelationTodos([]))
-  }, [project?.id])
 
   const applySession = useCallback(
     async (session: { workspaceRoot: string | null; project: Project | null }) => {
@@ -485,8 +470,6 @@ export default function App() {
     setError(null)
     try {
       const p = await fn()
-      const todos = await api.listRelationTodos(p.id).catch(() => null)
-      if (todos) setRelationTodos(todos.items)
       await applyProject(p)
     } catch (e) {
       setError(String(e))
@@ -1333,20 +1316,6 @@ export default function App() {
           </button>
           <button
             type="button"
-            disabled={!project || busy}
-            onClick={() => {
-              if (!project) return
-              void api.listRelationTodos(project.id).then((r) => {
-                setRelationTodos(r.items)
-                setTodosOpen(true)
-              })
-            }}
-            title="Pending relation edits"
-          >
-            TODOs ({relationTodos.length})
-          </button>
-          <button
-            type="button"
             className="settings-btn"
             title="Settings"
             aria-label="Settings"
@@ -1420,19 +1389,6 @@ export default function App() {
         workspaceOpen={!!workspaceRoot}
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
-      />
-      <RelationTodosDialog
-        open={todosOpen}
-        items={relationTodos}
-        onClose={() => setTodosOpen(false)}
-        onDelete={(id) => {
-          if (!project) return
-          void api.deleteRelationTodo(project.id, id).then(() =>
-            api
-              .listRelationTodos(project.id)
-              .then((r) => setRelationTodos(r.items)),
-          )
-        }}
       />
       <WorkspaceDialog
         open={workspaceDialog != null}
@@ -1644,9 +1600,6 @@ export default function App() {
                 includeBindingsInRouting={settings.includeBindingsInRouting}
                 sheet={sheet}
                 selectedIds={selectedIds}
-                relationTodos={relationTodos}
-                pendingChangeColor={settings.pendingChangeColor}
-                pendingAddColor={settings.pendingAddColor}
                 formatPaintMode={!!paintMode}
                 onSelectArtifact={(artifactId, opts) => {
                   if (paintMode && artifactId) {
@@ -1704,7 +1657,6 @@ export default function App() {
             }
             selectedId={selectedId}
             selectedIds={selectedIds}
-            relationTodos={relationTodos}
             editorMode={editorMode}
             viewMode={settings.viewMode}
             onHierarchyOverrideChange={(override) =>

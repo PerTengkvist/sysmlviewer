@@ -79,22 +79,6 @@ class ProjectService:
             return None
         return RelationTodoStore(Path(root))
 
-    def list_relation_todos(self, project_id: str) -> list[dict] | None:
-        if not self.repo.get(project_id):
-            return None
-        store = self._todo_store()
-        if not store:
-            return []
-        return store.load()
-
-    def delete_relation_todo(self, project_id: str, todo_id: int) -> bool:
-        if not self.repo.get(project_id):
-            return False
-        store = self._todo_store()
-        if not store:
-            return False
-        return store.delete(todo_id)
-
     def record_relation_todo(self, entry: dict) -> dict | None:
         store = self._todo_store()
         if not store:

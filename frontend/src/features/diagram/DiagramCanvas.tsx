@@ -126,7 +126,6 @@ import {
   nodeBoxSize,
   nodeExtentSize,
 } from './resizeSync'
-import { applyRelationTodos, type RelationTodo } from './applyRelationTodos'
 import {
   diagramElementToPngBlob,
   waitFrames,
@@ -478,9 +477,6 @@ type Props = {
    */
   includeBindingsInRouting?: boolean
   selectedIds?: string[]
-  relationTodos?: RelationTodo[]
-  pendingChangeColor?: string
-  pendingAddColor?: string
   /** Format painter active — show banner; Esc clears in App. */
   formatPaintMode?: boolean
   onSelectArtifact: (
@@ -541,9 +537,6 @@ export function DiagramCanvas({
   showJumpers = true,
   includeBindingsInRouting = true,
   selectedIds = [],
-  relationTodos = [],
-  pendingChangeColor = '#dc2626',
-  pendingAddColor = '#16a34a',
   formatPaintMode = false,
   onSelectArtifact,
   onSelectionFromFlow,
@@ -914,7 +907,6 @@ export function DiagramCanvas({
           requirementDisplay,
         })
     }
-    const visibleIds = new Set(built.nodes.map((n) => n.id))
     const previousViewId = viewKeyRef.current?.split('|')[1]
     const geometry =
       previousViewId && previousViewId === view.view.id && nodesRef.current.length
@@ -972,14 +964,8 @@ export function DiagramCanvas({
         },
       })),
     )
-    const overlaid = applyRelationTodos(
-      geometry.edges,
-      relationTodos,
-      { change: pendingChangeColor, add: pendingAddColor },
-      visibleIds,
-    )
     setEdges(
-      overlaid.edges.map((edge) => ({
+      geometry.edges.map((edge) => ({
         ...edge,
         interactionWidth: 24,
         data: {

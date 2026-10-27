@@ -38,10 +38,6 @@ export type AppSettings = {
   selectedConnectionColor: string
   /** Multiplier applied to the edge's own stroke width when selected. */
   selectedConnectionLinewidthFactor: number
-  /** Pending relation todo: change overlay color. */
-  pendingChangeColor: string
-  /** Pending relation todo: add overlay color. */
-  pendingAddColor: string
   /**
    * Min gap (flow px at 100% zoom) between unrelated connection tracks.
    * Related nets (shared port) may still coincide.
@@ -141,8 +137,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   requirementDisplay: cloneRequirementDisplay(),
   selectedConnectionColor: '#2563eb',
   selectedConnectionLinewidthFactor: 3,
-  pendingChangeColor: '#dc2626',
-  pendingAddColor: '#16a34a',
   connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
   showJumpers: true,
   includeBindingsInRouting: true,
@@ -205,14 +199,6 @@ export function loadSettings(): AppSettings {
         }
         return Math.max(1, raw)
       })(),
-      pendingChangeColor:
-        typeof parsed.pendingChangeColor === 'string' && parsed.pendingChangeColor
-          ? parsed.pendingChangeColor
-          : DEFAULT_SETTINGS.pendingChangeColor,
-      pendingAddColor:
-        typeof parsed.pendingAddColor === 'string' && parsed.pendingAddColor
-          ? parsed.pendingAddColor
-          : DEFAULT_SETTINGS.pendingAddColor,
       connectionSeparation: Math.max(
         0,
         Number(parsed.connectionSeparation) ||

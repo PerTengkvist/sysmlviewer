@@ -624,20 +624,6 @@ def create_api_app(
             raise HTTPException(status_code=404, detail="Relation not found")
         return project.to_dict()
 
-    @app.get("/projects/{project_id}/relation-todos")
-    def list_relation_todos(project_id: str) -> dict:
-        items = _service().list_relation_todos(project_id)
-        if items is None:
-            raise HTTPException(status_code=404, detail="Project not found")
-        return {"items": items}
-
-    @app.delete("/projects/{project_id}/relation-todos/{todo_id}")
-    def delete_relation_todo(project_id: str, todo_id: int) -> dict:
-        ok = _service().delete_relation_todo(project_id, todo_id)
-        if not ok:
-            raise HTTPException(status_code=404, detail="Todo not found")
-        return {"ok": True}
-
     @app.patch("/projects/{project_id}/files/item/{file_id:path}")
     def patch_file_meta(
         project_id: str,
