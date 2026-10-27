@@ -1388,16 +1388,18 @@ export default function App() {
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
       />
-      <WorkspaceDialog
-        open={workspaceDialog != null}
-        mode={workspaceDialog || 'new'}
-        initialFolder={workspaceRoot || ''}
-        exampleProjects={exampleProjects}
-        onClose={() => setWorkspaceDialog(null)}
-        onCreate={(name, folder) => void createProject(name, folder)}
-        onOpenFolder={(folder) => void openFolder(folder)}
-        onOpenProjectFile={(pf) => void openProjectFile(pf)}
-      />
+      {workspaceDialog && (
+        <WorkspaceDialog
+          open
+          mode={workspaceDialog}
+          initialFolder={workspaceRoot || ''}
+          exampleProjects={exampleProjects}
+          onClose={() => setWorkspaceDialog(null)}
+          onCreate={(name, folder) => void createProject(name, folder)}
+          onOpenFolder={(folder) => void openFolder(folder)}
+          onOpenProjectFile={(pf) => void openProjectFile(pf)}
+        />
+      )}
       {project && (
         <SheetDialog
           open={sheetOpen}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ExampleProject } from '../../api'
 import { api } from '../../api'
 import { normalizeFolderPath } from '../files/workspacePaths'
@@ -7,6 +7,8 @@ type Props = {
   open: boolean
   mode: 'new' | 'open'
   initialFolder?: string
+  /** Initial "Open by" choice (mode 'open' only). */
+  initialOpenMode?: 'folder' | 'file'
   exampleProjects?: ExampleProject[]
   onClose: () => void
   onCreate: (name: string, folder: string) => void
@@ -18,6 +20,7 @@ export function WorkspaceDialog({
   open,
   mode,
   initialFolder = '',
+  initialOpenMode = 'folder',
   exampleProjects = [],
   onClose,
   onCreate,
@@ -27,9 +30,16 @@ export function WorkspaceDialog({
   const [name, setName] = useState('New Project')
   const [folder, setFolder] = useState(initialFolder)
   const [projectFile, setProjectFile] = useState('')
-  const [openMode, setOpenMode] = useState<'folder' | 'file'>('folder')
+  const [openMode, setOpenMode] = useState<'folder' | 'file'>(initialOpenMode)
   const [browseBusy, setBrowseBusy] = useState(false)
   const [browseError, setBrowseError] = useState<string | null>(null)
+
+  // App mounts this dialog only while open, so `useState(initialFolder)`
+  // already picks up the current workspace. This effect covers callers
+  // that keep the dialog mounted and re-open it for another workspace.
+  useEffect(() => {
+    if (open) setFolder(initialFolder)
+  }, [open, initialFolder])
 
   if (!open) return null
 
