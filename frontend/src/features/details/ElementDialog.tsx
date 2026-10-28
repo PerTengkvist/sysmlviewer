@@ -15,6 +15,8 @@ type Props = {
   onClose: () => void
   /** Same props the right sidebar's DetailsPanel gets; selectedId is overridden. */
   detailsProps: DetailsPanelProps
+  /** Project documentation paths — needed for package-qualified .md resolution. */
+  docPaths?: readonly string[]
   requirementDisplay?: RequirementDisplaySettings
 }
 
@@ -29,6 +31,7 @@ export function ElementDialog({
   onSizeChange,
   onClose,
   detailsProps,
+  docPaths,
   requirementDisplay,
 }: Props) {
   const el = detailsProps.project?.semantic[elementId]
@@ -113,6 +116,7 @@ export function ElementDialog({
             <DocumentationPanel
               project={detailsProps.project}
               selectedId={elementId}
+              docPaths={docPaths}
               requirementDisplay={requirementDisplay}
             />
           </div>

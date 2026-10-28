@@ -6,6 +6,7 @@ const DIALOG_KINDS: ReadonlySet<ArtifactKind> = new Set<ArtifactKind>([
   'part',
   'interface',
   'package',
+  'view',
 ])
 
 /** What a double-click on a diagram node of the given kind should open. */

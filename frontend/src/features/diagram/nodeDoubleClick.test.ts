@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { nodeDoubleClickAction } from './nodeDoubleClick'
 
 describe('nodeDoubleClickAction', () => {
-  it('opens the element dialog for parts, interfaces and packages', () => {
+  it('opens the element dialog for parts, interfaces, packages and views', () => {
     expect(nodeDoubleClickAction('part')).toBe('element-dialog')
     expect(nodeDoubleClickAction('interface')).toBe('element-dialog')
     expect(nodeDoubleClickAction('package')).toBe('element-dialog')
+    expect(nodeDoubleClickAction('view')).toBe('element-dialog')
   })
 
   it('keeps the use-case flow dialog', () => {

@@ -41,6 +41,8 @@ type Props = {
   locateInModel?: LocateInModelRequest | null
   onSelectView: (viewId: string) => void
   onSelectArtifact: (artifactId: string) => void
+  /** Double-click in the Model tree (same kinds as diagram: dialog / use-case flow). */
+  onArtifactDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
   onAddFilePath: () => void
   onRefreshFile: (fileId: string) => void
   onDeleteFile?: (fileId: string) => void
@@ -58,6 +60,7 @@ function ViewTree({
   visibleKinds,
   onSelectArtifact,
   onSelectView,
+  onArtifactDoubleClick,
 }: {
   projectId: string | null
   semantic: Record<string, SemanticElement>
@@ -69,6 +72,7 @@ function ViewTree({
   visibleKinds: Set<ArtifactKind>
   onSelectArtifact: (artifactId: string) => void
   onSelectView: (viewId: string) => void
+  onArtifactDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
 }) {
   const semanticKey = Object.keys(semantic).sort().join('|')
 
@@ -324,6 +328,10 @@ function ViewTree({
               if (el.kind === 'view') onSelectView(el.id)
               else onSelectArtifact(el.id)
             }}
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              onArtifactDoubleClick?.(el.id, el.kind)
+            }}
             title={el.id}
           >
             <span className="artifact-kind">{el.kind}</span>{' '}
@@ -545,6 +553,7 @@ export function LeftSidebar({
   locateInModel,
   onSelectView,
   onSelectArtifact,
+  onArtifactDoubleClick,
   onAddFilePath,
   onRefreshFile,
   onDeleteFile,
@@ -645,6 +654,7 @@ export function LeftSidebar({
             visibleKinds={visibleKinds}
             onSelectArtifact={onSelectArtifact}
             onSelectView={onSelectView}
+            onArtifactDoubleClick={onArtifactDoubleClick}
           />
           <ModelTreeFilterDialog
             open={filterOpen}

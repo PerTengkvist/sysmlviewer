@@ -1501,6 +1501,7 @@ export default function App() {
           onSizeChange={onElementDialogSize}
           onClose={closeElementDialog}
           detailsProps={detailsPanelProps}
+          docPaths={docPaths}
           requirementDisplay={settings.requirementDisplay}
         />
       )}
@@ -1635,6 +1636,11 @@ export default function App() {
                 }
               }
               void loadView(project.id, `artifact::${artifactId}`)
+            }}
+            onArtifactDoubleClick={(artifactId, kind) => {
+              const action = nodeDoubleClickAction(kind)
+              if (action === 'use-case-flow') setUseCaseDialogId(artifactId)
+              else if (action === 'element-dialog') setElementDialogId(artifactId)
             }}
             onAddFilePath={() => void addFileByPath()}
             onRefreshFile={(id) => void refreshFile(id)}
