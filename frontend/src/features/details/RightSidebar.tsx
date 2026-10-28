@@ -9,6 +9,8 @@ type DetailsProps = ComponentProps<typeof DetailsPanel>
 type Props = DetailsProps & {
   layout: Pick<AppSettings, 'rightPanelSizes'>
   onLayoutChange: (sizes: [number, number]) => void
+  /** Hide the sidebar (canvas takes the space). */
+  onToggle?: () => void
   requirementDisplay?: AppSettings['requirementDisplay']
   /** Project documentation paths (markdown files in docs folders). */
   docPaths?: readonly string[]
@@ -17,6 +19,7 @@ type Props = DetailsProps & {
 export function RightSidebar({
   layout,
   onLayoutChange,
+  onToggle,
   requirementDisplay,
   docPaths,
   ...detailsProps
@@ -25,6 +28,17 @@ export function RightSidebar({
 
   return (
     <aside className="sidebar right-sidebar panel-host">
+      <div className="sidebar-toolbar right-sidebar-toolbar">
+        <button
+          type="button"
+          className="sidebar-toolbar-btn"
+          aria-label="Hide details panel"
+          title="Hide details panel"
+          onClick={onToggle}
+        >
+          ›
+        </button>
+      </div>
       <Group
         orientation="vertical"
         className="panel-group-vertical"

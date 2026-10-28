@@ -344,27 +344,6 @@ export function SettingsDialog({
             </label>
           </fieldset>
           <fieldset className="settings-fieldset">
-            <legend>Pending relation edits</legend>
-            <label className="settings-row">
-              <span>Change color</span>
-              <input
-                type="color"
-                value={settings.pendingChangeColor}
-                onChange={(e) =>
-                  patch({ pendingChangeColor: e.target.value })
-                }
-              />
-            </label>
-            <label className="settings-row">
-              <span>Add color</span>
-              <input
-                type="color"
-                value={settings.pendingAddColor}
-                onChange={(e) => patch({ pendingAddColor: e.target.value })}
-              />
-            </label>
-          </fieldset>
-          <fieldset className="settings-fieldset">
             <legend>Connection routing</legend>
             <label className="settings-row">
               <span>Connection Separation (px)</span>

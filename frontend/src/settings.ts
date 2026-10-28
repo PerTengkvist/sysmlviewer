@@ -38,10 +38,6 @@ export type AppSettings = {
   selectedConnectionColor: string
   /** Multiplier applied to the edge's own stroke width when selected. */
   selectedConnectionLinewidthFactor: number
-  /** Pending relation todo: change overlay color. */
-  pendingChangeColor: string
-  /** Pending relation todo: add overlay color. */
-  pendingAddColor: string
   /**
    * Min gap (flow px at 100% zoom) between unrelated connection tracks.
    * Related nets (shared port) may still coincide.
@@ -59,6 +55,8 @@ export type AppSettings = {
   horizontalPanelSizes: [number, number, number]
   /** Right sidebar split [details, documentation] percentages. */
   rightPanelSizes: [number, number]
+  /** Right sidebar hidden to give the canvas the full width. */
+  rightPanelCollapsed: boolean
   /** Curated icon libraries: enable + default style for vendoring. */
   iconLibraries: Record<IconLibraryId, IconLibrarySetting>
 }
@@ -141,13 +139,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
   requirementDisplay: cloneRequirementDisplay(),
   selectedConnectionColor: '#2563eb',
   selectedConnectionLinewidthFactor: 3,
-  pendingChangeColor: '#dc2626',
-  pendingAddColor: '#16a34a',
   connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
   showJumpers: true,
   includeBindingsInRouting: true,
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
+  rightPanelCollapsed: false,
   iconLibraries: {
     iconmind: { ...DEFAULT_ICON_LIBRARIES.iconmind },
     iconoven: { ...DEFAULT_ICON_LIBRARIES.iconoven },
@@ -205,14 +202,6 @@ export function loadSettings(): AppSettings {
         }
         return Math.max(1, raw)
       })(),
-      pendingChangeColor:
-        typeof parsed.pendingChangeColor === 'string' && parsed.pendingChangeColor
-          ? parsed.pendingChangeColor
-          : DEFAULT_SETTINGS.pendingChangeColor,
-      pendingAddColor:
-        typeof parsed.pendingAddColor === 'string' && parsed.pendingAddColor
-          ? parsed.pendingAddColor
-          : DEFAULT_SETTINGS.pendingAddColor,
       connectionSeparation: Math.max(
         0,
         Number(parsed.connectionSeparation) ||
@@ -234,6 +223,7 @@ export function loadSettings(): AppSettings {
         parsed.rightPanelSizes,
         DEFAULT_SETTINGS.rightPanelSizes,
       ),
+      rightPanelCollapsed: parsed.rightPanelCollapsed === true,
       iconLibraries: normalizeIconLibraries(parsed.iconLibraries),
     }
   } catch {
@@ -263,7 +253,9 @@ function normalizeTriple(
 ): [number, number, number] {
   if (!Array.isArray(raw) || raw.length !== 3) return fallback
   const nums = raw.map(Number)
-  if (nums.some((n) => !Number.isFinite(n)) || nums.reduce((s, n) => s + n, 0) <= 0) {
+  // Every panel must have a visible share; a stored 0 (collapsed) would
+  // otherwise hide a panel at startup with no way to drag it back.
+  if (nums.some((n) => !Number.isFinite(n) || n < 1)) {
     return fallback
   }
   return nums as [number, number, number]

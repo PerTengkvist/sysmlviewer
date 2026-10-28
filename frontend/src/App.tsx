@@ -5,7 +5,6 @@ import {
   type ExampleProject,
   type PortSide,
   type Project,
-  type RelationTodoItem,
   type RoutingType,
   type ViewPayload,
   type VisualizationEdge,
@@ -15,10 +14,20 @@ import { DiagramCanvas } from './features/diagram/DiagramCanvas'
 import { lockTargets } from './features/diagram/editLock'
 import { nextSelection, selectionFromFlow } from './features/diagram/selection'
 import { RightSidebar } from './features/details/RightSidebar'
+import type { DetailsPanelProps } from './features/details/DetailsPanel'
+import { ElementDialog } from './features/details/ElementDialog'
+import {
+  loadElementDialogSize,
+  saveElementDialogSize,
+  type ElementDialogSize,
+} from './features/details/elementDialogState'
+import { nodeDoubleClickAction } from './features/diagram/nodeDoubleClick'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
 import { TutorialMarkdown } from './features/docs/TutorialMarkdown'
 import { WorkspaceLayout } from './features/layout/WorkspaceLayout'
+import { WorkspaceLabel } from './features/layout/WorkspaceLabel'
+import { applyLayoutChange } from './features/layout/rightPanelState'
 import { WorkspaceDialog } from './features/files/WorkspaceDialog'
 import { normalizeRelSysmlPath } from './features/files/workspacePaths'
 import { PrintDialog } from './features/print/PrintDialog'
@@ -28,7 +37,6 @@ import { docPathForArtifact } from './features/docs/docPath'
 import { SheetDialog } from './features/sheet/SheetDialog'
 import { normalizeSheet, type ProjectSheet } from './features/sheet/sheet'
 import { SettingsDialog } from './features/settings/SettingsDialog'
-import { RelationTodosDialog } from './features/diagram/RelationTodosDialog'
 import {
   applyTheme,
   loadSettings,
@@ -90,6 +98,15 @@ export default function App() {
     y: number
   } | null>(null)
   const [useCaseDialogId, setUseCaseDialogId] = useState<string | null>(null)
+  const [elementDialogId, setElementDialogId] = useState<string | null>(null)
+  const [elementDialogSize, setElementDialogSize] = useState<ElementDialogSize>(
+    () => loadElementDialogSize(),
+  )
+  const onElementDialogSize = useCallback((next: ElementDialogSize) => {
+    setElementDialogSize(next)
+    saveElementDialogSize(next)
+  }, [])
+  const closeElementDialog = useCallback(() => setElementDialogId(null), [])
   const [viewPayload, setViewPayload] = useState<ViewPayload | null>(null)
   const [diagramEpoch, setDiagramEpoch] = useState(0)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -110,8 +127,6 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [todosOpen, setTodosOpen] = useState(false)
-  const [relationTodos, setRelationTodos] = useState<RelationTodoItem[]>([])
   const [workspaceDialog, setWorkspaceDialog] = useState<'new' | 'open' | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
@@ -127,17 +142,6 @@ export default function App() {
   const structureNotation = structureNotationForPatch(
     settings.showDiagramDetails.structureNotation,
   )
-
-  useEffect(() => {
-    if (!project) {
-      setRelationTodos([])
-      return
-    }
-    void api
-      .listRelationTodos(project.id)
-      .then((r) => setRelationTodos(r.items))
-      .catch(() => setRelationTodos([]))
-  }, [project?.id])
 
   const applySession = useCallback(
     async (session: { workspaceRoot: string | null; project: Project | null }) => {
@@ -306,7 +310,29 @@ export default function App() {
 
   const updateHorizontalLayout = useCallback((sizes: [number, number, number]) => {
     setSettings((prev) => {
-      const next = { ...prev, horizontalPanelSizes: sizes }
+      const state = applyLayoutChange(
+        { collapsed: prev.rightPanelCollapsed, sizes: prev.horizontalPanelSizes },
+        sizes,
+      )
+      if (
+        state.collapsed === prev.rightPanelCollapsed &&
+        state.sizes === prev.horizontalPanelSizes
+      ) {
+        return prev
+      }
+      const next = {
+        ...prev,
+        horizontalPanelSizes: state.sizes,
+        rightPanelCollapsed: state.collapsed,
+      }
+      saveSettings(next)
+      return next
+    })
+  }, [])
+
+  const toggleRightPanel = useCallback(() => {
+    setSettings((prev) => {
+      const next = { ...prev, rightPanelCollapsed: !prev.rightPanelCollapsed }
       saveSettings(next)
       return next
     })
@@ -485,8 +511,6 @@ export default function App() {
     setError(null)
     try {
       const p = await fn()
-      const todos = await api.listRelationTodos(p.id).catch(() => null)
-      if (todos) setRelationTodos(todos.items)
       await applyProject(p)
     } catch (e) {
       setError(String(e))
@@ -1266,15 +1290,111 @@ export default function App() {
     })
   }, [])
 
+  const detailsPanelProps: DetailsPanelProps = {
+    project,
+    viewVisualization: viewPayload?.visualization,
+    viewPayload,
+    globalHierarchicalLevels: settings.showDiagramDetails.hierarchicalLevels,
+    selectedId,
+    selectedIds,
+    editorMode,
+    viewMode: settings.viewMode,
+    onHierarchyOverrideChange: (override) =>
+      void onHierarchyOverrideChange(override),
+    onViewFiltersChange: (filters) => void onViewFiltersChange(filters),
+    onRoutingChange: (id, routing) => void onRoutingChange(id, routing),
+    onAutoroute: (id) => void onAutorouteConnection(id),
+    onWaypointsChange: (id, wps) => void onWaypointsMoved(id, wps),
+    onStyleChange: (id, style, kind) => void onStyleChange(id, style, kind),
+    onStylesChange: (styles, kind) => void onStylesChange(styles, kind),
+    onFormatPaint,
+    paintModeActive: !!paintMode,
+    onRename: (id, name) =>
+      void mutateAndSync(() => api.renameArtifact(project!.id, id, name)),
+    onMetadataKeywordsChange: (id, metadataKeywords) =>
+      void mutateAndSync(() =>
+        api.patchArtifact(project!.id, id, { metadataKeywords }),
+      ),
+    onAddPart: (parentId) =>
+      void mutateAndSync(() => api.addPart(project!.id, { parentId })),
+    onAddPort: (parentId) =>
+      void mutateAndSync(() => api.addPort(project!.id, { parentId })),
+    onAddAttribute: (parentId) =>
+      void mutateAndSync(() => api.addAttribute(project!.id, { parentId })),
+    onDelete: (id) => {
+      if (!window.confirm('Delete this element?')) return
+      void mutateAndSync(() => api.deleteArtifact(project!.id, id))
+    },
+    onRetargetRelation: (id, sourceId, targetId) => {
+      void mutateAndSync(() =>
+        api.updateRelationEnds(project!.id, id, sourceId, targetId),
+      )
+    },
+    onLocateInModelView: (artifactId) => {
+      setLeftTab('views')
+      setSelectedId(artifactId)
+      setLocateInModel((prev) => ({
+        artifactId,
+        seq: (prev?.seq ?? 0) + 1,
+      }))
+    },
+    onPositionChange: (id, x, y) =>
+      void onNodesMoved({ [id]: { x, y } }),
+    onSizeChange: (ids, size) => {
+      const semantic =
+        viewPayload?.semantic ?? project?.semantic ?? {}
+      const vizNodes =
+        viewPayload?.visualization.nodes ??
+        project?.visualization.nodes ??
+        {}
+      const rootId = viewPayload?.view.rootArtifactId
+      const isWhitebox = viewPayload?.diagramMode === 'whitebox'
+      const patch: Record<string, Partial<VisualizationNode>> = {}
+      for (const id of ids) {
+        const isBoundary = isWhitebox && rootId === id
+        const clamped = clampPartSize(size, { isBoundary })
+        patch[id] = { artifactId: id, ...clamped }
+        if (clamped.height == null) continue
+        const part = semantic[id]
+        for (const childId of part?.children || []) {
+          const child = semantic[childId]
+          if (child?.kind !== 'port') continue
+          const portViz = vizNodes[childId]
+          if (portViz?.side == null || portViz.offset == null) continue
+          const nextOffset = clampPortOffset(
+            Number(portViz.offset),
+            portViz.side as PortSide,
+            clamped.height,
+            { isBoundary },
+          )
+          if (nextOffset === portViz.offset) continue
+          patch[childId] = {
+            artifactId: childId,
+            side: portViz.side,
+            offset: nextOffset,
+          }
+        }
+      }
+      void onNodesMoved(patch)
+    },
+    onEditLockChange: (id, locked) => {
+      if (!viewPayload) return
+      const patch = lockTargets(
+        [id],
+        viewPayload.visualization.nodes,
+        viewPayload.visualization.edges,
+        locked,
+      )
+      void onNodesMoved(patch.nodes, patch.edges)
+    },
+  }
+
   return (
     <div className={`app-shell${printPages ? ' printing' : ''}`}>
       <header className="app-header no-print">
         <div className="brand">SysML Viewer</div>
         <div className="header-actions">
-          <span className="workspace-label muted" title={workspaceRoot || undefined}>
-            {project ? project.name : 'No project'}
-            {workspaceRoot ? ` — ${workspaceRoot}` : ''}
-          </span>
+          <WorkspaceLabel name={project?.name} root={workspaceRoot} />
           {exampleProjects.length > 0 && (
             <select
               className="projects-menu"
@@ -1352,20 +1472,6 @@ export default function App() {
           </button>
           <button
             type="button"
-            disabled={!project || busy}
-            onClick={() => {
-              if (!project) return
-              void api.listRelationTodos(project.id).then((r) => {
-                setRelationTodos(r.items)
-                setTodosOpen(true)
-              })
-            }}
-            title="Pending relation edits"
-          >
-            TODOs ({relationTodos.length})
-          </button>
-          <button
-            type="button"
             className="settings-btn"
             title="Settings"
             aria-label="Settings"
@@ -1386,6 +1492,18 @@ export default function App() {
             Dismiss
           </button>
         </div>
+      )}
+
+      {elementDialogId && project && project.semantic[elementDialogId] && (
+        <ElementDialog
+          elementId={elementDialogId}
+          size={elementDialogSize}
+          onSizeChange={onElementDialogSize}
+          onClose={closeElementDialog}
+          detailsProps={detailsPanelProps}
+          docPaths={docPaths}
+          requirementDisplay={settings.requirementDisplay}
+        />
       )}
 
       {useCaseDialogId && project && (
@@ -1440,29 +1558,18 @@ export default function App() {
         onChange={setSettings}
         onClose={() => setSettingsOpen(false)}
       />
-      <RelationTodosDialog
-        open={todosOpen}
-        items={relationTodos}
-        onClose={() => setTodosOpen(false)}
-        onDelete={(id) => {
-          if (!project) return
-          void api.deleteRelationTodo(project.id, id).then(() =>
-            api
-              .listRelationTodos(project.id)
-              .then((r) => setRelationTodos(r.items)),
-          )
-        }}
-      />
-      <WorkspaceDialog
-        open={workspaceDialog != null}
-        mode={workspaceDialog || 'new'}
-        initialFolder={workspaceRoot || ''}
-        exampleProjects={exampleProjects}
-        onClose={() => setWorkspaceDialog(null)}
-        onCreate={(name, folder) => void createProject(name, folder)}
-        onOpenFolder={(folder) => void openFolder(folder)}
-        onOpenProjectFile={(pf) => void openProjectFile(pf)}
-      />
+      {workspaceDialog && (
+        <WorkspaceDialog
+          open
+          mode={workspaceDialog}
+          initialFolder={workspaceRoot || ''}
+          exampleProjects={exampleProjects}
+          onClose={() => setWorkspaceDialog(null)}
+          onCreate={(name, folder) => void createProject(name, folder)}
+          onOpenFolder={(folder) => void openFolder(folder)}
+          onOpenProjectFile={(pf) => void openProjectFile(pf)}
+        />
+      )}
       {project && (
         <SheetDialog
           open={sheetOpen}
@@ -1494,6 +1601,8 @@ export default function App() {
       <WorkspaceLayout
         layout={settings}
         onLayoutChange={updateHorizontalLayout}
+        rightCollapsed={settings.rightPanelCollapsed}
+        onToggleRight={toggleRightPanel}
         left={
           <LeftSidebar
             project={project}
@@ -1527,6 +1636,11 @@ export default function App() {
                 }
               }
               void loadView(project.id, `artifact::${artifactId}`)
+            }}
+            onArtifactDoubleClick={(artifactId, kind) => {
+              const action = nodeDoubleClickAction(kind)
+              if (action === 'use-case-flow') setUseCaseDialogId(artifactId)
+              else if (action === 'element-dialog') setElementDialogId(artifactId)
             }}
             onAddFilePath={() => void addFileByPath()}
             onRefreshFile={(id) => void refreshFile(id)}
@@ -1663,9 +1777,6 @@ export default function App() {
                 includeBindingsInRouting={settings.includeBindingsInRouting}
                 sheet={sheet}
                 selectedIds={selectedIds}
-                relationTodos={relationTodos}
-                pendingChangeColor={settings.pendingChangeColor}
-                pendingAddColor={settings.pendingAddColor}
                 formatPaintMode={!!paintMode}
                 onSelectArtifact={(artifactId, opts) => {
                   if (paintMode && artifactId) {
@@ -1694,7 +1805,11 @@ export default function App() {
                 }}
                 onOpenView={onOpenView}
                 onBackView={() => void goBackView()}
-                onUseCaseDoubleClick={(id) => setUseCaseDialogId(id)}
+                onNodeDoubleClick={(id, kind) => {
+                  const action = nodeDoubleClickAction(kind)
+                  if (action === 'use-case-flow') setUseCaseDialogId(id)
+                  else if (action === 'element-dialog') setElementDialogId(id)
+                }}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
                 onLayeredLayoutChange={(layered) =>
@@ -1717,114 +1832,10 @@ export default function App() {
           <RightSidebar
             layout={settings}
             onLayoutChange={updateRightLayout}
+            onToggle={toggleRightPanel}
             requirementDisplay={settings.requirementDisplay}
             docPaths={docPaths}
-            project={project}
-            viewVisualization={viewPayload?.visualization}
-            viewPayload={viewPayload}
-            globalHierarchicalLevels={
-              settings.showDiagramDetails.hierarchicalLevels
-            }
-            selectedId={selectedId}
-            selectedIds={selectedIds}
-            relationTodos={relationTodos}
-            editorMode={editorMode}
-            viewMode={settings.viewMode}
-            onHierarchyOverrideChange={(override) =>
-              void onHierarchyOverrideChange(override)
-            }
-            onViewFiltersChange={(filters) => void onViewFiltersChange(filters)}
-            onRoutingChange={(id, routing) => void onRoutingChange(id, routing)}
-            onAutoroute={(id) => void onAutorouteConnection(id)}
-            onWaypointsChange={(id, wps) => void onWaypointsMoved(id, wps)}
-            onStyleChange={(id, style, kind) => void onStyleChange(id, style, kind)}
-            onStylesChange={(styles, kind) => void onStylesChange(styles, kind)}
-            onFormatPaint={onFormatPaint}
-            paintModeActive={!!paintMode}
-            onRename={(id, name) =>
-              void mutateAndSync(() => api.renameArtifact(project!.id, id, name))
-            }
-            onMetadataKeywordsChange={(id, metadataKeywords) =>
-              void mutateAndSync(() =>
-                api.patchArtifact(project!.id, id, { metadataKeywords }),
-              )
-            }
-            onAddPart={(parentId) =>
-              void mutateAndSync(() => api.addPart(project!.id, { parentId }))
-            }
-            onAddPort={(parentId) =>
-              void mutateAndSync(() => api.addPort(project!.id, { parentId }))
-            }
-            onAddAttribute={(parentId) =>
-              void mutateAndSync(() => api.addAttribute(project!.id, { parentId }))
-            }
-            onDelete={(id) => {
-              if (!window.confirm('Delete this element?')) return
-              void mutateAndSync(() => api.deleteArtifact(project!.id, id))
-            }}
-            onRetargetRelation={(id, sourceId, targetId) => {
-              void mutateAndSync(() =>
-                api.updateRelationEnds(project!.id, id, sourceId, targetId),
-              )
-            }}
-            onLocateInModelView={(artifactId) => {
-              setLeftTab('views')
-              setSelectedId(artifactId)
-              setLocateInModel((prev) => ({
-                artifactId,
-                seq: (prev?.seq ?? 0) + 1,
-              }))
-            }}
-            onPositionChange={(id, x, y) =>
-              void onNodesMoved({ [id]: { x, y } })
-            }
-            onSizeChange={(ids, size) => {
-              const semantic =
-                viewPayload?.semantic ?? project?.semantic ?? {}
-              const vizNodes =
-                viewPayload?.visualization.nodes ??
-                project?.visualization.nodes ??
-                {}
-              const rootId = viewPayload?.view.rootArtifactId
-              const isWhitebox = viewPayload?.diagramMode === 'whitebox'
-              const patch: Record<string, Partial<VisualizationNode>> = {}
-              for (const id of ids) {
-                const isBoundary = isWhitebox && rootId === id
-                const clamped = clampPartSize(size, { isBoundary })
-                patch[id] = { artifactId: id, ...clamped }
-                if (clamped.height == null) continue
-                const part = semantic[id]
-                for (const childId of part?.children || []) {
-                  const child = semantic[childId]
-                  if (child?.kind !== 'port') continue
-                  const portViz = vizNodes[childId]
-                  if (portViz?.side == null || portViz.offset == null) continue
-                  const nextOffset = clampPortOffset(
-                    Number(portViz.offset),
-                    portViz.side as PortSide,
-                    clamped.height,
-                    { isBoundary },
-                  )
-                  if (nextOffset === portViz.offset) continue
-                  patch[childId] = {
-                    artifactId: childId,
-                    side: portViz.side,
-                    offset: nextOffset,
-                  }
-                }
-              }
-              void onNodesMoved(patch)
-            }}
-            onEditLockChange={(id, locked) => {
-              if (!viewPayload) return
-              const patch = lockTargets(
-                [id],
-                viewPayload.visualization.nodes,
-                viewPayload.visualization.edges,
-                locked,
-              )
-              void onNodesMoved(patch.nodes, patch.edges)
-            }}
+            {...detailsPanelProps}
           />
         }
       />

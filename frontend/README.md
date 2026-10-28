@@ -30,3 +30,21 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## UI notes
+
+- **Header path**: the workspace path shows its tail (`…/examples/car`);
+  hover the path for the full value.
+- **Left sidebar**: the Model/Files tabs, Collapse/Filter and the
+  "Add SysML file" zone stay fixed while the tree scrolls.
+- **Right sidebar**: the `›` button hides Details/Docs so the canvas gets the
+  full width; the thin strip on the right shows it again. The choice and the
+  previous width persist in `localStorage` (`sysmlviewer.settings`).
+- **Double-click** on a part, interface or package node opens a dialog with
+  Details on the left and Documentation on the right. Drag the bottom-right
+  corner to resize (up to the window), use the maximize button for the full
+  window, and Esc or × to close. Size is remembered in
+  `sysmlviewer.elementDialog`. Double-click on a use case still opens the
+  use-case flow dialog.
+- **Relation TODOs**: the backend still writes `.update_relations_todos.json`
+  on relation edits, but the viewer no longer shows a TODOs button or overlay.

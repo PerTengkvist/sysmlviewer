@@ -169,3 +169,33 @@ describe('settings includeBindingsInRouting', () => {
     expect(loadSettings().includeBindingsInRouting).toBe(true)
   })
 })
+
+describe('settings removed relation-todo colors', () => {
+  it('ignores legacy pending todo colors', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({ pendingChangeColor: '#f00', pendingAddColor: '#0f0' }),
+    )
+    const s = loadSettings()
+    expect('pendingChangeColor' in s).toBe(false)
+    expect('pendingAddColor' in s).toBe(false)
+  })
+})
+
+describe('settings right panel collapse', () => {
+  it('defaults rightPanelCollapsed to false and accepts only booleans', () => {
+    expect(DEFAULT_SETTINGS.rightPanelCollapsed).toBe(false)
+    localStorage.setItem('sysmlviewer.settings', JSON.stringify({ rightPanelCollapsed: 'yes' }))
+    expect(loadSettings().rightPanelCollapsed).toBe(false)
+    localStorage.setItem('sysmlviewer.settings', JSON.stringify({ rightPanelCollapsed: true }))
+    expect(loadSettings().rightPanelCollapsed).toBe(true)
+  })
+
+  it('falls back to default sizes when the stored right panel is zero', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({ horizontalPanelSizes: [18, 82, 0] }),
+    )
+    expect(loadSettings().horizontalPanelSizes).toEqual(DEFAULT_SETTINGS.horizontalPanelSizes)
+  })
+})

@@ -3,6 +3,7 @@ import type { ArtifactKind, Project, SemanticElement, SysmlFile } from '../../ap
 import { isRelationElement } from '../diagram/relationKinds'
 import { ancestorIdsForLocate } from '../details/interfaceLocate'
 import { buildFileTree, type FileTreeNode } from './buildFileTree'
+import { collapsedFolderKeysForAll, collapsedIdsForAll } from './modelTreeCollapse'
 import { ModelTreeFilterDialog } from './ModelTreeFilterDialog'
 import {
   loadModelTreeKindFilter,
@@ -40,6 +41,8 @@ type Props = {
   locateInModel?: LocateInModelRequest | null
   onSelectView: (viewId: string) => void
   onSelectArtifact: (artifactId: string) => void
+  /** Double-click in the Model tree (same kinds as diagram: dialog / use-case flow). */
+  onArtifactDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
   onAddFilePath: () => void
   onRefreshFile: (fileId: string) => void
   onDeleteFile?: (fileId: string) => void
@@ -53,16 +56,23 @@ function ViewTree({
   selectedId,
   activeViewId,
   locateInModel,
+  collapseSignal,
+  visibleKinds,
   onSelectArtifact,
   onSelectView,
+  onArtifactDoubleClick,
 }: {
   projectId: string | null
   semantic: Record<string, SemanticElement>
   selectedId: string | null
   activeViewId: string | null
   locateInModel?: LocateInModelRequest | null
+  /** Bump to collapse every folder and element. */
+  collapseSignal: number
+  visibleKinds: Set<ArtifactKind>
   onSelectArtifact: (artifactId: string) => void
   onSelectView: (viewId: string) => void
+  onArtifactDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
 }) {
   const semanticKey = Object.keys(semantic).sort().join('|')
 
@@ -88,32 +98,12 @@ function ViewTree({
     id: string
     position: 'before' | 'after'
   } | null>(null)
-  const [filterOpen, setFilterOpen] = useState(false)
-
-  const availableKinds = useMemo(
-    () => treeKindsInSemantic(semantic),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [semanticKey],
-  )
-
-  const [visibleKinds, setVisibleKinds] = useState<Set<ArtifactKind>>(
-    () => loadModelTreeKindFilter(projectId || '', treeKindsInSemantic(semantic)),
-  )
-
   useEffect(() => {
     setOrder(loadViewTreeOrder(projectId || ''))
     dragRef.current = null
     setDragging(null)
     setDrop(null)
-    setVisibleKinds(
-      loadModelTreeKindFilter(projectId || '', treeKindsInSemantic(semantic)),
-    )
-  }, [projectId, semanticKey, semantic])
-
-  const setVisibleKindsPersist = (next: Set<ArtifactKind>) => {
-    setVisibleKinds(next)
-    if (projectId) saveModelTreeKindFilter(projectId, next)
-  }
+  }, [projectId, semanticKey])
 
   const orderedFolders = useMemo(
     () => applyFolderTreeOrder(folderTree.folders, order.groups),
@@ -273,30 +263,13 @@ function ViewTree({
     })
   }
 
-  const collapseAll = () => {
-    const nextFolders = new Set<string>()
-    const walkFolders = (
-      folders: typeof orderedFolders,
-    ) => {
-      for (const f of folders) {
-        nextFolders.add(`folder::${f.path}`)
-        walkFolders(f.folders)
-      }
-    }
-    walkFolders(orderedFolders)
-    setFolderCollapsed(nextFolders)
-
-    const nextEls = new Set<string>()
-    const walkEl = (id: string) => {
-      const el = byId[id]
-      if (!el) return
-      const kids = defaultChildOrder(el.children || [], byId)
-      if (kids.length) nextEls.add(id)
-      for (const cid of kids) walkEl(cid)
-    }
-    for (const r of roots) walkEl(r.id)
-    setCollapsedIds(nextEls)
-  }
+  useEffect(() => {
+    if (!collapseSignal) return
+    setFolderCollapsed(collapsedFolderKeysForAll(orderedFolders))
+    setCollapsedIds(collapsedIdsForAll(byId, roots))
+    // Only react to the signal; folders/elements are read at that moment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collapseSignal])
 
   const render = (
     el: SemanticElement,
@@ -354,6 +327,10 @@ function ViewTree({
             onClick={() => {
               if (el.kind === 'view') onSelectView(el.id)
               else onSelectArtifact(el.id)
+            }}
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              onArtifactDoubleClick?.(el.id, el.kind)
             }}
             title={el.id}
           >
@@ -441,29 +418,10 @@ function ViewTree({
 
   return (
     <div className="view-tree">
-      <div className="model-tree-toolbar">
-        <button type="button" onClick={collapseAll} title="Collapse all">
-          Collapse
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterOpen(true)}
-          title="Filter object types"
-        >
-          Filter
-        </button>
-      </div>
       {orderedFolders.map((folder) => renderFolder(folder, 0, '', rootFolderPaths))}
       {ungroupedIds.map((id) =>
         byId[id] ? render(byId[id], 0, UNGROUPED_GROUP_KEY, ungroupedIds) : null,
       )}
-      <ModelTreeFilterDialog
-        open={filterOpen}
-        kinds={availableKinds}
-        enabled={visibleKinds}
-        onChange={setVisibleKindsPersist}
-        onClose={() => setFilterOpen(false)}
-      />
     </div>
   )
 }
@@ -595,6 +553,7 @@ export function LeftSidebar({
   locateInModel,
   onSelectView,
   onSelectArtifact,
+  onArtifactDoubleClick,
   onAddFilePath,
   onRefreshFile,
   onDeleteFile,
@@ -612,44 +571,103 @@ export function LeftSidebar({
     [project?.files, docPaths],
   )
 
+  const projectId = project?.id ?? null
+  const semantic = project?.semantic
+  const semanticKey = Object.keys(semantic || {}).sort().join('|')
+  const availableKinds = useMemo(
+    () => treeKindsInSemantic(semantic || {}),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [semanticKey],
+  )
+  const [visibleKinds, setVisibleKinds] = useState<Set<ArtifactKind>>(() =>
+    loadModelTreeKindFilter(projectId || '', treeKindsInSemantic(semantic || {})),
+  )
+  useEffect(() => {
+    setVisibleKinds(
+      loadModelTreeKindFilter(projectId || '', treeKindsInSemantic(semantic || {})),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, semanticKey])
+  const setVisibleKindsPersist = (next: Set<ArtifactKind>) => {
+    setVisibleKinds(next)
+    if (projectId) saveModelTreeKindFilter(projectId, next)
+  }
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [collapseSignal, setCollapseSignal] = useState(0)
+  const hasModel = !!project
+
   return (
     <aside className="sidebar left-sidebar" onClick={() => setMenu(null)}>
-      <div className="tab-bar">
-        <button
-          type="button"
-          className={activeTab === 'views' ? 'active' : ''}
-          onClick={() => onTabChange('views')}
-        >
-          Model
-        </button>
-        <button
-          type="button"
-          className={activeTab === 'files' ? 'active' : ''}
-          onClick={() => onTabChange('files')}
-        >
-          Files
-        </button>
+      <div className="sidebar-header">
+        <div className="tab-bar">
+          <button
+            type="button"
+            className={activeTab === 'views' ? 'active' : ''}
+            onClick={() => onTabChange('views')}
+          >
+            Model
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'files' ? 'active' : ''}
+            onClick={() => onTabChange('files')}
+          >
+            Files
+          </button>
+        </div>
+        {activeTab === 'views' && (
+          <div className="model-tree-toolbar">
+            <button
+              type="button"
+              disabled={!hasModel}
+              onClick={() => setCollapseSignal((n) => n + 1)}
+              title="Collapse all"
+            >
+              Collapse
+            </button>
+            <button
+              type="button"
+              disabled={!hasModel}
+              onClick={() => setFilterOpen(true)}
+              title="Filter object types"
+            >
+              Filter
+            </button>
+          </div>
+        )}
+        {activeTab === 'files' && (
+          <button type="button" className="upload-zone" onClick={() => onAddFilePath()}>
+            <span>Add SysML file by relative path…</span>
+          </button>
+        )}
       </div>
 
       {activeTab === 'views' && (
         <div className="sidebar-body">
           <ViewTree
-            projectId={project?.id ?? null}
-            semantic={project?.semantic || {}}
+            projectId={projectId}
+            semantic={semantic || {}}
             selectedId={selectedArtifactId}
             activeViewId={activeViewId}
             locateInModel={locateInModel}
+            collapseSignal={collapseSignal}
+            visibleKinds={visibleKinds}
             onSelectArtifact={onSelectArtifact}
             onSelectView={onSelectView}
+            onArtifactDoubleClick={onArtifactDoubleClick}
+          />
+          <ModelTreeFilterDialog
+            open={filterOpen}
+            kinds={availableKinds}
+            enabled={visibleKinds}
+            onChange={setVisibleKindsPersist}
+            onClose={() => setFilterOpen(false)}
           />
         </div>
       )}
 
       {activeTab === 'files' && (
         <div className="sidebar-body files-panel">
-          <button type="button" className="upload-zone" onClick={() => onAddFilePath()}>
-            <span>Add SysML file by relative path…</span>
-          </button>
           <div className="file-tree view-tree">
             {fileTree.length ? (
               <FileTree

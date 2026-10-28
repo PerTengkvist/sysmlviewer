@@ -20,3 +20,4 @@ running-session.json
 .cursor/
 .claude*
 .sysmlviewer/
+frontend/e2e/*

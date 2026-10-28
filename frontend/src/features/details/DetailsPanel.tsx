@@ -3,7 +3,6 @@ import type {
   ElementStyle,
   ElementStyleMode,
   Project,
-  RelationTodoItem,
   RoutingType,
   SemanticElement,
   ViewFilterRow,
@@ -29,6 +28,8 @@ import {
   sharedNumericField,
 } from './multiSelectDetails'
 
+export type DetailsPanelProps = Props
+
 type Props = {
   project: Project | null
   /** Merged per-view visualization from the active diagram (nodes/edges overlays). */
@@ -39,7 +40,6 @@ type Props = {
   selectedId: string | null
   /** Full multi-selection (details uses primaryId; multi-part mode uses this). */
   selectedIds?: string[]
-  relationTodos?: RelationTodoItem[]
   editorMode?: boolean
   viewMode?: ViewMode
   onHierarchyOverrideChange?: (override: number | null) => void
@@ -84,21 +84,6 @@ function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string 
   const parent = choices.find((c) => c.id === item.parentId)
   const hint = parent?.name || item.parentId || item.id
   return `${item.kind} ${item.name} (${hint})`
-}
-
-function pendingEnds(
-  relationId: string,
-  sourceId: string,
-  targetId: string,
-  todos: RelationTodoItem[] | undefined,
-): { sourceId: string; targetId: string } {
-  const last = [...(todos || [])]
-    .reverse()
-    .find((todo) => todo.relationId === relationId)
-  if (last && (last.action === 'change' || last.action === 'add')) {
-    return { sourceId: last.source, targetId: last.target }
-  }
-  return { sourceId, targetId }
 }
 
 function diagramChoices(
@@ -538,7 +523,6 @@ export function DetailsPanel({
   globalHierarchicalLevels = 2,
   selectedId,
   selectedIds = [],
-  relationTodos = [],
   editorMode,
   viewMode: _viewMode,
   onHierarchyOverrideChange,
@@ -768,12 +752,7 @@ export function DetailsPanel({
   if (!el) {
     const useEdge = parseUseEdge(selectedId)
     if (useEdge) {
-      const ends = pendingEnds(
-        selectedId,
-        useEdge.sourceId,
-        useEdge.targetId,
-        relationTodos,
-      )
+      const ends = { sourceId: useEdge.sourceId, targetId: useEdge.targetId }
       return (
         <div className="details-panel">
           <h2>Details</h2>
@@ -825,7 +804,7 @@ export function DetailsPanel({
     el.kind === 'transition' ||
     el.kind === 'succession'
   const relationEnds = isRelationDetailKind(el.kind, el)
-    ? pendingEnds(selectedId, el.sourceId || '', el.targetId || '', relationTodos)
+    ? { sourceId: el.sourceId || '', targetId: el.targetId || '' }
     : null
   const formatKind: 'node' | 'edge' = isEdgeKind ? 'edge' : 'node'
   const formatStyle = isEdgeKind ? edge?.style : node?.style

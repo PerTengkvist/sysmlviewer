@@ -28,6 +28,7 @@ import {
   type ReactNode,
 } from 'react'
 import type {
+  ArtifactKind,
   DiagramMode,
   LayoutRuleRow,
   LayeredLayoutConfig,
@@ -132,7 +133,6 @@ import {
   nodeBoxSize,
   nodeExtentSize,
 } from './resizeSync'
-import { applyRelationTodos, type RelationTodo } from './applyRelationTodos'
 import {
   diagramElementToPngBlob,
   waitFrames,
@@ -484,9 +484,6 @@ type Props = {
    */
   includeBindingsInRouting?: boolean
   selectedIds?: string[]
-  relationTodos?: RelationTodo[]
-  pendingChangeColor?: string
-  pendingAddColor?: string
   /** Format painter active — show banner; Esc clears in App. */
   formatPaintMode?: boolean
   onSelectArtifact: (
@@ -499,7 +496,8 @@ type Props = {
     opts?: { ctrlKey?: boolean; metaKey?: boolean },
   ) => void
   onBackView?: () => void
-  onUseCaseDoubleClick?: (useCaseId: string) => void
+  /** Double-click on a node; the caller decides what the kind opens. */
+  onNodeDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -548,15 +546,12 @@ export function DiagramCanvas({
   showJumpers = true,
   includeBindingsInRouting = true,
   selectedIds = [],
-  relationTodos = [],
-  pendingChangeColor = '#dc2626',
-  pendingAddColor = '#16a34a',
   formatPaintMode = false,
   onSelectArtifact,
   onSelectionFromFlow,
   onOpenView,
   onBackView,
-  onUseCaseDoubleClick,
+  onNodeDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
   onLayeredLayoutChange,
@@ -925,7 +920,6 @@ export function DiagramCanvas({
           requirementDisplay,
         })
     }
-    const visibleIds = new Set(built.nodes.map((n) => n.id))
     const previousViewId = viewKeyRef.current?.split('|')[1]
     const geometry =
       previousViewId && previousViewId === view.view.id && nodesRef.current.length
@@ -983,14 +977,8 @@ export function DiagramCanvas({
         },
       })),
     )
-    const overlaid = applyRelationTodos(
-      geometry.edges,
-      relationTodos,
-      { change: pendingChangeColor, add: pendingAddColor },
-      visibleIds,
-    )
     setEdges(
-      overlaid.edges.map((edge) => ({
+      geometry.edges.map((edge) => ({
         ...edge,
         interactionWidth: 24,
         data: {
@@ -2866,11 +2854,11 @@ export function DiagramCanvas({
                   onSelectArtifact(node.id, { shift: e.shiftKey })
           }
           onNodeDoubleClick={
-            printMode || !onUseCaseDoubleClick
+            printMode || !onNodeDoubleClick
               ? undefined
               : (_e, node) => {
                   const el = view?.semantic[node.id]
-                  if (el?.kind === 'useCase') onUseCaseDoubleClick(node.id)
+                  if (el) onNodeDoubleClick(node.id, el.kind)
                 }
           }
           onEdgeClick={
