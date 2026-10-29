@@ -57,10 +57,54 @@ export function docPathCandidates(
   return qualified === legacy ? [legacy] : [qualified, legacy]
 }
 
+/** Part ids that are the source of a specialization (specialized defs). */
+function specializedDefIds(semantic: Semantic): Set<string> {
+  const ids = new Set<string>()
+  for (const e of Object.values(semantic)) {
+    if (e?.kind === 'specialization' && e.sourceId) ids.add(e.sourceId)
+  }
+  return ids
+}
+
+function nameMatchesTypeRef(el: SemanticElement, typeRef: string): boolean {
+  if (el.id === typeRef || el.name === typeRef) return true
+  const simple = typeRef.split('::').pop() || typeRef
+  return el.name === simple
+}
+
+/**
+ * Resolve the part definition a usage is typed by.
+ * Prefer a plain def (`typeRef == null`), else a specialized def
+ * (`part def X :> Base` — source of a specialization).
+ */
+export function findPartTypeDef(
+  semantic: Semantic,
+  typeRef: string | null | undefined,
+): SemanticElement | null {
+  if (!typeRef) return null
+  const specialized = specializedDefIds(semantic)
+  const parts = Object.values(semantic).filter(
+    (e): e is SemanticElement => !!e && e.kind === 'part' && nameMatchesTypeRef(e, typeRef),
+  )
+  const plain = parts.find((e) => !e.typeRef)
+  if (plain) return plain
+  const specializedDef = parts.find((e) => specialized.has(e.id))
+  return specializedDef ?? null
+}
+
+/** True for a part usage (`part x : Type`), not a part def (including specialized defs). */
+function isPartUsage(el: SemanticElement, semantic: Semantic): boolean {
+  if (el.kind !== 'part' || !el.typeRef) return false
+  return !specializedDefIds(semantic).has(el.id)
+}
+
 /**
  * Resolve the markdown path for an artifact. With the project's list of
  * documentation paths the first existing candidate wins; otherwise the most
  * specific candidate is returned (legacy flat name when no model is given).
+ *
+ * When `docPaths` is known and the element is a part usage with no own doc,
+ * the type definition's existing doc is used instead (one hop).
  */
 export function docPathForArtifact(
   el: SemanticElement | null | undefined,
@@ -73,6 +117,13 @@ export function docPathForArtifact(
     const known = new Set(docPaths)
     const hit = candidates.find((c) => known.has(c))
     if (hit) return hit
+    if (el && semantic && isPartUsage(el, semantic)) {
+      const typeDef = findPartTypeDef(semantic, el.typeRef)
+      if (typeDef) {
+        const typeHit = docPathCandidates(typeDef, semantic).find((c) => known.has(c))
+        if (typeHit) return typeHit
+      }
+    }
   }
   return candidates[0]
 }
