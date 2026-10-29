@@ -18,6 +18,8 @@ type Props = {
   /** Project documentation paths — needed for package-qualified .md resolution. */
   docPaths?: readonly string[]
   requirementDisplay?: RequirementDisplaySettings
+  /** Open an internal markdown link in the markdown dialog. */
+  onOpenDoc?: (docPath: string) => void
 }
 
 /**
@@ -33,6 +35,7 @@ export function ElementDialog({
   detailsProps,
   docPaths,
   requirementDisplay,
+  onOpenDoc,
 }: Props) {
   const el = detailsProps.project?.semantic[elementId]
   const label = `${el?.kind ?? 'element'} ${el?.name ?? elementId}`
@@ -118,6 +121,7 @@ export function ElementDialog({
               selectedId={elementId}
               docPaths={docPaths}
               requirementDisplay={requirementDisplay}
+              onOpenDoc={onOpenDoc}
             />
           </div>
         </div>

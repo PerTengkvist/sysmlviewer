@@ -24,6 +24,12 @@ import {
 import { nodeDoubleClickAction } from './features/diagram/nodeDoubleClick'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
+import { MarkdownDialog } from './features/docs/MarkdownDialog'
+import {
+  loadMarkdownDialogSize,
+  saveMarkdownDialogSize,
+  type MarkdownDialogSize,
+} from './features/docs/markdownDialogState'
 import { TutorialMarkdown } from './features/docs/TutorialMarkdown'
 import { WorkspaceLayout } from './features/layout/WorkspaceLayout'
 import { WorkspaceLabel } from './features/layout/WorkspaceLabel'
@@ -107,6 +113,19 @@ export default function App() {
     saveElementDialogSize(next)
   }, [])
   const closeElementDialog = useCallback(() => setElementDialogId(null), [])
+  const [markdownDialogPath, setMarkdownDialogPath] = useState<string | null>(
+    null,
+  )
+  const [markdownDialogSize, setMarkdownDialogSize] =
+    useState<MarkdownDialogSize>(() => loadMarkdownDialogSize())
+  const onMarkdownDialogSize = useCallback((next: MarkdownDialogSize) => {
+    setMarkdownDialogSize(next)
+    saveMarkdownDialogSize(next)
+  }, [])
+  const openMarkdownDialog = useCallback((docPath: string) => {
+    setMarkdownDialogPath(docPath)
+  }, [])
+  const closeMarkdownDialog = useCallback(() => setMarkdownDialogPath(null), [])
   const [viewPayload, setViewPayload] = useState<ViewPayload | null>(null)
   const [diagramEpoch, setDiagramEpoch] = useState(0)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -1503,6 +1522,18 @@ export default function App() {
           detailsProps={detailsPanelProps}
           docPaths={docPaths}
           requirementDisplay={settings.requirementDisplay}
+          onOpenDoc={openMarkdownDialog}
+        />
+      )}
+
+      {markdownDialogPath && project && (
+        <MarkdownDialog
+          projectId={project.id}
+          docPath={markdownDialogPath}
+          size={markdownDialogSize}
+          onSizeChange={onMarkdownDialogSize}
+          onClose={closeMarkdownDialog}
+          onNavigate={openMarkdownDialog}
         />
       )}
 
@@ -1759,6 +1790,7 @@ export default function App() {
                       : ''
                 }
                 onBack={() => setCanvasMode({ type: 'diagram' })}
+                onOpenDoc={openMarkdownDialog}
               />
             ) : (
               <DiagramCanvas
@@ -1835,6 +1867,7 @@ export default function App() {
             onToggle={toggleRightPanel}
             requirementDisplay={settings.requirementDisplay}
             docPaths={docPaths}
+            onOpenDoc={openMarkdownDialog}
             {...detailsPanelProps}
           />
         }
