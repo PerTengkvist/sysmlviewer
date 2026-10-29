@@ -172,3 +172,126 @@ describe('docPathForArtifact', () => {
     expect(docPathForArtifact(null)).toBeNull()
   })
 })
+
+describe('docPathForArtifact type-def fallback', () => {
+  const TYPE_FILE = 'logical/engine.sysml'
+  const USAGE_FILE = 'physical/vehicle.sysml'
+
+  const typeSemantic: Record<string, SemanticElement> = {
+    Logical: el({
+      id: 'Logical',
+      kind: 'package',
+      name: 'Logical',
+      fileId: TYPE_FILE,
+    }),
+    'Logical::Engine': el({
+      id: 'Logical::Engine',
+      kind: 'part',
+      name: 'Engine',
+      parentId: 'Logical',
+      fileId: TYPE_FILE,
+    }),
+    Physical: el({
+      id: 'Physical',
+      kind: 'package',
+      name: 'Physical',
+      fileId: USAGE_FILE,
+    }),
+    'Physical::engine': el({
+      id: 'Physical::engine',
+      kind: 'part',
+      name: 'engine',
+      parentId: 'Physical',
+      typeRef: 'Engine',
+      fileId: USAGE_FILE,
+    }),
+    'Physical::qualifiedEngine': el({
+      id: 'Physical::qualifiedEngine',
+      kind: 'part',
+      name: 'qualifiedEngine',
+      parentId: 'Physical',
+      typeRef: 'Logical::Engine',
+      fileId: USAGE_FILE,
+    }),
+    Base: el({
+      id: 'Base',
+      kind: 'part',
+      name: 'Base',
+      fileId: TYPE_FILE,
+    }),
+    // Specialized def: part def Derived :> Base — has typeRef but is a type, not a usage.
+    Derived: el({
+      id: 'Derived',
+      kind: 'part',
+      name: 'Derived',
+      typeRef: 'Base',
+      fileId: TYPE_FILE,
+    }),
+    'Derived_specializes_Base': el({
+      id: 'Derived_specializes_Base',
+      kind: 'specialization',
+      name: 'Derived_specializes_Base',
+      sourceId: 'Derived',
+      targetId: 'Base',
+      fileId: TYPE_FILE,
+    }),
+  }
+  const T = (id: string) => typeSemantic[id]
+
+  it('falls back to the type def doc when the usage has none', () => {
+    expect(
+      docPathForArtifact(T('Physical::engine'), typeSemantic, [
+        'logical/docs/Logical.Engine.md',
+      ]),
+    ).toBe('logical/docs/Logical.Engine.md')
+  })
+
+  it('prefers the usage doc when both usage and type have docs', () => {
+    expect(
+      docPathForArtifact(T('Physical::engine'), typeSemantic, [
+        'physical/docs/Physical.engine.md',
+        'logical/docs/Logical.Engine.md',
+      ]),
+    ).toBe('physical/docs/Physical.engine.md')
+  })
+
+  it('returns the usage candidate when neither usage nor type has a doc', () => {
+    expect(docPathForArtifact(T('Physical::engine'), typeSemantic, ['other/docs/x.md'])).toBe(
+      'physical/docs/Physical.engine.md',
+    )
+  })
+
+  it('leaves a part def without typeRef unchanged when it has no doc', () => {
+    expect(
+      docPathForArtifact(T('Logical::Engine'), typeSemantic, ['other/docs/x.md']),
+    ).toBe('logical/docs/Logical.Engine.md')
+  })
+
+  it('does not fall back from a specialized def to its base', () => {
+    expect(
+      docPathForArtifact(T('Derived'), typeSemantic, ['logical/docs/Base.md']),
+    ).toBe('logical/docs/Derived.md')
+  })
+
+  it('resolves a qualified typeRef to the type def by simple name', () => {
+    expect(
+      docPathForArtifact(T('Physical::qualifiedEngine'), typeSemantic, [
+        'logical/docs/Logical.Engine.md',
+      ]),
+    ).toBe('logical/docs/Logical.Engine.md')
+  })
+
+  it('uses the type def fileId for the docs directory', () => {
+    expect(
+      docPathForArtifact(T('Physical::engine'), typeSemantic, [
+        'logical/docs/Engine.md',
+      ]),
+    ).toBe('logical/docs/Engine.md')
+  })
+
+  it('does not fall back when no docPaths list is known', () => {
+    expect(docPathForArtifact(T('Physical::engine'), typeSemantic)).toBe(
+      'physical/docs/Physical.engine.md',
+    )
+  })
+})
