@@ -14,6 +14,8 @@ type Props = DetailsProps & {
   requirementDisplay?: AppSettings['requirementDisplay']
   /** Project documentation paths (markdown files in docs folders). */
   docPaths?: readonly string[]
+  /** Open an internal markdown link in the markdown dialog. */
+  onOpenDoc?: (docPath: string) => void
 }
 
 export function RightSidebar({
@@ -22,6 +24,7 @@ export function RightSidebar({
   onToggle,
   requirementDisplay,
   docPaths,
+  onOpenDoc,
   ...detailsProps
 }: Props) {
   const [detailsSize, docsSize] = layout.rightPanelSizes
@@ -65,6 +68,7 @@ export function RightSidebar({
             selectedId={detailsProps.selectedId}
             docPaths={docPaths}
             requirementDisplay={requirementDisplay}
+            onOpenDoc={onOpenDoc}
           />
         </Panel>
       </Group>

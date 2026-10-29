@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { api, type Project } from '../../api'
 import type { RequirementDisplaySettings } from '../../settings'
@@ -7,7 +7,7 @@ import {
   resolveRequirementDocPanel,
 } from '../diagram/requirementDisplay'
 import { docPathCandidates, docPathForArtifact } from '../docs/docPath'
-import { markdownComponents } from '../docs/markdownComponents'
+import { createMarkdownComponents } from '../docs/markdownComponents'
 import {
   documentationRemarkPlugins,
   interpretDocNewlines,
@@ -19,6 +19,8 @@ type Props = {
   /** Known documentation paths (docs folders) used to pick the existing candidate. */
   docPaths?: readonly string[]
   requirementDisplay?: RequirementDisplaySettings
+  /** Open an internal markdown link in the markdown dialog. */
+  onOpenDoc?: (docPath: string) => void
 }
 
 export function DocumentationPanel({
@@ -26,12 +28,21 @@ export function DocumentationPanel({
   selectedId,
   docPaths,
   requirementDisplay = DEFAULT_REQUIREMENT_DISPLAY,
+  onOpenDoc,
 }: Props) {
   const [content, setContent] = useState<string | null>(null)
   const [docPath, setDocPath] = useState<string | null>(null)
   const [attrFallback, setAttrFallback] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const mdComponents = useMemo(() => {
+    if (!docPath || !onOpenDoc) return createMarkdownComponents()
+    return createMarkdownComponents({
+      currentDocPath: docPath,
+      onOpenDoc,
+    })
+  }, [docPath, onOpenDoc])
 
   useEffect(() => {
     if (!project || !selectedId) {
@@ -119,7 +130,7 @@ export function DocumentationPanel({
           {docPath ? <div className="doc-path muted">{docPath}</div> : null}
           <ReactMarkdown
             remarkPlugins={documentationRemarkPlugins}
-            components={markdownComponents}
+            components={mdComponents}
           >
             {interpretDocNewlines(content)}
           </ReactMarkdown>
