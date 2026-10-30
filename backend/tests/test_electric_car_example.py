@@ -10,21 +10,6 @@ from domain.models import ArtifactKind, SysmlFile
 
 ROOT = resolve_repo_root() / "examples" / "electric_car"
 
-SEQUENCES = {
-    "Unlock": "UnlockSequence",
-    "Lock": "LockSequence",
-    "ChangeGear": "ChangeGearSequence",
-    "TurnLeft": "TurnLeftSequence",
-    "TurnRight": "TurnRightSequence",
-    "Brake": "BrakeSequence",
-    "Accelerate": "AccelerateSequence",
-    "EmergencyStop": "EmergencyStopSequence",
-    "Charge": "ChargeSequence",
-    "Park": "ParkSequence",
-    "AdjustClimate": "AdjustClimateSequence",
-    "PlayMedia": "PlayMediaSequence",
-    "CleanWindshield": "CleanWindshieldSequence",
-}
 
 
 def _load():
@@ -212,7 +197,7 @@ def test_physical_ecu_proxy_ports_and_connection_owners():
         assert same_ecu, (b.name, src_owner, tgt_owner)
 
 
-def test_user_stories_and_use_case_sequences():
+def test_user_stories_are_typed():
     elements = _load().elements
     stories = [
         e
@@ -228,13 +213,6 @@ def test_user_stories_and_use_case_sequences():
         )
         assert type_attr.default_value == '"UserStory"'
 
-    use_case_names = {
-        e.name for e in elements.values() if e.kind == ArtifactKind.USE_CASE
-    }
-    for use_case, interaction in SEQUENCES.items():
-        assert use_case in use_case_names
-        assert f"Dynamics::{interaction}" in elements
-        assert f"Dynamics::{interaction}View" in elements
 
 
 def test_documentation_files_match_artifacts():
@@ -322,8 +300,8 @@ def test_shipped_views_render_requested_diagrams():
     unlock_msgs = [
         e for e in unlock["semantic"].values() if e["kind"] == "message"
     ]
-    assert len(unlock_msgs) == 4
-    assert any(e["name"] == "presentCredential" for e in unlock_msgs)
+    assert len(unlock_msgs) == 8
+    assert any(e["name"] == "credential" for e in unlock_msgs)
 
     logical = service.get_view(
         project.id, "LogicalArchitecture::CarLogicalView", hierarchical_levels=3

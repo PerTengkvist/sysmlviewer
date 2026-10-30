@@ -1,6 +1,6 @@
 # EmergencyStopSequence
 
-Emergency stop. Extends braking: the driver brakes hard and the speed controller commands maximum deceleration.
+Precondition Driving. Postcondition Driving. The driver brakes hard from speed. Extends Brake: the drive controller commands maximum deceleration, modulates the calipers against wheel lock and the body controller switches the hazard lights on.
 
 ## Diagrams
 
