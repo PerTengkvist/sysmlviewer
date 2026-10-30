@@ -450,6 +450,14 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       }
     }
     walk(rootId, 1)
+    // A view may expose more than one root (`expose A; expose B::C;`). The
+    // members of the extra roots arrive without their ancestors; treat each
+    // such orphan as a top-level sibling of the root's children.
+    for (const el of Object.values(semantic)) {
+      if (el.id === rootId || partDepth.has(el.id) || !isStructureNode(el)) continue
+      if (el.parentId && semantic[el.parentId]) continue
+      walk(el.id, 2)
+    }
   }
   const nestedChildParts = (parentId: string) =>
     Object.values(semantic)
@@ -655,6 +663,51 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       })
     }
     placeUnder(rootId, boundaryW, boundaryH, 1)
+
+    // Members of extra expose roots (for example a counterpart package) are
+    // placed beside the boundary, with their own children nested inside.
+    const orphanRoots = Object.values(semantic)
+      .filter(
+        (el) =>
+          el.id !== rootId &&
+          isStructureNode(el) &&
+          partDepth.get(el.id) === 2 &&
+          (!el.parentId || !semantic[el.parentId]),
+      )
+      .map((el) => el.id)
+    orphanRoots.forEach((id, index) => {
+      const el = semantic[id]
+      if (!el) return
+      const viz = visualization.nodes[id]
+      const kids = nestedChildParts(id)
+      const isContainer = kids.length > 0
+      const defaults = defaultNestedBox(id, isContainer)
+      const data = partData(id, el, isContainer, isContainer)
+      const box = sizedPartBox(
+        id,
+        el,
+        data.ports,
+        defaults.fallbackW,
+        isContainer ? defaults.fallbackH : 120,
+      )
+      builtNodes.push({
+        id,
+        type: 'part',
+        position: {
+          x: viz?.x ?? (rootViz?.x ?? 60) + boundaryW + 80,
+          y: viz?.y ?? (rootViz?.y ?? 40) + index * (box.height + 40),
+        },
+        style: {
+          width: box.width,
+          height: box.height,
+          ...(isContainer ? { background: 'transparent' } : {}),
+          ...nodeInlineStyle(formatFor(id), viewMode, { isBoundary: isContainer }),
+        },
+        zIndex: 0,
+        data,
+      })
+      if (isContainer) placeUnder(id, box.width, box.height, 1)
+    })
   } else {
     // Structure (typically package root): top-level parts + nested by depth
     const topLevel = Object.values(semantic)

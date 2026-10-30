@@ -4,258 +4,409 @@
   "name": "PhysicalDependenciesView",
   "structureNotation": "sysmlv2",
   "nodes": {
-    "PhysicalArchitecture::VehiclePhysical": {
-      "x": -234.0,
-      "y": 9598.0,
-      "width": 1016.0,
-      "height": 1892.0
+    "PhysicalArchitecture::VehiclePhysical::keyFobUnit": {
+      "x": 40.0,
+      "y": 60.0,
+      "width": 220.0,
+      "height": 80.0
     },
-    "PhysicalArchitecture::VehiclePhysical::brakePedalMech": {
-      "x": 756.0,
-      "y": 1252.0,
-      "width": 148.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::chassisFrame": {
-      "x": 48.0,
-      "y": 48.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::bodyShell": {
-      "x": 284.0,
-      "y": 48.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windshield": {
-      "x": 446.0,
-      "y": 98.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::car": {
-      "x": 807.122907020145,
-      "y": 63.14466340421495,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::wipers": {
-      "x": 48.0,
-      "y": 220.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::startButtonMech": {
+      "x": 40.0,
+      "y": 174.0,
+      "width": 220.0,
+      "height": 80.0
     },
     "PhysicalArchitecture::VehiclePhysical::steeringWheelMech": {
-      "x": 48.0,
-      "y": 1596.0,
-      "width": 172.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::wheelSet": {
-      "x": 284.0,
-      "y": 220.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::steeringWheel": {
-      "x": 520.0,
-      "y": 220.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem": {
-      "x": 48.0,
-      "y": 1768.0,
-      "width": 188.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers": {
-      "x": 584.0,
-      "y": 1596.0,
-      "width": 180.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::climateSystem": {
-      "x": 756.0,
-      "y": 220.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal": {
-      "x": 804.0,
-      "y": 1424.0,
-      "width": 164.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chassis": {
-      "x": 48.0,
-      "y": 392.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::windshieldGlass": {
-      "x": 48.0,
-      "y": 1424.0,
-      "width": 156.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::electricMotor": {
-      "x": 284.0,
-      "y": 392.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::driveEcu": {
-      "x": 316.0,
-      "y": 1596.0,
-      "width": 172.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech": {
-      "x": 332.0,
-      "y": 1768.0,
-      "width": 196.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::doorLockAsm": {
-      "x": 520.0,
-      "y": 392.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::windowAsm": {
-      "x": 756.0,
-      "y": 392.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::hvacAssembly": {
-      "x": 48.0,
-      "y": 564.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::wheels": {
-      "x": 284.0,
-      "y": 564.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::batteryPack": {
-      "x": 520.0,
-      "y": 564.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::lampUnits": {
-      "x": 756.0,
-      "y": 564.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::lamps": {
-      "x": 48.0,
-      "y": 736.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chargeInlet": {
-      "x": 284.0,
-      "y": 736.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::suspensionAsm": {
-      "x": 520.0,
-      "y": 736.0,
-      "width": 140.0,
-      "height": 76.0
+      "x": 40.0,
+      "y": 288.0,
+      "width": 220.0,
+      "height": 80.0
     },
     "PhysicalArchitecture::VehiclePhysical::gearStickMech": {
-      "x": 756.0,
-      "y": 736.0,
-      "width": 140.0,
-      "height": 76.0
+      "x": 40.0,
+      "y": 402.0,
+      "width": 220.0,
+      "height": 80.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::brakePedal": {
-      "x": 48.0,
-      "y": 908.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech": {
+      "x": 40.0,
+      "y": 516.0,
+      "width": 220.0,
+      "height": 80.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::windows": {
-      "x": 284.0,
-      "y": 908.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::brakePedalMech": {
+      "x": 40.0,
+      "y": 630.0,
+      "width": 220.0,
+      "height": 80.0
     },
-    "PhysicalArchitecture::VehiclePhysical::batteryEcu": {
-      "x": 520.0,
-      "y": 908.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::vehicleEcu": {
+      "x": 350.0,
+      "y": 60.0,
+      "width": 220.0,
+      "height": 200.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::engine": {
-      "x": 756.0,
-      "y": 908.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::vehicleEcu::vehicleControlSw": {
+      "x": 20.0,
+      "y": 70.0,
+      "width": 180.0,
+      "height": 100.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::locks": {
-      "x": 48.0,
-      "y": 1080.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::driveEcu": {
+      "x": 350.0,
+      "y": 294.0,
+      "width": 220.0,
+      "height": 300.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::body": {
-      "x": 284.0,
-      "y": 1080.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::driveControlSw": {
+      "x": 20.0,
+      "y": 170.0,
+      "width": 180.0,
+      "height": 100.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::suspension": {
-      "x": 520.0,
-      "y": 1080.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::bodyEcu": {
+      "x": 350.0,
+      "y": 628.0,
+      "width": 220.0,
+      "height": 220.0
     },
-    "PhysicalArchitecture::VehiclePhysical::wiperAsm": {
-      "x": 756.0,
-      "y": 1080.0,
-      "width": 140.0,
-      "height": 76.0
-    },
-    "PhysicalArchitecture::VehiclePhysical::chargeInletMech": {
-      "x": 300.0,
-      "y": 1424.0,
-      "width": 156.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::bodyEcu::bodyControlSw": {
+      "x": 20.0,
+      "y": 90.0,
+      "width": 180.0,
+      "height": 100.0
     },
     "PhysicalArchitecture::VehiclePhysical::engineEcu": {
-      "x": 48.0,
-      "y": 1252.0,
-      "width": 140.0,
-      "height": 76.0
+      "x": 350.0,
+      "y": 882.0,
+      "width": 220.0,
+      "height": 180.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw": {
+      "x": 20.0,
+      "y": 50.0,
+      "width": 180.0,
+      "height": 100.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu": {
+      "x": 350.0,
+      "y": 1096.0,
+      "width": 220.0,
+      "height": 180.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw": {
+      "x": 20.0,
+      "y": 50.0,
+      "width": 180.0,
+      "height": 100.0
     },
     "PhysicalArchitecture::VehiclePhysical::infotainmentEcu": {
-      "x": 552.0,
-      "y": 1424.0,
-      "width": 156.0,
-      "height": 76.0
+      "x": 350.0,
+      "y": 1310.0,
+      "width": 220.0,
+      "height": 260.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::battery": {
-      "x": 284.0,
-      "y": 1252.0,
-      "width": 140.0,
-      "height": 76.0
+    "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::entertainmentSw": {
+      "x": 20.0,
+      "y": 50.0,
+      "width": 180.0,
+      "height": 90.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw": {
+      "x": 20.0,
+      "y": 155.0,
+      "width": 180.0,
+      "height": 90.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::electricMotor": {
+      "x": 660.0,
+      "y": 60.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::brakeCaliperAsm": {
+      "x": 660.0,
+      "y": 174.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::wheelSet": {
+      "x": 660.0,
+      "y": 288.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::doorLockAsm": {
+      "x": 660.0,
+      "y": 402.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::doorAsm": {
+      "x": 660.0,
+      "y": 516.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::windowLiftAsm": {
+      "x": 660.0,
+      "y": 630.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::lampUnits": {
+      "x": 660.0,
+      "y": 744.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::wiperAsm": {
+      "x": 660.0,
+      "y": 858.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::instrumentClusterUnit": {
+      "x": 660.0,
+      "y": 972.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack": {
+      "x": 970.0,
+      "y": 60.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::chargeInletMech": {
+      "x": 970.0,
+      "y": 174.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::hvacAssembly": {
+      "x": 970.0,
+      "y": 288.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers": {
+      "x": 970.0,
+      "y": 402.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::windshieldGlass": {
+      "x": 970.0,
+      "y": 516.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::chassisFrame": {
+      "x": 1280.0,
+      "y": 60.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::suspensionAsm": {
+      "x": 1280.0,
+      "y": 174.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::bodyShell": {
+      "x": 1280.0,
+      "y": 288.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical::windowAsm": {
+      "x": 1280.0,
+      "y": 402.0,
+      "width": 220.0,
+      "height": 80.0
+    },
+    "PhysicalArchitecture::VehiclePhysical": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1610.0,
+      "height": 1634.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts": {
+      "x": 1730.0,
+      "y": 0.0,
+      "width": 280.0,
+      "height": 1908.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::car": {
+      "x": 30.0,
+      "y": 50.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::keyFob": {
+      "x": 30.0,
+      "y": 116.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::startButton": {
+      "x": 30.0,
+      "y": 182.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::steeringWheel": {
+      "x": 30.0,
+      "y": 248.0,
+      "width": 220.0,
+      "height": 54.0
     },
     "PhysicalArchitecture::LogicalCounterparts::gearStick": {
-      "x": 520.0,
-      "y": 1252.0,
-      "width": 140.0,
-      "height": 76.0
+      "x": 30.0,
+      "y": 314.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal": {
+      "x": 30.0,
+      "y": 380.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::brakePedal": {
+      "x": 30.0,
+      "y": 446.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::vehicleController": {
+      "x": 30.0,
+      "y": 512.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::driveController": {
+      "x": 30.0,
+      "y": 578.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::bodyController": {
+      "x": 30.0,
+      "y": 644.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::instrumentCluster": {
+      "x": 30.0,
+      "y": 710.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::climateSystem": {
+      "x": 30.0,
+      "y": 776.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem": {
+      "x": 30.0,
+      "y": 842.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::engine": {
+      "x": 30.0,
+      "y": 908.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::battery": {
+      "x": 30.0,
+      "y": 974.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::chassis": {
+      "x": 30.0,
+      "y": 1040.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::wheels": {
+      "x": 30.0,
+      "y": 1106.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::frictionBrakes": {
+      "x": 30.0,
+      "y": 1172.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::suspension": {
+      "x": 30.0,
+      "y": 1238.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::doors": {
+      "x": 30.0,
+      "y": 1304.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::windows": {
+      "x": 30.0,
+      "y": 1370.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::windowLifts": {
+      "x": 30.0,
+      "y": 1436.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::body": {
+      "x": 30.0,
+      "y": 1502.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::windshield": {
+      "x": 30.0,
+      "y": 1568.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::wipers": {
+      "x": 30.0,
+      "y": 1634.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::locks": {
+      "x": 30.0,
+      "y": 1700.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::lamps": {
+      "x": 30.0,
+      "y": 1766.0,
+      "width": 220.0,
+      "height": 54.0
+    },
+    "PhysicalArchitecture::LogicalCounterparts::chargeInlet": {
+      "x": 30.0,
+      "y": 1832.0,
+      "width": 220.0,
+      "height": 54.0
     }
   },
-  "edges": {}
+  "edges": {},
+  "hierarchicalLevelsOverride": 3
 }

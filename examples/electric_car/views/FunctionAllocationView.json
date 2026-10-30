@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::FunctionAllocationView",
+  "name": "FunctionAllocationView",
+  "structureNotation": "sysmlv2",
+  "hierarchicalLevelsOverride": 3,
+  "nodes": {
+    "Functions::Security": {
+      "x": 40.0,
+      "y": 40.0,
+      "width": 240.0,
+      "height": 396.0
+    },
+    "Functions::Security::authenticate": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Security::immobilizer": {
+      "x": 20.0,
+      "y": 112.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Security::wakeUp": {
+      "x": 20.0,
+      "y": 180.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Security::lockControl": {
+      "x": 20.0,
+      "y": 248.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Security::driverInformation": {
+      "x": 20.0,
+      "y": 316.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Charging": {
+      "x": 40.0,
+      "y": 476.0,
+      "width": 240.0,
+      "height": 260.0
+    },
+    "Functions::Charging::chargeConnection": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Charging::chargeSession": {
+      "x": 20.0,
+      "y": 112.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Charging::energyStorage": {
+      "x": 20.0,
+      "y": 180.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::SpeedControl": {
+      "x": 40.0,
+      "y": 776.0,
+      "width": 240.0,
+      "height": 328.0
+    },
+    "Functions::SpeedControl::torqueArbitration": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::SpeedControl::regenBlending": {
+      "x": 20.0,
+      "y": 112.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::SpeedControl::tractionDrive": {
+      "x": 20.0,
+      "y": 180.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::SpeedControl::frictionBraking": {
+      "x": 20.0,
+      "y": 248.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Maneuvrability": {
+      "x": 40.0,
+      "y": 1144.0,
+      "width": 240.0,
+      "height": 260.0
+    },
+    "Functions::Maneuvrability::steeringControl": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Maneuvrability::gearSelection": {
+      "x": 20.0,
+      "y": 112.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Maneuvrability::roadHolding": {
+      "x": 20.0,
+      "y": 180.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Entertainment": {
+      "x": 320.0,
+      "y": 40.0,
+      "width": 240.0,
+      "height": 124.0
+    },
+    "Functions::Entertainment::mediaPlayback": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Climate": {
+      "x": 320.0,
+      "y": 204.0,
+      "width": 240.0,
+      "height": 124.0
+    },
+    "Functions::Climate::cabinTemperature": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::WindshieldCleaning": {
+      "x": 320.0,
+      "y": 368.0,
+      "width": 240.0,
+      "height": 192.0
+    },
+    "Functions::WindshieldCleaning::wipeControl": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::WindshieldCleaning::wipeSweep": {
+      "x": 20.0,
+      "y": 112.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Lighting": {
+      "x": 320.0,
+      "y": 600.0,
+      "width": 240.0,
+      "height": 260.0
+    },
+    "Functions::Lighting::headlampControl": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Lighting::indicatorControl": {
+      "x": 20.0,
+      "y": 112.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Lighting::lampDrive": {
+      "x": 20.0,
+      "y": 180.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "LogicalArchitecture::Car::vehicleController": {
+      "x": 720.0,
+      "y": 40.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::driveController": {
+      "x": 720.0,
+      "y": 130.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::bodyController": {
+      "x": 720.0,
+      "y": 220.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::instrumentCluster": {
+      "x": 720.0,
+      "y": 310.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::engine": {
+      "x": 720.0,
+      "y": 400.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::frictionBrakes": {
+      "x": 720.0,
+      "y": 490.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::suspension": {
+      "x": 720.0,
+      "y": 580.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::battery": {
+      "x": 720.0,
+      "y": 670.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::chargeInlet": {
+      "x": 720.0,
+      "y": 760.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::climateSystem": {
+      "x": 720.0,
+      "y": 850.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::entertainmentSystem": {
+      "x": 720.0,
+      "y": 940.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::wipers": {
+      "x": 720.0,
+      "y": 1030.0,
+      "width": 200.0,
+      "height": 70.0
+    },
+    "LogicalArchitecture::Car::lamps": {
+      "x": 720.0,
+      "y": 1120.0,
+      "width": 200.0,
+      "height": 70.0
+    }
+  },
+  "edges": {}
+}

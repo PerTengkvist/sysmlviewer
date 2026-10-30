@@ -70,9 +70,35 @@ export function buildUseCaseGraph(
   const rootId = view.view.rootArtifactId
   const elements = Object.values(semantic) as SemanticElement[]
 
+  // Use cases directly under the exposed root, or nested in packages under it
+  // (for example UseCases::Driving and UseCases::Managing).
+  const underRoot = (e: SemanticElement): boolean => {
+    let parentId = e.parentId
+    while (parentId) {
+      if (parentId === rootId) return true
+      const parent = semantic[parentId]
+      if (!parent || parent.kind !== 'package') return false
+      parentId = parent.parentId
+    }
+    return false
+  }
   const useCases = elements.filter(
-    (e) => e.kind === 'useCase' && (e.parentId === rootId || e.id === rootId),
+    (e) => e.kind === 'useCase' && (e.id === rootId || underRoot(e)),
   )
+  // Group by owning package: each package becomes a column of the diagram.
+  const groupKeys: string[] = []
+  const groupIndex = new Map<string, number>()
+  const rowInGroup = new Map<string, number>()
+  for (const uc of useCases) {
+    const key = uc.parentId || rootId
+    if (!groupIndex.has(key)) {
+      groupIndex.set(key, groupKeys.length)
+      groupKeys.push(key)
+    }
+    rowInGroup.set(uc.id, (rowInGroup.get(key) ?? 0))
+    rowInGroup.set(key, (rowInGroup.get(key) ?? 0) + 1)
+  }
+  const groupedByPackage = groupKeys.length > 1
   const actors = elements.filter((e) => e.kind === 'actor')
   const includes = elements.filter((e) => e.kind === 'include')
   const extends_ = elements.filter(
@@ -90,8 +116,10 @@ export function buildUseCaseGraph(
 
   const nodes: Node[] = []
   const placeholder = sharedPlaceholder(visualization.nodes)
-  const cols = useCases.length > 6 ? 2 : 1
-  const rows = Math.max(1, Math.ceil(useCases.length / cols))
+  const cols = groupedByPackage ? groupKeys.length : useCases.length > 6 ? 2 : 1
+  const rows = groupedByPackage
+    ? Math.max(1, ...groupKeys.map((key) => rowInGroup.get(key) ?? 0))
+    : Math.max(1, Math.ceil(useCases.length / cols))
   const subjectX = 140
   const subjectY = TOP
   const subjectW = 48 + cols * (UC_W + GAP)
@@ -132,8 +160,8 @@ export function buildUseCaseGraph(
 
   useCases.forEach((uc, i) => {
     if (uc.id === rootId && uc.kind === 'useCase' && useCases.length > 1) return
-    const col = i % cols
-    const row = Math.floor(i / cols)
+    const col = groupedByPackage ? groupIndex.get(uc.parentId || rootId) ?? 0 : i % cols
+    const row = groupedByPackage ? rowInGroup.get(uc.id) ?? 0 : Math.floor(i / cols)
     const box = savedBox(
       visualization.nodes[uc.id],
       {
