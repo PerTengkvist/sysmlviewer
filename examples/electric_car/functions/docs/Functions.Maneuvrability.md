@@ -1,6 +1,8 @@
 # Maneuvrability
 
-Steer the car left and right and keep it directionally stable. Depends on Security, and on SpeedControl because steering response changes with speed.
+Steer the car left and right, select the direction of travel, and keep it directionally stable. Depends on Security, and on SpeedControl because steering response changes with speed.
+
+Part of `Functions`.
 
 ## Relations
 
@@ -11,3 +13,4 @@ Steer the car left and right and keep it directionally stable. Depends on Securi
 ## Diagrams
 
 - `FunctionsView`
+- `FunctionAllocationView`

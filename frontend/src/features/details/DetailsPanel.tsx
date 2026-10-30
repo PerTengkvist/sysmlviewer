@@ -778,6 +778,18 @@ export function DetailsPanel({
               onDelete={onDelete ? () => onDelete(selectedId) : undefined}
             />
           </dl>
+          {viewPayload?.diagramMode === 'useCase' && (
+            <div className="routing-control">
+              <button
+                type="button"
+                className="autoroute-btn"
+                onClick={() => onAutoroute?.(selectedId)}
+                title="Redraw only this relation"
+              >
+                Redraw
+              </button>
+            </div>
+          )}
         </div>
       )
     }
@@ -1147,6 +1159,16 @@ export function DetailsPanel({
               title="Clear waypoints and redraw the orthogonal route"
             >
               Autoroute
+            </button>
+          )}
+          {viewPayload?.diagramMode === 'useCase' && (
+            <button
+              type="button"
+              className="autoroute-btn"
+              onClick={() => onAutoroute?.(selectedId)}
+              title="Redraw only this relation"
+            >
+              Redraw
             </button>
           )}
           {edge?.waypoints?.length ? (

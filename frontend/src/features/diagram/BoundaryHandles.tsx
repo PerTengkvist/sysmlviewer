@@ -54,14 +54,18 @@ export function BoundaryHandles({ boxRef, anchors, shape, onAnchorDrag }: Props)
       last = read(ev)
       onAnchorDrag(anchor.id, last.side, last.offset, false)
     }
-    const up = (ev: PointerEvent) => {
-      last = read(ev)
+    const finish = (persist: boolean, ev?: PointerEvent) => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
-      onAnchorDrag(anchor.id, last.side, last.offset, true)
+      window.removeEventListener('pointercancel', cancel)
+      if (ev) last = read(ev)
+      onAnchorDrag(anchor.id, last.side, last.offset, persist)
     }
+    const up = (ev: PointerEvent) => finish(true, ev)
+    const cancel = () => finish(false)
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', cancel)
   }
 
   return (

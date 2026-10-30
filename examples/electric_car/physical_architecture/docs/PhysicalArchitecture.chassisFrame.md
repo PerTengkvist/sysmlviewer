@@ -6,9 +6,10 @@ Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `chassis`.
+- Implements `chassis`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

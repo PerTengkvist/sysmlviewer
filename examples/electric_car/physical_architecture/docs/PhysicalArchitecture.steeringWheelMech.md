@@ -1,18 +1,19 @@
 # steeringWheelMech
 
-Mechanical steering wheel. The remaining non-software part of steering. Implements the logical steering wheel.
+Mechanical steering wheel with angle sensor. Provides DirectionCommand to the drive computer.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `steeringWheel`.
+- Implements `steeringWheel`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Provider port `directionOut` : DirectionCommand, connected to the maneuvrability controller.
+- Provider port `directionOut` : DirectionCommand, connected to `driveEcu`.

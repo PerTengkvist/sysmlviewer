@@ -1,6 +1,6 @@
 # ChargeSequence
 
-Charge. The driver connects the plug, the battery controller starts the session, and the battery reports state of charge.
+Precondition Unlocked. Postcondition Charging. The driver plugs in. The charge inlet detects the plug, the battery negotiates a session with the charger, the vehicle controller locks the plug and inhibits driving, and the cluster shows the state of charge.
 
 ## Diagrams
 

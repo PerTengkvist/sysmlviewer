@@ -1,14 +1,15 @@
 # windowAsm
 
-Mechanical side and rear windows. Implements the logical windows.
+Side and rear glass panes. Implements the logical windows.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `windows`.
+- Implements `windows`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

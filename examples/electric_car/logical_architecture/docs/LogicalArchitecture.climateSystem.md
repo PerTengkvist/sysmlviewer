@@ -1,19 +1,21 @@
 # climateSystem
 
-Logical heating, ventilation and cooling of the cabin. Draws energy from the battery.
+Logical heating, ventilation and cooling of the cabin. Consumes EnergySupply from the battery.
 
 Part of `Car`.
 
 ## Relations
 
+- Comprises `cabinTemperature`.
 - Depends on `battery` («Energy»).
+- Satisfies `CabinClimate`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `CabinComfortView`
 
 ## Interfaces
 
-- Consumer port `energyIn` : EnergySupply.
+- Consumer port `energyIn` : EnergySupply, connected from `battery`.

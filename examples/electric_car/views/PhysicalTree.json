@@ -196,13 +196,13 @@
       "width": 160.0,
       "height": 40.0
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::driveControlSw": {
       "x": 688.0,
       "y": 368.0,
       "width": 160.0,
       "height": 40.0
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu": {
       "x": 368.0,
       "y": 2288.0,
       "width": 160.0,

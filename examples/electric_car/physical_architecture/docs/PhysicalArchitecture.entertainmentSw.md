@@ -6,9 +6,10 @@ Part of `infotainmentEcu`.
 
 ## Relations
 
-- Implements logical `entertainmentSystem`.
+- Implements `entertainmentSystem`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

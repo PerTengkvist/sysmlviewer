@@ -1,6 +1,8 @@
 # Lighting
 
-Headlamps, tail lamps and direction indicators. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn.
+Headlamps, tail lamps, brake lamps and direction indicators. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn.
+
+Part of `Functions`.
 
 ## Relations
 
@@ -11,3 +13,4 @@ Headlamps, tail lamps and direction indicators. Depends on Security and Charging
 ## Diagrams
 
 - `FunctionsView`
+- `FunctionAllocationView`

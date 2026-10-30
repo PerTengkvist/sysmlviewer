@@ -108,6 +108,7 @@ import { buildRequirementRows } from './modes/requirements/buildRequirementRows'
 import { ActorNode } from './modes/useCase/ActorNode'
 import { UseCaseNode } from './modes/useCase/UseCaseNode'
 import { buildUseCaseGraph } from './modes/useCase/buildUseCaseGraph'
+import { redrawUseCaseRelations } from './modes/useCase/redrawUseCaseRelations'
 import {
   layoutByDependency,
   orientEdgeHandles,
@@ -712,6 +713,8 @@ export function DiagramCanvas({
     const clear = () => {
       setPortMoveMode(false)
       setShiftHeld(false)
+      // Abort a stuck Option-drag if the window loses focus (Alt menu, etc.).
+      document.body.classList.remove('port-dragging')
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -972,8 +975,12 @@ export function DiagramCanvas({
               offset,
               !!persist,
             ),
-          onAddAnchor: (side: PortSide, offset: number) =>
-            handleAddAnchorRef.current(node.id, side, offset),
+          // Free-form anchors break exact N=relations on use-case diagrams.
+          onAddAnchor:
+            mode === 'useCase'
+              ? undefined
+              : (side: PortSide, offset: number) =>
+                  handleAddAnchorRef.current(node.id, side, offset),
         },
       })),
     )
@@ -1826,9 +1833,16 @@ export function DiagramCanvas({
       persist = false,
     ) => {
       const node = nodesRef.current.find((n) => n.id === nodeId)
-      const anchors = resolveAnchors(
-        (node?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors,
-      ).map((a) => (a.id === anchorId ? { ...a, side, offset } : a))
+      const raw =
+        (node?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors || []
+      // Use-case / actor diagrams own exact relation anchors — do not inject defaults.
+      const base =
+        node?.type === 'useCase' || node?.type === 'actor'
+          ? raw
+          : resolveAnchors(raw)
+      const anchors = base.map((a) =>
+        a.id === anchorId ? { ...a, side, offset } : a,
+      )
       setNodes((ns) =>
         ns.map((n) =>
           n.id === nodeId ? { ...n, data: { ...n.data, anchors } } : n,
@@ -1996,13 +2010,24 @@ export function DiagramCanvas({
     if (!req?.connectionId || req.seq == null) return
     if (req.seq === lastAutorouteSeqRef.current) return
     lastAutorouteSeqRef.current = req.seq
+    if (mode === 'useCase') {
+      const { nodes: nextNodes, edges: next, edgePatch, nodePatch } =
+        redrawUseCaseRelations(nodesRef.current, edgesRef.current, {
+          onlyId: req.connectionId,
+        })
+      if (!Object.keys(edgePatch).length) return
+      setNodes(nextNodes)
+      setEdges(next)
+      onNodesMovedRef.current(nodePatch, edgePatch)
+      return
+    }
     if (!isStructure) return
     const edge = edgesRef.current.find((e) => e.id === req.connectionId)
     if (!edge) return
     const data = (edge.data || {}) as SysmlEdgeData
     if ((data.routing || 'angular') !== 'angular') return
     applyRedrawConnectionsRef.current(nodesRef.current, [edge])
-  }, [autorouteRequest?.connectionId, autorouteRequest?.seq, isStructure])
+  }, [autorouteRequest?.connectionId, autorouteRequest?.seq, isStructure, mode])
 
   // One-shot obstacle routing after opening a structure view (not during edge render).
   useEffect(() => {
@@ -2718,6 +2743,27 @@ export function DiagramCanvas({
                 <button type="button" onClick={() => applyRedraw('LR')} title="Redraw left-right">
                   Redraw: LR
                 </button>
+                {mode === 'useCase' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pushVizHistory()
+                      const {
+                        nodes: nextNodes,
+                        edges: next,
+                        edgePatch,
+                        nodePatch,
+                      } = redrawUseCaseRelations(nodes, edges)
+                      if (!Object.keys(edgePatch).length) return
+                      setNodes(nextNodes)
+                      setEdges(next)
+                      onNodesMovedRef.current(nodePatch, edgePatch)
+                    }}
+                    title="Recompute facing anchors for include, extend, and actor associations (does not move nodes)"
+                  >
+                    Redraw: Relations
+                  </button>
+                ) : null}
                 <IconToolbarButton
                   icon={TOOLBAR_ICONS.layoutRules}
                   title="Layout Rules"

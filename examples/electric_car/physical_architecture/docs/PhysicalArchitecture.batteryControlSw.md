@@ -1,19 +1,21 @@
 # batteryControlSw
 
-Software component for battery limits and charge sessions. Hosted on the battery computer. Implements the logical battery and the logical charge inlet.
+Software component for battery limits and charge sessions. Provides EnergySupply and consumes ChargeFeed.
 
 Part of `batteryEcu`.
 
 ## Relations
 
-- Implements logical `battery`.
-- Implements logical `chargeInlet`.
+- Implements `battery`.
+- Implements `chargeInlet`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Provider port `energyOut` : EnergySupply. Consumer port `chargeIn` : ChargeFeed.
+- Provider port `energyOut` : EnergySupply, bound to `batteryEcu`.
+- Consumer port `chargeIn` : ChargeFeed, bound to `batteryEcu`.

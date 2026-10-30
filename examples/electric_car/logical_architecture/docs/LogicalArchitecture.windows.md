@@ -11,5 +11,5 @@ Part of `Car`.
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `BodyView`

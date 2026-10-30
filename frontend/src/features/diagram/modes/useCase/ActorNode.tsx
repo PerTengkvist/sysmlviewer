@@ -1,7 +1,9 @@
-import { memo } from 'react'
-import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { ElementStyle } from '../../../../api'
+import { memo, useEffect, useRef } from 'react'
+import { type NodeProps, useUpdateNodeInternals } from '@xyflow/react'
+import type { ElementStyle, PortSide } from '../../../../api'
 import type { ViewMode } from '../../../../settings'
+import { BoundaryHandles } from '../../BoundaryHandles'
+import type { BoundaryAnchor } from '../../boundaryAnchors'
 import { iconUrl } from '../../iconRef'
 
 export type ActorNodeData = {
@@ -10,14 +12,41 @@ export type ActorNodeData = {
   formatStyle?: ElementStyle | null
   viewMode?: ViewMode
   iconName?: string | null
+  anchors?: BoundaryAnchor[]
+  portMoveMode?: boolean
+  onAnchorDrag?: (
+    anchorId: string,
+    side: PortSide,
+    offset: number,
+    persist: boolean,
+  ) => void
 }
 
-function ActorNodeInner({ data, selected }: NodeProps) {
+function ActorNodeInner({ id, data, selected }: NodeProps) {
   const d = data as unknown as ActorNodeData
+  const rootRef = useRef<HTMLDivElement>(null)
+  const updateNodeInternals = useUpdateNodeInternals()
+  // Relation-owned list may be empty; do not inject the four defaults.
+  const liveAnchors = Array.isArray(d.anchors) ? d.anchors : []
+  const anchorSig = liveAnchors.map((a) => `${a.id}:${a.side}:${a.offset}`).join('|')
+
+  useEffect(() => {
+    updateNodeInternals(id)
+  }, [anchorSig, id, updateNodeInternals])
+
   return (
-    <div className={`actor-node${selected ? ' selected' : ''}`}>
-      <Handle type="source" position={Position.Right} id="out" className="actor-handle" />
-      <Handle type="target" position={Position.Left} id="in" className="actor-handle" />
+    <div
+      ref={rootRef}
+      className={`actor-node${selected ? ' selected' : ''}${
+        d.portMoveMode ? ' port-move-mode' : ''
+      }`}
+    >
+      <BoundaryHandles
+        boxRef={rootRef}
+        anchors={liveAnchors}
+        shape="rect"
+        onAnchorDrag={d.onAnchorDrag}
+      />
       {d.iconName ? (
         <img
           className="actor-icon"

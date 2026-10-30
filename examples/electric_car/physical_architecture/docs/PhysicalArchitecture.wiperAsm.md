@@ -1,18 +1,20 @@
 # wiperAsm
 
-Mechanical wiper and washer. Implements the logical wipers.
+Mechanical wiper and washer. Consumes WipeCommand from the body computer and provides WindshieldClear.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `wipers`.
+- Implements `wipers`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Provider port `clearOut` : WindshieldClear.
+- Consumer port `wipeIn` : WipeCommand, connected from `bodyEcu`.
+- Provider port `clearOut` : WindshieldClear, connected to `windshieldGlass`.

@@ -1,22 +1,22 @@
 # wheels
 
-Road wheels that accelerate, brake and steer the car. Supported by the suspension.
+Road wheels that accelerate, brake and steer the car. Consume DirectionCommand from the drive controller; the engine and the friction brakes act on them.
 
 Part of `Car`.
 
 ## Relations
 
-- `steeringWheel` depends on this («Command»).
-- `brakePedal` depends on this («Command»).
+- `driveController` depends on this («Command»).
 - Depends on `suspension` («Support»).
-- Satisfies `BrakingDistance`.
+- `engine` depends on this («Actuate»).
+- `frictionBrakes` depends on this («Actuate»).
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `SkateboardView`
 
 ## Interfaces
 
-- Consumer ports `directionIn` : DirectionCommand and `brakeIn` : BrakeRequest.
+- Consumer port `directionCommandIn` : DirectionCommand, connected from `driveController`.

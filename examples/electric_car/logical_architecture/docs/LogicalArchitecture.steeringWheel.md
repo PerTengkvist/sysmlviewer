@@ -1,20 +1,20 @@
 # steeringWheel
 
-Driver control for direction. Commands the road wheels. Realized by the steering wheel mechanism and the maneuvrability controller.
+Driver control for direction. Provides DirectionCommand to the drive controller.
 
 Part of `Car`.
 
 ## Relations
 
-- Depends on `wheels` («Command»).
+- Depends on `driveController` («Command»).
 - Satisfies `DirectionalControl`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `DriverControlsView`
 
 ## Interfaces
 
-- Provider port `directionOut` : DirectionCommand, connected to the wheels.
+- Provider port `directionOut` : DirectionCommand, connected to `driveController`.

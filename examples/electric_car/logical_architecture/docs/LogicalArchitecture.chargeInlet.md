@@ -1,20 +1,21 @@
 # chargeInlet
 
-Inlet where a home or DC charger connects. Feeds the battery.
+Inlet where a home or DC charger connects. Provides ChargeFeed to the battery.
 
 Part of `Car`.
 
 ## Relations
 
+- Comprises `chargeConnection`.
 - Depends on `battery` («Energy»).
 - Satisfies `ChargeTime`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `SkateboardView`
 
 ## Interfaces
 
-- Provider port `chargeOut` : ChargeFeed, connected to the battery.
+- Provider port `chargeOut` : ChargeFeed, connected to `battery`.

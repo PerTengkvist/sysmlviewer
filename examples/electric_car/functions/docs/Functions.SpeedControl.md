@@ -2,6 +2,8 @@
 
 Command traction torque and braking, including regenerative braking, so the driver can set and hold speed. Depends on Security for the immobilizer and on Charging for energy.
 
+Part of `Functions`.
+
 ## Relations
 
 - Depends on `Security` («Authorize»).
@@ -12,3 +14,4 @@ Command traction torque and braking, including regenerative braking, so the driv
 ## Diagrams
 
 - `FunctionsView`
+- `FunctionAllocationView`

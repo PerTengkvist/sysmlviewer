@@ -6,9 +6,10 @@ Part of `infotainmentEcu`.
 
 ## Relations
 
-- Implements logical `climateSystem`.
+- Implements `climateSystem`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

@@ -1,13 +1,11 @@
 # Car
 
-Logical electric car: driver controls, motion actuation, skateboard platform, body and cabin comfort.
+Logical electric car: driver controls, three controllers, traction, energy, body and cabin systems.
+
+Part of `LogicalArchitecture`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `DriverControlsView`
-- `MotionActuationView`
-- `SkateboardView`
-- `BodyView`
-- `CabinComfortView`

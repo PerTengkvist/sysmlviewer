@@ -1,18 +1,21 @@
 # locks
 
-Door locks. Enforce access control, the immobilizer interlock and lock confirmation.
+Door latches. Consume LockCommand from the body controller and report latched or released.
 
 Part of `Car`.
 
 ## Relations
 
+- `bodyController` depends on this («Command»).
 - Depends on `body` («Mount»).
 - Satisfies `AccessControl`.
-- Satisfies `Immobilizer`.
-- Satisfies `LockIndication`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `BodyView`
+
+## Interfaces
+
+- Consumer port `lockIn` : LockCommand, connected from `bodyController`.

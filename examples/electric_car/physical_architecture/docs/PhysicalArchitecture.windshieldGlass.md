@@ -1,18 +1,19 @@
 # windshieldGlass
 
-Mechanical windshield. Implements the logical windshield.
+Mechanical windshield. Consumes WindshieldClear.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `windshield`.
+- Implements `windshield`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Consumer port `clearIn` : WindshieldClear.
+- Consumer port `clearIn` : WindshieldClear, connected from `wiperAsm`.

@@ -1,18 +1,19 @@
 # gearStickMech
 
-Mechanical gear selector for park, reverse, neutral and drive. Implements the logical gear stick.
+Mechanical gear selector for park, reverse, neutral and drive. Provides GearCommand to the drive computer.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `gearStick`.
+- Implements `gearStick`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Provider port `gearOut` : GearCommand.
+- Provider port `gearOut` : GearCommand, connected to `driveEcu`.

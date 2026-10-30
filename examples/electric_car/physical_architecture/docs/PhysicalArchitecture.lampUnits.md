@@ -1,18 +1,20 @@
 # lampUnits
 
-Mechanical lamp units. Implements the logical lamps.
+Mechanical lamp units. Consume LampCommand from the body computer and EnergySupply.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `lamps`.
+- Implements `lamps`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Consumer port `energyIn` : EnergySupply.
+- Consumer port `lampIn` : LampCommand, connected from `bodyEcu`.
+- Consumer port `energyIn` : EnergySupply, connected from `batteryEcu`.

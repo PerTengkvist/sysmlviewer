@@ -2,11 +2,6 @@ import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { PortSide, SemanticElement, ViewPayload } from '../../../../api'
 import type { ViewMode } from '../../../../settings'
-import {
-  bindStoredAnchor,
-  resolveAnchors,
-  type BoundaryAnchor,
-} from '../../boundaryAnchors'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { pickRelationBoundarySides } from '../../relationshipStyle'
 import { absoluteNodeOrigin } from '../structure/buildStructureGraph'
@@ -14,6 +9,8 @@ import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import { iconNameForElement } from '../../iconRef'
 import type { ActorNodeData } from './ActorNode'
 import type { UseCaseNodeData } from './UseCaseNode'
+import type { BoundaryAnchor } from '../../boundaryAnchors'
+import { syncUseCaseAnchors } from './syncUseCaseAnchors'
 
 const LEFT = 24
 const TOP = 40
@@ -70,9 +67,35 @@ export function buildUseCaseGraph(
   const rootId = view.view.rootArtifactId
   const elements = Object.values(semantic) as SemanticElement[]
 
+  // Use cases directly under the exposed root, or nested in packages under it
+  // (for example UseCases::Driving and UseCases::Managing).
+  const underRoot = (e: SemanticElement): boolean => {
+    let parentId = e.parentId
+    while (parentId) {
+      if (parentId === rootId) return true
+      const parent = semantic[parentId]
+      if (!parent || parent.kind !== 'package') return false
+      parentId = parent.parentId
+    }
+    return false
+  }
   const useCases = elements.filter(
-    (e) => e.kind === 'useCase' && (e.parentId === rootId || e.id === rootId),
+    (e) => e.kind === 'useCase' && (e.id === rootId || underRoot(e)),
   )
+  // Group by owning package: each package becomes a column of the diagram.
+  const groupKeys: string[] = []
+  const groupIndex = new Map<string, number>()
+  const rowInGroup = new Map<string, number>()
+  for (const uc of useCases) {
+    const key = uc.parentId || rootId
+    if (!groupIndex.has(key)) {
+      groupIndex.set(key, groupKeys.length)
+      groupKeys.push(key)
+    }
+    rowInGroup.set(uc.id, (rowInGroup.get(key) ?? 0))
+    rowInGroup.set(key, (rowInGroup.get(key) ?? 0) + 1)
+  }
+  const groupedByPackage = groupKeys.length > 1
   const actors = elements.filter((e) => e.kind === 'actor')
   const includes = elements.filter((e) => e.kind === 'include')
   const extends_ = elements.filter(
@@ -90,8 +113,10 @@ export function buildUseCaseGraph(
 
   const nodes: Node[] = []
   const placeholder = sharedPlaceholder(visualization.nodes)
-  const cols = useCases.length > 6 ? 2 : 1
-  const rows = Math.max(1, Math.ceil(useCases.length / cols))
+  const cols = groupedByPackage ? groupKeys.length : useCases.length > 6 ? 2 : 1
+  const rows = groupedByPackage
+    ? Math.max(1, ...groupKeys.map((key) => rowInGroup.get(key) ?? 0))
+    : Math.max(1, Math.ceil(useCases.length / cols))
   const subjectX = 140
   const subjectY = TOP
   const subjectW = 48 + cols * (UC_W + GAP)
@@ -132,8 +157,8 @@ export function buildUseCaseGraph(
 
   useCases.forEach((uc, i) => {
     if (uc.id === rootId && uc.kind === 'useCase' && useCases.length > 1) return
-    const col = i % cols
-    const row = Math.floor(i / cols)
+    const col = groupedByPackage ? groupIndex.get(uc.parentId || rootId) ?? 0 : i % cols
+    const row = groupedByPackage ? rowInGroup.get(uc.id) ?? 0 : Math.floor(i / cols)
     const box = savedBox(
       visualization.nodes[uc.id],
       {
@@ -149,7 +174,7 @@ export function buildUseCaseGraph(
       artifactId: uc.id,
       formatStyle: visualization.nodes[uc.id]?.style,
       viewMode,
-      anchors: resolveAnchors(visualization.nodes[uc.id]?.anchors),
+      anchors: visualization.nodes[uc.id]?.anchors || [],
     }
     nodes.push({
       id: uc.id,
@@ -214,6 +239,7 @@ export function buildUseCaseGraph(
       iconName: actorEl
         ? iconNameForElement(actorEl, semantic)
         : null,
+      anchors: visualization.nodes[group.id]?.anchors || [],
     }
     nodes.push({
       id: group.id,
@@ -243,9 +269,6 @@ export function buildUseCaseGraph(
     }
   }
 
-  const anchorsOf = (node: Node | undefined): BoundaryAnchor[] =>
-    resolveAnchors((node?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors)
-
   for (const group of actorGroups) {
     for (const useCaseId of [...new Set(group.useCaseIds)]) {
       if (!idSet.has(useCaseId) || !idSet.has(group.id)) continue
@@ -257,26 +280,25 @@ export function buildUseCaseGraph(
         src && tgt
           ? pickRelationBoundarySides(boxOf(src), boxOf(tgt))
           : { sourceSide: 'right' as PortSide, targetSide: 'left' as PortSide }
-      const tgtAnchor = bindStoredAnchor(
-        anchorsOf(tgt),
-        (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
-        edgeViz?.targetOffset ?? undefined,
-        edgeViz?.targetAnchorId,
-      )
       edges.push({
         id: edgeId,
         source: group.id,
         target: useCaseId,
-        sourceHandle: 'out',
-        targetHandle: `target:${tgtAnchor.id}`,
+        sourceHandle: edgeViz?.sourceAnchorId || 'out',
+        targetHandle: `target:${edgeViz?.targetAnchorId || 'a-left'}`,
         type: 'straight',
         style: { stroke: 'var(--part-stroke)', strokeWidth: 1.5 },
         data: {
           selectedColor: selectedConnectionColor,
           selectedFactor,
-          targetSide: tgtAnchor.side,
-          targetOffset: tgtAnchor.offset,
-          targetAnchorId: tgtAnchor.id,
+          sourceSide: (edgeViz?.sourceSide as PortSide | undefined) || picked.sourceSide,
+          sourceOffset: edgeViz?.sourceOffset ?? 0.5,
+          sourceAnchorId: edgeViz?.sourceAnchorId ?? undefined,
+          targetSide: (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
+          targetOffset: edgeViz?.targetOffset ?? 0.5,
+          targetAnchorId: edgeViz?.targetAnchorId ?? undefined,
+          routing: edgeViz?.routing || 'direct',
+          waypoints: edgeViz?.waypoints || [],
         },
       })
     }
@@ -296,25 +318,13 @@ export function buildUseCaseGraph(
       src && tgt
         ? pickRelationBoundarySides(boxOf(src), boxOf(tgt))
         : { sourceSide: 'right' as PortSide, targetSide: 'left' as PortSide }
-    const srcAnchor = bindStoredAnchor(
-      anchorsOf(src),
-      (edgeViz?.sourceSide as PortSide | undefined) || picked.sourceSide,
-      edgeViz?.sourceOffset ?? undefined,
-      edgeViz?.sourceAnchorId,
-    )
-    const tgtAnchor = bindStoredAnchor(
-      anchorsOf(tgt),
-      (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
-      edgeViz?.targetOffset ?? undefined,
-      edgeViz?.targetAnchorId,
-    )
     const stroke = edgeStrokeStyle(edgeViz?.style, viewMode)
     edges.push({
       id: el.id,
       source: el.sourceId,
       target: el.targetId,
-      sourceHandle: srcAnchor.id,
-      targetHandle: `target:${tgtAnchor.id}`,
+      sourceHandle: edgeViz?.sourceAnchorId || `rel:${el.id}`,
+      targetHandle: `target:${edgeViz?.targetAnchorId || `rel:${el.id}`}`,
       label,
       type: 'sysml',
       markerEnd: { type: MarkerType.Arrow, width: 14, height: 14 },
@@ -329,12 +339,12 @@ export function buildUseCaseGraph(
         relationKind: kind,
         waypoints: edgeViz?.waypoints || [],
         labelOffset: edgeViz?.labelOffset || { x: 0, y: 0 },
-        sourceSide: srcAnchor.side,
-        sourceOffset: srcAnchor.offset,
-        targetSide: tgtAnchor.side,
-        targetOffset: tgtAnchor.offset,
-        sourceAnchorId: srcAnchor.id,
-        targetAnchorId: tgtAnchor.id,
+        sourceSide: (edgeViz?.sourceSide as PortSide | undefined) || picked.sourceSide,
+        sourceOffset: edgeViz?.sourceOffset ?? 0.5,
+        targetSide: (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
+        targetOffset: edgeViz?.targetOffset ?? 0.5,
+        sourceAnchorId: edgeViz?.sourceAnchorId ?? undefined,
+        targetAnchorId: edgeViz?.targetAnchorId ?? undefined,
         selectedColor: selectedConnectionColor,
         selectedFactor,
       },
@@ -344,5 +354,11 @@ export function buildUseCaseGraph(
   for (const inc of includes) pushRelation(inc, '«include»', 'include')
   for (const ext of extends_) pushRelation(ext, '«extend»', 'dependency')
 
-  return { nodes, edges }
+  const savedAnchors: Record<string, BoundaryAnchor[] | null | undefined> = {}
+  for (const n of nodes) {
+    if (n.type !== 'useCase' && n.type !== 'actor') continue
+    savedAnchors[n.id] = visualization.nodes[n.id]?.anchors
+  }
+  const synced = syncUseCaseAnchors(nodes, edges, { savedAnchors })
+  return { nodes: synced.nodes, edges: synced.edges }
 }
