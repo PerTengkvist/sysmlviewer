@@ -2,11 +2,6 @@ import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { PortSide, SemanticElement, ViewPayload } from '../../../../api'
 import type { ViewMode } from '../../../../settings'
-import {
-  bindStoredAnchor,
-  resolveAnchors,
-  type BoundaryAnchor,
-} from '../../boundaryAnchors'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { pickRelationBoundarySides } from '../../relationshipStyle'
 import { absoluteNodeOrigin } from '../structure/buildStructureGraph'
@@ -14,6 +9,8 @@ import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import { iconNameForElement } from '../../iconRef'
 import type { ActorNodeData } from './ActorNode'
 import type { UseCaseNodeData } from './UseCaseNode'
+import type { BoundaryAnchor } from '../../boundaryAnchors'
+import { syncUseCaseAnchors } from './syncUseCaseAnchors'
 
 const LEFT = 24
 const TOP = 40
@@ -177,7 +174,7 @@ export function buildUseCaseGraph(
       artifactId: uc.id,
       formatStyle: visualization.nodes[uc.id]?.style,
       viewMode,
-      anchors: resolveAnchors(visualization.nodes[uc.id]?.anchors),
+      anchors: visualization.nodes[uc.id]?.anchors || [],
     }
     nodes.push({
       id: uc.id,
@@ -242,6 +239,7 @@ export function buildUseCaseGraph(
       iconName: actorEl
         ? iconNameForElement(actorEl, semantic)
         : null,
+      anchors: visualization.nodes[group.id]?.anchors || [],
     }
     nodes.push({
       id: group.id,
@@ -271,9 +269,6 @@ export function buildUseCaseGraph(
     }
   }
 
-  const anchorsOf = (node: Node | undefined): BoundaryAnchor[] =>
-    resolveAnchors((node?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors)
-
   for (const group of actorGroups) {
     for (const useCaseId of [...new Set(group.useCaseIds)]) {
       if (!idSet.has(useCaseId) || !idSet.has(group.id)) continue
@@ -285,26 +280,25 @@ export function buildUseCaseGraph(
         src && tgt
           ? pickRelationBoundarySides(boxOf(src), boxOf(tgt))
           : { sourceSide: 'right' as PortSide, targetSide: 'left' as PortSide }
-      const tgtAnchor = bindStoredAnchor(
-        anchorsOf(tgt),
-        (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
-        edgeViz?.targetOffset ?? undefined,
-        edgeViz?.targetAnchorId,
-      )
       edges.push({
         id: edgeId,
         source: group.id,
         target: useCaseId,
-        sourceHandle: 'out',
-        targetHandle: `target:${tgtAnchor.id}`,
+        sourceHandle: edgeViz?.sourceAnchorId || 'out',
+        targetHandle: `target:${edgeViz?.targetAnchorId || 'a-left'}`,
         type: 'straight',
         style: { stroke: 'var(--part-stroke)', strokeWidth: 1.5 },
         data: {
           selectedColor: selectedConnectionColor,
           selectedFactor,
-          targetSide: tgtAnchor.side,
-          targetOffset: tgtAnchor.offset,
-          targetAnchorId: tgtAnchor.id,
+          sourceSide: (edgeViz?.sourceSide as PortSide | undefined) || picked.sourceSide,
+          sourceOffset: edgeViz?.sourceOffset ?? 0.5,
+          sourceAnchorId: edgeViz?.sourceAnchorId ?? undefined,
+          targetSide: (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
+          targetOffset: edgeViz?.targetOffset ?? 0.5,
+          targetAnchorId: edgeViz?.targetAnchorId ?? undefined,
+          routing: edgeViz?.routing || 'direct',
+          waypoints: edgeViz?.waypoints || [],
         },
       })
     }
@@ -324,25 +318,13 @@ export function buildUseCaseGraph(
       src && tgt
         ? pickRelationBoundarySides(boxOf(src), boxOf(tgt))
         : { sourceSide: 'right' as PortSide, targetSide: 'left' as PortSide }
-    const srcAnchor = bindStoredAnchor(
-      anchorsOf(src),
-      (edgeViz?.sourceSide as PortSide | undefined) || picked.sourceSide,
-      edgeViz?.sourceOffset ?? undefined,
-      edgeViz?.sourceAnchorId,
-    )
-    const tgtAnchor = bindStoredAnchor(
-      anchorsOf(tgt),
-      (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
-      edgeViz?.targetOffset ?? undefined,
-      edgeViz?.targetAnchorId,
-    )
     const stroke = edgeStrokeStyle(edgeViz?.style, viewMode)
     edges.push({
       id: el.id,
       source: el.sourceId,
       target: el.targetId,
-      sourceHandle: srcAnchor.id,
-      targetHandle: `target:${tgtAnchor.id}`,
+      sourceHandle: edgeViz?.sourceAnchorId || `rel:${el.id}`,
+      targetHandle: `target:${edgeViz?.targetAnchorId || `rel:${el.id}`}`,
       label,
       type: 'sysml',
       markerEnd: { type: MarkerType.Arrow, width: 14, height: 14 },
@@ -357,12 +339,12 @@ export function buildUseCaseGraph(
         relationKind: kind,
         waypoints: edgeViz?.waypoints || [],
         labelOffset: edgeViz?.labelOffset || { x: 0, y: 0 },
-        sourceSide: srcAnchor.side,
-        sourceOffset: srcAnchor.offset,
-        targetSide: tgtAnchor.side,
-        targetOffset: tgtAnchor.offset,
-        sourceAnchorId: srcAnchor.id,
-        targetAnchorId: tgtAnchor.id,
+        sourceSide: (edgeViz?.sourceSide as PortSide | undefined) || picked.sourceSide,
+        sourceOffset: edgeViz?.sourceOffset ?? 0.5,
+        targetSide: (edgeViz?.targetSide as PortSide | undefined) || picked.targetSide,
+        targetOffset: edgeViz?.targetOffset ?? 0.5,
+        sourceAnchorId: edgeViz?.sourceAnchorId ?? undefined,
+        targetAnchorId: edgeViz?.targetAnchorId ?? undefined,
         selectedColor: selectedConnectionColor,
         selectedFactor,
       },
@@ -372,5 +354,11 @@ export function buildUseCaseGraph(
   for (const inc of includes) pushRelation(inc, '«include»', 'include')
   for (const ext of extends_) pushRelation(ext, '«extend»', 'dependency')
 
-  return { nodes, edges }
+  const savedAnchors: Record<string, BoundaryAnchor[] | null | undefined> = {}
+  for (const n of nodes) {
+    if (n.type !== 'useCase' && n.type !== 'actor') continue
+    savedAnchors[n.id] = visualization.nodes[n.id]?.anchors
+  }
+  const synced = syncUseCaseAnchors(nodes, edges, { savedAnchors })
+  return { nodes: synced.nodes, edges: synced.edges }
 }

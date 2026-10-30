@@ -135,10 +135,16 @@ describe('buildUseCaseGraph', () => {
     const inc = edges.find((e) => e.id === 'P::inc1')
     expect(inc?.type).toBe('sysml')
     expect((inc?.data as { routing?: string }).routing).toBe('direct')
-    expect(inc?.sourceHandle).toBe('a-bottom')
-    expect(inc?.targetHandle).toBe('target:a-top')
-    const uc = nodes.find((n) => n.type === 'useCase')
-    expect((uc?.data as { anchors?: unknown[] }).anchors).toHaveLength(4)
+    expect(inc?.sourceHandle).toBe('rel:P::inc1')
+    expect(inc?.targetHandle).toBe('target:rel:P::inc1')
+    const login = nodes.find((n) => n.id === 'P::Login')
+    // Login: include source, extend target, actor use target → 3 relation anchors
+    expect((login?.data as { anchors?: unknown[] }).anchors).toHaveLength(3)
+    const use = edges.find((e) => e.id === 'use:P::a->P::Login')
+    expect(use?.sourceHandle).toBe('rel:use:P::a->P::Login')
+    expect(use?.sourceHandle).not.toBe('out')
+    const actorAnchors = (actor?.data as { anchors?: unknown[] }).anchors
+    expect(actorAnchors).toHaveLength(1)
   })
 
   it('draws one stick-figure actor and a use line to each case it takes part in', () => {

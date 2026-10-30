@@ -3,7 +3,6 @@
   "viewId": "Functions::FunctionAllocationView",
   "name": "FunctionAllocationView",
   "structureNotation": "sysmlv2",
-  "hierarchicalLevelsOverride": 3,
   "nodes": {
     "Functions::Security": {
       "x": 40.0,
@@ -42,8 +41,8 @@
       "height": 56.0
     },
     "Functions::Charging": {
-      "x": 40.0,
-      "y": 476.0,
+      "x": 1106.56982421875,
+      "y": 580.0,
       "width": 240.0,
       "height": 260.0
     },
@@ -72,14 +71,14 @@
       "height": 328.0
     },
     "Functions::SpeedControl::torqueArbitration": {
-      "x": 20.0,
-      "y": 44.0,
+      "x": 14.469154630665003,
+      "y": 114.5182784590213,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::SpeedControl::regenBlending": {
-      "x": 20.0,
-      "y": 112.0,
+      "x": 14.469154630665003,
+      "y": 52.54341227964858,
       "width": 200.0,
       "height": 56.0
     },
@@ -97,172 +96,186 @@
     },
     "Functions::Maneuvrability": {
       "x": 40.0,
-      "y": 1144.0,
+      "y": 462.0,
       "width": 240.0,
       "height": 260.0
     },
     "Functions::Maneuvrability::steeringControl": {
-      "x": 20.0,
-      "y": 44.0,
+      "x": 18.0,
+      "y": 46.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Maneuvrability::gearSelection": {
-      "x": 20.0,
+      "x": 18.0,
       "y": 112.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Maneuvrability::roadHolding": {
-      "x": 20.0,
+      "x": 18.0,
       "y": 180.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Entertainment": {
-      "x": 320.0,
-      "y": 40.0,
+      "x": 40.0,
+      "y": 1120.686374478446,
       "width": 240.0,
       "height": 124.0
     },
     "Functions::Entertainment::mediaPlayback": {
-      "x": 20.0,
+      "x": 12.31646737595338,
       "y": 44.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Climate": {
-      "x": 320.0,
-      "y": 204.0,
+      "x": 1104.56982421875,
+      "y": 865.7978418970927,
       "width": 240.0,
       "height": 124.0
     },
     "Functions::Climate::cabinTemperature": {
-      "x": 20.0,
+      "x": 26.70301540565538,
       "y": 44.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::WindshieldCleaning": {
-      "x": 320.0,
-      "y": 368.0,
-      "width": 240.0,
-      "height": 192.0
+      "x": 1104.56982421875,
+      "y": 338.6694744994495,
+      "width": 242.0,
+      "height": 230.0
     },
     "Functions::WindshieldCleaning::wipeControl": {
-      "x": 20.0,
+      "x": 19.151083068079743,
       "y": 44.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::WindshieldCleaning::wipeSweep": {
-      "x": 20.0,
+      "x": 19.151083068079743,
       "y": 112.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Lighting": {
-      "x": 320.0,
-      "y": 600.0,
+      "x": 1104.56982421875,
+      "y": 11.518687956974844,
       "width": 240.0,
       "height": 260.0
     },
     "Functions::Lighting::headlampControl": {
-      "x": 20.0,
-      "y": 44.0,
+      "x": 19.39111309791633,
+      "y": 51.31864331108659,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Lighting::indicatorControl": {
-      "x": 20.0,
+      "x": 19.39111309791633,
       "y": 112.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Lighting::lampDrive": {
-      "x": 20.0,
+      "x": 19.39111309791633,
       "y": 180.0,
       "width": 200.0,
       "height": 56.0
     },
     "LogicalArchitecture::Car::vehicleController": {
-      "x": 720.0,
+      "x": 714.0,
       "y": 40.0,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::driveController": {
-      "x": 720.0,
+      "x": 714.0,
       "y": 130.0,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::bodyController": {
-      "x": 720.0,
+      "x": 714.0,
       "y": 220.0,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::instrumentCluster": {
-      "x": 720.0,
-      "y": 310.0,
+      "x": 714.0,
+      "y": 506.461006355213,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::engine": {
-      "x": 720.0,
-      "y": 400.0,
+      "x": 714.0,
+      "y": 684.4610063552129,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::frictionBrakes": {
-      "x": 720.0,
-      "y": 490.0,
+      "x": 714.0,
+      "y": 774.4610063552129,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::suspension": {
-      "x": 720.0,
-      "y": 580.0,
+      "x": 714.0,
+      "y": 590.4610063552129,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::battery": {
-      "x": 720.0,
-      "y": 670.0,
+      "x": 714.0,
+      "y": 866.4610063552129,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::chargeInlet": {
-      "x": 720.0,
-      "y": 760.0,
+      "x": 714.0,
+      "y": 956.4610063552129,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::climateSystem": {
-      "x": 720.0,
-      "y": 850.0,
+      "x": 714.0,
+      "y": 1046.461006355213,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::entertainmentSystem": {
-      "x": 720.0,
-      "y": 940.0,
+      "x": 716.4253831093922,
+      "y": 1144.1747123751024,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::wipers": {
-      "x": 720.0,
-      "y": 1030.0,
+      "x": 714.0,
+      "y": 412.46100635521293,
       "width": 200.0,
       "height": 70.0
     },
     "LogicalArchitecture::Car::lamps": {
-      "x": 720.0,
-      "y": 1120.0,
+      "x": 714.0,
+      "y": 314.9492357804696,
       "width": 200.0,
       "height": 70.0
     }
   },
-  "edges": {}
+  "edges": {
+    "Functions::alloc10": {
+      "sourceSide": "right",
+      "sourceOffset": 0.45190041581781976,
+      "targetSide": "left",
+      "targetOffset": 0.8552946861414378
+    },
+    "Functions::alloc9": {
+      "sourceSide": "right",
+      "sourceOffset": 0.5749716735376508,
+      "targetSide": "left",
+      "targetOffset": 0.8766101999985636
+    }
+  },
+  "hierarchicalLevelsOverride": 3
 }

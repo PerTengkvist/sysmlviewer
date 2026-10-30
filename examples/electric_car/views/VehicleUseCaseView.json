@@ -7,134 +7,421 @@
     "UseCases::vehicle": {
       "x": 180.0,
       "y": 40.0,
-      "width": 480,
-      "height": 1256
+      "width": 480.0,
+      "height": 1256.0
     },
     "UseCases::Driving::StartVehicle": {
       "x": 24.0,
       "y": 228.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StartVehicle",
+          "side": "left",
+          "offset": 0.2465132609981653
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_StartVehicle",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::StopVehicle": {
       "x": 24.0,
       "y": 328.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StopVehicle",
+          "side": "top",
+          "offset": 0.055655809768513365
+        },
+        {
+          "id": "rel:UseCases::Driving::Park::include_StopVehicle",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::ChangeGear": {
       "x": 24.0,
       "y": 428.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ChangeGear",
+          "side": "top",
+          "offset": 0.21322615431886371
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_ChangeGear",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::TurnLeft": {
       "x": 24.0,
       "y": 828.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnLeft",
+          "side": "top",
+          "offset": 0.38142261269236516
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_TurnLeft",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::TurnRight": {
       "x": 24.0,
       "y": 928.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnRight",
+          "side": "top",
+          "offset": 0.39658601290906315
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_TurnRight",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::Brake": {
       "x": 24.0,
       "y": 628.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Brake",
+          "side": "top",
+          "offset": 0.3322201064084391
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_Brake",
+          "side": "top",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::dep1",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::Accelerate": {
       "x": 24.0,
       "y": 528.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Accelerate",
+          "side": "top",
+          "offset": 0.2882983631805149
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_Accelerate",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::EmergencyStop": {
       "x": 24.0,
       "y": 728.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::EmergencyStop",
+          "side": "top",
+          "offset": 0.3610483982640991
+        },
+        {
+          "id": "rel:UseCases::Driving::dep1",
+          "side": "top",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::CleanWindshield": {
       "x": 24.0,
       "y": 1028.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::CleanWindshield",
+          "side": "top",
+          "offset": 0.4083109900330313
+        }
+      ]
     },
     "UseCases::Driving::ToggleHeadlights": {
       "x": 24.0,
       "y": 1128.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ToggleHeadlights",
+          "side": "top",
+          "offset": 0.4176479816562621
+        }
+      ]
     },
     "UseCases::Driving::Drive": {
       "x": 24.0,
       "y": 28.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Driving::Drive",
+          "side": "bottom",
+          "offset": 0.2616111157744652
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Drive",
+          "side": "left",
+          "offset": 0.8647936087270188
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_Brake",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_Accelerate",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_TurnLeft",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_TurnRight",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_ChangeGear",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::Drive::include_StartVehicle",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Driving::Park": {
       "x": 24.0,
       "y": 128.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Park",
+          "side": "left",
+          "offset": 0.5556534348625921
+        },
+        {
+          "id": "rel:UseCases::Driving::Park::include_Lock",
+          "side": "right",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:UseCases::Driving::Park::include_StopVehicle",
+          "side": "bottom",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Managing::Unlock": {
       "x": 240.0,
       "y": 28.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Unlock",
+          "side": "bottom",
+          "offset": 0.15193725951065792
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Unlock",
+          "side": "left",
+          "offset": 0.7320052076276033
+        }
+      ]
     },
     "UseCases::Managing::Lock": {
       "x": 240.0,
       "y": 128.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Lock",
+          "side": "bottom",
+          "offset": 0.05
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Lock",
+          "side": "left",
+          "offset": 0.5353950464086863
+        },
+        {
+          "id": "rel:UseCases::Driving::Park::include_Lock",
+          "side": "left",
+          "offset": 0.5
+        }
+      ]
     },
     "UseCases::Managing::OpenDoor": {
       "x": 240.0,
       "y": 228.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenDoor",
+          "side": "left",
+          "offset": 0.8778777213719198
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenDoor",
+          "side": "left",
+          "offset": 0.3387848851897696
+        }
+      ]
     },
     "UseCases::Managing::CloseDoor": {
       "x": 240.0,
       "y": 328.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseDoor",
+          "side": "left",
+          "offset": 0.7076859269804009
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseDoor",
+          "side": "left",
+          "offset": 0.14217472397085215
+        }
+      ]
     },
     "UseCases::Managing::OpenWindow": {
       "x": 240.0,
       "y": 428.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenWindow",
+          "side": "left",
+          "offset": 0.5374941325888819
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenWindow",
+          "side": "top",
+          "offset": 0.05
+        }
+      ]
     },
     "UseCases::Managing::CloseWindow": {
       "x": 240.0,
       "y": 528.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseWindow",
+          "side": "left",
+          "offset": 0.36730233819736213
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseWindow",
+          "side": "top",
+          "offset": 0.16713073013104038
+        }
+      ]
     },
     "UseCases::Managing::AdjustClimate": {
       "x": 240.0,
       "y": 628.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::AdjustClimate",
+          "side": "left",
+          "offset": 0.19711054380584395
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::AdjustClimate",
+          "side": "top",
+          "offset": 0.2361911248417223
+        }
+      ]
     },
     "UseCases::Managing::PlayMedia": {
       "x": 240.0,
       "y": 728.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::PlayMedia",
+          "side": "left",
+          "offset": 0.05
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::PlayMedia",
+          "side": "top",
+          "offset": 0.28151931694136695
+        }
+      ]
     },
     "UseCases::Managing::Charge": {
       "x": 240.0,
       "y": 828.0,
       "width": 168.0,
-      "height": 72.0
+      "height": 72.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Charge",
+          "side": "top",
+          "offset": 0.31355473236271014
+        },
+        {
+          "id": "rel:use:UseCases::Managing::Charge::Charger->UseCases::Managing::Charge",
+          "side": "right",
+          "offset": 0.524783692029263
+        }
+      ]
     },
     "UseCases::Driving::Drive::Driver": {
       "x": 40.0,
@@ -143,16 +430,70 @@
       "height": 108.0
     },
     "UseCases::Driving::Drive::Passenger": {
-      "x": 40.0,
-      "y": 380.0,
+      "x": -166.81499892518212,
+      "y": 492.03715141144465,
       "width": 88.0,
-      "height": 108.0
+      "height": 108.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Driving::Drive",
+          "side": "right",
+          "offset": 0.13378499133796456
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenWindow",
+          "side": "right",
+          "offset": 0.48690681084197884
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseWindow",
+          "side": "right",
+          "offset": 0.5463388660263178
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseDoor",
+          "side": "right",
+          "offset": 0.42747475565763887
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenDoor",
+          "side": "right",
+          "offset": 0.36804270047329835
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Unlock",
+          "side": "right",
+          "offset": 0.24917859010461837
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::AdjustClimate",
+          "side": "right",
+          "offset": 0.6057709212106578
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Lock",
+          "side": "right",
+          "offset": 0.3086106452889584
+        },
+        {
+          "id": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::PlayMedia",
+          "side": "right",
+          "offset": 0.6652029763949977
+        }
+      ]
     },
     "UseCases::Managing::Charge::Charger": {
-      "x": 40.0,
-      "y": 600.0,
+      "x": 767.0081370258819,
+      "y": 856.5218243873089,
       "width": 88.0,
-      "height": 108.0
+      "height": 108.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::Charge::Charger->UseCases::Managing::Charge",
+          "side": "left",
+          "offset": 0.49134537738660705
+        }
+      ]
     },
     "UseCases::Driving::StartVehicle::Driver": {
       "x": 40.0,
@@ -206,7 +547,114 @@
       "x": 40.0,
       "y": 160.0,
       "width": 88.0,
-      "height": 108.0
+      "height": 108.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::CleanWindshield",
+          "side": "bottom",
+          "offset": 0.08333333333333333
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Brake",
+          "side": "bottom",
+          "offset": 0.16666666666666666
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ToggleHeadlights",
+          "side": "bottom",
+          "offset": 0.25
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnLeft",
+          "side": "bottom",
+          "offset": 0.3333333333333333
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::AdjustClimate",
+          "side": "bottom",
+          "offset": 0.4166666666666667
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnRight",
+          "side": "bottom",
+          "offset": 0.5
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::PlayMedia",
+          "side": "bottom",
+          "offset": 0.5833333333333334
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Accelerate",
+          "side": "bottom",
+          "offset": 0.6666666666666666
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::EmergencyStop",
+          "side": "bottom",
+          "offset": 0.75
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ChangeGear",
+          "side": "bottom",
+          "offset": 0.8333333333333334
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Charge",
+          "side": "bottom",
+          "offset": 0.9166666666666666
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StopVehicle",
+          "side": "right",
+          "offset": 0.09090909090909091
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenDoor",
+          "side": "right",
+          "offset": 0.18181818181818182
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseWindow",
+          "side": "right",
+          "offset": 0.2727272727272727
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Park",
+          "side": "right",
+          "offset": 0.36363636363636365
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenWindow",
+          "side": "right",
+          "offset": 0.45454545454545453
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Lock",
+          "side": "right",
+          "offset": 0.5454545454545454
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Drive",
+          "side": "right",
+          "offset": 0.6363636363636364
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseDoor",
+          "side": "right",
+          "offset": 0.7272727272727273
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Unlock",
+          "side": "right",
+          "offset": 0.8181818181818182
+        },
+        {
+          "id": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StartVehicle",
+          "side": "right",
+          "offset": 0.9090909090909091
+        }
+      ]
     },
     "UseCases::Driving::ToggleHeadlights::Driver": {
       "x": 40.0,
@@ -287,16 +735,170 @@
       "height": 108.0
     },
     "UseCases::Managing::CloseWindow::Passenger": {
-      "x": 40.0,
-      "y": 380.0,
+      "x": -32.771210370830985,
+      "y": 567.1259695249939,
       "width": 88.0,
-      "height": 108.0
+      "height": 108.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseWindow",
+          "side": "right",
+          "offset": 0.37105483547943297
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Unlock",
+          "side": "right",
+          "offset": 0.3503477264177768
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Lock",
+          "side": "right",
+          "offset": 0.3731571948055618
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::PlayMedia",
+          "side": "right",
+          "offset": 0.375
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenWindow",
+          "side": "right",
+          "offset": 0.3669631468984725
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Driving::Drive",
+          "side": "right",
+          "offset": 0.3678221754403315
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::AdjustClimate",
+          "side": "right",
+          "offset": 0.3626227921606581
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenDoor",
+          "side": "right",
+          "offset": 0.3509806948170414
+        },
+        {
+          "id": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseDoor",
+          "side": "right",
+          "offset": 0.3700375648377577
+        }
+      ]
     },
     "UseCases::Managing::AdjustClimate::Driver": {
-      "x": 40.0,
-      "y": 160.0,
+      "x": -133.3908295653312,
+      "y": 168.00265367224605,
       "width": 88.0,
-      "height": 108.0
+      "height": 108.0,
+      "anchors": [
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::AdjustClimate",
+          "side": "right",
+          "offset": 0.8309274081442821
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Park",
+          "side": "right",
+          "offset": 0.480565467190841
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenDoor",
+          "side": "right",
+          "offset": 0.5562973416797632
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Unlock",
+          "side": "right",
+          "offset": 0.4189823084475037
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseWindow",
+          "side": "right",
+          "offset": 0.7622698915281524
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::CleanWindshield",
+          "side": "bottom",
+          "offset": 0.7625639830872282
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Brake",
+          "side": "bottom",
+          "offset": 0.95
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnLeft",
+          "side": "bottom",
+          "offset": 0.8395625181991361
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::EmergencyStop",
+          "side": "bottom",
+          "offset": 0.8979068595164434
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Lock",
+          "side": "right",
+          "offset": 0.48763982506363346
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ChangeGear",
+          "side": "right",
+          "offset": 0.8044266017154782
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Accelerate",
+          "side": "right",
+          "offset": 0.9123803132236906
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Charge",
+          "side": "right",
+          "offset": 0.95
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenWindow",
+          "side": "right",
+          "offset": 0.6936123749120227
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Drive",
+          "side": "right",
+          "offset": 0.3726117556826283
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StopVehicle",
+          "side": "right",
+          "offset": 0.6964728902072658
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnRight",
+          "side": "bottom",
+          "offset": 0.7961400539422283
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::PlayMedia",
+          "side": "right",
+          "offset": 0.8995849247604119
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseDoor",
+          "side": "right",
+          "offset": 0.6249548582958929
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ToggleHeadlights",
+          "side": "bottom",
+          "offset": 0.735826234347977
+        },
+        {
+          "id": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StartVehicle",
+          "side": "right",
+          "offset": 0.5885191786990533
+        }
+      ]
     },
     "UseCases::Managing::AdjustClimate::Passenger": {
       "x": 40.0,
@@ -323,6 +925,917 @@
       "height": 108.0
     }
   },
-  "edges": {},
+  "edges": {
+    "use:UseCases::Managing::Charge::Charger->UseCases::Managing::Charge": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "left",
+      "sourceOffset": 0.49134537738660705,
+      "targetSide": "right",
+      "targetOffset": 0.524783692029263,
+      "sourceAnchorId": "rel:use:UseCases::Managing::Charge::Charger->UseCases::Managing::Charge",
+      "targetAnchorId": "rel:use:UseCases::Managing::Charge::Charger->UseCases::Managing::Charge"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::PlayMedia": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::OpenDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Driving::Drive": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "bottom",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-bottom"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::CloseWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::CloseDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::OpenWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::PlayMedia::Passenger->UseCases::Managing::Unlock": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::Unlock": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::Charge": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::Accelerate": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::ToggleHeadlights": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::StartVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::Drive": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::EmergencyStop": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::TurnLeft": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::StopVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::Brake": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::Park": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::ChangeGear": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::CleanWindshield": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::CloseDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::PlayMedia": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::CloseWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::TurnRight": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-top"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::OpenWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Managing::OpenDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "targetAnchorId": "a-left"
+    },
+    "UseCases::Driving::Drive::include_ChangeGear": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Drive::include_ChangeGear",
+      "targetAnchorId": "rel:UseCases::Driving::Drive::include_ChangeGear"
+    },
+    "UseCases::Driving::Drive::include_TurnRight": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Drive::include_TurnRight",
+      "targetAnchorId": "rel:UseCases::Driving::Drive::include_TurnRight"
+    },
+    "UseCases::Driving::Drive::include_Brake": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Drive::include_Brake",
+      "targetAnchorId": "rel:UseCases::Driving::Drive::include_Brake"
+    },
+    "UseCases::Driving::Drive::include_Accelerate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Drive::include_Accelerate",
+      "targetAnchorId": "rel:UseCases::Driving::Drive::include_Accelerate"
+    },
+    "UseCases::Driving::Drive::include_StartVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Drive::include_StartVehicle",
+      "targetAnchorId": "rel:UseCases::Driving::Drive::include_StartVehicle"
+    },
+    "UseCases::Driving::Park::include_StopVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Park::include_StopVehicle",
+      "targetAnchorId": "rel:UseCases::Driving::Park::include_StopVehicle"
+    },
+    "UseCases::Driving::Park::include_Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Park::include_Lock",
+      "targetAnchorId": "rel:UseCases::Driving::Park::include_Lock"
+    },
+    "UseCases::Driving::Drive::include_TurnLeft": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::Drive::include_TurnLeft",
+      "targetAnchorId": "rel:UseCases::Driving::Drive::include_TurnLeft"
+    },
+    "UseCases::Driving::dep1": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "top",
+      "sourceOffset": 0.5,
+      "targetSide": "bottom",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:UseCases::Driving::dep1",
+      "targetAnchorId": "rel:UseCases::Driving::dep1"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::CleanWindshield": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.08333333333333333,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::CleanWindshield",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::CleanWindshield"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Brake": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.16666666666666666,
+      "targetSide": "top",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Brake",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Brake"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StopVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.09090909090909091,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StopVehicle",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StopVehicle"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ToggleHeadlights": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.25,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ToggleHeadlights",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ToggleHeadlights"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.18181818181818182,
+      "targetSide": "left",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenDoor",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenDoor"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.2727272727272727,
+      "targetSide": "left",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseWindow",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseWindow"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Park": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.36363636363636365,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Park",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Park"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.45454545454545453,
+      "targetSide": "left",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenWindow",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::OpenWindow"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.5454545454545454,
+      "targetSide": "left",
+      "targetOffset": 0.25,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Lock",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Lock"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Drive": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.6363636363636364,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Drive",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Drive"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.7272727272727273,
+      "targetSide": "left",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseDoor",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::CloseDoor"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnLeft": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.3333333333333333,
+      "targetSide": "top",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnLeft",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnLeft"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Unlock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.8181818181818182,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Unlock",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Unlock"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.4166666666666667,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::AdjustClimate",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::AdjustClimate"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StartVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.9090909090909091,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StartVehicle",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::StartVehicle"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnRight": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnRight",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::TurnRight"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::PlayMedia": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5833333333333334,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::PlayMedia",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::PlayMedia"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Accelerate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.6666666666666666,
+      "targetSide": "top",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Accelerate",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::Accelerate"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::EmergencyStop": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.75,
+      "targetSide": "top",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::EmergencyStop",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::EmergencyStop"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ChangeGear": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.8333333333333334,
+      "targetSide": "top",
+      "targetOffset": 0.3333333333333333,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ChangeGear",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Driving::ChangeGear"
+    },
+    "use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Charge": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.9166666666666666,
+      "targetSide": "top",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Charge",
+      "targetAnchorId": "rel:use:UseCases::Driving::CleanWindshield::Driver->UseCases::Managing::Charge"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.37105483547943297,
+      "targetSide": "left",
+      "targetOffset": 0.6666666666666666,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseWindow",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseWindow"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Unlock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3503477264177768,
+      "targetSide": "bottom",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Unlock",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Unlock"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3731571948055618,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Lock",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::Lock"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::PlayMedia": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.375,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::PlayMedia",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::PlayMedia"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3669631468984725,
+      "targetSide": "left",
+      "targetOffset": 0.6666666666666666,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenWindow",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenWindow"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Driving::Drive": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3678221754403315,
+      "targetSide": "bottom",
+      "targetOffset": 0.125,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Driving::Drive",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Driving::Drive"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3626227921606581,
+      "targetSide": "left",
+      "targetOffset": 0.5,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::AdjustClimate",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::AdjustClimate"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3509806948170414,
+      "targetSide": "left",
+      "targetOffset": 0.6666666666666666,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenDoor",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::OpenDoor"
+    },
+    "use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3700375648377577,
+      "targetSide": "left",
+      "targetOffset": 0.6666666666666666,
+      "sourceAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseDoor",
+      "targetAnchorId": "rel:use:UseCases::Managing::CloseWindow::Passenger->UseCases::Managing::CloseDoor"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Driving::Drive": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.13378499133796456,
+      "targetSide": "bottom",
+      "targetOffset": 0.2616111157744652,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Driving::Drive",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Driving::Drive"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.48690681084197884,
+      "targetSide": "left",
+      "targetOffset": 0.5374941325888819,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenWindow",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenWindow"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.5463388660263178,
+      "targetSide": "left",
+      "targetOffset": 0.36730233819736213,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseWindow",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseWindow"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.42747475565763887,
+      "targetSide": "left",
+      "targetOffset": 0.7076859269804009,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseDoor",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::CloseDoor"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.36804270047329835,
+      "targetSide": "left",
+      "targetOffset": 0.8778777213719198,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenDoor",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::OpenDoor"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Unlock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.24917859010461837,
+      "targetSide": "bottom",
+      "targetOffset": 0.15193725951065792,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Unlock",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Unlock"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.6057709212106578,
+      "targetSide": "left",
+      "targetOffset": 0.19711054380584395,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::AdjustClimate",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::AdjustClimate"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3086106452889584,
+      "targetSide": "bottom",
+      "targetOffset": 0.05,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Lock",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::Lock"
+    },
+    "use:UseCases::Driving::Drive::Passenger->UseCases::Managing::PlayMedia": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.6652029763949977,
+      "targetSide": "left",
+      "targetOffset": 0.05,
+      "sourceAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::PlayMedia",
+      "targetAnchorId": "rel:use:UseCases::Driving::Drive::Passenger->UseCases::Managing::PlayMedia"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.8309274081442821,
+      "targetSide": "top",
+      "targetOffset": 0.2361911248417223,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::AdjustClimate",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::AdjustClimate"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Park": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.480565467190841,
+      "targetSide": "left",
+      "targetOffset": 0.5556534348625921,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Park",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Park"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.5562973416797632,
+      "targetSide": "left",
+      "targetOffset": 0.3387848851897696,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenDoor",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenDoor"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Unlock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.4189823084475037,
+      "targetSide": "left",
+      "targetOffset": 0.7320052076276033,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Unlock",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Unlock"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.7622698915281524,
+      "targetSide": "top",
+      "targetOffset": 0.16713073013104038,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseWindow",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseWindow"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::CleanWindshield": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.7625639830872282,
+      "targetSide": "top",
+      "targetOffset": 0.4083109900330313,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::CleanWindshield",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::CleanWindshield"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Brake": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.95,
+      "targetSide": "top",
+      "targetOffset": 0.3322201064084391,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Brake",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Brake"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnLeft": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.8395625181991361,
+      "targetSide": "top",
+      "targetOffset": 0.38142261269236516,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnLeft",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnLeft"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::EmergencyStop": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.8979068595164434,
+      "targetSide": "top",
+      "targetOffset": 0.3610483982640991,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::EmergencyStop",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::EmergencyStop"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Lock": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.48763982506363346,
+      "targetSide": "left",
+      "targetOffset": 0.5353950464086863,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Lock",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Lock"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ChangeGear": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.8044266017154782,
+      "targetSide": "top",
+      "targetOffset": 0.21322615431886371,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ChangeGear",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ChangeGear"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Accelerate": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.9123803132236906,
+      "targetSide": "top",
+      "targetOffset": 0.2882983631805149,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Accelerate",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Accelerate"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Charge": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.95,
+      "targetSide": "top",
+      "targetOffset": 0.31355473236271014,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Charge",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::Charge"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenWindow": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.6936123749120227,
+      "targetSide": "top",
+      "targetOffset": 0.05,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenWindow",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::OpenWindow"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Drive": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.3726117556826283,
+      "targetSide": "left",
+      "targetOffset": 0.8647936087270188,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Drive",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::Drive"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StopVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.6964728902072658,
+      "targetSide": "top",
+      "targetOffset": 0.055655809768513365,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StopVehicle",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StopVehicle"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnRight": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.7961400539422283,
+      "targetSide": "top",
+      "targetOffset": 0.39658601290906315,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnRight",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::TurnRight"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::PlayMedia": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.8995849247604119,
+      "targetSide": "top",
+      "targetOffset": 0.28151931694136695,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::PlayMedia",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::PlayMedia"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseDoor": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.6249548582958929,
+      "targetSide": "left",
+      "targetOffset": 0.14217472397085215,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseDoor",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::CloseDoor"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ToggleHeadlights": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "bottom",
+      "sourceOffset": 0.735826234347977,
+      "targetSide": "top",
+      "targetOffset": 0.4176479816562621,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ToggleHeadlights",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::ToggleHeadlights"
+    },
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StartVehicle": {
+      "routing": "direct",
+      "waypoints": [],
+      "sourceSide": "right",
+      "sourceOffset": 0.5885191786990533,
+      "targetSide": "left",
+      "targetOffset": 0.2465132609981653,
+      "sourceAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StartVehicle",
+      "targetAnchorId": "rel:use:UseCases::Managing::AdjustClimate::Driver->UseCases::Driving::StartVehicle"
+    }
+  },
   "hierarchicalLevelsOverride": 3
 }

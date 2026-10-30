@@ -505,14 +505,21 @@ export function PartNode({ data, selected }: NodeProps) {
       applyGroupOrSingle(ev.clientX, ev.clientY)
     }
 
-    const onUp = (ev: PointerEvent) => {
+    const finish = (ev: PointerEvent | null, persist: boolean) => {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
-      if (draggingPortId.current !== port.id) return
-      const moves = applyGroupOrSingle(ev.clientX, ev.clientY)
+      window.removeEventListener('pointercancel', onCancel)
+      const active = draggingPortId.current === port.id
       draggingPortId.current = null
       document.body.classList.remove('port-dragging')
-      if (!moves?.length) return
+      if (!active) return
+      const moves = ev
+        ? applyGroupOrSingle(ev.clientX, ev.clientY)
+        : applyGroupOrSingle(e.clientX, e.clientY)
+      if (!persist || !moves?.length) {
+        if (nodeId) updateNodeInternals(nodeId)
+        return
+      }
       if (moves.length > 1 && d.onPortsDrag) {
         d.onPortsDrag(moves)
       } else {
@@ -522,8 +529,12 @@ export function PartNode({ data, selected }: NodeProps) {
       if (nodeId) updateNodeInternals(nodeId)
     }
 
+    const onUp = (ev: PointerEvent) => finish(ev, true)
+    const onCancel = () => finish(null, false)
+
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onCancel)
   }
 
   const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light', {
@@ -773,13 +784,23 @@ export function PartNode({ data, selected }: NodeProps) {
               last = { side: next.side, offset: next.offset }
               d.onRelationEndDrag?.(artifactId, end, last.side, last.offset, false)
             }
-            const onUp = () => {
+            const finish = (persist: boolean) => {
               window.removeEventListener('pointermove', onMove)
               window.removeEventListener('pointerup', onUp)
-              d.onRelationEndDrag?.(artifactId, end, last.side, last.offset, true)
+              window.removeEventListener('pointercancel', onCancel)
+              d.onRelationEndDrag?.(
+                artifactId,
+                end,
+                last.side,
+                last.offset,
+                persist,
+              )
             }
+            const onUp = () => finish(true)
+            const onCancel = () => finish(false)
             window.addEventListener('pointermove', onMove)
             window.addEventListener('pointerup', onUp)
+            window.addEventListener('pointercancel', onCancel)
           }}
         />
       ))}
