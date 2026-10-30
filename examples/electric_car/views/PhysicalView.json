@@ -143,7 +143,7 @@
       "width": 200.0,
       "height": 120.0
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::driveControlSw": {
       "x": 101.0,
       "y": 931.0000000000018,
       "width": 220.0,
@@ -161,7 +161,7 @@
       "width": 200.0,
       "height": 120.0
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu": {
       "x": 125.66473232530154,
       "y": 644.5999999999977,
       "width": 280.0,
@@ -233,11 +233,11 @@
       "side": "left",
       "offset": 0.6499999999999999
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionIn": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::driveControlSw::directionIn": {
       "side": "left",
       "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::maneuvrabilityControlSw::directionOut": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::driveControlSw::directionOut": {
       "side": "right",
       "offset": 0.5166666666666666
     },
@@ -265,11 +265,11 @@
       "side": "left",
       "offset": 0.6499999999999999
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionIn": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::directionIn": {
       "side": "left",
       "offset": 0.5166666666666666
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu::directionOut": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu::directionOut": {
       "side": "right",
       "offset": 0.5166666666666666
     }

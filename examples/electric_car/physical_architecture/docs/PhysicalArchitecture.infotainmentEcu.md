@@ -6,10 +6,11 @@ Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `entertainmentSystem`.
-- Implements logical `climateSystem`.
+- Implements `entertainmentSystem`.
+- Implements `climateSystem`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

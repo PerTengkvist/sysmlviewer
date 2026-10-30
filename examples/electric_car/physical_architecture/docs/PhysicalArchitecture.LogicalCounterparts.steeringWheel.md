@@ -6,8 +6,6 @@ Part of `LogicalCounterparts`.
 
 ## Relations
 
-- Implemented by `maneuvrabilityEcu`.
-- Implemented by `maneuvrabilityControlSw`.
 - Implemented by `steeringWheelMech`.
 
 ## Diagrams

@@ -1,18 +1,20 @@
 # engineControlSw
 
-Software component for motor torque and mode. Hosted on the engine computer. Implements the logical engine.
+Software component for motor torque and mode. Consumes GearCommand and TorqueCommand from the drive computer.
 
 Part of `engineEcu`.
 
 ## Relations
 
-- Implements logical `engine`.
+- Implements `engine`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Consumer ports `gearIn` : GearCommand and `torqueIn` : TorqueRequest.
+- Consumer port `gearCommandIn` : GearCommand, bound to `engineEcu`.
+- Consumer port `torqueCommandIn` : TorqueCommand, bound to `engineEcu`.

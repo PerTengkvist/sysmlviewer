@@ -1,6 +1,6 @@
 # windshield
 
-Front glass. Must stay clear for the driver.
+Front glass. Consumes WindshieldClear from the wipers.
 
 Part of `Car`.
 
@@ -13,9 +13,9 @@ Part of `Car`.
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `BodyView`
 
 ## Interfaces
 
-- Consumer port `clearIn` : WindshieldClear.
+- Consumer port `clearIn` : WindshieldClear, connected from `wipers`.

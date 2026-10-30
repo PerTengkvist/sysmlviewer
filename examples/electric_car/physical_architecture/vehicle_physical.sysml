@@ -1,20 +1,53 @@
 package PhysicalArchitecture {
-  doc /* Physical architecture of the electric car. Software components run on embedded controllers. Climate and entertainment share one computer. Maneuvrability, engine and battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Logical counterparts live in LogicalCounterparts so the physical whitebox stays clean. */
+  doc /* Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Logical counterparts live in LogicalCounterparts so the physical whitebox stays clean. */
 
   interface def DirectionCommand {
-    doc /* Steering command, same contract as the logical architecture. The maneuvrability controller provides it and the wheels consume it. */
+    doc /* Steering command, same contract as the logical architecture. Steering wheel to drive computer, drive computer to wheels. */
   }
   interface def GearCommand {
-    doc /* Gear selection, same contract as the logical architecture. The gear selector provides it and the engine controller consumes it. */
+    doc /* Gear selection, same contract as the logical architecture. Gear selector to drive computer, drive computer to engine computer. */
   }
   interface def TorqueRequest {
-    doc /* Torque request, same contract as the logical architecture. The accelerator provides it and the engine controller consumes it. */
+    doc /* Torque request, same contract as the logical architecture. The accelerator provides it and the drive computer consumes it. */
+  }
+  interface def TorqueCommand {
+    doc /* Arbitrated torque, same contract as the logical architecture. The drive computer provides it and the engine computer consumes it. */
   }
   interface def BrakeRequest {
-    doc /* Brake request, same contract as the logical architecture. The brake pedal provides it and the wheels consume it. */
+    doc /* Brake request, same contract as the logical architecture. The brake pedal provides it and the drive computer consumes it. */
+  }
+  interface def BrakeCommand {
+    doc /* Friction brake pressure, same contract as the logical architecture. The drive computer provides it and the brake calipers consume it. */
+  }
+  interface def StartRequest {
+    doc /* Start or stop, same contract as the logical architecture. The start button provides it and the vehicle computer consumes it. */
+  }
+  interface def Credential {
+    doc /* Driver credential, same contract as the logical architecture. The key fob provides it and the vehicle computer consumes it. */
+  }
+  interface def DriveEnable {
+    doc /* Immobilizer release, same contract as the logical architecture. The vehicle computer provides it and the drive computer consumes it. */
+  }
+  interface def LockCommand {
+    doc /* Latch command, same contract as the logical architecture. The body computer provides it and the door locks consume it. */
+  }
+  interface def DoorCommand {
+    doc /* Door command, same contract as the logical architecture. The body computer provides it and the door assembly consumes it. */
+  }
+  interface def WindowCommand {
+    doc /* Window command, same contract as the logical architecture. The body computer provides it and the window lift assembly consumes it. */
+  }
+  interface def LampCommand {
+    doc /* Lamp command, same contract as the logical architecture. The body computer provides it and the lamp units consume it. */
+  }
+  interface def WipeCommand {
+    doc /* Wipe command, same contract as the logical architecture. The body computer provides it and the wiper assembly consumes it. */
+  }
+  interface def DriverFeedback {
+    doc /* Driver feedback, same contract as the logical architecture. The vehicle computer provides it and the instrument cluster unit consumes it. */
   }
   interface def EnergySupply {
-    doc /* Traction energy, same contract as the logical architecture. The battery controller provides it. The motor, climate hardware, display and lamps consume it. */
+    doc /* Traction energy, same contract as the logical architecture. The battery controller provides it. The motor, climate hardware, display, lamps and window lifts consume it. */
   }
   interface def ChargeFeed {
     doc /* External charge energy, same contract as the logical architecture. The charge inlet provides it and the battery controller consumes it. */
@@ -29,6 +62,12 @@ package PhysicalArchitecture {
     #Logical ref part car {
       doc /* Logical Car. The whole physical car implements this assembly. */
     }
+    #Logical ref part keyFob {
+      doc /* Logical key fob, from the logical architecture. */
+    }
+    #Logical ref part startButton {
+      doc /* Logical start button, from the logical architecture. */
+    }
     #Logical ref part steeringWheel {
       doc /* Logical steering wheel, from the logical architecture. */
     }
@@ -40,6 +79,18 @@ package PhysicalArchitecture {
     }
     #Logical ref part brakePedal {
       doc /* Logical brake pedal, from the logical architecture. */
+    }
+    #Logical ref part vehicleController {
+      doc /* Logical vehicle controller, from the logical architecture. */
+    }
+    #Logical ref part driveController {
+      doc /* Logical drive controller, from the logical architecture. */
+    }
+    #Logical ref part bodyController {
+      doc /* Logical body controller, from the logical architecture. */
+    }
+    #Logical ref part instrumentCluster {
+      doc /* Logical instrument cluster, from the logical architecture. */
     }
     #Logical ref part climateSystem {
       doc /* Logical climate system, from the logical architecture. */
@@ -59,11 +110,20 @@ package PhysicalArchitecture {
     #Logical ref part wheels {
       doc /* Logical wheels, from the logical architecture. */
     }
+    #Logical ref part frictionBrakes {
+      doc /* Logical friction brakes, from the logical architecture. */
+    }
     #Logical ref part suspension {
       doc /* Logical suspension, from the logical architecture. */
     }
+    #Logical ref part doors {
+      doc /* Logical doors, from the logical architecture. */
+    }
     #Logical ref part windows {
       doc /* Logical windows, from the logical architecture. */
+    }
+    #Logical ref part windowLifts {
+      doc /* Logical window lifts, from the logical architecture. */
     }
     #Logical ref part body {
       doc /* Logical body shell (kaross), from the logical architecture. */
@@ -88,6 +148,63 @@ package PhysicalArchitecture {
   part def VehiclePhysical {
     doc /* Physical car: embedded controllers with their software, and the mechanical parts. Implements the logical Car. */
 
+    part vehicleEcu {
+      doc /* Embedded computer for power modes, authentication and the immobilizer. Implements the logical vehicle controller. Proxy ports expose Credential, StartRequest, DriveEnable and DriverFeedback at the ECU boundary. */
+      port credentialIn : Credential;
+      port startIn : StartRequest;
+      port driveEnableOut : DriveEnable;
+      port feedbackOut : DriverFeedback;
+      part vehicleControlSw {
+        doc /* Software component for vehicle modes, key authentication and driver feedback. Hosted on the vehicle computer. */
+        port credentialIn : Credential;
+        port startIn : StartRequest;
+        port driveEnableOut : DriveEnable;
+        port feedbackOut : DriverFeedback;
+      }
+    }
+
+    part driveEcu {
+      doc /* Embedded computer for torque, braking, gear and steering. Implements the logical drive controller. Proxy ports expose the driver inputs and the actuator commands at the ECU boundary. */
+      port driveEnableIn : DriveEnable;
+      port torqueIn : TorqueRequest;
+      port brakeIn : BrakeRequest;
+      port gearIn : GearCommand;
+      port directionIn : DirectionCommand;
+      port torqueCommandOut : TorqueCommand;
+      port brakeCommandOut : BrakeCommand;
+      port gearCommandOut : GearCommand;
+      port directionCommandOut : DirectionCommand;
+      part driveControlSw {
+        doc /* Software component for torque arbitration, regen blending, gear mode and steering angle. Hosted on the drive computer. */
+        port driveEnableIn : DriveEnable;
+        port torqueIn : TorqueRequest;
+        port brakeIn : BrakeRequest;
+        port gearIn : GearCommand;
+        port directionIn : DirectionCommand;
+        port torqueCommandOut : TorqueCommand;
+        port brakeCommandOut : BrakeCommand;
+        port gearCommandOut : GearCommand;
+        port directionCommandOut : DirectionCommand;
+      }
+    }
+
+    part bodyEcu {
+      doc /* Embedded computer for locks, doors, windows, lamps and wipers. Implements the logical body controller. Proxy ports expose the body commands at the ECU boundary. */
+      port lockOut : LockCommand;
+      port doorOut : DoorCommand;
+      port windowOut : WindowCommand;
+      port lampOut : LampCommand;
+      port wipeOut : WipeCommand;
+      part bodyControlSw {
+        doc /* Software component for lock, door, window, lamp and wiper control. Hosted on the body computer. */
+        port lockOut : LockCommand;
+        port doorOut : DoorCommand;
+        port windowOut : WindowCommand;
+        port lampOut : LampCommand;
+        port wipeOut : WipeCommand;
+      }
+    }
+
     part infotainmentEcu {
       doc /* Embedded computer shared by the entertainment software and the climate software. Implements the logical entertainment system and the logical climate system. */
       part entertainmentSw {
@@ -98,25 +215,14 @@ package PhysicalArchitecture {
       }
     }
 
-    part maneuvrabilityEcu {
-      doc /* Embedded computer for steering. Separate from the other controllers. Implements the logical steering wheel's control path. Proxy ports expose DirectionCommand at the ECU boundary. */
-      port directionIn : DirectionCommand;
-      port directionOut : DirectionCommand;
-      part maneuvrabilityControlSw {
-        doc /* Software component for steering angle and directional control. Consumes the driver's DirectionCommand and provides it to the wheels. */
-        port directionIn : DirectionCommand;
-        port directionOut : DirectionCommand;
-      }
-    }
-
     part engineEcu {
-      doc /* Embedded computer for the traction motor. Separate module. Implements the logical engine. Proxy ports expose GearCommand and TorqueRequest at the ECU boundary. */
-      port gearIn : GearCommand;
-      port torqueIn : TorqueRequest;
+      doc /* Embedded computer for the traction motor. Separate module. Implements the logical engine. Proxy ports expose GearCommand and TorqueCommand at the ECU boundary. */
+      port gearCommandIn : GearCommand;
+      port torqueCommandIn : TorqueCommand;
       part engineControlSw {
-        doc /* Software component for motor torque and mode. Consumes GearCommand and TorqueRequest. */
-        port gearIn : GearCommand;
-        port torqueIn : TorqueRequest;
+        doc /* Software component for motor torque and mode. Consumes GearCommand and TorqueCommand from the drive computer. */
+        port gearCommandIn : GearCommand;
+        port torqueCommandIn : TorqueCommand;
       }
     }
 
@@ -132,25 +238,40 @@ package PhysicalArchitecture {
       }
     }
 
+    part keyFobUnit {
+      doc /* Radio key fob. Provides Credential to the vehicle computer. */
+      port credentialOut : Credential;
+    }
+
+    part startButtonMech {
+      doc /* Push button on the dashboard. Provides StartRequest to the vehicle computer. */
+      port startOut : StartRequest;
+    }
+
     part steeringWheelMech {
-      doc /* Mechanical steering wheel. Provides DirectionCommand to the maneuvrability controller. */
+      doc /* Mechanical steering wheel with angle sensor. Provides DirectionCommand to the drive computer. */
       port directionOut : DirectionCommand;
     }
 
     part gearStickMech {
       attribute _icon_body = "energy/busbar";
-      doc /* Mechanical gear selector for park, reverse, neutral and drive. Provides GearCommand. */
+      doc /* Mechanical gear selector for park, reverse, neutral and drive. Provides GearCommand to the drive computer. */
       port gearOut : GearCommand;
     }
 
     part acceleratorPedalMech {
-      doc /* Mechanical accelerator pedal. Provides TorqueRequest. */
+      doc /* Mechanical accelerator pedal with travel sensor. Provides TorqueRequest to the drive computer. */
       port torqueOut : TorqueRequest;
     }
 
     part brakePedalMech {
-      doc /* Mechanical brake pedal. Provides BrakeRequest. */
+      doc /* Mechanical brake pedal with force sensor. Provides BrakeRequest to the drive computer. */
       port brakeOut : BrakeRequest;
+    }
+
+    part instrumentClusterUnit {
+      doc /* Display and sounder behind the steering wheel. Consumes DriverFeedback. */
+      port feedbackIn : DriverFeedback;
     }
 
     part hvacAssembly {
@@ -179,18 +300,33 @@ package PhysicalArchitecture {
     }
 
     part wheelSet {
-      doc /* Mechanical road wheels. Consume DirectionCommand and BrakeRequest. */
+      doc /* Mechanical road wheels with steering knuckles. Consume DirectionCommand from the drive computer. */
       attribute _icon = "disc";
-      port directionIn : DirectionCommand;
-      port brakeIn : BrakeRequest;
+      port directionCommandIn : DirectionCommand;
+    }
+
+    part brakeCaliperAsm {
+      doc /* Hydraulic calipers, discs and the brake actuator. Consume BrakeCommand from the drive computer. */
+      port brakeCommandIn : BrakeCommand;
     }
 
     part suspensionAsm {
       doc /* Mechanical suspension. Implements the logical suspension. */
     }
 
+    part doorAsm {
+      doc /* Door shells, hinges and position sensors. Consume DoorCommand from the body computer. */
+      port doorIn : DoorCommand;
+    }
+
     part windowAsm {
-      doc /* Mechanical side and rear windows. Implements the logical windows. */
+      doc /* Side and rear glass panes. Implements the logical windows. */
+    }
+
+    part windowLiftAsm {
+      doc /* Window lift motors with pinch sensing. Consume WindowCommand from the body computer and EnergySupply. */
+      port windowIn : WindowCommand;
+      port energyIn : EnergySupply;
     }
 
     part bodyShell {
@@ -203,16 +339,19 @@ package PhysicalArchitecture {
     }
 
     part wiperAsm {
-      doc /* Mechanical wiper and washer. Provides WindshieldClear. */
+      doc /* Mechanical wiper and washer. Consumes WipeCommand from the body computer and provides WindshieldClear. */
+      port wipeIn : WipeCommand;
       port clearOut : WindshieldClear;
     }
 
     part doorLockAsm {
-      doc /* Mechanical door locks. Implements the logical locks. */
+      doc /* Mechanical door latches with lock motors. Consume LockCommand from the body computer. */
+      port lockIn : LockCommand;
     }
 
     part lampUnits {
-      doc /* Mechanical lamp units. Consume EnergySupply. */
+      doc /* Mechanical lamp units. Consume LampCommand from the body computer and EnergySupply. */
+      port lampIn : LampCommand;
       port energyIn : EnergySupply;
     }
 
@@ -222,27 +361,37 @@ package PhysicalArchitecture {
     }
 
     #implements dependency from VehiclePhysical to LogicalCounterparts::car;
+    #implements dependency from vehicleEcu to LogicalCounterparts::vehicleController;
+    #implements dependency from vehicleEcu.vehicleControlSw to LogicalCounterparts::vehicleController;
+    #implements dependency from driveEcu to LogicalCounterparts::driveController;
+    #implements dependency from driveEcu.driveControlSw to LogicalCounterparts::driveController;
+    #implements dependency from bodyEcu to LogicalCounterparts::bodyController;
+    #implements dependency from bodyEcu.bodyControlSw to LogicalCounterparts::bodyController;
     #implements dependency from infotainmentEcu to LogicalCounterparts::entertainmentSystem, LogicalCounterparts::climateSystem;
     #implements dependency from infotainmentEcu.entertainmentSw to LogicalCounterparts::entertainmentSystem;
     #implements dependency from infotainmentEcu.climateControlSw to LogicalCounterparts::climateSystem;
-    #implements dependency from maneuvrabilityEcu to LogicalCounterparts::steeringWheel;
-    #implements dependency from maneuvrabilityEcu.maneuvrabilityControlSw to LogicalCounterparts::steeringWheel;
     #implements dependency from engineEcu to LogicalCounterparts::engine;
     #implements dependency from engineEcu.engineControlSw to LogicalCounterparts::engine;
     #implements dependency from batteryEcu to LogicalCounterparts::battery;
     #implements dependency from batteryEcu.batteryControlSw to LogicalCounterparts::battery, LogicalCounterparts::chargeInlet;
+    #implements dependency from keyFobUnit to LogicalCounterparts::keyFob;
+    #implements dependency from startButtonMech to LogicalCounterparts::startButton;
     #implements dependency from steeringWheelMech to LogicalCounterparts::steeringWheel;
     #implements dependency from gearStickMech to LogicalCounterparts::gearStick;
     #implements dependency from acceleratorPedalMech to LogicalCounterparts::acceleratorPedal;
     #implements dependency from brakePedalMech to LogicalCounterparts::brakePedal;
+    #implements dependency from instrumentClusterUnit to LogicalCounterparts::instrumentCluster;
     #implements dependency from hvacAssembly to LogicalCounterparts::climateSystem;
     #implements dependency from displayAndSpeakers to LogicalCounterparts::entertainmentSystem;
     #implements dependency from electricMotor to LogicalCounterparts::engine;
     #implements dependency from batteryPack to LogicalCounterparts::battery;
     #implements dependency from chassisFrame to LogicalCounterparts::chassis;
     #implements dependency from wheelSet to LogicalCounterparts::wheels;
+    #implements dependency from brakeCaliperAsm to LogicalCounterparts::frictionBrakes;
     #implements dependency from suspensionAsm to LogicalCounterparts::suspension;
+    #implements dependency from doorAsm to LogicalCounterparts::doors;
     #implements dependency from windowAsm to LogicalCounterparts::windows;
+    #implements dependency from windowLiftAsm to LogicalCounterparts::windowLifts;
     #implements dependency from bodyShell to LogicalCounterparts::body;
     #implements dependency from windshieldGlass to LogicalCounterparts::windshield;
     #implements dependency from wiperAsm to LogicalCounterparts::wipers;
@@ -251,23 +400,52 @@ package PhysicalArchitecture {
     #implements dependency from chargeInletMech to LogicalCounterparts::chargeInlet;
 
     // Internal ECU↔SW bindings (proxy faces on the parent).
-    bind maneuvrabilityEcu.directionIn = maneuvrabilityEcu.maneuvrabilityControlSw.directionIn;
-    bind maneuvrabilityEcu.directionOut = maneuvrabilityEcu.maneuvrabilityControlSw.directionOut;
-    bind engineEcu.gearIn = engineEcu.engineControlSw.gearIn;
-    bind engineEcu.torqueIn = engineEcu.engineControlSw.torqueIn;
+    bind vehicleEcu.credentialIn = vehicleEcu.vehicleControlSw.credentialIn;
+    bind vehicleEcu.startIn = vehicleEcu.vehicleControlSw.startIn;
+    bind vehicleEcu.driveEnableOut = vehicleEcu.vehicleControlSw.driveEnableOut;
+    bind vehicleEcu.feedbackOut = vehicleEcu.vehicleControlSw.feedbackOut;
+    bind driveEcu.driveEnableIn = driveEcu.driveControlSw.driveEnableIn;
+    bind driveEcu.torqueIn = driveEcu.driveControlSw.torqueIn;
+    bind driveEcu.brakeIn = driveEcu.driveControlSw.brakeIn;
+    bind driveEcu.gearIn = driveEcu.driveControlSw.gearIn;
+    bind driveEcu.directionIn = driveEcu.driveControlSw.directionIn;
+    bind driveEcu.torqueCommandOut = driveEcu.driveControlSw.torqueCommandOut;
+    bind driveEcu.brakeCommandOut = driveEcu.driveControlSw.brakeCommandOut;
+    bind driveEcu.gearCommandOut = driveEcu.driveControlSw.gearCommandOut;
+    bind driveEcu.directionCommandOut = driveEcu.driveControlSw.directionCommandOut;
+    bind bodyEcu.lockOut = bodyEcu.bodyControlSw.lockOut;
+    bind bodyEcu.doorOut = bodyEcu.bodyControlSw.doorOut;
+    bind bodyEcu.windowOut = bodyEcu.bodyControlSw.windowOut;
+    bind bodyEcu.lampOut = bodyEcu.bodyControlSw.lampOut;
+    bind bodyEcu.wipeOut = bodyEcu.bodyControlSw.wipeOut;
+    bind engineEcu.gearCommandIn = engineEcu.engineControlSw.gearCommandIn;
+    bind engineEcu.torqueCommandIn = engineEcu.engineControlSw.torqueCommandIn;
     bind batteryEcu.energyOut = batteryEcu.batteryControlSw.energyOut;
     bind batteryEcu.chargeIn = batteryEcu.batteryControlSw.chargeIn;
 
     // External peer connections (ECU proxy ports ↔ mechanical peers).
-    connection direction connect maneuvrabilityEcu.directionOut to wheelSet.directionIn;
-    connection steerInput connect steeringWheelMech.directionOut to maneuvrabilityEcu.directionIn;
-    connection gear connect gearStickMech.gearOut to engineEcu.gearIn;
-    connection torque connect acceleratorPedalMech.torqueOut to engineEcu.torqueIn;
-    connection brake connect brakePedalMech.brakeOut to wheelSet.brakeIn;
+    connection credential connect keyFobUnit.credentialOut to vehicleEcu.credentialIn;
+    connection start connect startButtonMech.startOut to vehicleEcu.startIn;
+    connection driveEnable connect vehicleEcu.driveEnableOut to driveEcu.driveEnableIn;
+    connection feedback connect vehicleEcu.feedbackOut to instrumentClusterUnit.feedbackIn;
+    connection steerInput connect steeringWheelMech.directionOut to driveEcu.directionIn;
+    connection direction connect driveEcu.directionCommandOut to wheelSet.directionCommandIn;
+    connection gearInput connect gearStickMech.gearOut to driveEcu.gearIn;
+    connection gear connect driveEcu.gearCommandOut to engineEcu.gearCommandIn;
+    connection torqueRequest connect acceleratorPedalMech.torqueOut to driveEcu.torqueIn;
+    connection torque connect driveEcu.torqueCommandOut to engineEcu.torqueCommandIn;
+    connection brakeRequest connect brakePedalMech.brakeOut to driveEcu.brakeIn;
+    connection brake connect driveEcu.brakeCommandOut to brakeCaliperAsm.brakeCommandIn;
+    connection lock connect bodyEcu.lockOut to doorLockAsm.lockIn;
+    connection door connect bodyEcu.doorOut to doorAsm.doorIn;
+    connection window connect bodyEcu.windowOut to windowLiftAsm.windowIn;
+    connection lamp connect bodyEcu.lampOut to lampUnits.lampIn;
+    connection wipe connect bodyEcu.wipeOut to wiperAsm.wipeIn;
     connection energyMotor connect batteryEcu.energyOut to electricMotor.energyIn;
     connection energyClimate connect batteryEcu.energyOut to hvacAssembly.energyIn;
     connection energyEntertainment connect batteryEcu.energyOut to displayAndSpeakers.energyIn;
     connection energyLamps connect batteryEcu.energyOut to lampUnits.energyIn;
+    connection energyWindows connect batteryEcu.energyOut to windowLiftAsm.energyIn;
     connection charge connect chargeInletMech.chargeOut to batteryEcu.chargeIn;
     connection clear connect wiperAsm.clearOut to windshieldGlass.clearIn;
   }

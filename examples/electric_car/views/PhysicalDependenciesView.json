@@ -106,7 +106,7 @@
       "width": 140.0,
       "height": 76.0
     },
-    "PhysicalArchitecture::VehiclePhysical::maneuvrabilityEcu": {
+    "PhysicalArchitecture::VehiclePhysical::driveEcu": {
       "x": 316.0,
       "y": 1596.0,
       "width": 172.0,

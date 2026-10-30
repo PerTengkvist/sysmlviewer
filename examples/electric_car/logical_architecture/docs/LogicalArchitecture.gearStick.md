@@ -1,20 +1,20 @@
 # gearStick
 
-Driver control for park, reverse, neutral and drive. Commands the traction motor's operating mode.
+Driver control for park, reverse, neutral and drive. Provides GearCommand to the drive controller.
 
 Part of `Car`.
 
 ## Relations
 
-- Depends on `engine` («Command»).
+- Depends on `driveController` («Command»).
 - Satisfies `PropulsionModes`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `DriverControlsView`
 
 ## Interfaces
 
-- Provider port `gearOut` : GearCommand, connected to the engine.
+- Provider port `gearOut` : GearCommand, connected to `driveController`.

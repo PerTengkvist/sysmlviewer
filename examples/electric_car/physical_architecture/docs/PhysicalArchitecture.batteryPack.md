@@ -6,9 +6,10 @@ Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `battery`.
+- Implements `battery`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

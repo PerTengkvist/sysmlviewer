@@ -1,5 +1,5 @@
 package Requirements {
-  doc /* Stakeholder requirements and user stories for a compact battery-electric passenger car. Size, performance, safety and security are the requirement groups. Driving, charging and parking are told as user stories. Leaf requirements refine a group. Logical parts satisfy the leaves. */
+  doc /* Stakeholder requirements and user stories for a compact battery-electric passenger car. Size, performance, safety, security and comfort are the requirement groups. Driving, charging and parking are told as user stories. Leaf requirements refine a group. Logical parts satisfy the leaves. */
 
   requirement def <'REQ-SIZE'> Size {
     attribute Type = "Size";
@@ -51,6 +51,10 @@ package Requirements {
     doc /* The driver shall be able to select park, reverse, neutral and drive. */
   }
 
+  requirement def <'REQ-PERF-06'> PowerModes {
+    doc /* The driver shall make the vehicle ready to drive, and shut it down, with a single control. */
+  }
+
   requirement def <'REQ-SAFE'> Safety {
     attribute Type = "Safety";
     doc /* The car shall protect occupants and people outside the vehicle. */
@@ -78,6 +82,27 @@ package Requirements {
 
   requirement def <'REQ-SAFE-06'> ForwardVisibility {
     doc /* The driver shall be able to clear the windshield while driving. */
+  }
+
+  requirement def <'REQ-SAFE-07'> NightVisibility {
+    doc /* The driver shall be able to light the road ahead with low and high beam. */
+  }
+
+  requirement def <'REQ-COMF'> Comfort {
+    attribute Type = "Comfort";
+    doc /* The car shall let occupants get in and out easily and keep the cabin comfortable. */
+  }
+
+  requirement def <'REQ-COMF-01'> CabinAccess {
+    doc /* Occupants shall be able to open and close every door and side window from inside the cabin. */
+  }
+
+  requirement def <'REQ-COMF-02'> CabinClimate {
+    doc /* Occupants shall be able to set the cabin temperature between 16 and 28 degrees Celsius. */
+  }
+
+  requirement def <'REQ-COMF-03'> CabinMedia {
+    doc /* Occupants shall be able to play audio and video on the cabin system. */
   }
 
   requirement def <'REQ-SEC'> Security {
@@ -132,6 +157,16 @@ package Requirements {
     doc /* As a passenger I want climate and entertainment during the trip so that the journey stays comfortable. */
   }
 
+  requirement def <'US-DRIVE-05'> DriveAtNight {
+    attribute Type = "UserStory";
+    doc /* As a driver I want to light the road so that I can drive after dark. */
+  }
+
+  requirement def <'US-CAB-01'> EnterAndExit {
+    attribute Type = "UserStory";
+    doc /* As a passenger I want to open the doors and windows so that I can get in, get out and let air in. */
+  }
+
   #refine dependency from VehicleLength to Size;
   #refine dependency from VehicleWidth to Size;
   #refine dependency from VehicleHeight to Size;
@@ -143,6 +178,7 @@ package Requirements {
   #refine dependency from TopSpeed to Performance;
   #refine dependency from ChargeTime to Performance;
   #refine dependency from PropulsionModes to Performance;
+  #refine dependency from PowerModes to Performance;
 
   #refine dependency from CrashProtection to Safety;
   #refine dependency from BrakingDistance to Safety;
@@ -150,6 +186,11 @@ package Requirements {
   #refine dependency from OccupantRestraint to Safety;
   #refine dependency from DirectionalControl to Safety;
   #refine dependency from ForwardVisibility to Safety;
+  #refine dependency from NightVisibility to Safety;
+
+  #refine dependency from CabinAccess to Comfort;
+  #refine dependency from CabinClimate to Comfort;
+  #refine dependency from CabinMedia to Comfort;
 
   #refine dependency from AccessControl to Security;
   #refine dependency from Immobilizer to Security;
@@ -161,6 +202,9 @@ package Requirements {
   #refine dependency from ChargeAtHome to Range, ChargeTime;
   #refine dependency from ChargeAway to ChargeTime;
   #refine dependency from ParkAndLeave to LockIndication, Immobilizer;
+  #refine dependency from EnjoyTheCabin to CabinClimate, CabinMedia;
+  #refine dependency from DriveAtNight to NightVisibility;
+  #refine dependency from EnterAndExit to CabinAccess;
 
   satisfy VehicleLength by LogicalArchitecture::Car::body;
   satisfy VehicleWidth by LogicalArchitecture::Car::body;
@@ -177,13 +221,21 @@ package Requirements {
   satisfy PedestrianProtection by LogicalArchitecture::Car::body;
   satisfy OccupantRestraint by LogicalArchitecture::Car::body;
   satisfy BrakingDistance by LogicalArchitecture::Car::brakePedal;
-  satisfy BrakingDistance by LogicalArchitecture::Car::wheels;
+  satisfy BrakingDistance by LogicalArchitecture::Car::frictionBrakes;
+  satisfy BrakingDistance by LogicalArchitecture::Car::driveController;
   satisfy DirectionalControl by LogicalArchitecture::Car::steeringWheel;
   satisfy ForwardVisibility by LogicalArchitecture::Car::windshield;
   satisfy ForwardVisibility by LogicalArchitecture::Car::wipers;
   satisfy AccessControl by LogicalArchitecture::Car::locks;
-  satisfy Immobilizer by LogicalArchitecture::Car::locks;
-  satisfy LockIndication by LogicalArchitecture::Car::locks;
+  satisfy Immobilizer by LogicalArchitecture::Car::vehicleController;
+  satisfy LockIndication by LogicalArchitecture::Car::bodyController;
+  satisfy PowerModes by LogicalArchitecture::Car::vehicleController;
+  satisfy PowerModes by LogicalArchitecture::Car::startButton;
+  satisfy NightVisibility by LogicalArchitecture::Car::lamps;
+  satisfy CabinAccess by LogicalArchitecture::Car::doors;
+  satisfy CabinAccess by LogicalArchitecture::Car::windowLifts;
+  satisfy CabinClimate by LogicalArchitecture::Car::climateSystem;
+  satisfy CabinMedia by LogicalArchitecture::Car::entertainmentSystem;
 
   view def RequirementsGraphView : GeneralView {
     doc /* Requirement graph. Group requirements, leaf requirements and user stories, with «refine» dependencies. */

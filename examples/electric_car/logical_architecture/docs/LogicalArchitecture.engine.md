@@ -1,24 +1,26 @@
 # engine
 
-Electric traction motor, nominally 150 kW. Mounted on the chassis, fed by the battery, and commanded by the pedals and the gear stick.
+Electric traction motor, nominally 150 kW. Consumes GearCommand and TorqueCommand from the drive controller and EnergySupply from the battery. Drives the wheels.
 
 Part of `Car`.
 
 ## Relations
 
-- `gearStick` depends on this («Command»).
-- `acceleratorPedal` depends on this («Command»).
+- `driveController` depends on this («Command»).
 - Depends on `battery` («Energy»).
 - Depends on `chassis` («Mount»).
+- Depends on `wheels` («Actuate»).
 - Satisfies `Acceleration`.
 - Satisfies `TopSpeed`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `SkateboardView`
 
 ## Interfaces
 
-- Consumer ports `gearIn` : GearCommand, `torqueIn` : TorqueRequest, `energyIn` : EnergySupply.
+- Consumer port `gearCommandIn` : GearCommand, connected from `driveController`.
+- Consumer port `torqueCommandIn` : TorqueCommand, connected from `driveController`.
+- Consumer port `energyIn` : EnergySupply, connected from `battery`.

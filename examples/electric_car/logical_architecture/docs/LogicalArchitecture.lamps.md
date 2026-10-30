@@ -1,20 +1,23 @@
 # lamps
 
-Headlamps, tail lamps and direction indicators, mounted on the body.
+Headlamps, tail lamps, brake lamps, direction indicators and hazard lights. Consume LampCommand from the body controller and EnergySupply from the battery.
 
 Part of `Car`.
 
 ## Relations
 
+- `bodyController` depends on this («Command»).
 - Depends on `battery` («Energy»).
 - Depends on `body` («Mount»).
+- Satisfies `NightVisibility`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `BodyView`
 
 ## Interfaces
 
-- Consumer port `energyIn` : EnergySupply.
+- Consumer port `lampIn` : LampCommand, connected from `bodyController`.
+- Consumer port `energyIn` : EnergySupply, connected from `battery`.

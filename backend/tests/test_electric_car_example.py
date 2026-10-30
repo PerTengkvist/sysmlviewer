@@ -145,8 +145,20 @@ def test_physical_ecu_proxy_ports_and_connection_owners():
     elements = _load().elements
     vp = "PhysicalArchitecture::VehiclePhysical"
     ecu_ports = {
-        "maneuvrabilityEcu": {"directionIn", "directionOut"},
-        "engineEcu": {"gearIn", "torqueIn"},
+        "vehicleEcu": {"credentialIn", "startIn", "driveEnableOut", "feedbackOut"},
+        "driveEcu": {
+            "driveEnableIn",
+            "torqueIn",
+            "brakeIn",
+            "gearIn",
+            "directionIn",
+            "torqueCommandOut",
+            "brakeCommandOut",
+            "gearCommandOut",
+            "directionCommandOut",
+        },
+        "bodyEcu": {"lockOut", "doorOut", "windowOut", "lampOut", "wipeOut"},
+        "engineEcu": {"gearCommandIn", "torqueCommandIn"},
         "batteryEcu": {"energyOut", "chargeIn"},
     }
     for ecu, names in ecu_ports.items():
@@ -173,9 +185,9 @@ def test_physical_ecu_proxy_ports_and_connection_owners():
         for e in elements.values()
         if e.kind == ArtifactKind.BINDING and e.id.startswith(f"{vp}::")
     ]
-    # 11 external peer links + 6 internal ECU↔SW bindings
-    assert len(conns) == 11
-    assert len(binds) == 6
+    # 24 external peer links + 22 internal ECU↔SW bindings
+    assert len(conns) == 24
+    assert len(binds) == 22
 
     for c in conns:
         sp = elements[c.source_id]
@@ -207,7 +219,7 @@ def test_user_stories_and_use_case_sequences():
         for e in elements.values()
         if e.kind == ArtifactKind.REQUIREMENT and e.short_id and e.short_id.startswith("US-")
     ]
-    assert len(stories) == 7
+    assert len(stories) == 9
     for story in stories:
         type_attr = next(
             elements[cid]
@@ -216,8 +228,11 @@ def test_user_stories_and_use_case_sequences():
         )
         assert type_attr.default_value == '"UserStory"'
 
+    use_case_names = {
+        e.name for e in elements.values() if e.kind == ArtifactKind.USE_CASE
+    }
     for use_case, interaction in SEQUENCES.items():
-        assert f"UseCases::{use_case}" in elements
+        assert use_case in use_case_names
         assert f"Dynamics::{interaction}" in elements
         assert f"Dynamics::{interaction}View" in elements
 
@@ -295,7 +310,7 @@ def test_shipped_views_render_requested_diagrams():
             if e["kind"] == "dependency"
             and "implements" in (e.get("metadataKeywords") or [])
         )
-        == 30
+        == 40
     )
     assert any(
         e["id"] == "PhysicalArchitecture::LogicalCounterparts::car"
@@ -315,7 +330,7 @@ def test_shipped_views_render_requested_diagrams():
     )
     assert logical["diagramMode"] == "whitebox"
     assert sum(1 for e in logical["semantic"].values() if e["kind"] == "dependency") == 0
-    assert sum(1 for e in logical["semantic"].values() if e["kind"] == "connection") == 10
+    assert sum(1 for e in logical["semantic"].values() if e["kind"] == "connection") == 24
 
     logical_deps = service.get_view(
         project.id,
@@ -329,5 +344,188 @@ def test_shipped_views_render_requested_diagrams():
     )
     assert (
         sum(1 for e in logical_deps["semantic"].values() if e["kind"] == "dependency")
-        == 20
+        == 39
     )
+
+
+# --- Logical architecture: controllers, routing and traceability -------------
+
+CAR = "LogicalArchitecture::Car"
+CONTROLLERS = {"vehicleController", "driveController", "bodyController"}
+NEW_LOGICAL_PARTS = CONTROLLERS | {
+    "startButton",
+    "keyFob",
+    "doors",
+    "windowLifts",
+    "frictionBrakes",
+    "instrumentCluster",
+}
+
+
+def _parts_under(elements, root_id):
+    return {
+        e.name: e
+        for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id == root_id
+    }
+
+
+def test_logical_controllers_exist():
+    parts = _parts_under(_load().elements, CAR)
+    assert NEW_LOGICAL_PARTS <= set(parts), sorted(NEW_LOGICAL_PARTS - set(parts))
+
+
+def test_driver_controls_route_through_drive_controller():
+    elements = _load().elements
+    driver_controls = {"acceleratorPedal", "brakePedal", "gearStick", "steeringWheel"}
+    actuators = {"engine", "wheels", "frictionBrakes"}
+    for c in elements.values():
+        if c.kind != ArtifactKind.CONNECTION or not c.id.startswith(CAR + "::"):
+            continue
+        src_owner = elements[elements[c.source_id].parent_id].name
+        tgt_owner = elements[elements[c.target_id].parent_id].name
+        if src_owner in driver_controls:
+            assert tgt_owner == "driveController", (c.name, src_owner, tgt_owner)
+        if tgt_owner in actuators and src_owner != "battery":
+            assert src_owner == "driveController", (c.name, src_owner, tgt_owner)
+
+
+def test_every_satisfy_source_exists():
+    elements = _load().elements
+    satisfies = [e for e in elements.values() if e.kind == ArtifactKind.SATISFY]
+    assert satisfies
+    missing = [s.source_id for s in satisfies if s.source_id not in elements]
+    assert missing == []
+    assert all(s.target_id in elements for s in satisfies)
+
+
+def test_every_logical_part_is_implemented():
+    """Converse of test_physical_parts_implement_logical_parts."""
+    elements = _load().elements
+    counterparts = {
+        e.name: e.id
+        for e in elements.values()
+        if e.kind == ArtifactKind.PART
+        and e.parent_id == "PhysicalArchitecture::LogicalCounterparts"
+    }
+    implemented = {
+        e.target_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "implements" in (e.metadata_keywords or [])
+    }
+    not_implemented = sorted(
+        name
+        for name in _parts_under(elements, CAR)
+        if counterparts.get(name) not in implemented
+    )
+    assert not_implemented == []
+
+
+# --- Use cases: Driving / Managing split and user-story refinement ----------
+
+DRIVING_USE_CASES = {
+    "StartVehicle",
+    "StopVehicle",
+    "ChangeGear",
+    "Accelerate",
+    "Brake",
+    "EmergencyStop",
+    "TurnLeft",
+    "TurnRight",
+    "CleanWindshield",
+    "ToggleHeadlights",
+    "Park",
+    "Drive",
+}
+MANAGING_USE_CASES = {
+    "Unlock",
+    "Lock",
+    "OpenDoor",
+    "CloseDoor",
+    "OpenWindow",
+    "CloseWindow",
+    "AdjustClimate",
+    "PlayMedia",
+    "Charge",
+}
+COMPOSITE_USE_CASES = {"Drive", "Park"}
+
+
+def _use_cases(elements):
+    return [e for e in elements.values() if e.kind == ArtifactKind.USE_CASE]
+
+
+def test_use_cases_split_into_driving_and_managing():
+    elements = _load().elements
+    assert "UseCases::Driving" in elements
+    assert "UseCases::Managing" in elements
+    by_parent: dict[str, set[str]] = {}
+    for uc in _use_cases(elements):
+        by_parent.setdefault(uc.parent_id, set()).add(uc.name)
+    assert by_parent == {
+        "UseCases::Driving": DRIVING_USE_CASES,
+        "UseCases::Managing": MANAGING_USE_CASES,
+    }
+
+
+def test_composites_include_their_steps():
+    elements = _load().elements
+    includes = {
+        (elements[e.source_id].name, elements[e.target_id].name)
+        for e in elements.values()
+        if e.kind == ArtifactKind.INCLUDE and e.source_id in elements and e.target_id in elements
+    }
+    assert ("Drive", "StartVehicle") in includes
+    assert ("Park", "StopVehicle") in includes
+    assert ("Park", "Lock") in includes
+
+
+def test_every_use_case_has_an_objective():
+    elements = _load().elements
+    objectives = {
+        e.source_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "objective" in (e.metadata_keywords or [])
+        and e.target_id in elements
+        and elements[e.target_id].kind == ArtifactKind.REQUIREMENT
+    }
+    missing = sorted(uc.name for uc in _use_cases(elements) if uc.id not in objectives)
+    assert missing == []
+
+
+def test_every_use_case_refines_a_user_story():
+    elements = _load().elements
+    refines = [
+        e
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "refine" in (e.metadata_keywords or [])
+        and e.source_id in elements
+        and elements[e.source_id].kind == ArtifactKind.USE_CASE
+    ]
+    stories = {
+        e.id
+        for e in elements.values()
+        if e.kind == ArtifactKind.REQUIREMENT and (e.short_id or "").startswith("US-")
+    }
+    for r in refines:
+        assert r.target_id in stories, (elements[r.source_id].name, r.target_id)
+    refining = {r.source_id for r in refines}
+    unrefined = sorted(
+        uc.name for uc in _use_cases(elements) if uc.id not in refining
+    )
+    assert unrefined == []
+    refined_stories = {r.target_id for r in refines}
+    assert sorted(stories - refined_stories) == []
+
+
+def test_use_case_view_exposes_both_packages():
+    repo = WorkspaceProjectRepository(ROOT)
+    project = repo.get_open()
+    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+    view = service.get_view(project.id, "UseCases::VehicleUseCaseView")
+    assert view["diagramMode"] == "useCase"
+    shown = {e["name"] for e in view["semantic"].values() if e["kind"] == "useCase"}
+    assert shown == DRIVING_USE_CASES | MANAGING_USE_CASES

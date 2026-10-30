@@ -1,11 +1,12 @@
 # wipers
 
-Wiper and washer mechanism on the body, acting on the windshield.
+Wiper and washer mechanism on the body. Consumes WipeCommand from the body controller and provides WindshieldClear to the windshield.
 
 Part of `Car`.
 
 ## Relations
 
+- `bodyController` depends on this («Command»).
 - Depends on `body` («Mount»).
 - Depends on `windshield` («Clear»).
 - Satisfies `ForwardVisibility`.
@@ -13,9 +14,10 @@ Part of `Car`.
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `BodyView`
 
 ## Interfaces
 
-- Provider port `clearOut` : WindshieldClear, connected to the windshield.
+- Consumer port `wipeIn` : WipeCommand, connected from `bodyController`.
+- Provider port `clearOut` : WindshieldClear, connected to `windshield`.

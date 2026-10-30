@@ -1,18 +1,19 @@
 # wheelSet
 
-Mechanical road wheels. Implements the logical wheels.
+Mechanical road wheels with steering knuckles. Consume DirectionCommand from the drive computer.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `wheels`.
+- Implements `wheels`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Consumer ports `directionIn` : DirectionCommand and `brakeIn` : BrakeRequest.
+- Consumer port `directionCommandIn` : DirectionCommand, connected from `driveEcu`.

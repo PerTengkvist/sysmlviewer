@@ -12,5 +12,5 @@ Part of `Car`.
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `SkateboardView`

@@ -6,9 +6,10 @@ Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `suspension`.
+- Implements `suspension`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`

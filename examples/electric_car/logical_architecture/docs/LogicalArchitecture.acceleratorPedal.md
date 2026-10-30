@@ -1,19 +1,19 @@
 # acceleratorPedal
 
-Driver control for requested traction torque. Commands the engine (electric motor).
+Driver control for requested traction torque. Provides TorqueRequest to the drive controller.
 
 Part of `Car`.
 
 ## Relations
 
-- Depends on `engine` («Command»).
+- Depends on `driveController` («Command»).
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `DriverControlsView`
 
 ## Interfaces
 
-- Provider port `torqueOut` : TorqueRequest, connected to the engine.
+- Provider port `torqueOut` : TorqueRequest, connected to `driveController`.

@@ -1,19 +1,20 @@
 # entertainmentSystem
 
-Logical cabin audio and video. Draws energy from the battery and is available when the car is authorized.
+Logical cabin audio and video. Consumes EnergySupply from the battery.
 
 Part of `Car`.
 
 ## Relations
 
 - Depends on `battery` («Energy»).
+- Satisfies `CabinMedia`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `CabinComfortView`
 
 ## Interfaces
 
-- Consumer port `energyIn` : EnergySupply.
+- Consumer port `energyIn` : EnergySupply, connected from `battery`.

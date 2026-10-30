@@ -1,18 +1,19 @@
 # hvacAssembly
 
-Mechanical climate hardware: heater, compressor, fans and ducts. Implements the logical climate system together with the climate software.
+Mechanical climate hardware: heater, compressor, fans and ducts. Consumes EnergySupply.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `climateSystem`.
+- Implements `climateSystem`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Consumer port `energyIn` : EnergySupply.
+- Consumer port `energyIn` : EnergySupply, connected from `batteryEcu`.

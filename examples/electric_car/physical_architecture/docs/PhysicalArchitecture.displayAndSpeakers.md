@@ -1,18 +1,19 @@
 # displayAndSpeakers
 
-Mechanical and electronic cabin display and speakers. Implements the logical entertainment system together with the entertainment software.
+Mechanical and electronic cabin display and speakers. Consumes EnergySupply.
 
 Part of `VehiclePhysical`.
 
 ## Relations
 
-- Implements logical `entertainmentSystem`.
+- Implements `entertainmentSystem`.
 
 ## Diagrams
 
 - `PhysicalView`
+- `PhysicalDependenciesView`
 - `PhysicalTree`
 
 ## Interfaces
 
-- Consumer port `energyIn` : EnergySupply.
+- Consumer port `energyIn` : EnergySupply, connected from `batteryEcu`.

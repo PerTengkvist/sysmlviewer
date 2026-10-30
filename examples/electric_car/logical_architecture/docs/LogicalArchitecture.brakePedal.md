@@ -1,20 +1,20 @@
 # brakePedal
 
-Driver control for deceleration. Commands the wheels through friction braking and regeneration.
+Driver control for deceleration. Provides BrakeRequest to the drive controller.
 
 Part of `Car`.
 
 ## Relations
 
-- Depends on `wheels` («Command»).
+- Depends on `driveController` («Command»).
 - Satisfies `BrakingDistance`.
 
 ## Diagrams
 
 - `CarLogicalView`
+- `CarLogicalDependenciesView`
 - `CarLogicalTree`
-- `DriverControlsView`
 
 ## Interfaces
 
-- Provider port `brakeOut` : BrakeRequest, connected to the wheels.
+- Provider port `brakeOut` : BrakeRequest, connected to `driveController`.

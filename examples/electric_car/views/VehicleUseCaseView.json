@@ -5,15 +5,14 @@
   "structureNotation": "sysmlv2",
   "nodes": {
     "UseCases::vehicle": {
-      "x": 752.0,
-      "y": 48.0,
+      "x": 48.0,
+      "y": 1478.0,
       "width": 1038.0,
-      "height": 1070.0,
-      "editLocked": true
+      "height": 1070.0
     },
-    "UseCases::Brake": {
-      "x": 870.0,
-      "y": 176.94239721074774,
+    "UseCases::Driving::Brake": {
+      "x": 419.3636754877823,
+      "y": 198.84458235247394,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -37,26 +36,23 @@
           "side": "left",
           "offset": 0.4212147394816081
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::CleanWindshield::Driver": {
+    "UseCases::Driving::CleanWindshield::Driver": {
       "x": -50.198774789737755,
       "y": 203.50563690594333,
       "width": 88.0,
-      "height": 108.0,
-      "editLocked": true
+      "height": 108.0
     },
-    "UseCases::PlayMedia::Passenger": {
+    "UseCases::Managing::PlayMedia::Passenger": {
       "x": 48.0,
       "y": 48.0,
       "width": 88.0,
-      "height": 108.0,
-      "editLocked": true
+      "height": 108.0
     },
-    "UseCases::Lock": {
-      "x": 409.3467054766734,
-      "y": 707.5060927346459,
+    "UseCases::Managing::Lock": {
+      "x": 384.0,
+      "y": 480.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -80,19 +76,17 @@
           "side": "left",
           "offset": 0.6439560928623881
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::TurnRight": {
-      "x": 687.0466965026762,
-      "y": 229.93755617848274,
+    "UseCases::Driving::TurnRight": {
+      "x": 384.0,
+      "y": 768.0,
       "width": 168.0,
-      "height": 72.0,
-      "editLocked": true
+      "height": 72.0
     },
-    "UseCases::Unlock": {
-      "x": 148.62094439299722,
-      "y": 920.5062399463186,
+    "UseCases::Managing::Unlock": {
+      "x": 48.0,
+      "y": 1056.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -116,19 +110,17 @@
           "side": "left",
           "offset": 0.29155392116970485
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::ChangeGear": {
-      "x": 348.6655176443005,
-      "y": 481.46635596190583,
+    "UseCases::Driving::ChangeGear": {
+      "x": 384.0,
+      "y": 336.0,
       "width": 168.0,
-      "height": 72.0,
-      "editLocked": true
+      "height": 72.0
     },
-    "UseCases::PlayMedia": {
-      "x": 42.16928641223171,
-      "y": 985.3919423046584,
+    "UseCases::Managing::PlayMedia": {
+      "x": 48.0,
+      "y": 912.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -152,12 +144,11 @@
           "side": "left",
           "offset": 0.2973056369357639
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::Charge": {
-      "x": 338.6438421734031,
-      "y": 783.0587751050941,
+    "UseCases::Managing::Charge": {
+      "x": 48.0,
+      "y": 192.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -181,26 +172,23 @@
           "side": "left",
           "offset": 0.33046131478381496
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::TurnLeft::Driver": {
+    "UseCases::Driving::TurnLeft::Driver": {
       "x": 224.0,
       "y": 48.0,
       "width": 88.0,
-      "height": 108.0,
-      "editLocked": true
+      "height": 108.0
     },
-    "UseCases::Park": {
-      "x": 404.4898946892888,
-      "y": 565.5777916436516,
+    "UseCases::Driving::Park": {
+      "x": 48.0,
+      "y": 768.0,
       "width": 168.0,
-      "height": 72.0,
-      "editLocked": true
+      "height": 72.0
     },
-    "UseCases::CleanWindshield": {
-      "x": 615.4215808334163,
-      "y": 68.41754120237647,
+    "UseCases::Driving::CleanWindshield": {
+      "x": 48.0,
+      "y": 336.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -224,12 +212,11 @@
           "side": "left",
           "offset": 0.646720433003256
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::EmergencyStop": {
-      "x": 864.4175535637421,
-      "y": 54.39851923935791,
+    "UseCases::Driving::EmergencyStop": {
+      "x": 48.0,
+      "y": 624.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -253,19 +240,18 @@
           "side": "bottom",
           "offset": 0.098877385528467
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::AdjustClimate": {
-      "x": 253.7124676346666,
-      "y": 858.3530047967243,
+    "UseCases::Managing::AdjustClimate": {
+      "x": 54.84458235247402,
+      "y": 53.703818627061764,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
         {
           "id": "a-left",
           "side": "left",
-          "offset": 0.5
+          "offset": 0.7230457699654247
         },
         {
           "id": "a-right",
@@ -280,14 +266,13 @@
         {
           "id": "a-bottom",
           "side": "left",
-          "offset": 0.3078695933024089
+          "offset": 0.5413005633598491
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::Drive": {
-      "x": 685.6338467296462,
-      "y": 468.78848467719,
+    "UseCases::Driving::Drive": {
+      "x": 48.0,
+      "y": 480.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -311,12 +296,11 @@
           "side": "bottom",
           "offset": 0.5
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::Accelerate": {
-      "x": 517.1322558460759,
-      "y": 291.7598069035418,
+    "UseCases::Driving::Accelerate": {
+      "x": 384.0,
+      "y": 48.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -340,12 +324,11 @@
           "side": "bottom",
           "offset": 0.7516927758863985
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::TurnLeft": {
-      "x": 345.34260529869675,
-      "y": 346.8128094313032,
+    "UseCases::Driving::TurnLeft": {
+      "x": 384.0,
+      "y": 624.0,
       "width": 168.0,
       "height": 72.0,
       "anchors": [
@@ -369,166 +352,131 @@
           "side": "bottom",
           "offset": 0.5
         }
-      ],
-      "editLocked": true
+      ]
     },
-    "UseCases::PlayMedia::Driver": {
+    "UseCases::Managing::PlayMedia::Driver": {
       "x": 224.0,
       "y": 48.0,
       "width": 88.0,
-      "height": 108.0,
-      "editLocked": true
+      "height": 108.0
     },
-    "UseCases::AdjustClimate::Passenger": {
+    "UseCases::Managing::AdjustClimate::Passenger": {
       "x": 254.8921161825726,
       "y": 776.4688796680498,
       "width": 88.0,
-      "height": 108.0,
-      "editLocked": true
+      "height": 108.0
     },
-    "UseCases::Charge::Passenger": {
+    "UseCases::Managing::Charge::Passenger": {
       "x": 10.0,
       "y": 786.0,
       "width": 200.0,
-      "height": 120.0,
-      "editLocked": true
+      "height": 120.0
     },
-    "UseCases::Unlock::Passenger": {
+    "UseCases::Managing::Unlock::Passenger": {
       "x": 324.8297071365897,
       "y": 987.1718618661755,
       "width": 200.0,
-      "height": 120.0,
-      "editLocked": true
+      "height": 120.0
     },
-    "UseCases::Unlock::Driver": {
+    "UseCases::Managing::Unlock::Driver": {
       "x": 343.72290795354843,
       "y": 328.87236737671367,
       "width": 200.0,
-      "height": 120.0,
-      "editLocked": true
+      "height": 120.0
     },
-    "UseCases": {
-      "editLocked": true
-    },
-    "UseCases::AdjustClimate::Driver": {
-      "editLocked": true
-    },
-    "UseCases::Drive::Driver": {
-      "editLocked": true
-    },
-    "UseCases::ChangeGear::Driver": {
-      "editLocked": true
-    },
-    "UseCases::Brake::Driver": {
-      "editLocked": true
-    },
-    "UseCases::Lock::Passenger": {
-      "x": 450.8905095881476,
-      "y": 892.6144852627888,
+    "UseCases": {},
+    "UseCases::Managing::AdjustClimate::Driver": {
+      "x": -432.0,
+      "y": 1756.0,
       "width": 200.0,
-      "height": 120.0,
-      "editLocked": true
+      "height": 120.0
     },
-    "UseCases::Park::Driver": {
-      "editLocked": true
+    "UseCases::Driving::Drive::Driver": {},
+    "UseCases::Driving::ChangeGear::Driver": {},
+    "UseCases::Driving::Brake::Driver": {},
+    "UseCases::Managing::Lock::Passenger": {
+      "x": -398.86774270888884,
+      "y": 2231.9103124406083,
+      "width": 200.0,
+      "height": 120.0
     },
-    "UseCases::TurnRight::Driver": {
-      "editLocked": true
-    },
-    "UseCases::Lock::Driver": {
-      "editLocked": true
-    },
-    "UseCases::EmergencyStop::Driver": {
-      "editLocked": true
-    },
-    "UseCases::Charge::Driver": {
+    "UseCases::Driving::Park::Driver": {},
+    "UseCases::Driving::TurnRight::Driver": {},
+    "UseCases::Managing::Lock::Driver": {},
+    "UseCases::Driving::EmergencyStop::Driver": {},
+    "UseCases::Managing::Charge::Driver": {
       "x": 450.6771685902791,
       "y": 229.84345578836658,
       "width": 200.0,
-      "height": 120.0,
-      "editLocked": true
+      "height": 120.0
     },
-    "UseCases::ElectricCar": {
-      "editLocked": true
-    },
-    "UseCases::Accelerate::Driver": {
-      "editLocked": true
-    }
+    "UseCases::ElectricCar": {},
+    "UseCases::Driving::Accelerate::Driver": {}
   },
   "edges": {
-    "UseCases::Drive::include_TurnRight": {
+    "UseCases::Driving::Drive::include_TurnRight": {
       "routing": "direct",
       "sourceSide": "top",
       "sourceOffset": 0.508664017712451,
       "targetSide": "bottom",
       "targetOffset": 0.48567850071100405,
-      "sourceAnchorId": "a-right",
-      "editLocked": true
+      "sourceAnchorId": "a-right"
     },
-    "UseCases::Drive::include_TurnLeft": {
+    "UseCases::Driving::Drive::include_TurnLeft": {
       "routing": "direct",
       "sourceSide": "top",
       "sourceOffset": 0.5,
       "targetSide": "right",
       "targetOffset": 0.7461338807477443,
-      "targetAnchorId": "a-right",
-      "editLocked": true
+      "targetAnchorId": "a-right"
     },
-    "use:UseCases::Charge::Passenger->UseCases::PlayMedia": {
+    "use:UseCases::Managing::Charge::Passenger->UseCases::Managing::PlayMedia": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.2973056369357639,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::Charge::Passenger->UseCases::Unlock": {
+    "use:UseCases::Managing::Charge::Passenger->UseCases::Managing::Unlock": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.29155392116970485,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::Charge::Passenger->UseCases::AdjustClimate": {
+    "use:UseCases::Managing::Charge::Passenger->UseCases::Managing::AdjustClimate": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.3078695933024089,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::Charge::Passenger->UseCases::Charge": {
+    "use:UseCases::Managing::Charge::Passenger->UseCases::Managing::Charge": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.33046131478381496,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::Charge::Passenger->UseCases::Lock": {
+    "use:UseCases::Managing::Charge::Passenger->UseCases::Managing::Lock": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.6439560928623881,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::PlayMedia::Driver->UseCases::Lock": {
+    "use:UseCases::Managing::PlayMedia::Driver->UseCases::Managing::Lock": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.17138152352554098,
-      "targetAnchorId": "a-left",
-      "editLocked": true
+      "targetAnchorId": "a-left"
     },
-    "UseCases::Drive::include_Accelerate": {
+    "UseCases::Driving::Drive::include_Accelerate": {
       "routing": "direct",
       "targetSide": "bottom",
       "targetOffset": 0.7516927758863985,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::Unlock::Driver->UseCases::CleanWindshield": {
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::CleanWindshield": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.646720433003256,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
     "UseCases::dep1": {
       "routing": "direct",
@@ -536,37 +484,42 @@
       "sourceOffset": 0.098877385528467,
       "targetSide": "top",
       "targetOffset": 0.5,
-      "sourceAnchorId": "a-bottom",
-      "editLocked": true
+      "sourceAnchorId": "a-bottom"
     },
-    "use:UseCases::Unlock::Driver->UseCases::EmergencyStop": {
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::EmergencyStop": {
       "routing": "direct",
       "targetSide": "bottom",
       "targetOffset": 0.098877385528467,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "use:UseCases::Unlock::Driver->UseCases::Brake": {
+    "use:UseCases::Managing::Unlock::Driver->UseCases::Driving::Brake": {
       "routing": "direct",
       "targetSide": "left",
       "targetOffset": 0.4212147394816081,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "UseCases::Drive::include_Brake": {
+    "UseCases::Driving::Drive::include_Brake": {
       "routing": "direct",
       "sourceSide": "top",
       "sourceOffset": 0.5,
       "targetSide": "left",
       "targetOffset": 0.4212147394816081,
-      "targetAnchorId": "a-bottom",
-      "editLocked": true
+      "targetAnchorId": "a-bottom"
     },
-    "UseCases::Park::include_Lock": {
-      "editLocked": true
+    "UseCases::Driving::Park::include_Lock": {},
+    "UseCases::Driving::Drive::include_ChangeGear": {},
+    "use:UseCases::Managing::Lock::Passenger->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.7230457699654247,
+      "targetAnchorId": "a-left"
     },
-    "UseCases::Drive::include_ChangeGear": {
-      "editLocked": true
+    "use:UseCases::Managing::AdjustClimate::Driver->UseCases::Managing::AdjustClimate": {
+      "routing": "direct",
+      "targetSide": "left",
+      "targetOffset": 0.5413005633598491,
+      "targetAnchorId": "a-bottom"
     }
-  }
+  },
+  "hierarchicalLevelsOverride": 3
 }
