@@ -40,8 +40,12 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 - **Right sidebar**: the `›` button hides Details/Docs so the canvas gets the
   full width; the thin strip on the right shows it again. The choice and the
   previous width persist in `localStorage` (`sysmlviewer.settings`).
-- **Double-click** on a part, interface or package node opens a dialog with
-  Details on the left and Documentation on the right. Drag the bottom-right
+- **Double-click** on a part, interface, package or requirement opens a dialog
+  with Details on the left and Documentation on the right. For requirements
+  this works on diagram nodes, on rows in the requirement table and on rows
+  in the model tree; the title shows the requirement header (`R-01 Name` by
+  default) and the documentation pane falls back to the `description`
+  attribute when no `.md` exists. Drag the bottom-right
   corner to resize (up to the window), use the maximize button for the full
   window, and Esc or × to close. Size is remembered in
   `sysmlviewer.elementDialog`. Double-click on a use case still opens the
