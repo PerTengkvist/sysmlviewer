@@ -9,6 +9,10 @@ describe('nodeDoubleClickAction', () => {
     expect(nodeDoubleClickAction('view')).toBe('element-dialog')
   })
 
+  it('opens the element dialog for requirements', () => {
+    expect(nodeDoubleClickAction('requirement')).toBe('element-dialog')
+  })
+
   it('keeps the use-case flow dialog', () => {
     expect(nodeDoubleClickAction('useCase')).toBe('use-case-flow')
   })
@@ -16,7 +20,6 @@ describe('nodeDoubleClickAction', () => {
   it('does nothing for other kinds', () => {
     expect(nodeDoubleClickAction('port')).toBeNull()
     expect(nodeDoubleClickAction('attribute')).toBeNull()
-    expect(nodeDoubleClickAction('requirement')).toBeNull()
     expect(nodeDoubleClickAction(undefined)).toBeNull()
   })
 })
