@@ -102,6 +102,24 @@ describe('buildSequenceGraph', () => {
     expect(nodes[0].style?.height).toBe(nodes[1].style?.height)
   })
 
+  it('marks reply messages dashed and leaves requests solid', () => {
+    const fixture = seqFixture()
+    fixture.semantic['P::I::msg2'] = {
+      ...fixture.semantic['P::I::msg1'],
+      id: 'P::I::msg2',
+      name: 'pong',
+      typeRef: 'pong',
+      sourceId: 'P::I::B',
+      targetId: 'P::I::A',
+      metadataKeywords: ['reply'],
+    }
+    const { edges } = buildSequenceGraph(fixture, 'light')
+    expect(edges).toHaveLength(2)
+    expect(edges[0].style?.strokeDasharray).toBeUndefined()
+    expect(edges[1].style?.strokeDasharray).toBe('8 4')
+    expect((edges[1].data as { isReply?: boolean }).isReply).toBe(true)
+  })
+
   it('ignores merge-index positions far off to the right', () => {
     const fixture = seqFixture()
     fixture.visualization.nodes = {

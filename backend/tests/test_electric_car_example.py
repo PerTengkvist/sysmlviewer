@@ -304,11 +304,10 @@ def test_shipped_views_render_requested_diagrams():
 
     unlock = service.get_view(project.id, "Dynamics::UnlockSequenceView")
     assert unlock["diagramMode"] == "sequence"
-    # Subset parser keeps the first `message`; `then message` chains are not expanded.
     unlock_msgs = [
         e for e in unlock["semantic"].values() if e["kind"] == "message"
     ]
-    assert len(unlock_msgs) >= 1
+    assert len(unlock_msgs) == 4
     assert any(e["name"] == "presentCredential" for e in unlock_msgs)
 
     logical = service.get_view(

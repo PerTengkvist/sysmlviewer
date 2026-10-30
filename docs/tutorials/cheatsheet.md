@@ -124,3 +124,22 @@ use case def Drive {
   include use case Accelerate;
 }
 ```
+
+## Sequences
+
+```sysml
+interaction def LockSequence {
+  lifeline Driver;
+  lifeline bodyController;
+  lifeline locks;
+  message requestLock from Driver to bodyController;
+  then message engageLatches from bodyController to locks;
+  then #reply message indicateLocked from locks to Driver;
+}
+
+view def LockSequenceView : SequenceView {
+  expose LockSequence;
+}
+```
+
+`then` chains messages in order. `#reply` marks an acknowledgement, drawn dashed.

@@ -107,7 +107,10 @@
         "Dynamics::UnlockSequence::KeyFob",
         "Dynamics::UnlockSequence::AccessController",
         "Dynamics::UnlockSequence::DoorLocks",
-        "Dynamics::UnlockSequence::msg1"
+        "Dynamics::UnlockSequence::msg1",
+        "Dynamics::UnlockSequence::msg2",
+        "Dynamics::UnlockSequence::msg3",
+        "Dynamics::UnlockSequence::msg4"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -211,6 +214,66 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
+    "Dynamics::UnlockSequence::msg2": {
+      "id": "Dynamics::UnlockSequence::msg2",
+      "kind": "message",
+      "name": "verifyCredential",
+      "parentId": "Dynamics::UnlockSequence",
+      "typeRef": "verifyCredential",
+      "sourceId": "Dynamics::UnlockSequence::KeyFob",
+      "targetId": "Dynamics::UnlockSequence::AccessController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::UnlockSequence::msg3": {
+      "id": "Dynamics::UnlockSequence::msg3",
+      "kind": "message",
+      "name": "releaseLatches",
+      "parentId": "Dynamics::UnlockSequence",
+      "typeRef": "releaseLatches",
+      "sourceId": "Dynamics::UnlockSequence::AccessController",
+      "targetId": "Dynamics::UnlockSequence::DoorLocks",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::UnlockSequence::msg4": {
+      "id": "Dynamics::UnlockSequence::msg4",
+      "kind": "message",
+      "name": "confirmUnlocked",
+      "parentId": "Dynamics::UnlockSequence",
+      "typeRef": "confirmUnlocked",
+      "sourceId": "Dynamics::UnlockSequence::DoorLocks",
+      "targetId": "Dynamics::UnlockSequence::Driver",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
     "Dynamics::LockSequence": {
       "id": "Dynamics::LockSequence",
       "kind": "interaction",
@@ -232,7 +295,9 @@
         "Dynamics::LockSequence::Driver",
         "Dynamics::LockSequence::AccessController",
         "Dynamics::LockSequence::DoorLocks",
-        "Dynamics::LockSequence::msg2"
+        "Dynamics::LockSequence::msg5",
+        "Dynamics::LockSequence::msg6",
+        "Dynamics::LockSequence::msg7"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -296,14 +361,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::LockSequence::msg2": {
-      "id": "Dynamics::LockSequence::msg2",
+    "Dynamics::LockSequence::msg5": {
+      "id": "Dynamics::LockSequence::msg5",
       "kind": "message",
       "name": "requestLock",
       "parentId": "Dynamics::LockSequence",
       "typeRef": "requestLock",
       "sourceId": "Dynamics::LockSequence::Driver",
       "targetId": "Dynamics::LockSequence::AccessController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::LockSequence::msg6": {
+      "id": "Dynamics::LockSequence::msg6",
+      "kind": "message",
+      "name": "engageLatches",
+      "parentId": "Dynamics::LockSequence",
+      "typeRef": "engageLatches",
+      "sourceId": "Dynamics::LockSequence::AccessController",
+      "targetId": "Dynamics::LockSequence::DoorLocks",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::LockSequence::msg7": {
+      "id": "Dynamics::LockSequence::msg7",
+      "kind": "message",
+      "name": "confirmLocked",
+      "parentId": "Dynamics::LockSequence",
+      "typeRef": "confirmLocked",
+      "sourceId": "Dynamics::LockSequence::DoorLocks",
+      "targetId": "Dynamics::LockSequence::Driver",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -338,7 +443,9 @@
         "Dynamics::ChangeGearSequence::GearStick",
         "Dynamics::ChangeGearSequence::ManeuvrabilityController",
         "Dynamics::ChangeGearSequence::TractionMotor",
-        "Dynamics::ChangeGearSequence::msg3"
+        "Dynamics::ChangeGearSequence::msg8",
+        "Dynamics::ChangeGearSequence::msg9",
+        "Dynamics::ChangeGearSequence::msg10"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -422,14 +529,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::ChangeGearSequence::msg3": {
-      "id": "Dynamics::ChangeGearSequence::msg3",
+    "Dynamics::ChangeGearSequence::msg8": {
+      "id": "Dynamics::ChangeGearSequence::msg8",
       "kind": "message",
       "name": "selectDrive",
       "parentId": "Dynamics::ChangeGearSequence",
       "typeRef": "selectDrive",
       "sourceId": "Dynamics::ChangeGearSequence::Driver",
       "targetId": "Dynamics::ChangeGearSequence::GearStick",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ChangeGearSequence::msg9": {
+      "id": "Dynamics::ChangeGearSequence::msg9",
+      "kind": "message",
+      "name": "modeRequest",
+      "parentId": "Dynamics::ChangeGearSequence",
+      "typeRef": "modeRequest",
+      "sourceId": "Dynamics::ChangeGearSequence::GearStick",
+      "targetId": "Dynamics::ChangeGearSequence::ManeuvrabilityController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ChangeGearSequence::msg10": {
+      "id": "Dynamics::ChangeGearSequence::msg10",
+      "kind": "message",
+      "name": "setMode",
+      "parentId": "Dynamics::ChangeGearSequence",
+      "typeRef": "setMode",
+      "sourceId": "Dynamics::ChangeGearSequence::ManeuvrabilityController",
+      "targetId": "Dynamics::ChangeGearSequence::TractionMotor",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -464,7 +611,9 @@
         "Dynamics::TurnLeftSequence::SteeringWheel",
         "Dynamics::TurnLeftSequence::ManeuvrabilityController",
         "Dynamics::TurnLeftSequence::FrontWheels",
-        "Dynamics::TurnLeftSequence::msg4"
+        "Dynamics::TurnLeftSequence::msg11",
+        "Dynamics::TurnLeftSequence::msg12",
+        "Dynamics::TurnLeftSequence::msg13"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -548,14 +697,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::TurnLeftSequence::msg4": {
-      "id": "Dynamics::TurnLeftSequence::msg4",
+    "Dynamics::TurnLeftSequence::msg11": {
+      "id": "Dynamics::TurnLeftSequence::msg11",
       "kind": "message",
       "name": "turnLeft",
       "parentId": "Dynamics::TurnLeftSequence",
       "typeRef": "turnLeft",
       "sourceId": "Dynamics::TurnLeftSequence::Driver",
       "targetId": "Dynamics::TurnLeftSequence::SteeringWheel",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::TurnLeftSequence::msg12": {
+      "id": "Dynamics::TurnLeftSequence::msg12",
+      "kind": "message",
+      "name": "steeringAngle",
+      "parentId": "Dynamics::TurnLeftSequence",
+      "typeRef": "steeringAngle",
+      "sourceId": "Dynamics::TurnLeftSequence::SteeringWheel",
+      "targetId": "Dynamics::TurnLeftSequence::ManeuvrabilityController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::TurnLeftSequence::msg13": {
+      "id": "Dynamics::TurnLeftSequence::msg13",
+      "kind": "message",
+      "name": "applyAngle",
+      "parentId": "Dynamics::TurnLeftSequence",
+      "typeRef": "applyAngle",
+      "sourceId": "Dynamics::TurnLeftSequence::ManeuvrabilityController",
+      "targetId": "Dynamics::TurnLeftSequence::FrontWheels",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -590,7 +779,9 @@
         "Dynamics::TurnRightSequence::SteeringWheel",
         "Dynamics::TurnRightSequence::ManeuvrabilityController",
         "Dynamics::TurnRightSequence::FrontWheels",
-        "Dynamics::TurnRightSequence::msg5"
+        "Dynamics::TurnRightSequence::msg14",
+        "Dynamics::TurnRightSequence::msg15",
+        "Dynamics::TurnRightSequence::msg16"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -674,14 +865,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::TurnRightSequence::msg5": {
-      "id": "Dynamics::TurnRightSequence::msg5",
+    "Dynamics::TurnRightSequence::msg14": {
+      "id": "Dynamics::TurnRightSequence::msg14",
       "kind": "message",
       "name": "turnRight",
       "parentId": "Dynamics::TurnRightSequence",
       "typeRef": "turnRight",
       "sourceId": "Dynamics::TurnRightSequence::Driver",
       "targetId": "Dynamics::TurnRightSequence::SteeringWheel",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::TurnRightSequence::msg15": {
+      "id": "Dynamics::TurnRightSequence::msg15",
+      "kind": "message",
+      "name": "steeringAngle",
+      "parentId": "Dynamics::TurnRightSequence",
+      "typeRef": "steeringAngle",
+      "sourceId": "Dynamics::TurnRightSequence::SteeringWheel",
+      "targetId": "Dynamics::TurnRightSequence::ManeuvrabilityController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::TurnRightSequence::msg16": {
+      "id": "Dynamics::TurnRightSequence::msg16",
+      "kind": "message",
+      "name": "applyAngle",
+      "parentId": "Dynamics::TurnRightSequence",
+      "typeRef": "applyAngle",
+      "sourceId": "Dynamics::TurnRightSequence::ManeuvrabilityController",
+      "targetId": "Dynamics::TurnRightSequence::FrontWheels",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -717,7 +948,10 @@
         "Dynamics::BrakeSequence::SpeedController",
         "Dynamics::BrakeSequence::TractionMotor",
         "Dynamics::BrakeSequence::Wheels",
-        "Dynamics::BrakeSequence::msg6"
+        "Dynamics::BrakeSequence::msg17",
+        "Dynamics::BrakeSequence::msg18",
+        "Dynamics::BrakeSequence::msg19",
+        "Dynamics::BrakeSequence::msg20"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -821,14 +1055,74 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::BrakeSequence::msg6": {
-      "id": "Dynamics::BrakeSequence::msg6",
+    "Dynamics::BrakeSequence::msg17": {
+      "id": "Dynamics::BrakeSequence::msg17",
       "kind": "message",
       "name": "pressPedal",
       "parentId": "Dynamics::BrakeSequence",
       "typeRef": "pressPedal",
       "sourceId": "Dynamics::BrakeSequence::Driver",
       "targetId": "Dynamics::BrakeSequence::BrakePedal",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::BrakeSequence::msg18": {
+      "id": "Dynamics::BrakeSequence::msg18",
+      "kind": "message",
+      "name": "requestDeceleration",
+      "parentId": "Dynamics::BrakeSequence",
+      "typeRef": "requestDeceleration",
+      "sourceId": "Dynamics::BrakeSequence::BrakePedal",
+      "targetId": "Dynamics::BrakeSequence::SpeedController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::BrakeSequence::msg19": {
+      "id": "Dynamics::BrakeSequence::msg19",
+      "kind": "message",
+      "name": "regenerativeTorque",
+      "parentId": "Dynamics::BrakeSequence",
+      "typeRef": "regenerativeTorque",
+      "sourceId": "Dynamics::BrakeSequence::SpeedController",
+      "targetId": "Dynamics::BrakeSequence::TractionMotor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::BrakeSequence::msg20": {
+      "id": "Dynamics::BrakeSequence::msg20",
+      "kind": "message",
+      "name": "slowWheels",
+      "parentId": "Dynamics::BrakeSequence",
+      "typeRef": "slowWheels",
+      "sourceId": "Dynamics::BrakeSequence::TractionMotor",
+      "targetId": "Dynamics::BrakeSequence::Wheels",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -864,7 +1158,10 @@
         "Dynamics::AccelerateSequence::SpeedController",
         "Dynamics::AccelerateSequence::Battery",
         "Dynamics::AccelerateSequence::TractionMotor",
-        "Dynamics::AccelerateSequence::msg7"
+        "Dynamics::AccelerateSequence::msg21",
+        "Dynamics::AccelerateSequence::msg22",
+        "Dynamics::AccelerateSequence::msg23",
+        "Dynamics::AccelerateSequence::msg24"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -968,14 +1265,74 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::AccelerateSequence::msg7": {
-      "id": "Dynamics::AccelerateSequence::msg7",
+    "Dynamics::AccelerateSequence::msg21": {
+      "id": "Dynamics::AccelerateSequence::msg21",
       "kind": "message",
       "name": "pressPedal",
       "parentId": "Dynamics::AccelerateSequence",
       "typeRef": "pressPedal",
       "sourceId": "Dynamics::AccelerateSequence::Driver",
       "targetId": "Dynamics::AccelerateSequence::AcceleratorPedal",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::AccelerateSequence::msg22": {
+      "id": "Dynamics::AccelerateSequence::msg22",
+      "kind": "message",
+      "name": "requestTorque",
+      "parentId": "Dynamics::AccelerateSequence",
+      "typeRef": "requestTorque",
+      "sourceId": "Dynamics::AccelerateSequence::AcceleratorPedal",
+      "targetId": "Dynamics::AccelerateSequence::SpeedController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::AccelerateSequence::msg23": {
+      "id": "Dynamics::AccelerateSequence::msg23",
+      "kind": "message",
+      "name": "dischargePower",
+      "parentId": "Dynamics::AccelerateSequence",
+      "typeRef": "dischargePower",
+      "sourceId": "Dynamics::AccelerateSequence::SpeedController",
+      "targetId": "Dynamics::AccelerateSequence::Battery",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::AccelerateSequence::msg24": {
+      "id": "Dynamics::AccelerateSequence::msg24",
+      "kind": "message",
+      "name": "driveTorque",
+      "parentId": "Dynamics::AccelerateSequence",
+      "typeRef": "driveTorque",
+      "sourceId": "Dynamics::AccelerateSequence::Battery",
+      "targetId": "Dynamics::AccelerateSequence::TractionMotor",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -1010,7 +1367,9 @@
         "Dynamics::EmergencyStopSequence::BrakePedal",
         "Dynamics::EmergencyStopSequence::SpeedController",
         "Dynamics::EmergencyStopSequence::TractionMotor",
-        "Dynamics::EmergencyStopSequence::msg8"
+        "Dynamics::EmergencyStopSequence::msg25",
+        "Dynamics::EmergencyStopSequence::msg26",
+        "Dynamics::EmergencyStopSequence::msg27"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -1094,14 +1453,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::EmergencyStopSequence::msg8": {
-      "id": "Dynamics::EmergencyStopSequence::msg8",
+    "Dynamics::EmergencyStopSequence::msg25": {
+      "id": "Dynamics::EmergencyStopSequence::msg25",
       "kind": "message",
       "name": "brakeHard",
       "parentId": "Dynamics::EmergencyStopSequence",
       "typeRef": "brakeHard",
       "sourceId": "Dynamics::EmergencyStopSequence::Driver",
       "targetId": "Dynamics::EmergencyStopSequence::BrakePedal",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::EmergencyStopSequence::msg26": {
+      "id": "Dynamics::EmergencyStopSequence::msg26",
+      "kind": "message",
+      "name": "maximumDeceleration",
+      "parentId": "Dynamics::EmergencyStopSequence",
+      "typeRef": "maximumDeceleration",
+      "sourceId": "Dynamics::EmergencyStopSequence::BrakePedal",
+      "targetId": "Dynamics::EmergencyStopSequence::SpeedController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::EmergencyStopSequence::msg27": {
+      "id": "Dynamics::EmergencyStopSequence::msg27",
+      "kind": "message",
+      "name": "fullRegenAndFriction",
+      "parentId": "Dynamics::EmergencyStopSequence",
+      "typeRef": "fullRegenAndFriction",
+      "sourceId": "Dynamics::EmergencyStopSequence::SpeedController",
+      "targetId": "Dynamics::EmergencyStopSequence::TractionMotor",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -1136,7 +1535,10 @@
         "Dynamics::ChargeSequence::ChargeInlet",
         "Dynamics::ChargeSequence::BatteryController",
         "Dynamics::ChargeSequence::Battery",
-        "Dynamics::ChargeSequence::msg9"
+        "Dynamics::ChargeSequence::msg28",
+        "Dynamics::ChargeSequence::msg29",
+        "Dynamics::ChargeSequence::msg30",
+        "Dynamics::ChargeSequence::msg31"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -1220,14 +1622,74 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::ChargeSequence::msg9": {
-      "id": "Dynamics::ChargeSequence::msg9",
+    "Dynamics::ChargeSequence::msg28": {
+      "id": "Dynamics::ChargeSequence::msg28",
       "kind": "message",
       "name": "connectPlug",
       "parentId": "Dynamics::ChargeSequence",
       "typeRef": "connectPlug",
       "sourceId": "Dynamics::ChargeSequence::Driver",
       "targetId": "Dynamics::ChargeSequence::ChargeInlet",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ChargeSequence::msg29": {
+      "id": "Dynamics::ChargeSequence::msg29",
+      "kind": "message",
+      "name": "startSession",
+      "parentId": "Dynamics::ChargeSequence",
+      "typeRef": "startSession",
+      "sourceId": "Dynamics::ChargeSequence::ChargeInlet",
+      "targetId": "Dynamics::ChargeSequence::BatteryController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ChargeSequence::msg30": {
+      "id": "Dynamics::ChargeSequence::msg30",
+      "kind": "message",
+      "name": "storeEnergy",
+      "parentId": "Dynamics::ChargeSequence",
+      "typeRef": "storeEnergy",
+      "sourceId": "Dynamics::ChargeSequence::BatteryController",
+      "targetId": "Dynamics::ChargeSequence::Battery",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ChargeSequence::msg31": {
+      "id": "Dynamics::ChargeSequence::msg31",
+      "kind": "message",
+      "name": "reportStateOfCharge",
+      "parentId": "Dynamics::ChargeSequence",
+      "typeRef": "reportStateOfCharge",
+      "sourceId": "Dynamics::ChargeSequence::Battery",
+      "targetId": "Dynamics::ChargeSequence::Driver",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -1263,7 +1725,10 @@
         "Dynamics::ParkSequence::BrakePedal",
         "Dynamics::ParkSequence::AccessController",
         "Dynamics::ParkSequence::DoorLocks",
-        "Dynamics::ParkSequence::msg10"
+        "Dynamics::ParkSequence::msg32",
+        "Dynamics::ParkSequence::msg33",
+        "Dynamics::ParkSequence::msg34",
+        "Dynamics::ParkSequence::msg35"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -1367,14 +1832,74 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::ParkSequence::msg10": {
-      "id": "Dynamics::ParkSequence::msg10",
+    "Dynamics::ParkSequence::msg32": {
+      "id": "Dynamics::ParkSequence::msg32",
       "kind": "message",
       "name": "selectPark",
       "parentId": "Dynamics::ParkSequence",
       "typeRef": "selectPark",
       "sourceId": "Dynamics::ParkSequence::Driver",
       "targetId": "Dynamics::ParkSequence::GearStick",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ParkSequence::msg33": {
+      "id": "Dynamics::ParkSequence::msg33",
+      "kind": "message",
+      "name": "holdBrake",
+      "parentId": "Dynamics::ParkSequence",
+      "typeRef": "holdBrake",
+      "sourceId": "Dynamics::ParkSequence::Driver",
+      "targetId": "Dynamics::ParkSequence::BrakePedal",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ParkSequence::msg34": {
+      "id": "Dynamics::ParkSequence::msg34",
+      "kind": "message",
+      "name": "requestLock",
+      "parentId": "Dynamics::ParkSequence",
+      "typeRef": "requestLock",
+      "sourceId": "Dynamics::ParkSequence::Driver",
+      "targetId": "Dynamics::ParkSequence::AccessController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::ParkSequence::msg35": {
+      "id": "Dynamics::ParkSequence::msg35",
+      "kind": "message",
+      "name": "engageLatches",
+      "parentId": "Dynamics::ParkSequence",
+      "typeRef": "engageLatches",
+      "sourceId": "Dynamics::ParkSequence::AccessController",
+      "targetId": "Dynamics::ParkSequence::DoorLocks",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -1408,7 +1933,9 @@
         "Dynamics::AdjustClimateSequence::Driver",
         "Dynamics::AdjustClimateSequence::ClimateController",
         "Dynamics::AdjustClimateSequence::HvacUnit",
-        "Dynamics::AdjustClimateSequence::msg11"
+        "Dynamics::AdjustClimateSequence::msg36",
+        "Dynamics::AdjustClimateSequence::msg37",
+        "Dynamics::AdjustClimateSequence::msg38"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -1472,14 +1999,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::AdjustClimateSequence::msg11": {
-      "id": "Dynamics::AdjustClimateSequence::msg11",
+    "Dynamics::AdjustClimateSequence::msg36": {
+      "id": "Dynamics::AdjustClimateSequence::msg36",
       "kind": "message",
       "name": "setTemperature",
       "parentId": "Dynamics::AdjustClimateSequence",
       "typeRef": "setTemperature",
       "sourceId": "Dynamics::AdjustClimateSequence::Driver",
       "targetId": "Dynamics::AdjustClimateSequence::ClimateController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::AdjustClimateSequence::msg37": {
+      "id": "Dynamics::AdjustClimateSequence::msg37",
+      "kind": "message",
+      "name": "commandAirflow",
+      "parentId": "Dynamics::AdjustClimateSequence",
+      "typeRef": "commandAirflow",
+      "sourceId": "Dynamics::AdjustClimateSequence::ClimateController",
+      "targetId": "Dynamics::AdjustClimateSequence::HvacUnit",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::AdjustClimateSequence::msg38": {
+      "id": "Dynamics::AdjustClimateSequence::msg38",
+      "kind": "message",
+      "name": "supplyAir",
+      "parentId": "Dynamics::AdjustClimateSequence",
+      "typeRef": "supplyAir",
+      "sourceId": "Dynamics::AdjustClimateSequence::HvacUnit",
+      "targetId": "Dynamics::AdjustClimateSequence::Driver",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -1513,7 +2080,9 @@
         "Dynamics::PlayMediaSequence::Passenger",
         "Dynamics::PlayMediaSequence::EntertainmentController",
         "Dynamics::PlayMediaSequence::Display",
-        "Dynamics::PlayMediaSequence::msg12"
+        "Dynamics::PlayMediaSequence::msg39",
+        "Dynamics::PlayMediaSequence::msg40",
+        "Dynamics::PlayMediaSequence::msg41"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -1577,14 +2146,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::PlayMediaSequence::msg12": {
-      "id": "Dynamics::PlayMediaSequence::msg12",
+    "Dynamics::PlayMediaSequence::msg39": {
+      "id": "Dynamics::PlayMediaSequence::msg39",
       "kind": "message",
       "name": "selectTitle",
       "parentId": "Dynamics::PlayMediaSequence",
       "typeRef": "selectTitle",
       "sourceId": "Dynamics::PlayMediaSequence::Passenger",
       "targetId": "Dynamics::PlayMediaSequence::EntertainmentController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::PlayMediaSequence::msg40": {
+      "id": "Dynamics::PlayMediaSequence::msg40",
+      "kind": "message",
+      "name": "startPlayback",
+      "parentId": "Dynamics::PlayMediaSequence",
+      "typeRef": "startPlayback",
+      "sourceId": "Dynamics::PlayMediaSequence::EntertainmentController",
+      "targetId": "Dynamics::PlayMediaSequence::Display",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::PlayMediaSequence::msg41": {
+      "id": "Dynamics::PlayMediaSequence::msg41",
+      "kind": "message",
+      "name": "showNowPlaying",
+      "parentId": "Dynamics::PlayMediaSequence",
+      "typeRef": "showNowPlaying",
+      "sourceId": "Dynamics::PlayMediaSequence::Display",
+      "targetId": "Dynamics::PlayMediaSequence::Passenger",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -1618,7 +2227,9 @@
         "Dynamics::CleanWindshieldSequence::Driver",
         "Dynamics::CleanWindshieldSequence::WiperStalk",
         "Dynamics::CleanWindshieldSequence::WiperMechanism",
-        "Dynamics::CleanWindshieldSequence::msg13"
+        "Dynamics::CleanWindshieldSequence::msg42",
+        "Dynamics::CleanWindshieldSequence::msg43",
+        "Dynamics::CleanWindshieldSequence::msg44"
       ],
       "fileId": "dynamics/sequences.sysml"
     },
@@ -1682,14 +2293,54 @@
       "children": [],
       "fileId": "dynamics/sequences.sysml"
     },
-    "Dynamics::CleanWindshieldSequence::msg13": {
-      "id": "Dynamics::CleanWindshieldSequence::msg13",
+    "Dynamics::CleanWindshieldSequence::msg42": {
+      "id": "Dynamics::CleanWindshieldSequence::msg42",
       "kind": "message",
       "name": "requestWipe",
       "parentId": "Dynamics::CleanWindshieldSequence",
       "typeRef": "requestWipe",
       "sourceId": "Dynamics::CleanWindshieldSequence::Driver",
       "targetId": "Dynamics::CleanWindshieldSequence::WiperStalk",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::CleanWindshieldSequence::msg43": {
+      "id": "Dynamics::CleanWindshieldSequence::msg43",
+      "kind": "message",
+      "name": "commandSweep",
+      "parentId": "Dynamics::CleanWindshieldSequence",
+      "typeRef": "commandSweep",
+      "sourceId": "Dynamics::CleanWindshieldSequence::WiperStalk",
+      "targetId": "Dynamics::CleanWindshieldSequence::WiperMechanism",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "dynamics/sequences.sysml"
+    },
+    "Dynamics::CleanWindshieldSequence::msg44": {
+      "id": "Dynamics::CleanWindshieldSequence::msg44",
+      "kind": "message",
+      "name": "clearGlass",
+      "parentId": "Dynamics::CleanWindshieldSequence",
+      "typeRef": "clearGlass",
+      "sourceId": "Dynamics::CleanWindshieldSequence::WiperMechanism",
+      "targetId": "Dynamics::CleanWindshieldSequence::Driver",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -8801,7 +9452,7 @@
       "name": "satisfy_1",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::VehicleLength",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8821,7 +9472,7 @@
       "name": "satisfy_2",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::VehicleWidth",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8841,7 +9492,7 @@
       "name": "satisfy_3",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::VehicleHeight",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8861,7 +9512,7 @@
       "name": "satisfy_4",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::PassengerCapacity",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8881,7 +9532,7 @@
       "name": "satisfy_5",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::CargoVolume",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8901,7 +9552,7 @@
       "name": "satisfy_6",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::skateboard::battery",
+      "sourceId": "LogicalArchitecture::Car::battery",
       "targetId": "Requirements::Range",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8921,7 +9572,7 @@
       "name": "satisfy_7",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::skateboard::engine",
+      "sourceId": "LogicalArchitecture::Car::engine",
       "targetId": "Requirements::Acceleration",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8941,7 +9592,7 @@
       "name": "satisfy_8",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::skateboard::engine",
+      "sourceId": "LogicalArchitecture::Car::engine",
       "targetId": "Requirements::TopSpeed",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8961,7 +9612,7 @@
       "name": "satisfy_9",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::skateboard::battery",
+      "sourceId": "LogicalArchitecture::Car::battery",
       "targetId": "Requirements::ChargeTime",
       "exposeRef": null,
       "exposeRefs": [],
@@ -8981,7 +9632,7 @@
       "name": "satisfy_10",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::skateboard::chargeInlet",
+      "sourceId": "LogicalArchitecture::Car::chargeInlet",
       "targetId": "Requirements::ChargeTime",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9001,7 +9652,7 @@
       "name": "satisfy_11",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::driverControls::gearStick",
+      "sourceId": "LogicalArchitecture::Car::gearStick",
       "targetId": "Requirements::PropulsionModes",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9021,7 +9672,7 @@
       "name": "satisfy_12",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::CrashProtection",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9041,7 +9692,7 @@
       "name": "satisfy_13",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::PedestrianProtection",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9061,7 +9712,7 @@
       "name": "satisfy_14",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::bodyShell",
+      "sourceId": "LogicalArchitecture::Car::body",
       "targetId": "Requirements::OccupantRestraint",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9081,7 +9732,7 @@
       "name": "satisfy_15",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::driverControls::brakePedal",
+      "sourceId": "LogicalArchitecture::Car::brakePedal",
       "targetId": "Requirements::BrakingDistance",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9101,7 +9752,7 @@
       "name": "satisfy_16",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::skateboard::wheels",
+      "sourceId": "LogicalArchitecture::Car::wheels",
       "targetId": "Requirements::BrakingDistance",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9121,7 +9772,7 @@
       "name": "satisfy_17",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::driverControls::steeringWheel",
+      "sourceId": "LogicalArchitecture::Car::steeringWheel",
       "targetId": "Requirements::DirectionalControl",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9141,7 +9792,7 @@
       "name": "satisfy_18",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::windshield",
+      "sourceId": "LogicalArchitecture::Car::windshield",
       "targetId": "Requirements::ForwardVisibility",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9161,7 +9812,7 @@
       "name": "satisfy_19",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::wipers",
+      "sourceId": "LogicalArchitecture::Car::wipers",
       "targetId": "Requirements::ForwardVisibility",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9181,7 +9832,7 @@
       "name": "satisfy_20",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::door",
+      "sourceId": "LogicalArchitecture::Car::locks",
       "targetId": "Requirements::AccessControl",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9201,7 +9852,7 @@
       "name": "satisfy_21",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::door",
+      "sourceId": "LogicalArchitecture::Car::locks",
       "targetId": "Requirements::Immobilizer",
       "exposeRef": null,
       "exposeRefs": [],
@@ -9221,7 +9872,7 @@
       "name": "satisfy_22",
       "parentId": "Requirements",
       "typeRef": null,
-      "sourceId": "LogicalArchitecture::Car::body::door",
+      "sourceId": "LogicalArchitecture::Car::locks",
       "targetId": "Requirements::LockIndication",
       "exposeRef": null,
       "exposeRefs": [],
@@ -13173,8 +13824,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::LockSequence::msg2": {
-        "artifactId": "Dynamics::LockSequence::msg2",
+      "Dynamics::UnlockSequence::msg2": {
+        "artifactId": "Dynamics::UnlockSequence::msg2",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13182,8 +13833,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::ChangeGearSequence::msg3": {
-        "artifactId": "Dynamics::ChangeGearSequence::msg3",
+      "Dynamics::UnlockSequence::msg3": {
+        "artifactId": "Dynamics::UnlockSequence::msg3",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13191,8 +13842,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::TurnLeftSequence::msg4": {
-        "artifactId": "Dynamics::TurnLeftSequence::msg4",
+      "Dynamics::UnlockSequence::msg4": {
+        "artifactId": "Dynamics::UnlockSequence::msg4",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13200,8 +13851,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::TurnRightSequence::msg5": {
-        "artifactId": "Dynamics::TurnRightSequence::msg5",
+      "Dynamics::LockSequence::msg5": {
+        "artifactId": "Dynamics::LockSequence::msg5",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13209,8 +13860,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::BrakeSequence::msg6": {
-        "artifactId": "Dynamics::BrakeSequence::msg6",
+      "Dynamics::LockSequence::msg6": {
+        "artifactId": "Dynamics::LockSequence::msg6",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13218,8 +13869,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::AccelerateSequence::msg7": {
-        "artifactId": "Dynamics::AccelerateSequence::msg7",
+      "Dynamics::LockSequence::msg7": {
+        "artifactId": "Dynamics::LockSequence::msg7",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13227,8 +13878,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::EmergencyStopSequence::msg8": {
-        "artifactId": "Dynamics::EmergencyStopSequence::msg8",
+      "Dynamics::ChangeGearSequence::msg8": {
+        "artifactId": "Dynamics::ChangeGearSequence::msg8",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13236,8 +13887,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::ChargeSequence::msg9": {
-        "artifactId": "Dynamics::ChargeSequence::msg9",
+      "Dynamics::ChangeGearSequence::msg9": {
+        "artifactId": "Dynamics::ChangeGearSequence::msg9",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13245,8 +13896,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::ParkSequence::msg10": {
-        "artifactId": "Dynamics::ParkSequence::msg10",
+      "Dynamics::ChangeGearSequence::msg10": {
+        "artifactId": "Dynamics::ChangeGearSequence::msg10",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13254,8 +13905,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::AdjustClimateSequence::msg11": {
-        "artifactId": "Dynamics::AdjustClimateSequence::msg11",
+      "Dynamics::TurnLeftSequence::msg11": {
+        "artifactId": "Dynamics::TurnLeftSequence::msg11",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13263,8 +13914,8 @@
           "y": 0.0
         }
       },
-      "Dynamics::PlayMediaSequence::msg12": {
-        "artifactId": "Dynamics::PlayMediaSequence::msg12",
+      "Dynamics::TurnLeftSequence::msg12": {
+        "artifactId": "Dynamics::TurnLeftSequence::msg12",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -13272,8 +13923,287 @@
           "y": 0.0
         }
       },
-      "Dynamics::CleanWindshieldSequence::msg13": {
-        "artifactId": "Dynamics::CleanWindshieldSequence::msg13",
+      "Dynamics::TurnLeftSequence::msg13": {
+        "artifactId": "Dynamics::TurnLeftSequence::msg13",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::TurnRightSequence::msg14": {
+        "artifactId": "Dynamics::TurnRightSequence::msg14",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::TurnRightSequence::msg15": {
+        "artifactId": "Dynamics::TurnRightSequence::msg15",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::TurnRightSequence::msg16": {
+        "artifactId": "Dynamics::TurnRightSequence::msg16",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::BrakeSequence::msg17": {
+        "artifactId": "Dynamics::BrakeSequence::msg17",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::BrakeSequence::msg18": {
+        "artifactId": "Dynamics::BrakeSequence::msg18",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::BrakeSequence::msg19": {
+        "artifactId": "Dynamics::BrakeSequence::msg19",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::BrakeSequence::msg20": {
+        "artifactId": "Dynamics::BrakeSequence::msg20",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AccelerateSequence::msg21": {
+        "artifactId": "Dynamics::AccelerateSequence::msg21",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AccelerateSequence::msg22": {
+        "artifactId": "Dynamics::AccelerateSequence::msg22",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AccelerateSequence::msg23": {
+        "artifactId": "Dynamics::AccelerateSequence::msg23",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AccelerateSequence::msg24": {
+        "artifactId": "Dynamics::AccelerateSequence::msg24",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::EmergencyStopSequence::msg25": {
+        "artifactId": "Dynamics::EmergencyStopSequence::msg25",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::EmergencyStopSequence::msg26": {
+        "artifactId": "Dynamics::EmergencyStopSequence::msg26",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::EmergencyStopSequence::msg27": {
+        "artifactId": "Dynamics::EmergencyStopSequence::msg27",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ChargeSequence::msg28": {
+        "artifactId": "Dynamics::ChargeSequence::msg28",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ChargeSequence::msg29": {
+        "artifactId": "Dynamics::ChargeSequence::msg29",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ChargeSequence::msg30": {
+        "artifactId": "Dynamics::ChargeSequence::msg30",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ChargeSequence::msg31": {
+        "artifactId": "Dynamics::ChargeSequence::msg31",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ParkSequence::msg32": {
+        "artifactId": "Dynamics::ParkSequence::msg32",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ParkSequence::msg33": {
+        "artifactId": "Dynamics::ParkSequence::msg33",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ParkSequence::msg34": {
+        "artifactId": "Dynamics::ParkSequence::msg34",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::ParkSequence::msg35": {
+        "artifactId": "Dynamics::ParkSequence::msg35",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AdjustClimateSequence::msg36": {
+        "artifactId": "Dynamics::AdjustClimateSequence::msg36",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AdjustClimateSequence::msg37": {
+        "artifactId": "Dynamics::AdjustClimateSequence::msg37",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::AdjustClimateSequence::msg38": {
+        "artifactId": "Dynamics::AdjustClimateSequence::msg38",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::PlayMediaSequence::msg39": {
+        "artifactId": "Dynamics::PlayMediaSequence::msg39",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::PlayMediaSequence::msg40": {
+        "artifactId": "Dynamics::PlayMediaSequence::msg40",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::PlayMediaSequence::msg41": {
+        "artifactId": "Dynamics::PlayMediaSequence::msg41",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::CleanWindshieldSequence::msg42": {
+        "artifactId": "Dynamics::CleanWindshieldSequence::msg42",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::CleanWindshieldSequence::msg43": {
+        "artifactId": "Dynamics::CleanWindshieldSequence::msg43",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Dynamics::CleanWindshieldSequence::msg44": {
+        "artifactId": "Dynamics::CleanWindshieldSequence::msg44",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {

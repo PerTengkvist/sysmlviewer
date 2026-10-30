@@ -74,3 +74,27 @@ action chargeSequence {
 ```
 
 Call it from a use case with `then perform chargeSequence;`. In the viewer it opens as a separate diagram.
+
+## Sequences
+
+An `interaction def` is one scenario drawn as a sequence diagram: lifelines are the participants, messages are the arrows in the order they are written. Chain messages with `then`. An acknowledgement carries the `#reply` keyword and is drawn dashed.
+
+```sysml
+interaction def UnlockSequence {
+  doc /* Precondition Locked. Postcondition Unlocked. */
+  lifeline Driver;
+  lifeline keyFob;
+  lifeline bodyController;
+  lifeline locks;
+  message pressUnlock from Driver to keyFob;
+  then message credential from keyFob to bodyController;
+  then message releaseLatches from bodyController to locks;
+  then #reply message indicateUnlocked from locks to Driver;
+}
+
+view def UnlockSequenceView : SequenceView {
+  expose UnlockSequence;
+}
+```
+
+Messages are numbered in the diagram in declaration order. Name lifelines after the logical parts that play the roles, so the sequence and the logical architecture read as one model.

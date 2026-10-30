@@ -10,6 +10,8 @@ import { selectedEdgeStyle } from '../../selectedEdgeStyle'
 export type MessageEdgeData = {
   label?: string
   sequenceIndex?: number
+  /** `#reply message` acknowledgement; drawn dashed via style.strokeDasharray. */
+  isReply?: boolean
   artifactId?: string
   selectedColor?: string
   selectedFactor?: number
