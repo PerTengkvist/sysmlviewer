@@ -105,6 +105,7 @@ import { TreeDiagramNode } from './modes/tree/TreeNode'
 import { buildAllocationGraph } from './modes/allocation/buildAllocationGraph'
 import { RequirementNode } from './modes/requirements/RequirementNode'
 import { buildRequirementRows } from './modes/requirements/buildRequirementRows'
+import { RequirementTable } from './modes/requirements/RequirementTable'
 import { ActorNode } from './modes/useCase/ActorNode'
 import { UseCaseNode } from './modes/useCase/UseCaseNode'
 import { buildUseCaseGraph } from './modes/useCase/buildUseCaseGraph'
@@ -2448,45 +2449,16 @@ export function DiagramCanvas({
             </div>
           </div>
         )}
-        <div className="requirement-table-wrap">
-          <table className="requirement-table">
-            <thead>
-              <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Text</th>
-                <th>Derived from</th>
-                <th>Satisfied by</th>
-                <th>File</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={`${row.id}:${row.depth}:${row.repeated}`}
-                  className={
-                    selectedIds.includes(row.id) ? 'selected' : undefined
-                  }
-                  onClick={(e) =>
-                    onSelectArtifact(row.id, { shift: e.shiftKey })
-                  }
-                >
-                  <td className="mono">{row.shortId}</td>
-                  <td style={{ paddingLeft: 8 + row.depth * 16 }}>
-                    {row.repeated ? '↺ ' : ''}
-                    {row.name}
-                  </td>
-                  <td>«{row.stereotype}»</td>
-                  <td>{row.text}</td>
-                  <td className="mono">{row.derivedFrom.join(', ')}</td>
-                  <td className="mono">{row.satisfiedBy.join(', ')}</td>
-                  <td className="mono">{row.fileId}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <RequirementTable
+          rows={rows}
+          selectedIds={selectedIds}
+          onSelect={onSelectArtifact}
+          onRowDoubleClick={
+            printMode || !onNodeDoubleClick
+              ? undefined
+              : (id) => onNodeDoubleClick(id, 'requirement')
+          }
+        />
       </div>
     )
   }
