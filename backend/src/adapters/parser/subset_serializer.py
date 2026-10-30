@@ -223,7 +223,8 @@ def _emit_element(
         src_n = src.name if src else (el.source_id or "?").split("::")[-1]
         tgt_n = tgt.name if tgt else (el.target_id or "?").split("::")[-1]
         payload = el.type_ref or el.name
-        lines.append(f"{pad}message {payload} from {src_n} to {tgt_n};")
+        prefix = "".join(f"#{kw} " for kw in (el.metadata_keywords or []))
+        lines.append(f"{pad}{prefix}message {payload} from {src_n} to {tgt_n};")
         return
 
     if el.kind == ArtifactKind.STATE:

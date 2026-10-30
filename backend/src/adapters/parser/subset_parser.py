@@ -160,6 +160,7 @@ class SubsetSysmlParser:
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
         self._warn_unresolved_type_refs(link_state)
+        self._warn_unresolved_endpoints(link_state)
         warnings.extend(link_state.warnings)
         # Attach link warnings to first file for visibility
         if link_state.warnings and files:
@@ -501,6 +502,74 @@ class SubsetSysmlParser:
                     nxt2 and nxt2.kind == "ident" and nxt2.value == "part"
                 )
             return False
+
+        def parse_message_statement(
+            line: int, metadata_keywords: list[str]
+        ) -> None:
+            """Parse `[payload] from A to B;` after the `message` keyword.
+
+            Shared by `message …`, `then message …` and `#reply message …`.
+            """
+            payload_parts: list[str] = []
+            if peek() and peek().kind == "ident" and peek().value != "from":
+                payload_parts.append(expect_ident() or "")
+                while peek() and peek().value == ".":
+                    take()
+                    nxt = expect_ident()
+                    if nxt:
+                        payload_parts.append(nxt)
+            if not (peek() and peek().value == "from"):
+                state.warnings.append(f"line {line}: message expected 'from'")
+                skip_until_semicolon_or_brace()
+                return
+            take()  # from
+            source_name = expect_ident()
+            if not (peek() and peek().value == "to"):
+                state.warnings.append(f"line {line}: message expected 'to'")
+                skip_until_semicolon_or_brace()
+                return
+            take()  # to
+            target_name = expect_ident()
+            if peek() and peek().value == ";":
+                take()
+
+            def resolve_participant(name: str | None) -> str | None:
+                if not name:
+                    return None
+                parent = state.current_parent()
+                if parent:
+                    cand = f"{parent}::{name}"
+                    if cand in state.elements:
+                        return cand
+                # search lifelines under parent by name
+                if parent and parent in state.elements:
+                    for cid in state.elements[parent].children:
+                        child = state.elements.get(cid)
+                        if (
+                            child
+                            and child.kind == ArtifactKind.LIFELINE
+                            and child.name == name
+                        ):
+                            return child.id
+                return resolve_ref(name)
+
+            state.anon_message += 1
+            msg_name = f"msg{state.anon_message}"
+            element_id = state.qualify(msg_name)
+            payload = ".".join(p for p in payload_parts if p) or msg_name
+            el = SemanticElement(
+                id=element_id,
+                kind=ArtifactKind.MESSAGE,
+                name=payload,
+                parent_id=state.current_parent(),
+                type_ref=payload,
+                source_id=resolve_participant(source_name),
+                target_id=resolve_participant(target_name),
+                file_id=file_id,
+                metadata_keywords=list(metadata_keywords),
+            )
+            state.add_child(el.parent_id, element_id)
+            state.elements[element_id] = el
 
         def parse_dependency_statement(metadata_keywords: list[str]) -> None:
             line = peek().line if peek() else 0
@@ -859,9 +928,14 @@ class SubsetSysmlParser:
                 if peek_is_part_declaration():
                     # Next loop iteration parses part / ref part with pending keywords.
                     continue
+                if peek() and peek().kind == "ident" and peek().value == "message":
+                    take()  # message
+                    parse_message_statement(tok.line, pending_metadata_keywords)
+                    pending_metadata_keywords = []
+                    continue
                 state.warnings.append(
                     f"line {tok.line}: metadata prefix ignored "
-                    f"(only supported on dependency and part in alpha)"
+                    f"(only supported on dependency, part and message in alpha)"
                 )
                 pending_metadata_keywords = []
                 skip_until_semicolon_or_brace()
@@ -1061,72 +1135,8 @@ class SubsetSysmlParser:
                 continue
 
             if tok.kind == "ident" and tok.value == "message":
-                # `message …` (use `then` handler for succession / then message)
-                line = tok.line
                 take()
-
-                # message [payload] from A to B
-                payload_parts: list[str] = []
-                if peek() and peek().kind == "ident" and peek().value != "from":
-                    payload_parts.append(expect_ident() or "")
-                    while peek() and peek().value == ".":
-                        take()
-                        nxt = expect_ident()
-                        if nxt:
-                            payload_parts.append(nxt)
-                if not (peek() and peek().value == "from"):
-                    state.warnings.append(
-                        f"line {line}: message expected 'from'"
-                    )
-                    skip_until_semicolon_or_brace()
-                    continue
-                take()  # from
-                source_name = expect_ident()
-                if not (peek() and peek().value == "to"):
-                    state.warnings.append(f"line {line}: message expected 'to'")
-                    skip_until_semicolon_or_brace()
-                    continue
-                take()  # to
-                target_name = expect_ident()
-                if peek() and peek().value == ";":
-                    take()
-
-                def resolve_participant(name: str | None) -> str | None:
-                    if not name:
-                        return None
-                    parent = state.current_parent()
-                    if parent:
-                        cand = f"{parent}::{name}"
-                        if cand in state.elements:
-                            return cand
-                    # search lifelines under parent by name
-                    if parent and parent in state.elements:
-                        for cid in state.elements[parent].children:
-                            child = state.elements.get(cid)
-                            if (
-                                child
-                                and child.kind == ArtifactKind.LIFELINE
-                                and child.name == name
-                            ):
-                                return child.id
-                    return resolve_ref(name)
-
-                state.anon_message += 1
-                msg_name = f"msg{state.anon_message}"
-                element_id = state.qualify(msg_name)
-                payload = ".".join(p for p in payload_parts if p) or msg_name
-                el = SemanticElement(
-                    id=element_id,
-                    kind=ArtifactKind.MESSAGE,
-                    name=payload,
-                    parent_id=state.current_parent(),
-                    type_ref=payload,
-                    source_id=resolve_participant(source_name),
-                    target_id=resolve_participant(target_name),
-                    file_id=file_id,
-                )
-                state.add_child(el.parent_id, element_id)
-                state.elements[element_id] = el
+                parse_message_statement(tok.line, [])
                 continue
 
             if tok.kind == "ident" and tok.value == "state":
@@ -1343,14 +1353,17 @@ class SubsetSysmlParser:
             if tok.kind == "ident" and tok.value == "then":
                 line = tok.line
                 take()
-                # then message … — fall through to message-like parse by rewinding
-                if peek() and peek().value == "message":
-                    # Put back as message token by not consuming; use skip for now
+                # then [#Keyword…] message payload from A to B;
+                if peek() and peek().value in {"message", "#"}:
+                    msg_keywords = take_prefix_metadata_keywords()
+                    if not (peek() and peek().value == "message"):
+                        state.warnings.append(
+                            f"line {line}: metadata prefix ignored after 'then'"
+                        )
+                        skip_until_semicolon_or_brace()
+                        continue
                     take()  # message
-                    # Reuse message parser body by jumping: emit warning if incomplete
-                    # Minimal: skip rest of statement (sequence diagrams still use
-                    # `message` without leading then in most fixtures).
-                    skip_until_semicolon_or_brace()
+                    parse_message_statement(line, msg_keywords)
                     continue
                 # then if guard then a else b;
                 if peek() and peek().value == "if":
@@ -2169,6 +2182,26 @@ class SubsetSysmlParser:
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
                 f"in the semantic graph."
             )
+
+    def _warn_unresolved_endpoints(self, state: _ParserState) -> None:
+        """Flag satisfy / dependency endpoints that name no element in the merged graph.
+
+        Only meaningful after all files are merged (parse_project); a single
+        file may legitimately point into another file.
+        """
+        checks = {
+            ArtifactKind.SATISFY: "satisfy",
+            ArtifactKind.DEPENDENCY: "dependency",
+        }
+        for el in state.elements.values():
+            label = checks.get(el.kind)
+            if label is None:
+                continue
+            for role, endpoint in (("source", el.source_id), ("target", el.target_id)):
+                if endpoint and endpoint not in state.elements:
+                    state.warnings.append(
+                        f"{label} {role} not found: {endpoint} (in '{el.id}')"
+                    )
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:
         """Copy ports, attributes, nested parts, and relations from defs onto usages."""

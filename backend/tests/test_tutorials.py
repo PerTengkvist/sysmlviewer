@@ -19,12 +19,16 @@ TUTORIALS = {
         "Dependencies",
         "Requirements",
         "Use cases",
+        "Sequences",
+        "#reply message",
     ],
     "use-cases-and-scenarios.md": [
         "# Use Cases and Scenarios",
         "Self-contained use case",
         "CaseScenario",
         "Action as a scenario",
+        "Sequences",
+        "then #reply message",
     ],
     "mbse.md": [
         "# Introduction to MBSE",

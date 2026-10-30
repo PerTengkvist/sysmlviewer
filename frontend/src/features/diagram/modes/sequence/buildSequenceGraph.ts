@@ -3,6 +3,7 @@ import { MarkerType } from '@xyflow/react'
 import type { ViewPayload } from '../../../api'
 import type { ViewMode } from '../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
+import { strokeDasharray } from '../../relationshipStyle'
 import { lifelineHeaderHeight } from './camelWrap'
 import type { LifelineNodeData } from './LifelineNode'
 
@@ -86,6 +87,9 @@ export function buildSequenceGraph(
       const tgt = msg.targetId || ''
       if (!llIndex.has(src) || !llIndex.has(tgt)) return null
       const stroke = edgeStrokeStyle(visualization.edges[msg.id]?.style, viewMode)
+      // `#reply message` acknowledgements render dashed unless a format style says otherwise.
+      const isReply = (msg.metadataKeywords ?? []).includes('reply')
+      const dash = stroke.strokeDasharray ?? (isReply ? strokeDasharray('dashed') : undefined)
       return {
         id: msg.id,
         source: src,
@@ -97,6 +101,7 @@ export function buildSequenceGraph(
         data: {
           label: msg.name,
           sequenceIndex: index,
+          isReply,
           selectedColor: selectedConnectionColor,
           selectedFactor: selectedConnectionLinewidthFactor,
         },
@@ -109,6 +114,7 @@ export function buildSequenceGraph(
         style: {
           stroke: stroke.stroke,
           strokeWidth: stroke.strokeWidth,
+          ...(dash ? { strokeDasharray: dash } : {}),
         },
       } as Edge
     })
