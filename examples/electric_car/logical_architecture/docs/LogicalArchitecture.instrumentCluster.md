@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `driverInformation`.
 - `vehicleController` depends on this («Inform»).
 - Depends on `body` («Mount»).
 

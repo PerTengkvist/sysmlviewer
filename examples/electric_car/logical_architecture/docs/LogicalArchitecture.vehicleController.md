@@ -6,6 +6,9 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `authenticate`.
+- Comprises `immobilizer`.
+- Comprises `wakeUp`.
 - `keyFob` depends on this («Command»).
 - `startButton` depends on this («Command»).
 - Depends on `driveController` («Enable»).

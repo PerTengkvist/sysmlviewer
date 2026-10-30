@@ -2,6 +2,8 @@
 
 Heat, cool and demist the cabin. Depends on Charging because the compressor and heater are electric.
 
+Part of `Functions`.
+
 ## Relations
 
 - Depends on `Charging` («Energy»).
@@ -9,3 +11,4 @@ Heat, cool and demist the cabin. Depends on Charging because the compressor and 
 ## Diagrams
 
 - `FunctionsView`
+- `FunctionAllocationView`

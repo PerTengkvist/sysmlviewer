@@ -6,6 +6,10 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `lockControl`.
+- Comprises `wipeControl`.
+- Comprises `headlampControl`.
+- Comprises `indicatorControl`.
 - Depends on `locks` («Command»).
 - Depends on `doors` («Command»).
 - Depends on `windowLifts` («Command»).

@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `tractionDrive`.
 - `driveController` depends on this («Command»).
 - Depends on `battery` («Energy»).
 - Depends on `chassis` («Mount»).

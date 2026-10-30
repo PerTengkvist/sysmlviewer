@@ -2654,7 +2654,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Functional architecture of the electric car. Each function is a part. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy.",
+      "documentation": "Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases.",
       "shortId": null,
       "children": [
         "Functions::Security",
@@ -2677,7 +2677,30 @@
         "Functions::dep10",
         "Functions::dep11",
         "Functions::dep12",
-        "Functions::FunctionsView"
+        "Functions::alloc1",
+        "Functions::alloc2",
+        "Functions::alloc3",
+        "Functions::alloc4",
+        "Functions::alloc5",
+        "Functions::alloc6",
+        "Functions::alloc7",
+        "Functions::alloc8",
+        "Functions::alloc9",
+        "Functions::alloc10",
+        "Functions::alloc11",
+        "Functions::alloc12",
+        "Functions::alloc13",
+        "Functions::alloc14",
+        "Functions::alloc15",
+        "Functions::alloc16",
+        "Functions::alloc17",
+        "Functions::alloc18",
+        "Functions::alloc19",
+        "Functions::alloc20",
+        "Functions::alloc21",
+        "Functions::alloc22",
+        "Functions::FunctionsView",
+        "Functions::FunctionAllocationView"
       ],
       "fileId": "functions/functions.sysml"
     },
@@ -2697,6 +2720,112 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "Authenticate the driver, unlock and lock the doors, and release the immobilizer. Every driving function depends on Security before the car will move.",
+      "shortId": null,
+      "children": [
+        "Functions::Security::authenticate",
+        "Functions::Security::immobilizer",
+        "Functions::Security::wakeUp",
+        "Functions::Security::lockControl",
+        "Functions::Security::driverInformation"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::authenticate": {
+      "id": "Functions::Security::authenticate",
+      "kind": "part",
+      "name": "authenticate",
+      "parentId": "Functions::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::immobilizer": {
+      "id": "Functions::Security::immobilizer",
+      "kind": "part",
+      "name": "immobilizer",
+      "parentId": "Functions::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Keep propulsion inhibited until the driver is authenticated and the start button is pressed. Allocated to the vehicle controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::wakeUp": {
+      "id": "Functions::Security::wakeUp",
+      "kind": "part",
+      "name": "wakeUp",
+      "parentId": "Functions::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Bring the cabin systems out of sleep when the car unlocks. Allocated to the vehicle controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::lockControl": {
+      "id": "Functions::Security::lockControl",
+      "kind": "part",
+      "name": "lockControl",
+      "parentId": "Functions::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Engage and release the latches and flash the indicators as confirmation. Allocated to the body controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::driverInformation": {
+      "id": "Functions::Security::driverInformation",
+      "kind": "part",
+      "name": "driverInformation",
+      "parentId": "Functions::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Tell the driver what state the car is in: ready, gear, speed, charge and warnings. Allocated to the instrument cluster.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -2718,6 +2847,70 @@
       "metadataKeywords": [],
       "documentation": "Take energy from a home or fast charger and store it in the battery. Speed control, climate, entertainment, lighting and windshield cleaning draw on this energy.",
       "shortId": null,
+      "children": [
+        "Functions::Charging::chargeConnection",
+        "Functions::Charging::chargeSession",
+        "Functions::Charging::energyStorage"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Charging::chargeConnection": {
+      "id": "Functions::Charging::chargeConnection",
+      "kind": "part",
+      "name": "chargeConnection",
+      "parentId": "Functions::Charging",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Detect the plug and carry the charger's energy into the car. Allocated to the charge inlet.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Charging::chargeSession": {
+      "id": "Functions::Charging::chargeSession",
+      "kind": "part",
+      "name": "chargeSession",
+      "parentId": "Functions::Charging",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Negotiate current with the charger and stop at the target state of charge. Allocated to the battery.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Charging::energyStorage": {
+      "id": "Functions::Charging::energyStorage",
+      "kind": "part",
+      "name": "energyStorage",
+      "parentId": "Functions::Charging",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Store traction energy and publish the discharge limit. Allocated to the battery.",
+      "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
     },
@@ -2738,6 +2931,91 @@
       "metadataKeywords": [],
       "documentation": "Command traction torque and braking, including regenerative braking, so the driver can set and hold speed. Depends on Security for the immobilizer and on Charging for energy.",
       "shortId": null,
+      "children": [
+        "Functions::SpeedControl::torqueArbitration",
+        "Functions::SpeedControl::regenBlending",
+        "Functions::SpeedControl::tractionDrive",
+        "Functions::SpeedControl::frictionBraking"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::SpeedControl::torqueArbitration": {
+      "id": "Functions::SpeedControl::torqueArbitration",
+      "kind": "part",
+      "name": "torqueArbitration",
+      "parentId": "Functions::SpeedControl",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Turn pedal travel into a torque command bounded by the battery limit. Allocated to the drive controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::SpeedControl::regenBlending": {
+      "id": "Functions::SpeedControl::regenBlending",
+      "kind": "part",
+      "name": "regenBlending",
+      "parentId": "Functions::SpeedControl",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Split a deceleration request between regenerative torque and friction pressure. Allocated to the drive controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::SpeedControl::tractionDrive": {
+      "id": "Functions::SpeedControl::tractionDrive",
+      "kind": "part",
+      "name": "tractionDrive",
+      "parentId": "Functions::SpeedControl",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Convert electrical power into torque at the wheels. Allocated to the engine.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::SpeedControl::frictionBraking": {
+      "id": "Functions::SpeedControl::frictionBraking",
+      "kind": "part",
+      "name": "frictionBraking",
+      "parentId": "Functions::SpeedControl",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Apply hydraulic brake pressure, with anti-lock modulation in an emergency stop. Allocated to the friction brakes.",
+      "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
     },
@@ -2756,7 +3034,71 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Steer the car left and right and keep it directionally stable. Depends on Security, and on SpeedControl because steering response changes with speed.",
+      "documentation": "Steer the car left and right, select the direction of travel, and keep it directionally stable. Depends on Security, and on SpeedControl because steering response changes with speed.",
+      "shortId": null,
+      "children": [
+        "Functions::Maneuvrability::steeringControl",
+        "Functions::Maneuvrability::gearSelection",
+        "Functions::Maneuvrability::roadHolding"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Maneuvrability::steeringControl": {
+      "id": "Functions::Maneuvrability::steeringControl",
+      "kind": "part",
+      "name": "steeringControl",
+      "parentId": "Functions::Maneuvrability",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Turn the steering wheel angle into a wheel angle. Allocated to the drive controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Maneuvrability::gearSelection": {
+      "id": "Functions::Maneuvrability::gearSelection",
+      "kind": "part",
+      "name": "gearSelection",
+      "parentId": "Functions::Maneuvrability",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Accept park, reverse, neutral or drive only when it is safe. Allocated to the drive controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Maneuvrability::roadHolding": {
+      "id": "Functions::Maneuvrability::roadHolding",
+      "kind": "part",
+      "name": "roadHolding",
+      "parentId": "Functions::Maneuvrability",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Keep the tyres on the road over bumps and in corners. Allocated to the suspension.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -2778,6 +3120,28 @@
       "metadataKeywords": [],
       "documentation": "Play audio and video for the driver and passengers. Depends on Security so the cabin systems wake only for an authorized user, and on Charging for power.",
       "shortId": null,
+      "children": [
+        "Functions::Entertainment::mediaPlayback"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Entertainment::mediaPlayback": {
+      "id": "Functions::Entertainment::mediaPlayback",
+      "kind": "part",
+      "name": "mediaPlayback",
+      "parentId": "Functions::Entertainment",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Select and play titles on the cabin display and speakers. Allocated to the entertainment system.",
+      "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
     },
@@ -2797,6 +3161,28 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "Heat, cool and demist the cabin. Depends on Charging because the compressor and heater are electric.",
+      "shortId": null,
+      "children": [
+        "Functions::Climate::cabinTemperature"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Climate::cabinTemperature": {
+      "id": "Functions::Climate::cabinTemperature",
+      "kind": "part",
+      "name": "cabinTemperature",
+      "parentId": "Functions::Climate",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Hold the cabin at the set temperature with heater, compressor and fans. Allocated to the climate system.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -2818,6 +3204,49 @@
       "metadataKeywords": [],
       "documentation": "Wipe and wash the windshield so the driver can see. Depends on Charging for the wiper motor and on SpeedControl so the wipe rate can follow vehicle speed.",
       "shortId": null,
+      "children": [
+        "Functions::WindshieldCleaning::wipeControl",
+        "Functions::WindshieldCleaning::wipeSweep"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::WindshieldCleaning::wipeControl": {
+      "id": "Functions::WindshieldCleaning::wipeControl",
+      "kind": "part",
+      "name": "wipeControl",
+      "parentId": "Functions::WindshieldCleaning",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Turn the stalk position into wipe speed and washer pulses. Allocated to the body controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::WindshieldCleaning::wipeSweep": {
+      "id": "Functions::WindshieldCleaning::wipeSweep",
+      "kind": "part",
+      "name": "wipeSweep",
+      "parentId": "Functions::WindshieldCleaning",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Sweep the glass and park the blades. Allocated to the wipers.",
+      "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
     },
@@ -2836,7 +3265,71 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Headlamps, tail lamps and direction indicators. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn.",
+      "documentation": "Headlamps, tail lamps, brake lamps and direction indicators. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn.",
+      "shortId": null,
+      "children": [
+        "Functions::Lighting::headlampControl",
+        "Functions::Lighting::indicatorControl",
+        "Functions::Lighting::lampDrive"
+      ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Lighting::headlampControl": {
+      "id": "Functions::Lighting::headlampControl",
+      "kind": "part",
+      "name": "headlampControl",
+      "parentId": "Functions::Lighting",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Switch low and high beam on and off. Allocated to the body controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Lighting::indicatorControl": {
+      "id": "Functions::Lighting::indicatorControl",
+      "kind": "part",
+      "name": "indicatorControl",
+      "parentId": "Functions::Lighting",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Flash direction indicators, brake lamps and hazard lights. Allocated to the body controller.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Lighting::lampDrive": {
+      "id": "Functions::Lighting::lampDrive",
+      "kind": "part",
+      "name": "lampDrive",
+      "parentId": "Functions::Lighting",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Light the lamp units. Allocated to the lamps.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -3105,6 +3598,446 @@
       "children": [],
       "fileId": "functions/functions.sysml"
     },
+    "Functions::alloc1": {
+      "id": "Functions::alloc1",
+      "kind": "allocation",
+      "name": "alloc1",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Security::authenticate",
+      "targetId": "LogicalArchitecture::Car::vehicleController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc2": {
+      "id": "Functions::alloc2",
+      "kind": "allocation",
+      "name": "alloc2",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Security::immobilizer",
+      "targetId": "LogicalArchitecture::Car::vehicleController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc3": {
+      "id": "Functions::alloc3",
+      "kind": "allocation",
+      "name": "alloc3",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Security::wakeUp",
+      "targetId": "LogicalArchitecture::Car::vehicleController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc4": {
+      "id": "Functions::alloc4",
+      "kind": "allocation",
+      "name": "alloc4",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Security::lockControl",
+      "targetId": "LogicalArchitecture::Car::bodyController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc5": {
+      "id": "Functions::alloc5",
+      "kind": "allocation",
+      "name": "alloc5",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Security::driverInformation",
+      "targetId": "LogicalArchitecture::Car::instrumentCluster",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc6": {
+      "id": "Functions::alloc6",
+      "kind": "allocation",
+      "name": "alloc6",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Charging::chargeConnection",
+      "targetId": "LogicalArchitecture::Car::chargeInlet",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc7": {
+      "id": "Functions::alloc7",
+      "kind": "allocation",
+      "name": "alloc7",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Charging::chargeSession",
+      "targetId": "LogicalArchitecture::Car::battery",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc8": {
+      "id": "Functions::alloc8",
+      "kind": "allocation",
+      "name": "alloc8",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Charging::energyStorage",
+      "targetId": "LogicalArchitecture::Car::battery",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc9": {
+      "id": "Functions::alloc9",
+      "kind": "allocation",
+      "name": "alloc9",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::torqueArbitration",
+      "targetId": "LogicalArchitecture::Car::driveController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc10": {
+      "id": "Functions::alloc10",
+      "kind": "allocation",
+      "name": "alloc10",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::regenBlending",
+      "targetId": "LogicalArchitecture::Car::driveController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc11": {
+      "id": "Functions::alloc11",
+      "kind": "allocation",
+      "name": "alloc11",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::tractionDrive",
+      "targetId": "LogicalArchitecture::Car::engine",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc12": {
+      "id": "Functions::alloc12",
+      "kind": "allocation",
+      "name": "alloc12",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::frictionBraking",
+      "targetId": "LogicalArchitecture::Car::frictionBrakes",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc13": {
+      "id": "Functions::alloc13",
+      "kind": "allocation",
+      "name": "alloc13",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::steeringControl",
+      "targetId": "LogicalArchitecture::Car::driveController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc14": {
+      "id": "Functions::alloc14",
+      "kind": "allocation",
+      "name": "alloc14",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::gearSelection",
+      "targetId": "LogicalArchitecture::Car::driveController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc15": {
+      "id": "Functions::alloc15",
+      "kind": "allocation",
+      "name": "alloc15",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::roadHolding",
+      "targetId": "LogicalArchitecture::Car::suspension",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc16": {
+      "id": "Functions::alloc16",
+      "kind": "allocation",
+      "name": "alloc16",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Entertainment::mediaPlayback",
+      "targetId": "LogicalArchitecture::Car::entertainmentSystem",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc17": {
+      "id": "Functions::alloc17",
+      "kind": "allocation",
+      "name": "alloc17",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Climate::cabinTemperature",
+      "targetId": "LogicalArchitecture::Car::climateSystem",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc18": {
+      "id": "Functions::alloc18",
+      "kind": "allocation",
+      "name": "alloc18",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::WindshieldCleaning::wipeControl",
+      "targetId": "LogicalArchitecture::Car::bodyController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc19": {
+      "id": "Functions::alloc19",
+      "kind": "allocation",
+      "name": "alloc19",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::WindshieldCleaning::wipeSweep",
+      "targetId": "LogicalArchitecture::Car::wipers",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc20": {
+      "id": "Functions::alloc20",
+      "kind": "allocation",
+      "name": "alloc20",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::headlampControl",
+      "targetId": "LogicalArchitecture::Car::bodyController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc21": {
+      "id": "Functions::alloc21",
+      "kind": "allocation",
+      "name": "alloc21",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::indicatorControl",
+      "targetId": "LogicalArchitecture::Car::bodyController",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::alloc22": {
+      "id": "Functions::alloc22",
+      "kind": "allocation",
+      "name": "alloc22",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::lampDrive",
+      "targetId": "LogicalArchitecture::Car::lamps",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
     "Functions::FunctionsView": {
       "id": "Functions::FunctionsView",
       "kind": "view",
@@ -3117,12 +4050,51 @@
       "exposeRefs": [
         "Functions"
       ],
-      "viewFilters": [],
+      "viewFilters": [
+        {
+          "op": "metaclassAny",
+          "refs": [
+            "PartUsage",
+            "Dependency"
+          ]
+        }
+      ],
       "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Functional dependency view. Arrows are «Authorize», «Energy», «Stability», «Speed» and «Indicate» dependencies.",
+      "documentation": "Functional dependency view. Arrows are «Authorize», «Energy», «Stability», «Speed» and «Indicate» dependencies between functions. Allocations are filtered out; see FunctionAllocationView.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::FunctionAllocationView": {
+      "id": "Functions::FunctionAllocationView",
+      "kind": "view",
+      "name": "FunctionAllocationView",
+      "parentId": "Functions",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "Functions",
+      "exposeRefs": [
+        "Functions",
+        "Functions::LogicalArchitecture::Car"
+      ],
+      "viewFilters": [
+        {
+          "op": "metaclassAny",
+          "refs": [
+            "PartUsage",
+            "AllocationUsage"
+          ]
+        }
+      ],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Functional entities and the logical parts they are allocated to. One logical part comprises one or more entities.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -17724,10 +18696,90 @@
         "side": null,
         "offset": null
       },
+      "Functions::Security::authenticate": {
+        "artifactId": "Functions::Security::authenticate",
+        "x": 360.0,
+        "y": 4040.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::immobilizer": {
+        "artifactId": "Functions::Security::immobilizer",
+        "x": 640.0,
+        "y": 4040.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::wakeUp": {
+        "artifactId": "Functions::Security::wakeUp",
+        "x": 80.0,
+        "y": 4220.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::lockControl": {
+        "artifactId": "Functions::Security::lockControl",
+        "x": 360.0,
+        "y": 4220.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::driverInformation": {
+        "artifactId": "Functions::Security::driverInformation",
+        "x": 640.0,
+        "y": 4220.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "Functions::Charging": {
         "artifactId": "Functions::Charging",
         "x": 80.0,
         "y": 2060.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Charging::chargeConnection": {
+        "artifactId": "Functions::Charging::chargeConnection",
+        "x": 360.0,
+        "y": 4400.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Charging::chargeSession": {
+        "artifactId": "Functions::Charging::chargeSession",
+        "x": 640.0,
+        "y": 4400.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Charging::energyStorage": {
+        "artifactId": "Functions::Charging::energyStorage",
+        "x": 80.0,
+        "y": 4580.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -17744,10 +18796,80 @@
         "side": null,
         "offset": null
       },
+      "Functions::SpeedControl::torqueArbitration": {
+        "artifactId": "Functions::SpeedControl::torqueArbitration",
+        "x": 640.0,
+        "y": 4580.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::SpeedControl::regenBlending": {
+        "artifactId": "Functions::SpeedControl::regenBlending",
+        "x": 80.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::SpeedControl::tractionDrive": {
+        "artifactId": "Functions::SpeedControl::tractionDrive",
+        "x": 360.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::SpeedControl::frictionBraking": {
+        "artifactId": "Functions::SpeedControl::frictionBraking",
+        "x": 640.0,
+        "y": 4760.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "Functions::Maneuvrability": {
         "artifactId": "Functions::Maneuvrability",
         "x": 640.0,
         "y": 2060.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Maneuvrability::steeringControl": {
+        "artifactId": "Functions::Maneuvrability::steeringControl",
+        "x": 360.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Maneuvrability::gearSelection": {
+        "artifactId": "Functions::Maneuvrability::gearSelection",
+        "x": 640.0,
+        "y": 4940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Maneuvrability::roadHolding": {
+        "artifactId": "Functions::Maneuvrability::roadHolding",
+        "x": 80.0,
+        "y": 5120.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -17764,10 +18886,30 @@
         "side": null,
         "offset": null
       },
+      "Functions::Entertainment::mediaPlayback": {
+        "artifactId": "Functions::Entertainment::mediaPlayback",
+        "x": 640.0,
+        "y": 5120.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "Functions::Climate": {
         "artifactId": "Functions::Climate",
         "x": 360.0,
         "y": 2240.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Climate::cabinTemperature": {
+        "artifactId": "Functions::Climate::cabinTemperature",
+        "x": 360.0,
+        "y": 5300.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -17784,10 +18926,60 @@
         "side": null,
         "offset": null
       },
+      "Functions::WindshieldCleaning::wipeControl": {
+        "artifactId": "Functions::WindshieldCleaning::wipeControl",
+        "x": 80.0,
+        "y": 5480.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::WindshieldCleaning::wipeSweep": {
+        "artifactId": "Functions::WindshieldCleaning::wipeSweep",
+        "x": 360.0,
+        "y": 5480.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "Functions::Lighting": {
         "artifactId": "Functions::Lighting",
         "x": 80.0,
         "y": 2420.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Lighting::headlampControl": {
+        "artifactId": "Functions::Lighting::headlampControl",
+        "x": 80.0,
+        "y": 5660.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Lighting::indicatorControl": {
+        "artifactId": "Functions::Lighting::indicatorControl",
+        "x": 360.0,
+        "y": 5660.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Lighting::lampDrive": {
+        "artifactId": "Functions::Lighting::lampDrive",
+        "x": 640.0,
+        "y": 5660.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -21807,6 +22999,424 @@
           "dark": {
             "lineStyle": "dashed",
             "markerEnd": "openArrow"
+          }
+        }
+      },
+      "Functions::alloc1": {
+        "artifactId": "Functions::alloc1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc2": {
+        "artifactId": "Functions::alloc2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc3": {
+        "artifactId": "Functions::alloc3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc4": {
+        "artifactId": "Functions::alloc4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc5": {
+        "artifactId": "Functions::alloc5",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc6": {
+        "artifactId": "Functions::alloc6",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc7": {
+        "artifactId": "Functions::alloc7",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc8": {
+        "artifactId": "Functions::alloc8",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc9": {
+        "artifactId": "Functions::alloc9",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc10": {
+        "artifactId": "Functions::alloc10",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc11": {
+        "artifactId": "Functions::alloc11",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc12": {
+        "artifactId": "Functions::alloc12",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc13": {
+        "artifactId": "Functions::alloc13",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc14": {
+        "artifactId": "Functions::alloc14",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc15": {
+        "artifactId": "Functions::alloc15",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc16": {
+        "artifactId": "Functions::alloc16",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc17": {
+        "artifactId": "Functions::alloc17",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc18": {
+        "artifactId": "Functions::alloc18",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc19": {
+        "artifactId": "Functions::alloc19",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc20": {
+        "artifactId": "Functions::alloc20",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc21": {
+        "artifactId": "Functions::alloc21",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "Functions::alloc22": {
+        "artifactId": "Functions::alloc22",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
           }
         }
       },
@@ -26857,10 +28467,17 @@
       "typeRef": "SequenceView"
     },
     {
+      "id": "Functions::FunctionAllocationView",
+      "name": "FunctionAllocationView",
+      "rootArtifactId": "Functions",
+      "parentViewId": "Functions::FunctionAllocationView",
+      "typeRef": "GeneralView"
+    },
+    {
       "id": "Functions::FunctionsView",
       "name": "FunctionsView",
       "rootArtifactId": "Functions",
-      "parentViewId": "Functions::FunctionsView",
+      "parentViewId": "Functions::FunctionAllocationView",
       "typeRef": "GeneralView"
     },
     {

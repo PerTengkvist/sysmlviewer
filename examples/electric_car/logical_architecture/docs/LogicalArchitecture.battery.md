@@ -6,6 +6,8 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `chargeSession`.
+- Comprises `energyStorage`.
 - `engine` depends on this («Energy»).
 - `climateSystem` depends on this («Energy»).
 - `entertainmentSystem` depends on this («Energy»).

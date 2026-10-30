@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `cabinTemperature`.
 - Depends on `battery` («Energy»).
 - Satisfies `CabinClimate`.
 

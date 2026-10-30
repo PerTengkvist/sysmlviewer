@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `wipeSweep`.
 - `bodyController` depends on this («Command»).
 - Depends on `body` («Mount»).
 - Depends on `windshield` («Clear»).

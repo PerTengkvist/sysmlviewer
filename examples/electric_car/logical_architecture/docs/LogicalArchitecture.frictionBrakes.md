@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `frictionBraking`.
 - `driveController` depends on this («Command»).
 - Depends on `wheels` («Actuate»).
 - Satisfies `BrakingDistance`.

@@ -2,6 +2,8 @@
 
 Take energy from a home or fast charger and store it in the battery. Speed control, climate, entertainment, lighting and windshield cleaning draw on this energy.
 
+Part of `Functions`.
+
 ## Relations
 
 - `SpeedControl` depends on this («Energy»).
@@ -13,3 +15,4 @@ Take energy from a home or fast charger and store it in the battery. Speed contr
 ## Diagrams
 
 - `FunctionsView`
+- `FunctionAllocationView`

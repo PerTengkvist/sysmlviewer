@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `lampDrive`.
 - `bodyController` depends on this («Command»).
 - Depends on `battery` («Energy»).
 - Depends on `body` («Mount»).

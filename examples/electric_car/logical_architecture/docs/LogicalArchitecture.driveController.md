@@ -6,6 +6,10 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `torqueArbitration`.
+- Comprises `regenBlending`.
+- Comprises `steeringControl`.
+- Comprises `gearSelection`.
 - `steeringWheel` depends on this («Command»).
 - `gearStick` depends on this («Command»).
 - `acceleratorPedal` depends on this («Command»).

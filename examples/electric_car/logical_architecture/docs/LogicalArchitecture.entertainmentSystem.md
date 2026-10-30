@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `mediaPlayback`.
 - Depends on `battery` («Energy»).
 - Satisfies `CabinMedia`.
 

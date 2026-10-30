@@ -529,3 +529,70 @@ def test_use_case_view_exposes_both_packages():
     assert view["diagramMode"] == "useCase"
     shown = {e["name"] for e in view["semantic"].values() if e["kind"] == "useCase"}
     assert shown == DRIVING_USE_CASES | MANAGING_USE_CASES
+
+
+# --- Functions: functional entities allocated to logical parts ---------------
+
+
+def _functions_and_entities(elements):
+    functions = {
+        e.id: e
+        for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id == "Functions"
+    }
+    entities = [
+        e
+        for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id in functions
+    ]
+    return functions, entities
+
+
+def test_every_function_decomposes_into_entities():
+    functions, entities = _functions_and_entities(_load().elements)
+    assert len(functions) == 8
+    without = sorted(
+        f.name for f in functions.values() if not any(e.parent_id == f.id for e in entities)
+    )
+    assert without == []
+
+
+def test_functional_entities_are_allocated_exactly_once():
+    elements = _load().elements
+    _, entities = _functions_and_entities(elements)
+    allocations = [e for e in elements.values() if e.kind == ArtifactKind.ALLOCATION]
+    by_source: dict[str, list] = {}
+    for a in allocations:
+        by_source.setdefault(a.source_id, []).append(a)
+    for ent in entities:
+        allocs = by_source.get(ent.id, [])
+        assert len(allocs) == 1, (ent.id, [a.target_id for a in allocs])
+        target = elements.get(allocs[0].target_id)
+        assert target is not None and target.parent_id == CAR, (ent.id, allocs[0].target_id)
+
+
+def test_each_controller_comprises_entities():
+    elements = _load().elements
+    targets: dict[str, int] = {}
+    for a in elements.values():
+        if a.kind == ArtifactKind.ALLOCATION and a.target_id in elements:
+            targets[elements[a.target_id].name] = targets.get(elements[a.target_id].name, 0) + 1
+    for controller in CONTROLLERS:
+        assert targets.get(controller, 0) >= 2, (controller, targets)
+
+
+def test_function_views_render():
+    repo = WorkspaceProjectRepository(ROOT)
+    project = repo.get_open()
+    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+    functions = service.get_view(project.id, "Functions::FunctionsView")
+    assert functions["diagramMode"] == "structure"
+    assert sum(1 for e in functions["semantic"].values() if e["kind"] == "dependency") == 12
+    assert not any(e["kind"] == "allocation" for e in functions["semantic"].values())
+
+    allocation = service.get_view(
+        project.id, "Functions::FunctionAllocationView", hierarchical_levels=3
+    )
+    allocs = [e for e in allocation["semantic"].values() if e["kind"] == "allocation"]
+    assert len(allocs) >= 20
+    assert any(e["name"] == "driveController" for e in allocation["semantic"].values())

@@ -2,6 +2,8 @@
 
 Authenticate the driver, unlock and lock the doors, and release the immobilizer. Every driving function depends on Security before the car will move.
 
+Part of `Functions`.
+
 ## Relations
 
 - `SpeedControl` depends on this («Authorize»).
@@ -12,3 +14,4 @@ Authenticate the driver, unlock and lock the doors, and release the immobilizer.
 ## Diagrams
 
 - `FunctionsView`
+- `FunctionAllocationView`

@@ -6,6 +6,7 @@ Part of `Car`.
 
 ## Relations
 
+- Comprises `chargeConnection`.
 - Depends on `battery` («Energy»).
 - Satisfies `ChargeTime`.
 
