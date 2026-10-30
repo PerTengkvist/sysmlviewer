@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { RequirementDisplaySettings } from '../../settings'
 import { DetailsPanel, type DetailsPanelProps } from './DetailsPanel'
 import { DocumentationPanel } from './DocumentationPanel'
+import { elementDialogTitle } from './elementDialogTitle'
 import {
   resizedTo,
   toggleMaximized,
@@ -37,8 +38,12 @@ export function ElementDialog({
   requirementDisplay,
   onOpenDoc,
 }: Props) {
-  const el = detailsProps.project?.semantic[elementId]
-  const label = `${el?.kind ?? 'element'} ${el?.name ?? elementId}`
+  const title = elementDialogTitle(
+    elementId,
+    detailsProps.project?.semantic ?? {},
+    requirementDisplay,
+  )
+  const label = `${title.kind} ${title.name}`
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -90,8 +95,7 @@ export function ElementDialog({
       >
         <header className="modal-header element-dialog-header">
           <h2>
-            <span className="artifact-kind">{el?.kind ?? 'element'}</span>{' '}
-            {el?.name ?? elementId}
+            <span className="artifact-kind">{title.kind}</span> {title.name}
           </h2>
           <span className="element-dialog-actions">
             <button
