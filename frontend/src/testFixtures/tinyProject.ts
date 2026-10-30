@@ -36,3 +36,29 @@ export function tinyProject(): Project {
     views: [],
   }
 }
+
+/**
+ * `tinyProject()` plus one requirement `R-01 Safety` under `Pkg`, with a
+ * `description` attribute (the Documentation-panel fallback when no .md exists).
+ */
+export function tinyProjectWithRequirement(): Project {
+  const p = tinyProject()
+  p.semantic.Pkg = { ...p.semantic.Pkg, children: ['Pkg::car', 'Pkg::R1'] }
+  p.semantic['Pkg::R1'] = el({
+    id: 'Pkg::R1',
+    kind: 'requirement',
+    name: 'Safety',
+    parentId: 'Pkg',
+    shortId: 'R-01',
+    documentation: 'Be safe',
+    children: ['Pkg::R1::description'],
+  })
+  p.semantic['Pkg::R1::description'] = el({
+    id: 'Pkg::R1::description',
+    kind: 'attribute',
+    name: 'description',
+    parentId: 'Pkg::R1',
+    defaultValue: '"Panel text"',
+  })
+  return p
+}
