@@ -21,3 +21,5 @@ running-session.json
 .claude*
 .sysmlviewer/
 frontend/e2e/*
+!frontend/e2e/save_verification.spec.ts
+!frontend/e2e/port_label_move.spec.ts

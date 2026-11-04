@@ -47,6 +47,8 @@ SysML on disk is otherwise treated as source of truth for parsing. Sheet and sem
 }
 ```
 
+A port entry holds `side` and `offset`. When its name has been moved from the default place it also holds `labelOffset` (`{ "x": 30, "y": -12 }`, diagram pixels from the default place). The name follows the port, and an absent `labelOffset` is the default place.
+
 Legacy `state.json` → `viewLayouts` is migrated into `views/*.json` on load (or via `scripts/migrate_view_layouts.py`).
 
 `get_view` merges overlay geometry into the view payload. Tree views without an overlay use compact defaults (`DEFAULT_TREE_WIDTH`/`HEIGHT`). GeneralView/whitebox uses global (or that view’s overlay) sizes.

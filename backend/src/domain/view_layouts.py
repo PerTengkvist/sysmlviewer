@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from domain.models import VisualizationEdge, VisualizationNode, Waypoint
@@ -38,6 +38,15 @@ def parse_boundary_anchors(raw: Any) -> list[dict[str, Any]] | None:
     return out
 
 
+def parse_port_label_offset(value: Any) -> dict[str, float] | None:
+    """Keep an x/y offset. None and a zero offset both mean the default place."""
+    if not isinstance(value, dict):
+        return None
+    x = float(value.get("x") or 0)
+    y = float(value.get("y") or 0)
+    return {"x": x, "y": y} if x or y else None
+
+
 @dataclass
 class ViewNodeLayout:
     """Per-view geometry for one artifact, plus optional boundary anchors."""
@@ -50,6 +59,8 @@ class ViewNodeLayout:
     offset: float | None = None
     anchors: list[dict[str, Any]] | None = None
     edit_locked: bool | None = None
+    # A port name's distance from its default place. None is the default place.
+    label_offset: dict[str, float] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -69,6 +80,8 @@ class ViewNodeLayout:
             out["anchors"] = list(self.anchors)
         if self.edit_locked:
             out["editLocked"] = True
+        if self.label_offset is not None:
+            out["labelOffset"] = dict(self.label_offset)
         return out
 
     @classmethod
@@ -88,6 +101,7 @@ class ViewNodeLayout:
             if "anchors" in data
             else None,
             edit_locked=bool(data["editLocked"]) if "editLocked" in data else None,
+            label_offset=parse_port_label_offset(data.get("labelOffset")),
         )
 
     def merge_patch(self, patch: dict[str, Any]) -> ViewNodeLayout:
@@ -100,6 +114,7 @@ class ViewNodeLayout:
         offset = self.offset
         anchors = self.anchors
         edit_locked = self.edit_locked
+        label_offset = self.label_offset
         if "x" in patch and patch["x"] is not None:
             x = float(patch["x"])
         if "y" in patch and patch["y"] is not None:
@@ -116,6 +131,8 @@ class ViewNodeLayout:
             anchors = parse_boundary_anchors(patch.get("anchors"))
         if "editLocked" in patch:
             edit_locked = bool(patch["editLocked"])
+        if "labelOffset" in patch:
+            label_offset = parse_port_label_offset(patch["labelOffset"])
         return ViewNodeLayout(
             x=x,
             y=y,
@@ -125,6 +142,7 @@ class ViewNodeLayout:
             offset=offset,
             anchors=anchors,
             edit_locked=edit_locked,
+            label_offset=label_offset,
         )
 
 
@@ -482,6 +500,8 @@ def resolve_view_node(
         out["offset"] = overlay.offset
     if overlay.anchors is not None:
         out["anchors"] = list(overlay.anchors)
+    if overlay.label_offset is not None:
+        out["labelOffset"] = dict(overlay.label_offset)
     stamp_edit_lock(out, overlay.edit_locked)
     return out
 
@@ -612,6 +632,50 @@ def apply_view_layout_edge_patch(
         edges[artifact_id] = existing.merge_patch(patch)
     by_view[view_id] = _copy_view_layout(view_layout, edges=edges)
     return ViewLayouts(by_view=by_view)
+
+
+def apply_view_snapshot(
+    layout: ViewLayout,
+    *,
+    parts: dict[str, dict[str, Any]],
+    ports: dict[str, dict[str, Any]],
+    edges: dict[str, dict[str, Any]],
+) -> ViewLayout:
+    """Store what the diagram shows, one element at a time.
+
+    Unlike a patch this replaces each listed element's geometry, so a value the
+    diagram no longer has is cleared. Elements not listed are hidden by level or
+    filter and keep their geometry. Locks, anchors and view settings are not
+    diagram geometry and stay as they are.
+    """
+    nodes = dict(layout.nodes)
+    for artifact_id, geometry in parts.items():
+        nodes[artifact_id] = replace(
+            nodes.get(artifact_id) or ViewNodeLayout(),
+            x=_optional_float(geometry.get("x")),
+            y=_optional_float(geometry.get("y")),
+            width=_optional_float(geometry.get("width")),
+            height=_optional_float(geometry.get("height")),
+        )
+    for artifact_id, geometry in ports.items():
+        nodes[artifact_id] = replace(
+            nodes.get(artifact_id) or ViewNodeLayout(),
+            side=str(geometry["side"]) if geometry.get("side") else None,
+            offset=_optional_float(geometry.get("offset")),
+            label_offset=parse_port_label_offset(geometry.get("labelOffset")),
+        )
+    new_edges = dict(layout.edges)
+    for artifact_id, geometry in edges.items():
+        existing = new_edges.get(artifact_id) or ViewEdgeLayout()
+        new_edges[artifact_id] = replace(
+            ViewEdgeLayout.from_dict(geometry),
+            edit_locked=existing.edit_locked,
+        )
+    return _copy_view_layout(layout, nodes=nodes, edges=new_edges)
+
+
+def _optional_float(value: Any) -> float | None:
+    return float(value) if value is not None else None
 
 
 def apply_view_hierarchy_override(

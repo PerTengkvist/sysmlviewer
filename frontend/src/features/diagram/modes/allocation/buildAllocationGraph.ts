@@ -57,6 +57,7 @@ function buildPorts(
         name: port.name,
         side: defaultSide || ((idx % 2 === 0 ? 'left' : 'right') as PortSide),
         offset: packed[ui++] ?? 0.7,
+        labelOffset: pv?.labelOffset,
         style: pv?.style,
       }
     }
@@ -66,6 +67,7 @@ function buildPorts(
       name: port.name,
       side,
       offset: clampPortOffset(Number(pv!.offset), side, partH),
+      labelOffset: pv!.labelOffset,
       style: pv?.style,
     }
   })

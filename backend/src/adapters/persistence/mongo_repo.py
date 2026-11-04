@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from domain.models import Project
+from domain.view_layouts import ViewLayout
 
 
 class MongoProjectRepository:
@@ -28,6 +31,37 @@ class MongoProjectRepository:
         )
 
     def delete(self, project_id: str) -> bool:
+        raise NotImplementedError(
+            "MongoProjectRepository is a stub. Use JsonFileProjectRepository in alpha."
+        )
+
+    def load_view_layout(
+        self, view_id: str, *, structure_notation: str = "sysmlv2"
+    ) -> ViewLayout | None:
+        raise NotImplementedError(
+            "MongoProjectRepository is a stub. Use JsonFileProjectRepository in alpha."
+        )
+
+    def save_view_layout(
+        self,
+        view_id: str,
+        name: str | None,
+        layout: ViewLayout,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> Path:
+        raise NotImplementedError(
+            "MongoProjectRepository is a stub. Use JsonFileProjectRepository in alpha."
+        )
+
+    def duplicate_view_files(
+        self, view_id: str, *, structure_notation: str = "sysmlv2"
+    ) -> list[Path]:
+        raise NotImplementedError(
+            "MongoProjectRepository is a stub. Use JsonFileProjectRepository in alpha."
+        )
+
+    def corrupt_view_files(self) -> list[Path]:
         raise NotImplementedError(
             "MongoProjectRepository is a stub. Use JsonFileProjectRepository in alpha."
         )

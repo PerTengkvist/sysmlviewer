@@ -187,6 +187,38 @@ const graphOpts = {
   onLabelOffsetChange: () => {},
 }
 
+describe('buildStructureGraph port names', () => {
+  it('carries a saved name offset to the port', async () => {
+    const { buildStructureGraph } = await import('./buildStructureGraph')
+    const view = viewOf(nestedPortSemantic())
+    const portId = 'P::System::a::layered_port'
+    const saved = {
+      artifactId: portId,
+      x: 0,
+      y: 0,
+      width: 12,
+      height: 12,
+      symbolRef: 'default-port',
+      labelOffset: { x: 30, y: -12 },
+    }
+
+    for (const placement of [
+      { side: null, offset: null },
+      { side: 'right' as const, offset: 0.5 },
+    ]) {
+      view.visualization.nodes[portId] = { ...saved, ...placement }
+      const { nodes } = buildStructureGraph({ view, ...graphOpts })
+      const part = nodes.find((n) => n.id === 'P::System::a')!
+      const ports = part.data.ports as { id: string; labelOffset?: unknown }[]
+
+      expect(ports.find((p) => p.id === portId)?.labelOffset).toEqual({
+        x: 30,
+        y: -12,
+      })
+    }
+  })
+})
+
 describe('resolvePortHandleId', () => {
   it('maps nested port ends to the direct ancestor port on the owner', async () => {
     const { resolvePortHandleId } = await import('./buildStructureGraph')

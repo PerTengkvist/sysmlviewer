@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +10,7 @@ from typing import Any
 from domain.models import Project, SemanticElement, SysmlFile, VisualizationModel, ViewDef
 from domain.view_layouts import ViewLayout, ViewLayouts
 from adapters.persistence import view_file_store
+from adapters.persistence.atomic_write import atomic_write_json
 
 
 def sanitize_rel_path(raw: str | None, fallback_name: str) -> str:
@@ -290,6 +289,19 @@ class WorkspaceProjectRepository:
             self.root, view_id, structure_notation=structure_notation
         )
 
+    def duplicate_view_files(
+        self,
+        view_id: str,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> list[Path]:
+        return view_file_store.duplicate_view_files(
+            self.root, view_id, structure_notation=structure_notation
+        )
+
+    def corrupt_view_files(self) -> list[Path]:
+        return view_file_store.corrupt_view_files(self.root)
+
     def save(self, project: Project) -> Project:
         """Persist project.json + state.json only (no viewLayouts blob).
 
@@ -352,28 +364,7 @@ class WorkspaceProjectRepository:
 
     @staticmethod
     def _atomic_write_json(path: Path, data: dict[str, Any]) -> None:
-        """Write JSON via unique temp + replace (safe under concurrent PATCH).
-
-        A fixed ``path.tmp`` name races: two writers replace the same temp and the
-        loser hits FileNotFoundError on replace (500 Internal Server Error).
-        """
-        path.parent.mkdir(parents=True, exist_ok=True)
-        text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-        fd, tmp_name = tempfile.mkstemp(
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            dir=path.parent,
-        )
-        tmp = Path(tmp_name)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(text)
-                handle.flush()
-                os.fsync(handle.fileno())
-            tmp.replace(path)
-        except Exception:
-            tmp.unlink(missing_ok=True)
-            raise
+        atomic_write_json(path, data)
 
     def delete(self, project_id: str) -> bool:
         project = self.get(project_id)

@@ -6,11 +6,15 @@ SysML v2 layouts use ``<name>.json``. Arcadia / SysML v1 layouts use the sibling
 
 from __future__ import annotations
 
+import errno
 import json
+import os
 import re
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from adapters.persistence.atomic_write import atomic_write_json
 from domain.view_layouts import ViewLayout, ViewLayouts
 
 VIEWS_DIR = "views"
@@ -20,6 +24,18 @@ ARCADIA_SUFFIX = ".arcadia"
 _UNSAFE = re.compile(r"[^\w.\-]+", re.UNICODE)
 
 StructureNotation = str  # "sysmlv2" | "arcadia"
+
+
+class ViewFileNotWritable(PermissionError):
+    """The view file exists but must not be replaced.
+
+    ``os.replace`` only needs directory access, so an atomic write would
+    otherwise overwrite a file the user marked read-only.
+    """
+
+    def __init__(self, path: Path) -> None:
+        super().__init__(errno.EACCES, "View file is not writable", str(path))
+        self.path = path
 
 
 def normalize_notation(raw: str | None) -> StructureNotation:
@@ -106,38 +122,106 @@ def write_one(
     notation = normalize_notation(structure_notation)
     directory = views_dir(root)
     directory.mkdir(parents=True, exist_ok=True)
-    if filename is None:
+    path = _write_target(directory, view_id, name, filename, notation)
+    if path.exists() and not os.access(path, os.W_OK):
+        raise ViewFileNotWritable(path.resolve())
+    if not os.access(directory, os.W_OK):
+        raise ViewFileNotWritable(directory.resolve())
+    atomic_write_json(
+        path,
+        layout_document(view_id, name, layout, structure_notation=notation),
+    )
+    return path.resolve()
+
+
+def _write_target(
+    directory: Path,
+    view_id: str,
+    name: str | None,
+    filename: str | None,
+    notation: StructureNotation,
+) -> Path:
+    """Pick the file to write, which must be the one a later read returns."""
+    if filename is not None:
+        path = directory / notation_filename(filename, notation)
+    else:
+        existing = _files_for_view(directory, view_id, notation)
+        if existing:
+            return existing[-1]
         claimed = _stems_claimed_by_other_views(directory, view_id, notation)
-        filename = safe_view_filename(
+        path = directory / safe_view_filename(
             view_id,
             name,
             existing_names=claimed,
             notation=notation,
         )
-    else:
-        filename = notation_filename(filename, notation)
-    path = directory / filename
-    if path.is_file():
-        try:
-            existing_doc = json.loads(path.read_text(encoding="utf-8"))
-            if existing_doc.get("viewId") and existing_doc.get("viewId") != view_id:
-                path = directory / notation_filename(
-                    f"{sanitize_filename_stem(view_id)}.json", notation
-                )
-        except (json.JSONDecodeError, OSError):
-            pass
-    path.write_text(
-        json.dumps(
-            layout_document(
-                view_id, name, layout, structure_notation=notation
-            ),
-            indent=2,
-            ensure_ascii=False,
+    existing_doc = _read_document(path) if path.is_file() else None
+    if existing_doc and existing_doc.get("viewId") not in (None, "", view_id):
+        path = directory / notation_filename(
+            f"{sanitize_filename_stem(view_id)}.json", notation
         )
-        + "\n",
-        encoding="utf-8",
-    )
-    return path.resolve()
+    return path
+
+
+def _read_document(path: Path) -> dict[str, Any] | None:
+    """Parsed layout document, or None when the file cannot be used."""
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+def _layout_documents(
+    directory: Path,
+    notation: StructureNotation,
+) -> Iterator[tuple[Path, dict[str, Any]]]:
+    """Parsable layout files for one notation, in the order reads apply them."""
+    want_arcadia = normalize_notation(notation) == "arcadia"
+    for path in sorted(directory.glob("*.json")):
+        if is_arcadia_layout_path(path) != want_arcadia:
+            continue
+        doc = _read_document(path)
+        if doc is not None:
+            yield path, doc
+
+
+def _files_for_view(
+    directory: Path,
+    view_id: str,
+    notation: StructureNotation,
+) -> list[Path]:
+    """Files holding this view. The last one wins, because reads apply in order."""
+    if not directory.is_dir():
+        return []
+    return [
+        path
+        for path, doc in _layout_documents(directory, notation)
+        if doc.get("viewId") == view_id
+    ]
+
+
+def duplicate_view_files(
+    root: Path,
+    view_id: str,
+    *,
+    structure_notation: StructureNotation = "sysmlv2",
+) -> list[Path]:
+    """All files for a view when more than one exists, otherwise empty."""
+    files = _files_for_view(views_dir(root), view_id, structure_notation)
+    return files if len(files) > 1 else []
+
+
+def corrupt_view_files(root: Path) -> list[Path]:
+    """Layout files that reads skip because they cannot be parsed."""
+    directory = views_dir(root)
+    if not directory.is_dir():
+        return []
+    return [
+        path
+        for path in sorted(directory.glob("*.json"))
+        if _read_document(path) is None
+    ]
 
 
 def _stems_claimed_by_other_views(
@@ -152,9 +236,8 @@ def _stems_claimed_by_other_views(
     for path in directory.glob("*.json"):
         if is_arcadia_layout_path(path) != want_arcadia:
             continue
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        doc = _read_document(path)
+        if doc is None:
             claimed.add(path.stem.replace(ARCADIA_SUFFIX, ""))
             continue
         if doc.get("viewId") != view_id:
@@ -179,14 +262,7 @@ def read_all(
     by_view: dict[str, ViewLayout] = {}
     if not directory.is_dir():
         return ViewLayouts()
-    want_arcadia = notation == "arcadia"
-    for path in sorted(directory.glob("*.json")):
-        if is_arcadia_layout_path(path) != want_arcadia:
-            continue
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            continue
+    for _path, doc in _layout_documents(directory, notation):
         view_id = doc.get("viewId")
         if not view_id or not isinstance(view_id, str):
             continue
@@ -246,19 +322,9 @@ def find_view_file(
     structure_notation: StructureNotation = "sysmlv2",
 ) -> Path | None:
     notation = normalize_notation(structure_notation)
-    directory = views_dir(root)
-    if not directory.is_dir():
-        return None
-    want_arcadia = notation == "arcadia"
-    for path in directory.glob("*.json"):
-        if is_arcadia_layout_path(path) != want_arcadia:
-            continue
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            continue
-        if doc.get("viewId") == view_id:
-            return path
+    files = _files_for_view(views_dir(root), view_id, notation)
+    if files:
+        return files[-1]
     if notation == "arcadia":
         return find_view_file(root, view_id, structure_notation="sysmlv2")
     return None

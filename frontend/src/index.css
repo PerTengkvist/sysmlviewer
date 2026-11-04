@@ -1962,6 +1962,26 @@ button.linkish {
   /* Anchored on .part-node — same box % as port handles */
 }
 
+.port-label.movable {
+  cursor: move;
+}
+
+.port-label.movable:hover {
+  outline: 1px dashed var(--accent);
+  outline-offset: 1px;
+}
+
+/* Overflows the part because a moved name can sit outside it. */
+.port-label-leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .port-annotation-node {
   pointer-events: all;
   background: transparent;
@@ -2886,4 +2906,141 @@ button.linkish {
   display: inline-flex;
   gap: 0.4rem;
   align-items: center;
+}
+
+/* Event log drawer under the canvas */
+.canvas-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.events-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.events-badge {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: var(--surface);
+  font-size: 0.75rem;
+  line-height: 18px;
+  text-align: center;
+}
+
+.events-drawer {
+  flex: 0 0 240px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  color: var(--ink);
+  border-top: 1px solid var(--panel-border);
+}
+
+.events-drawer-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.events-drawer-header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.events-drawer-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.events-empty {
+  margin: 0;
+  padding: 12px;
+  color: var(--muted);
+}
+
+.events-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.events-row {
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  border-left: 3px solid transparent;
+}
+
+.events-row-warning {
+  border-left-color: var(--accent);
+}
+
+.events-row-error {
+  border-left-color: var(--danger);
+}
+
+.events-row-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.events-row-line time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.events-level {
+  min-width: 52px;
+  color: var(--muted);
+}
+
+.events-row-error .events-level {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.events-message {
+  flex: 1 1 240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.events-local {
+  color: var(--danger);
+  font-size: 0.75rem;
+}
+
+.events-details {
+  margin: 4px 0 4px 16px;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.events-details th,
+.events-details td {
+  padding: 1px 12px 1px 0;
+  text-align: left;
+  font-weight: 400;
+}
+
+.events-details th {
+  color: var(--muted);
 }
