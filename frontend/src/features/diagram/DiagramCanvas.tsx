@@ -500,6 +500,8 @@ type Props = {
   onBackView?: () => void
   /** Double-click on a node; the caller decides what the kind opens. */
   onNodeDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
+  /** Double-click on an edge; same callback shape as nodes. */
+  onEdgeDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -554,6 +556,7 @@ export function DiagramCanvas({
   onOpenView,
   onBackView,
   onNodeDoubleClick,
+  onEdgeDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
   onLayeredLayoutChange,
@@ -2877,6 +2880,14 @@ export function DiagramCanvas({
               : (_e, node) => {
                   const el = view?.semantic[node.id]
                   if (el) onNodeDoubleClick(node.id, el.kind)
+                }
+          }
+          onEdgeDoubleClick={
+            printMode || !onEdgeDoubleClick
+              ? undefined
+              : (_e, edge) => {
+                  const el = view?.semantic[edge.id]
+                  if (el) onEdgeDoubleClick(edge.id, el.kind)
                 }
           }
           onEdgeClick={

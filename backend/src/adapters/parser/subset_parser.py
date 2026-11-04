@@ -851,20 +851,13 @@ class SubsetSysmlParser:
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
-                # Alpha: record port def name; skip feature body if present
-                if is_def and peek() and peek().value == "{":
-                    depth = 0
-                    while i < n:
-                        t = take()
-                        if not t:
-                            break
-                        if t.value == "{":
-                            depth += 1
-                        elif t.value == "}":
-                            depth -= 1
-                            if depth <= 0:
-                                break
-                elif peek() and peek().value == ";":
+                nxt = peek()
+                if nxt and nxt.value == "{":
+                    take()
+                    state.scopes.append(
+                        _Scope(element_id=element_id, kind=ArtifactKind.PORT, brace_depth=1)
+                    )
+                elif nxt and nxt.value == ";":
                     take()
                 continue
 
@@ -2192,6 +2185,10 @@ class SubsetSysmlParser:
         checks = {
             ArtifactKind.SATISFY: "satisfy",
             ArtifactKind.DEPENDENCY: "dependency",
+            ArtifactKind.CONNECTION: "connection",
+            ArtifactKind.BINDING: "binding",
+            ArtifactKind.FLOW: "flow",
+            ArtifactKind.INTERFACE: "interface",
         }
         for el in state.elements.values():
             label = checks.get(el.kind)
@@ -2231,6 +2228,33 @@ class SubsetSysmlParser:
                     return el
             return defs_by_name.get(type_ref)
 
+        def resolve_port_def(type_ref: str | None) -> SemanticElement | None:
+            """Resolve a port definition by type ref (package-level `port def` preferred)."""
+            if not type_ref:
+                return None
+            direct = state.elements.get(type_ref)
+            if direct and direct.kind == ArtifactKind.PORT and direct.type_ref is None:
+                parent = state.elements.get(direct.parent_id) if direct.parent_id else None
+                if parent is None or parent.kind == ArtifactKind.PACKAGE:
+                    return direct
+            simple = type_ref.split("::")[-1]
+            candidates = [
+                el
+                for el in state.elements.values()
+                if el.kind == ArtifactKind.PORT and el.name == simple and el.type_ref is None
+            ]
+            for el in candidates:
+                parent = state.elements.get(el.parent_id) if el.parent_id else None
+                if parent is not None and parent.kind == ArtifactKind.PACKAGE:
+                    return el
+            for el in candidates:
+                parent = state.elements.get(el.parent_id) if el.parent_id else None
+                # Nested ports under a port def are usages, not defs — skip those.
+                if parent is not None and parent.kind == ArtifactKind.PORT:
+                    continue
+                return el
+            return None
+
         def copy_port(usage: SemanticElement, child: SemanticElement) -> None:
             usage_child_id = f"{usage.id}::{child.name}"
             if usage_child_id in state.elements:
@@ -2246,6 +2270,32 @@ class SubsetSysmlParser:
             )
             state.elements[usage_child_id] = port
             state.add_child(usage.id, usage_child_id)
+
+        def expand_port_usage(
+            port_usage: SemanticElement, branch: list[str] | None = None
+        ) -> None:
+            """Copy nested ports from a port def onto a typed port usage."""
+            if port_usage.kind != ArtifactKind.PORT or not port_usage.type_ref:
+                return
+            port_def = resolve_port_def(port_usage.type_ref)
+            if not port_def:
+                return
+            if branch is None:
+                branch = []
+            if port_def.id in branch:
+                return
+            branch.append(port_def.id)
+            try:
+                for child_id in list(port_def.children):
+                    child = state.elements.get(child_id)
+                    if not child or child.kind != ArtifactKind.PORT:
+                        continue
+                    copy_port(port_usage, child)
+                    nested = state.elements.get(f"{port_usage.id}::{child.name}")
+                    if nested:
+                        expand_port_usage(nested, branch)
+            finally:
+                branch.pop()
 
         def copy_attribute(usage: SemanticElement, child: SemanticElement) -> None:
             usage_child_id = f"{usage.id}::{child.name}"
@@ -2356,6 +2406,11 @@ class SubsetSysmlParser:
                         continue
                     if child.kind == ArtifactKind.PORT:
                         copy_port(usage, child)
+                        # Expand hierarchical port types before copying binds/
+                        # connections that target nested leaves.
+                        copied = state.elements.get(f"{usage.id}::{child.name}")
+                        if copied:
+                            expand_port_usage(copied)
                     elif child.kind == ArtifactKind.ATTRIBUTE:
                         copy_attribute(usage, child)
                     elif child.kind == ArtifactKind.PART:
@@ -2391,9 +2446,22 @@ class SubsetSysmlParser:
         # Fixpoint: specialized defs may gain copied relations in an earlier
         # pass that later usages need. Re-expand a usage only when its type
         # def has gained children since the last expansion.
+        # Port usages typed by a port def gain nested ports the same way.
         expanded_child_count: dict[str, int] = {}
+        expanded_port_child_count: dict[str, int] = {}
         for _ in range(32):
             before = len(state.elements)
+            for port_usage in list(state.elements.values()):
+                if port_usage.kind != ArtifactKind.PORT or not port_usage.type_ref:
+                    continue
+                port_def = resolve_port_def(port_usage.type_ref)
+                if not port_def:
+                    continue
+                child_count = len(port_def.children)
+                if expanded_port_child_count.get(port_usage.id) == child_count:
+                    continue
+                expand_port_usage(port_usage)
+                expanded_port_child_count[port_usage.id] = child_count
             usages = [
                 el
                 for el in list(state.elements.values())

@@ -226,6 +226,40 @@ export function findOwnerPart(
   return displayIds.has(current.id) ? current.id : null
 }
 
+/**
+ * Port handles on a part: every direct port usage (including hierarchical
+ * composites used as connection ends) plus leaf nested ports under them.
+ */
+function leafPortsForPart(
+  el: SemanticElement,
+  semantic: Record<string, SemanticElement>,
+): SemanticElement[] {
+  const out: SemanticElement[] = []
+  const seen = new Set<string>()
+  const add = (port: SemanticElement) => {
+    if (seen.has(port.id)) return
+    seen.add(port.id)
+    out.push(port)
+  }
+  const visitLeaves = (port: SemanticElement) => {
+    const childPorts = (port.children || [])
+      .map((cid) => semantic[cid])
+      .filter((c): c is SemanticElement => !!c && c.kind === 'port')
+    if (childPorts.length === 0) {
+      add(port)
+      return
+    }
+    for (const child of childPorts) visitLeaves(child)
+  }
+  for (const cid of el.children || []) {
+    const child = semantic[cid]
+    if (child?.kind !== 'port') continue
+    add(child) // composite face stays connectable (e.g. sPort to ~sPort)
+    visitLeaves(child)
+  }
+  return out
+}
+
 function buildPorts(
   el: SemanticElement,
   semantic: Record<string, SemanticElement>,
@@ -233,9 +267,7 @@ function buildPorts(
   isBoundary = false,
 ) {
   const partH = Number(visualization.nodes[el.id]?.height) || 120
-  const portEls = (el.children || [])
-    .map((cid) => semantic[cid])
-    .filter((c): c is SemanticElement => !!c && c.kind === 'port')
+  const portEls = leafPortsForPart(el, semantic)
   const unsaved = portEls.filter(
     (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
   )
@@ -365,10 +397,9 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     const baseH = viz?.height ?? fallbackH
     if (!ports.length) return { width: baseW, height: baseH }
     const fitted = sizePartForPorts(el.name, ports)
-    const unsaved = (el.children || []).some((cid) => {
-      const c = semantic[cid]
-      return c?.kind === 'port' && !hasSavedPortPlacement(visualization.nodes[cid])
-    })
+    const unsaved = leafPortsForPart(el, semantic).some(
+      (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
+    )
     // Default (unsaved) placement: grow to fit port names in the body.
     // Saved placement: still never shrink below fitted height needed for body band.
     if (unsaved) {

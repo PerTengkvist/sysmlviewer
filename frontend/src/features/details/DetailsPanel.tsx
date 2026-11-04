@@ -21,6 +21,7 @@ import {
   findInterfaceDefId,
   interfaceUsageKindLabel,
 } from './interfaceLocate'
+import { findPortDefId } from './portLocate'
 import { sizeFieldChange } from '../diagram/partSizeLimits'
 import {
   mergeStylePatch,
@@ -897,6 +898,42 @@ export function DetailsPanel({
                 </span>
               )
             })()
+          ) : (el.kind === 'connection' || el.kind === 'binding') &&
+            el.typeRef ? (
+            (() => {
+              const defId = findInterfaceDefId(project.semantic, el.typeRef)
+              const kindLabel = el.typeRef
+              return (
+                <span className="kind-with-locate">
+                  {defId && onLocateInModelView ? (
+                    <button
+                      type="button"
+                      className="linkish"
+                      onClick={() => onLocateInModelView(defId)}
+                      title="Locate interface def in Model view"
+                    >
+                      {kindLabel}
+                    </button>
+                  ) : (
+                    <>
+                      {el.kind}
+                      {kindLabel ? ` : ${kindLabel}` : ''}
+                    </>
+                  )}
+                  {onLocateInModelView && (
+                    <button
+                      type="button"
+                      className="locate-in-model-btn"
+                      disabled={!defId}
+                      onClick={() => defId && onLocateInModelView(defId)}
+                      title="Locate in Model view"
+                    >
+                      Locate in Model
+                    </button>
+                  )}
+                </span>
+              )
+            })()
           ) : (
             el.kind
           )}
@@ -958,10 +995,48 @@ export function DetailsPanel({
             </dd>
           </>
         )}
-        {el.typeRef && !isInterfaceUsage && (
+        {el.typeRef &&
+          !isInterfaceUsage &&
+          el.kind !== 'connection' &&
+          el.kind !== 'binding' && (
           <>
             <dt>Type</dt>
-            <dd>{el.typeRef}</dd>
+            <dd>
+              {el.kind === 'port' ? (
+                (() => {
+                  const defId = findPortDefId(project.semantic, el.typeRef)
+                  return (
+                    <span className="kind-with-locate">
+                      {defId && onLocateInModelView ? (
+                        <button
+                          type="button"
+                          className="linkish"
+                          onClick={() => onLocateInModelView(defId)}
+                          title="Locate port def in Model view"
+                        >
+                          {el.typeRef}
+                        </button>
+                      ) : (
+                        el.typeRef
+                      )}
+                      {onLocateInModelView && (
+                        <button
+                          type="button"
+                          className="locate-in-model-btn"
+                          disabled={!defId}
+                          onClick={() => defId && onLocateInModelView(defId)}
+                          title="Locate in Model view"
+                        >
+                          Locate in Model
+                        </button>
+                      )}
+                    </span>
+                  )
+                })()
+              ) : (
+                el.typeRef
+              )}
+            </dd>
           </>
         )}
         {el.exposeRef && (
@@ -1000,13 +1075,61 @@ export function DetailsPanel({
         {(relationEnds?.sourceId || el.sourceId) && (
           <>
             <dt>Source</dt>
-            <dd className="mono">{relationEnds?.sourceId || el.sourceId}</dd>
+            <dd className="mono">
+              {(() => {
+                const endId = relationEnds?.sourceId || el.sourceId || ''
+                const endEl = project.semantic[endId]
+                const defId =
+                  endEl?.kind === 'port'
+                    ? findPortDefId(project.semantic, endEl.typeRef)
+                    : null
+                return (
+                  <span className="kind-with-locate">
+                    <span>{endId}</span>
+                    {onLocateInModelView && defId && (
+                      <button
+                        type="button"
+                        className="locate-in-model-btn"
+                        onClick={() => onLocateInModelView(defId)}
+                        title="Locate port def in Model view"
+                      >
+                        Locate in Model
+                      </button>
+                    )}
+                  </span>
+                )
+              })()}
+            </dd>
           </>
         )}
         {(relationEnds?.targetId || el.targetId) && (
           <>
             <dt>Target</dt>
-            <dd className="mono">{relationEnds?.targetId || el.targetId}</dd>
+            <dd className="mono">
+              {(() => {
+                const endId = relationEnds?.targetId || el.targetId || ''
+                const endEl = project.semantic[endId]
+                const defId =
+                  endEl?.kind === 'port'
+                    ? findPortDefId(project.semantic, endEl.typeRef)
+                    : null
+                return (
+                  <span className="kind-with-locate">
+                    <span>{endId}</span>
+                    {onLocateInModelView && defId && (
+                      <button
+                        type="button"
+                        className="locate-in-model-btn"
+                        onClick={() => onLocateInModelView(defId)}
+                        title="Locate port def in Model view"
+                      >
+                        Locate in Model
+                      </button>
+                    )}
+                  </span>
+                )
+              })()}
+            </dd>
           </>
         )}
         {relationEnds && (
