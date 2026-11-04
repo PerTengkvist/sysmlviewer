@@ -24,9 +24,10 @@ def collect_related_edges(
 ) -> set[str]:
     """Include relationship edges whose endpoints fall within `included`.
 
-    Also pulls the endpoint ids themselves into the set so nested port ends
-    (under a composite port usage) are present in the view semantic — needed
-    for diagram handle resolution.
+    Also pulls **nested port** endpoint ids into the set (for diagram handle
+    resolution). Depth-excluded parts/packages are never pulled in — edges
+    that only touch them via a parent walk are still added here, then dropped
+    by the view's hidden-relation filter when the ends are absent.
     """
     extra: set[str] = set()
     for el in semantic.values():
@@ -43,10 +44,13 @@ def collect_related_edges(
             continue
         if el.id not in included:
             extra.add(el.id)
-        if src not in included:
-            extra.add(src)
-        if tgt not in included:
-            extra.add(tgt)
+        for endpoint in (src, tgt):
+            if endpoint in included or endpoint in extra:
+                continue
+            end_el = semantic.get(endpoint)
+            # Only nested ports — never reintroduce hidden structural nodes.
+            if end_el and end_el.kind == ArtifactKind.PORT:
+                extra.add(endpoint)
     return extra
 
 
