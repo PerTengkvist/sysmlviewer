@@ -42,6 +42,7 @@ import { EDGE_LABEL_TEXT_HEIGHT_PX, type ViewMode } from '../../settings'
 import type { ProjectSheet } from '../sheet/sheet'
 import { paperSizeMm } from '../sheet/sheet'
 import { PartNode, type PartNodeData } from './PartNode'
+import { PortAnnotationNode } from './PortAnnotationNode'
 import { SysmlEdge, type SysmlEdgeData } from './InternalEdge'
 import {
   HighlightedSmoothStepEdge,
@@ -144,6 +145,7 @@ import {
 /** All custom types registered together — React Flow caches nodeTypes on mount. */
 const allNodeTypes: NodeTypes = {
   part: PartNode,
+  portAnnotation: PortAnnotationNode,
   lifeline: LifelineNode,
   state: StateNode,
   action: ActionNode,
@@ -474,6 +476,7 @@ type Props = {
   viewMode?: ViewMode
   showAttributes?: boolean
   structureNotation?: import('../../settings').StructureNotation
+  nestedPortReveal?: import('../../settings').NestedPortReveal
   requirementDisplay?: import('../../settings').RequirementDisplaySettings
   sheet?: ProjectSheet
   selectedConnectionColor?: string
@@ -500,6 +503,8 @@ type Props = {
   onBackView?: () => void
   /** Double-click on a node; the caller decides what the kind opens. */
   onNodeDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
+  /** Double-click on an edge; same callback shape as nodes. */
+  onEdgeDoubleClick?: (artifactId: string, kind: ArtifactKind) => void
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
@@ -540,6 +545,7 @@ export function DiagramCanvas({
   viewMode = 'light',
   showAttributes = false,
   structureNotation = 'sysmlv2',
+  nestedPortReveal = 'hover',
   requirementDisplay,
   sheet,
   selectedConnectionColor = '#2563eb',
@@ -554,6 +560,7 @@ export function DiagramCanvas({
   onOpenView,
   onBackView,
   onNodeDoubleClick,
+  onEdgeDoubleClick,
   onNodesMoved,
   onLayoutRulesChange,
   onLayeredLayoutChange,
@@ -797,7 +804,7 @@ export function DiagramCanvas({
     ? JSON.stringify(requirementDisplay)
     : ''
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -915,6 +922,7 @@ export function DiagramCanvas({
           showAttributes,
           viewMode: renderViewMode,
           structureNotation,
+          nestedPortReveal,
           selectedConnectionColor,
           selectedConnectionLinewidthFactor,
           onWaypointsChange: stableWp,
@@ -1041,7 +1049,7 @@ export function DiagramCanvas({
     }
     viewKeyRef.current = viewKey
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewKey, showAttributes, renderViewMode])
+  }, [viewKey, showAttributes, renderViewMode, nestedPortReveal])
 
   const onCopyImage = useCallback(() => {
     if (printMode || pendingCopyRef.current || copyState === 'busy') return
@@ -2877,6 +2885,14 @@ export function DiagramCanvas({
               : (_e, node) => {
                   const el = view?.semantic[node.id]
                   if (el) onNodeDoubleClick(node.id, el.kind)
+                }
+          }
+          onEdgeDoubleClick={
+            printMode || !onEdgeDoubleClick
+              ? undefined
+              : (_e, edge) => {
+                  const el = view?.semantic[edge.id]
+                  if (el) onEdgeDoubleClick(edge.id, el.kind)
                 }
           }
           onEdgeClick={

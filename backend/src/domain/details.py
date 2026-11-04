@@ -123,6 +123,18 @@ def collect_artifacts_to_depth(
         frontier = nxt
 
     extra: set[str] = set()
+
+    def _attach_port_tree(port_id: str) -> None:
+        """Include a port and all nested ports under it (hierarchical faces)."""
+        port = semantic.get(port_id)
+        if not port or port.kind != ArtifactKind.PORT:
+            return
+        extra.add(port_id)
+        for cid in port.children:
+            child = semantic.get(cid)
+            if child and child.kind == ArtifactKind.PORT:
+                _attach_port_tree(cid)
+
     for aid in list(included):
         el = semantic.get(aid)
         if not el:
@@ -131,7 +143,9 @@ def collect_artifacts_to_depth(
             child = semantic.get(cid)
             if not child:
                 continue
-            if child.kind in _ATTACHED_KINDS:
+            if child.kind == ArtifactKind.PORT:
+                _attach_port_tree(cid)
+            elif child.kind in _ATTACHED_KINDS:
                 extra.add(cid)
             # nested structural nodes beyond depth already excluded
     included |= extra

@@ -22,21 +22,35 @@ def is_relation_element(el: SemanticElement) -> bool:
 def collect_related_edges(
     semantic: dict[str, SemanticElement], included: set[str]
 ) -> set[str]:
-    """Include relationship edges whose endpoints fall within `included`."""
+    """Include relationship edges whose endpoints fall within `included`.
+
+    Also pulls **nested port** endpoint ids into the set (for diagram handle
+    resolution). Depth-excluded parts/packages are never pulled in — edges
+    that only touch them via a parent walk are still added here, then dropped
+    by the view's hidden-relation filter when the ends are absent.
+    """
     extra: set[str] = set()
     for el in semantic.values():
         if not is_relation_element(el):
-            continue
-        if el.id in included:
             continue
         src = el.source_id
         tgt = el.target_id
         if not src or not tgt:
             continue
-        if _endpoint_included(src, included, semantic) and _endpoint_included(
-            tgt, included, semantic
+        if not (
+            _endpoint_included(src, included, semantic)
+            and _endpoint_included(tgt, included, semantic)
         ):
+            continue
+        if el.id not in included:
             extra.add(el.id)
+        for endpoint in (src, tgt):
+            if endpoint in included or endpoint in extra:
+                continue
+            end_el = semantic.get(endpoint)
+            # Only nested ports — never reintroduce hidden structural nodes.
+            if end_el and end_el.kind == ArtifactKind.PORT:
+                extra.add(endpoint)
     return extra
 
 

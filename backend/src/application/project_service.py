@@ -1468,17 +1468,7 @@ class ProjectService:
                 root_ids=set(expose_root_ids),
             )
 
-        structure_edge_kinds = {
-            ArtifactKind.CONNECTION,
-            ArtifactKind.DEPENDENCY,
-            ArtifactKind.ALLOCATION,
-            ArtifactKind.BINDING,
-            ArtifactKind.FLOW,
-            ArtifactKind.SPECIALIZATION,
-            ArtifactKind.SUBSETTING,
-            ArtifactKind.REDEFINITION,
-            ArtifactKind.SATISFY,
-        }
+        from domain.merge import STRUCTURE_EDGE_KINDS as structure_edge_kinds
 
         # Drop relations to/from parts outside the depth window (even if nested
         # under an included parent as a child feature).

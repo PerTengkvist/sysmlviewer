@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { nodeDoubleClickAction } from './nodeDoubleClick'
+import {
+  diagramDoubleClickAction,
+  nodeDoubleClickAction,
+} from './nodeDoubleClick'
 
 describe('nodeDoubleClickAction', () => {
   it('opens the element dialog for parts, interfaces, packages and views', () => {
@@ -21,5 +24,16 @@ describe('nodeDoubleClickAction', () => {
     expect(nodeDoubleClickAction('port')).toBeNull()
     expect(nodeDoubleClickAction('attribute')).toBeNull()
     expect(nodeDoubleClickAction(undefined)).toBeNull()
+  })
+})
+
+describe('diagramDoubleClickAction', () => {
+  it('opens the element dialog for connection and binding edges', () => {
+    expect(diagramDoubleClickAction('connection')).toBe('element-dialog')
+    expect(diagramDoubleClickAction('binding')).toBe('element-dialog')
+  })
+
+  it('opens the element dialog for interface usages', () => {
+    expect(diagramDoubleClickAction('interface')).toBe('element-dialog')
   })
 })

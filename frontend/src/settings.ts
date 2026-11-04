@@ -12,6 +12,9 @@ export type ViewMode = 'light' | 'dark'
 
 export type StructureNotation = 'sysmlv2' | 'arcadia'
 
+/** How hierarchical (nested) ports disclose their sub-ports on the diagram. */
+export type NestedPortReveal = 'hover' | 'annotations'
+
 export type { RequirementDisplaySettings }
 
 /** Curated remote SVG libraries (allowlist — not free-form CDN URLs). */
@@ -51,6 +54,11 @@ export type AppSettings = {
    * excluded by the layout filter). When false, all bindings are skipped.
    */
   includeBindingsInRouting: boolean
+  /**
+   * Hierarchical ports: reveal sub-ports on hover (default) or as movable
+   * `subports:{…}` annotations with a dashed association line.
+   */
+  nestedPortReveal: NestedPortReveal
   /** Panel sizes as percentages [left, center, right]. */
   horizontalPanelSizes: [number, number, number]
   /** Right sidebar split [details, documentation] percentages. */
@@ -142,6 +150,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   connectionSeparation: EDGE_LABEL_TEXT_HEIGHT_PX,
   showJumpers: true,
   includeBindingsInRouting: true,
+  nestedPortReveal: 'hover',
   horizontalPanelSizes: [18, 64, 18],
   rightPanelSizes: [50, 50],
   rightPanelCollapsed: false,
@@ -215,6 +224,8 @@ export function loadSettings(): AppSettings {
         typeof parsed.includeBindingsInRouting === 'boolean'
           ? parsed.includeBindingsInRouting
           : DEFAULT_SETTINGS.includeBindingsInRouting,
+      nestedPortReveal:
+        parsed.nestedPortReveal === 'annotations' ? 'annotations' : 'hover',
       horizontalPanelSizes: normalizeTriple(
         parsed.horizontalPanelSizes,
         DEFAULT_SETTINGS.horizontalPanelSizes,

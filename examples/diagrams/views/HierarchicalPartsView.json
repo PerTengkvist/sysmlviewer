@@ -5,14 +5,20 @@
   "structureNotation": "sysmlv2",
   "nodes": {
     "HierarchicalPartsPkg::PartDefinitions::FD2": {
-      "x": 129.51833350908817,
-      "y": 4405.197890414426,
+      "x": 178.5605272873924,
+      "y": 405.26400771989324,
       "width": 200.0,
       "height": 120.0
     },
     "HierarchicalPartsPkg::PartDefinitions::FD3": {
-      "x": 627.895434185664,
-      "y": 4551.913779027879,
+      "x": -139.80636073351883,
+      "y": 204.50555398860138,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1": {
+      "x": 534.8325046022662,
+      "y": 205.52363205634458,
       "width": 200.0,
       "height": 120.0
     }

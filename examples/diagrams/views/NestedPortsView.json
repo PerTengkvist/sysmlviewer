@@ -1,0 +1,686 @@
+{
+  "schemaVersion": 1,
+  "viewId": "HierarchicalPartsPkg::NestedPortsView",
+  "name": "NestedPortsView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "HierarchicalPartsPkg::NestedPorts::a::c1": {
+      "x": 89.72190160460713,
+      "y": 613.1504794331063,
+      "width": 160.0,
+      "height": 79.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::b": {
+      "x": 102.53393434449646,
+      "y": 370.11517883384073,
+      "width": 256.0,
+      "height": 192.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::b::layered_port::hport_l1": {
+      "side": "left",
+      "offset": 0.5625
+    },
+    "HierarchicalPartsPkg::NestedPorts::b::layered_port::hport_l2": {
+      "side": "right",
+      "offset": 0.2708333333333333
+    },
+    "HierarchicalPartsPkg::NestedPorts::b::c1": {
+      "x": 32.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::b::c1::l1p": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::Child": {
+      "x": 430.80625183688517,
+      "y": 245.31962763723664,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Parent": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 266.0,
+      "height": 224.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Parent::layered_port::hport_l1": {
+      "side": "right",
+      "offset": 0.7946428571428571
+    },
+    "HierarchicalPartsPkg::NestedPorts::Parent::layered_port::hport_l2": {
+      "side": "right",
+      "offset": 0.875
+    },
+    "HierarchicalPartsPkg::NestedPorts::Parent::c1": {
+      "x": 42.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Parent::c1::l1p": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::a": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 664.0,
+      "height": 783.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::a::layered_port::hport_l1": {
+      "side": "left",
+      "offset": 0.5675
+    },
+    "HierarchicalPartsPkg::NestedPorts::a::layered_port::hport_l2": {
+      "side": "right",
+      "offset": 0.8025
+    },
+    "HierarchicalPartsPkg::NestedPorts::Child::l1p": {
+      "side": "left",
+      "offset": 0.685
+    },
+    "HierarchicalPartsPkg::NestedPorts::a::c1::l1p": {
+      "side": "left",
+      "offset": 0.685
+    },
+    "HierarchicalPartsPkg::NestedPorts::client": {
+      "x": 502.0,
+      "y": 206.0,
+      "width": 276.0,
+      "height": 350.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::sPort::sP1": {
+      "side": "right",
+      "offset": 0.56
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::sPort::sP2": {
+      "side": "right",
+      "offset": 0.5085714285714286
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::c1": {
+      "x": 52.0,
+      "y": 206.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::c1::cP1": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::c2": {
+      "x": 52.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::c2::cP2": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 266.0,
+      "height": 346.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::sPort::sP1": {
+      "side": "right",
+      "offset": 0.15028901734104047
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::sPort::sP2": {
+      "side": "right",
+      "offset": 0.5549132947976878
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::s1": {
+      "x": 42.0,
+      "y": 62.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::s1::sP1": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::s2": {
+      "x": 42.0,
+      "y": 202.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::s2::sP2": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::C1": {
+      "x": 48.0,
+      "y": 2092.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::C2": {
+      "x": 344.0,
+      "y": 2092.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client": {
+      "x": 832.0,
+      "y": 1636.0,
+      "width": 266.0,
+      "height": 360.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP1": {
+      "side": "left",
+      "offset": 0.44999999999999996
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP2": {
+      "side": "left",
+      "offset": 0.6499999999999999
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::c1": {
+      "x": 42.0,
+      "y": 62.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::c1::cP1": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::c2": {
+      "x": 42.0,
+      "y": 202.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::c2::cP2": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPorts::S1": {
+      "x": 640.0,
+      "y": 2092.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::S2": {
+      "x": 936.0,
+      "y": 2092.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::s1": {
+      "x": 640.0,
+      "y": 1108.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::s2": {
+      "x": 48.0,
+      "y": 1324.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 962.0,
+      "height": 1492.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::S2::sP2": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "HierarchicalPartsPkg::NestedPorts::C2::cP2": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "HierarchicalPartsPkg::NestedPorts::S1::sP1": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort::sP1": {
+      "side": "left",
+      "offset": 0.44999999999999996
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort::sP2": {
+      "side": "left",
+      "offset": 0.6499999999999999
+    },
+    "HierarchicalPartsPkg::NestedPorts::C1::cP1": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::s2::sP2": {
+      "side": "left",
+      "offset": 0.685
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::s1::sP1": {
+      "side": "left",
+      "offset": 0.685
+    },
+    "HierarchicalPartsPkg::NestedPortExample": {
+      "x": 1194.0,
+      "y": 1636.0,
+      "width": 256.0,
+      "height": 332.0
+    },
+    "HierarchicalPartsPkg::NestedPortExample::client": {
+      "x": 32.0,
+      "y": 188.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPortExample::client::sPort::sP1": {
+      "side": "left",
+      "offset": 0.4
+    },
+    "HierarchicalPartsPkg::NestedPortExample::client::sPort::sP2": {
+      "side": "left",
+      "offset": 0.6777777777777778
+    },
+    "HierarchicalPartsPkg::NestedPortExample::serviceA": {
+      "x": 32.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPortExample::serviceA::sPort::sP1": {
+      "side": "left",
+      "offset": 0.4
+    },
+    "HierarchicalPartsPkg::NestedPortExample::serviceA::sPort::sP2": {
+      "side": "left",
+      "offset": 0.6777777777777778
+    },
+    "HierarchicalPartsPkg::PartDefinitions": {
+      "x": 48.0,
+      "y": 1636.0,
+      "width": 688.0,
+      "height": 192.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD1": {
+      "x": 244.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2": {
+      "x": 464.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3": {
+      "x": 24.0,
+      "y": 48.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPorts": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1498.0,
+      "height": 2260.0
+    },
+    "HierarchicalPartsPkg::NestedPorts::sP1": {
+      "side": "left",
+      "offset": 0.40555555555555556
+    },
+    "HierarchicalPartsPkg::NestedPorts::sP2": {
+      "side": "left",
+      "offset": 0.5166666666666666
+    },
+    "HierarchicalPartsPkg::NestedPorts::sPort::sP1": {
+      "side": "left",
+      "offset": 0.6277777777777778
+    },
+    "HierarchicalPartsPkg::NestedPorts::sPort::sP2": {
+      "side": "left",
+      "offset": 0.7388888888888889
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::c1": {
+      "x": 23.303603300225916,
+      "y": 75.14648262181564,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::c2": {
+      "x": 22.0818602764204,
+      "y": 245.2549922403344,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA": {
+      "x": 558.8122230310232,
+      "y": -37.30137670515763,
+      "width": 346.0,
+      "height": 360.0
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP1": {
+      "side": "left",
+      "offset": 0.3403972133288616
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP2": {
+      "side": "left",
+      "offset": 0.7286383123731377
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1": {
+      "x": 108.71780796337725,
+      "y": 60.95753425057222,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1::sP1": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2": {
+      "x": 110.01597807893609,
+      "y": 202.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2::sP2": {
+      "side": "left",
+      "offset": 0.5
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client": {
+      "x": 42.578900922664076,
+      "y": -76.77552664835127,
+      "width": 310.0,
+      "height": 392.0
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP1": {
+      "side": "right",
+      "offset": 0.42010188357784745
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP2": {
+      "side": "right",
+      "offset": 0.7769945003278557
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::c1::cP1": {
+      "side": "right",
+      "offset": 0.7519039641510016
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::c2::cP2": {
+      "side": "right",
+      "offset": 0.4866616718632774
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort": {
+      "side": "left",
+      "offset": 0.5080101648966472
+    }
+  },
+  "edges": {
+    "HierarchicalPartsPkg::NestedPorts::Parent::bind1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 78.0,
+          "y": 226.0
+        },
+        {
+          "x": 78.0,
+          "y": 156.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::a::bind1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 22.599661783059254,
+          "y": 444.0917862788057
+        },
+        {
+          "x": 22.599661783059254,
+          "y": 709.6454820886811
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::b::bind1": {
+      "routing": "angular",
+      "waypoints": []
+    },
+    "HierarchicalPartsPkg::NestedPorts::layer1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 39.09864961249282,
+          "y": 444.3525
+        },
+        {
+          "x": 39.09864961249282,
+          "y": 475.7567721878183
+        }
+      ],
+      "labelOffset": {
+        "x": 13.436756166146544,
+        "y": 17.314928295576237
+      }
+    },
+    "HierarchicalPartsPkg::NestedPorts::layer2": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 473.9703291910988,
+          "y": 627.2167511766363
+        },
+        {
+          "x": 473.9703291910988,
+          "y": 422.9666865953534
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::bind3": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 78.0,
+          "y": 704.0
+        },
+        {
+          "x": 78.0,
+          "y": 774.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::Client::bind4": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 78.0,
+          "y": 984.0
+        },
+        {
+          "x": 78.0,
+          "y": 914.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::bind1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 12.0,
+          "y": 846.71
+        },
+        {
+          "x": 12.0,
+          "y": 1048.0
+        },
+        {
+          "x": 628.0,
+          "y": 1048.0
+        },
+        {
+          "x": 628.0,
+          "y": 1190.2
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::ServiceA::bind2": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 950.0,
+          "y": 1197.33
+        },
+        {
+          "x": 950.0,
+          "y": 1276.0
+        },
+        {
+          "x": 36.0,
+          "y": 1276.0
+        },
+        {
+          "x": 36.0,
+          "y": 1406.2
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::bind3": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 542.0,
+          "y": 402.0
+        },
+        {
+          "x": 542.0,
+          "y": 472.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::client::bind4": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 542.0,
+          "y": 384.0
+        },
+        {
+          "x": 542.0,
+          "y": 314.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::bind1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 78.0,
+          "y": 100.0
+        },
+        {
+          "x": 78.0,
+          "y": 170.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPorts::serviceA::bind2": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 78.0,
+          "y": 239.99999999999997
+        },
+        {
+          "x": 78.0,
+          "y": 310.0
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::bind3": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 309.23070257277703,
+          "y": 143.9890025079636
+        },
+        {
+          "x": 309.23070257277703,
+          "y": 88.59943167158455
+        }
+      ],
+      "labelOffset": {
+        "x": 0.47020043967398806,
+        "y": 0.22757425097876194
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.3443426234333894
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::bind4": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 276.6607611990845,
+          "y": 143.9890025079636
+        },
+        {
+          "x": 276.6607611990845,
+          "y": 226.8788662155764
+        }
+      ],
+      "labelOffset": {
+        "x": -1.4581674508046945,
+        "y": -0.2534600688030366
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.7756741238707259
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind1": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 588.8122230310232,
+          "y": 145.58228265763537
+        },
+        {
+          "x": 588.8122230310232,
+          "y": 84.69862329484238
+        }
+      ]
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind2": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 570.8122230310232,
+          "y": 145.58228265763537
+        },
+        {
+          "x": 570.8122230310232,
+          "y": 224.69862329484238
+        }
+      ],
+      "labelOffset": {
+        "x": -48.35000004214044,
+        "y": -0.37809362814311953
+      }
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::layered": {
+      "routing": "angular",
+      "waypoints": [
+        {
+          "x": 562.8122230310232,
+          "y": 145.58228265763537
+        },
+        {
+          "x": 562.8122230310232,
+          "y": 143.9890025079636
+        }
+      ],
+      "labelOffset": {
+        "x": 63.41552734375,
+        "y": 0.3662109375
+      }
+    }
+  },
+  "hierarchicalLevelsOverride": 3
+}

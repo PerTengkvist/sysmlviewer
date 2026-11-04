@@ -34,6 +34,7 @@ import {
 } from './partIcon'
 import { partMinSize } from './partSizeLimits'
 import { applyPortGroupDelta } from './layout/portGroupMove'
+import { portHoverText } from './portHoverText'
 
 /** Header icon from `_icon` — Lucide component or SVG library img. */
 export function PartHeaderIcon({
@@ -157,12 +158,20 @@ export function PartBodyIcon({
   )
 }
 
+export type PartPortNested = {
+  id: string
+  name: string
+  typeRef: string | null
+}
+
 export type PartPort = {
   id: string
   name: string
   side: PortSide
   offset: number
   style?: ElementStyle | null
+  typeRef?: string | null
+  nestedPorts?: PartPortNested[]
 }
 
 export type PartNodeData = {
@@ -195,6 +204,8 @@ export type PartNodeData = {
   /** From `attribute _icon_body` — centered in body at 50% body height (blackbox) */
   iconBodyName?: string | null
   formatStyle?: ElementStyle | null
+  /** Hierarchical port disclosure: hover tooltips vs annotations. */
+  nestedPortReveal?: 'hover' | 'annotations'
   /** Diagram edit lock — no resize or port move. */
   editLocked?: boolean
   viewMode?: ViewMode
@@ -667,7 +678,13 @@ export function PartNode({ data, selected }: NodeProps) {
           title={
             moveMode
               ? `${port.name} — drag along edge (Option+Shift = select; group drag moves selected ports on this part only)`
-              : `${port.name} — drag to another port (Option = move, Option+Shift = select)`
+              : d.nestedPortReveal !== 'annotations'
+                ? portHoverText(
+                    port.name,
+                    port.typeRef,
+                    port.nestedPorts || [],
+                  )
+                : `${port.name} — drag to another port (Option = move, Option+Shift = select)`
           }
           className={
             [

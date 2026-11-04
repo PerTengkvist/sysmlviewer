@@ -71,3 +71,51 @@ def test_collect_related_edges_includes_interface_usage():
     extra = collect_related_edges(semantic, included)
     assert "P::x" in extra
     assert "P::itf_y" not in extra
+
+
+def test_collect_related_edges_includes_nested_port_endpoints():
+    """Interface ends on nested ports must be pulled into the view set."""
+    semantic = {
+        "P::a": SemanticElement(id="P::a", kind=ArtifactKind.PART, name="a"),
+        "P::a::layered": SemanticElement(
+            id="P::a::layered",
+            kind=ArtifactKind.PORT,
+            name="layered",
+            parent_id="P::a",
+            children=["P::a::layered::l1"],
+        ),
+        "P::a::layered::l1": SemanticElement(
+            id="P::a::layered::l1",
+            kind=ArtifactKind.PORT,
+            name="l1",
+            parent_id="P::a::layered",
+        ),
+        "P::b": SemanticElement(id="P::b", kind=ArtifactKind.PART, name="b"),
+        "P::b::layered": SemanticElement(
+            id="P::b::layered",
+            kind=ArtifactKind.PORT,
+            name="layered",
+            parent_id="P::b",
+            children=["P::b::layered::l1"],
+        ),
+        "P::b::layered::l1": SemanticElement(
+            id="P::b::layered::l1",
+            kind=ArtifactKind.PORT,
+            name="l1",
+            parent_id="P::b::layered",
+        ),
+        "P::link": SemanticElement(
+            id="P::link",
+            kind=ArtifactKind.INTERFACE,
+            name="link",
+            parent_id="P",
+            source_id="P::a::layered::l1",
+            target_id="P::b::layered::l1",
+        ),
+    }
+    # Parts + composite ports only — nested leaves missing until collect.
+    included = {"P::a", "P::b", "P::a::layered", "P::b::layered"}
+    extra = collect_related_edges(semantic, included)
+    assert "P::link" in extra
+    assert "P::a::layered::l1" in extra
+    assert "P::b::layered::l1" in extra

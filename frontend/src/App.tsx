@@ -21,7 +21,7 @@ import {
   saveElementDialogSize,
   type ElementDialogSize,
 } from './features/details/elementDialogState'
-import { nodeDoubleClickAction } from './features/diagram/nodeDoubleClick'
+import { diagramDoubleClickAction } from './features/diagram/nodeDoubleClick'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
 import { MarkdownDialog } from './features/docs/MarkdownDialog'
@@ -1669,7 +1669,7 @@ export default function App() {
               void loadView(project.id, `artifact::${artifactId}`)
             }}
             onArtifactDoubleClick={(artifactId, kind) => {
-              const action = nodeDoubleClickAction(kind)
+              const action = diagramDoubleClickAction(kind)
               if (action === 'use-case-flow') setUseCaseDialogId(artifactId)
               else if (action === 'element-dialog') setElementDialogId(artifactId)
             }}
@@ -1799,6 +1799,7 @@ export default function App() {
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
+                nestedPortReveal={settings.nestedPortReveal}
                 requirementDisplay={settings.requirementDisplay}
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidthFactor={
@@ -1838,9 +1839,13 @@ export default function App() {
                 onOpenView={onOpenView}
                 onBackView={() => void goBackView()}
                 onNodeDoubleClick={(id, kind) => {
-                  const action = nodeDoubleClickAction(kind)
+                  const action = diagramDoubleClickAction(kind)
                   if (action === 'use-case-flow') setUseCaseDialogId(id)
                   else if (action === 'element-dialog') setElementDialogId(id)
+                }}
+                onEdgeDoubleClick={(id, kind) => {
+                  const action = diagramDoubleClickAction(kind)
+                  if (action === 'element-dialog') setElementDialogId(id)
                 }}
                 onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}

@@ -9,10 +9,12 @@ import type {
   ElementStyle,
 } from '../../../../api'
 import type {
+  NestedPortReveal,
   RequirementDisplaySettings,
   StructureNotation,
   ViewMode,
 } from '../../../../settings'
+import { formatSubportsAnnotation } from '../../portHoverText'
 import {
   DEFAULT_REQUIREMENT_DISPLAY,
   resolveRequirementBody,
@@ -226,6 +228,54 @@ export function findOwnerPart(
   return displayIds.has(current.id) ? current.id : null
 }
 
+/**
+ * Map a port endpoint to the handle id drawn on `ownerPartId`.
+ * Nested ports under a hierarchical face resolve to that direct port;
+ * a port that is already a direct child of the owner stays itself.
+ */
+export function resolvePortHandleId(
+  endpointId: string,
+  ownerPartId: string,
+  semantic: Record<string, SemanticElement>,
+): string | null {
+  let current = semantic[endpointId]
+  if (!current || current.kind !== 'port') return null
+  while (current) {
+    if (current.parentId === ownerPartId && current.kind === 'port') {
+      return current.id
+    }
+    if (!current.parentId) return null
+    const parent = semantic[current.parentId]
+    if (!parent) return null
+    if (parent.kind !== 'port') {
+      // Walked past ports without hitting the owner as parent.
+      return current.parentId === ownerPartId ? current.id : null
+    }
+    current = parent
+  }
+  return null
+}
+
+/** Direct port children of a part (OMG: hierarchical face = one handle). */
+function directPortsForPart(
+  el: SemanticElement,
+  semantic: Record<string, SemanticElement>,
+): SemanticElement[] {
+  return (el.children || [])
+    .map((cid) => semantic[cid])
+    .filter((c): c is SemanticElement => !!c && c.kind === 'port')
+}
+
+function nestedPortSummaries(
+  port: SemanticElement,
+  semantic: Record<string, SemanticElement>,
+): { id: string; name: string; typeRef: string | null }[] {
+  return (port.children || [])
+    .map((cid) => semantic[cid])
+    .filter((c): c is SemanticElement => !!c && c.kind === 'port')
+    .map((c) => ({ id: c.id, name: c.name, typeRef: c.typeRef ?? null }))
+}
+
 function buildPorts(
   el: SemanticElement,
   semantic: Record<string, SemanticElement>,
@@ -233,15 +283,14 @@ function buildPorts(
   isBoundary = false,
 ) {
   const partH = Number(visualization.nodes[el.id]?.height) || 120
-  const portEls = (el.children || [])
-    .map((cid) => semantic[cid])
-    .filter((c): c is SemanticElement => !!c && c.kind === 'port')
+  const portEls = directPortsForPart(el, semantic)
   const unsaved = portEls.filter(
     (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
   )
   const packed = packBodyOffsets(unsaved.length, partH)
   let ui = 0
   return portEls.map((port, idx) => {
+    const nested = nestedPortSummaries(port, semantic)
     const pv = visualization.nodes[port.id]
     if (!hasSavedPortPlacement(pv)) {
       return {
@@ -249,6 +298,8 @@ function buildPorts(
         name: port.name,
         side: (idx % 2 === 0 ? 'left' : 'right') as PortSide,
         offset: packed[ui++] ?? 0.7,
+        typeRef: port.typeRef ?? null,
+        nestedPorts: nested,
       }
     }
     const side = pv!.side as PortSide
@@ -257,6 +308,8 @@ function buildPorts(
       name: port.name,
       side,
       offset: clampPortOffset(Number(pv!.offset), side, partH, { isBoundary }),
+      typeRef: port.typeRef ?? null,
+      nestedPorts: nested,
     }
   })
 }
@@ -269,6 +322,8 @@ export type StructureBuildOpts = {
   showAttributes: boolean
   viewMode: ViewMode
   structureNotation?: StructureNotation
+  /** How hierarchical ports disclose nested sub-ports (default hover). */
+  nestedPortReveal?: NestedPortReveal
   selectedConnectionColor?: string
   selectedConnectionLinewidthFactor?: number
   onWaypointsChange: (
@@ -302,6 +357,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     showAttributes,
     viewMode,
     structureNotation = 'sysmlv2',
+    nestedPortReveal = 'hover',
     selectedConnectionColor = '#2563eb',
     selectedConnectionLinewidthFactor = 3,
     onWaypointsChange,
@@ -365,10 +421,9 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     const baseH = viz?.height ?? fallbackH
     if (!ports.length) return { width: baseW, height: baseH }
     const fitted = sizePartForPorts(el.name, ports)
-    const unsaved = (el.children || []).some((cid) => {
-      const c = semantic[cid]
-      return c?.kind === 'port' && !hasSavedPortPlacement(visualization.nodes[cid])
-    })
+    const unsaved = directPortsForPart(el, semantic).some(
+      (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
+    )
     // Default (unsaved) placement: grow to fit port names in the body.
     // Saved placement: still never shrink below fitted height needed for body band.
     if (unsaved) {
@@ -410,6 +465,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     iconBodyName: readPartIconBodyName(semantic, id),
     formatStyle: formatFor(id),
     viewMode,
+    nestedPortReveal,
     onOpenView,
     onPortDrag: onPortMoved,
   })
@@ -957,9 +1013,19 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         srcNode?.type === 'requirement' || srcNode?.type === 'useCase'
       const tgtAnchored =
         tgtNode?.type === 'requirement' || tgtNode?.type === 'useCase'
-      let sourceHandle = portHandles ? sourceEndpoint : `rel-src-${conn.id}`
+      const sourcePortHandle = portHandles
+        ? resolvePortHandleId(sourceEndpoint, sourcePart, semantic) ||
+          sourceEndpoint
+        : null
+      const targetPortHandle = portHandles
+        ? resolvePortHandleId(targetEndpoint, targetPart, semantic) ||
+          targetEndpoint
+        : null
+      let sourceHandle = portHandles
+        ? (sourcePortHandle as string)
+        : `rel-src-${conn.id}`
       let targetHandle = portHandles
-        ? `target:${targetEndpoint}`
+        ? `target:${targetPortHandle}`
         : `rel-tgt-${conn.id}`
       let sourceOffset = 0.5
       let targetOffset = 0.5
@@ -1131,8 +1197,96 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     },
   }))
 
-  const allEdges = [...builtEdges, ...orientedComposition]
-  const nodesWithHandles = applyRelationHandlesToNodes(builtNodes, allEdges)
+  const annotationNodes: Node[] = []
+  const annotationEdges: Edge[] = []
+  if (nestedPortReveal === 'annotations') {
+    const absOf = (node: Node): { x: number; y: number } => {
+      let x = node.position.x
+      let y = node.position.y
+      let pid = node.parentId as string | undefined
+      while (pid) {
+        const parent = nodesById.get(pid)
+        if (!parent) break
+        x += parent.position.x
+        y += parent.position.y
+        pid = parent.parentId as string | undefined
+      }
+      return { x, y }
+    }
+    for (const node of builtNodes) {
+      if (node.type !== 'part') continue
+      const data = node.data as PartNodeData
+      const ports = data.ports || []
+      const box = absOf(node)
+      const w = Number(node.style?.width) || 200
+      const h = Number(node.style?.height) || 120
+      for (const port of ports) {
+        const nested = port.nestedPorts || []
+        const label = formatSubportsAnnotation(nested.map((n) => n.name))
+        if (!label) continue
+        const annoId = `anno::${port.id}`
+        const saved = visualization.nodes[annoId]
+        let ax: number
+        let ay: number
+        if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+          ax = saved.x
+          ay = saved.y
+        } else {
+          const t = Math.min(0.95, Math.max(0.05, port.offset))
+          if (port.side === 'left') {
+            ax = box.x - 96
+            ay = box.y + t * h - 10
+          } else if (port.side === 'right') {
+            ax = box.x + w + 24
+            ay = box.y + t * h - 10
+          } else if (port.side === 'top') {
+            ax = box.x + t * w - 40
+            ay = box.y - 36
+          } else {
+            ax = box.x + t * w - 40
+            ay = box.y + h + 16
+          }
+        }
+        annotationNodes.push({
+          id: annoId,
+          type: 'portAnnotation',
+          position: { x: ax, y: ay },
+          data: { label, portId: port.id },
+          draggable: true,
+          selectable: true,
+          zIndex: 2,
+          style: { width: 'auto', height: 'auto' },
+        })
+        annotationEdges.push({
+          id: `anno-edge::${port.id}`,
+          source: node.id,
+          target: annoId,
+          sourceHandle: port.id,
+          targetHandle: 'anno-target',
+          type: 'straight',
+          selectable: false,
+          focusable: false,
+          zIndex: 0,
+          style: {
+            stroke: '#64748b',
+            strokeWidth: 1,
+            strokeDasharray: '4 3',
+          },
+          data: {
+            relationKind: 'portAnnotation',
+            artifactId: annoId,
+            portId: port.id,
+          },
+        })
+      }
+    }
+  }
+
+  const allEdges = [...builtEdges, ...orientedComposition, ...annotationEdges]
+  const nodesWithHandles = applyRelationHandlesToNodes(
+    [...builtNodes, ...annotationNodes],
+    allEdges,
+  )
 
   return {
     nodes: nodesWithHandles,
