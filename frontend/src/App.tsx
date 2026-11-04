@@ -1799,6 +1799,7 @@ export default function App() {
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
+                nestedPortReveal={settings.nestedPortReveal}
                 requirementDisplay={settings.requirementDisplay}
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidthFactor={

@@ -34,6 +34,26 @@ describe('connection separation', () => {
   })
 })
 
+describe('settings nestedPortReveal', () => {
+  it('defaults to hover', () => {
+    expect(DEFAULT_SETTINGS.nestedPortReveal).toBe('hover')
+    expect(loadSettings().nestedPortReveal).toBe('hover')
+  })
+
+  it('round-trips annotations via save/load', () => {
+    saveSettings({ ...DEFAULT_SETTINGS, nestedPortReveal: 'annotations' })
+    expect(loadSettings().nestedPortReveal).toBe('annotations')
+  })
+
+  it('falls back to hover for unknown values', () => {
+    localStorage.setItem(
+      'sysmlviewer.settings',
+      JSON.stringify({ nestedPortReveal: 'nope' }),
+    )
+    expect(loadSettings().nestedPortReveal).toBe('hover')
+  })
+})
+
 describe('settings selected connection highlight', () => {
   it('defaults to blue color and linewidth factor 3', () => {
     expect(DEFAULT_SETTINGS.selectedConnectionColor).toBe('#2563eb')

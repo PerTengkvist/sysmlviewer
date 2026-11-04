@@ -218,6 +218,26 @@ export function SettingsDialog({
                 </option>
               </select>
             </label>
+            <label className="settings-row">
+              <span>Nested ports</span>
+              <select
+                value={settings.nestedPortReveal ?? 'hover'}
+                onChange={(e) =>
+                  patch({
+                    nestedPortReveal:
+                      e.target.value === 'annotations' ? 'annotations' : 'hover',
+                  })
+                }
+              >
+                <option value="hover">Hover details</option>
+                <option value="annotations">Subport annotations</option>
+              </select>
+            </label>
+            <p className="muted settings-note">
+              Hierarchical ports draw as one handle. Reveal nested sub-ports on
+              hover (default) or as italic <code>subports:&#123;…&#125;</code>{' '}
+              annotations with a dashed line.
+            </p>
           </fieldset>
           <fieldset className="settings-fieldset">
             <legend>Requirement objects</legend>
