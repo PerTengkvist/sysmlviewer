@@ -10,9 +10,11 @@ import {
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import type { PortSide, ElementStyle } from '../../api'
@@ -35,6 +37,13 @@ import {
 import { partMinSize } from './partSizeLimits'
 import { applyPortGroupDelta } from './layout/portGroupMove'
 import { portHoverText } from './portHoverText'
+import {
+  dragPortLabelOffset,
+  isMovedPortLabel,
+  leaderLineEnd,
+  samePortLabelOffset,
+  type PortLabelOffset,
+} from './portLabelOffset'
 
 /** Header icon from `_icon` — Lucide component or SVG library img. */
 export function PartHeaderIcon({
@@ -169,6 +178,8 @@ export type PartPort = {
   name: string
   side: PortSide
   offset: number
+  /** Where the name was moved to. Absent or null is the default place. */
+  labelOffset?: PortLabelOffset | null
   style?: ElementStyle | null
   typeRef?: string | null
   nestedPorts?: PartPortNested[]
@@ -219,6 +230,8 @@ export type PartNodeData = {
   onPortsDrag?: (
     moves: { portId: string; side: PortSide; offset: number }[],
   ) => void
+  /** Option-drag of a port name. Null puts the name back at its default place. */
+  onPortLabelDrag?: (portId: string, labelOffset: PortLabelOffset | null) => void
   /** Option+Shift click — multi-select ports for distribute. */
   onPortSelect?: (portId: string) => void
   /** Live drag of a relation endpoint along this part's boundary. */
@@ -355,11 +368,75 @@ export function isPortMultiSelectGesture(opts: {
   return opts.altKey || opts.moveMode
 }
 
-function portLabelStyle(side: PortSide, offset: number, outside = false): CSSProperties {
+function portLabelStyle(
+  side: PortSide,
+  offset: number,
+  outside: boolean,
+  labelOffset: PortLabelOffset | null | undefined,
+): CSSProperties {
   return {
     color: 'var(--ink)',
-    ...(computePortLabelStyle(side, offset, { outside }) as CSSProperties),
+    ...(computePortLabelStyle(side, offset, { outside, labelOffset }) as CSSProperties),
   }
+}
+
+type LeaderLine = { portId: string; x1: number; y1: number; x2: number; y2: number }
+
+/**
+ * Dashed lines from moved port names to their ports. The ends are read from
+ * the rendered name and port, so a line follows anything that moves them.
+ */
+function PortLabelLeaders({ ports }: { ports: { id: string; color: string }[] }) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [lines, setLines] = useState<LeaderLine[]>([])
+
+  // No dependencies: part size and port places change without changing props here.
+  useLayoutEffect(() => {
+    const svg = svgRef.current
+    const part = svg?.parentElement
+    if (!svg || !part) return
+    const origin = svg.getBoundingClientRect()
+    const scale = part.getBoundingClientRect().width / part.offsetWidth || 1
+    const toPart = (x: number, y: number) => ({
+      x: Math.round(((x - origin.left) / scale) * 10) / 10,
+      y: Math.round(((y - origin.top) / scale) * 10) / 10,
+    })
+    const next: LeaderLine[] = []
+    for (const { id } of ports) {
+      const key = CSS.escape(id)
+      const handle = part.querySelector(`[data-port-id="${key}"]`)
+      const label = part.querySelector(`[data-port-label="${key}"]`)
+      if (!handle || !label) continue
+      const h = handle.getBoundingClientRect()
+      const l = label.getBoundingClientRect()
+      const start = toPart(h.left + h.width / 2, h.top + h.height / 2)
+      const topLeft = toPart(l.left, l.top)
+      const bottomRight = toPart(l.right, l.bottom)
+      const end = leaderLineEnd(start, {
+        left: topLeft.x,
+        top: topLeft.y,
+        right: bottomRight.x,
+        bottom: bottomRight.y,
+      })
+      if (end) next.push({ portId: id, x1: start.x, y1: start.y, x2: end.x, y2: end.y })
+    }
+    setLines((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+  })
+
+  const colors = new Map(ports.map((port) => [port.id, port.color]))
+  return (
+    <svg ref={svgRef} className="port-label-leaders" aria-hidden="true">
+      {lines.map(({ portId, ...ends }) => (
+        <line
+          key={portId}
+          {...ends}
+          data-leader-for={portId}
+          strokeDasharray="3 3"
+          style={{ stroke: colors.get(portId) }}
+        />
+      ))}
+    </svg>
+  )
 }
 
 export function PartNode({ data, selected }: NodeProps) {
@@ -376,6 +453,7 @@ export function PartNode({ data, selected }: NodeProps) {
   const keyword = partStereotypeKeyword(d)
   const typeTag = d.typeRef ? typeShortTag(d.typeRef) : null
   const moveMode = !!d.portMoveMode
+  const labelsMovable = moveMode && !d.editLocked
   const selectedPorts = new Set(d.selectedPortIds || [])
   const { headerIcon, bodyIcon } = resolvePartIconPlacement(d)
   const bodyIconMaxPx = partBodyIconMaxPx(headerHeight)
@@ -548,9 +626,69 @@ export function PartNode({ data, selected }: NodeProps) {
     window.addEventListener('pointercancel', onCancel)
   }
 
+  const onPortLabelPointerDown = (port: PartPort, e: ReactPointerEvent) => {
+    if (!labelsMovable || e.shiftKey) return
+    stopPortPointer(e)
+
+    const placeAt = (ev: PointerEvent) => {
+      const labelOffset = dragPortLabelOffset(
+        port.labelOffset,
+        { x: ev.clientX - e.clientX, y: ev.clientY - e.clientY },
+        zoom,
+      )
+      setLocalPorts((prev) =>
+        prev.map((p) => (p.id === port.id ? { ...p, labelOffset } : p)),
+      )
+      return labelOffset
+    }
+
+    const finish = () => {
+      window.removeEventListener('pointermove', placeAt)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onCancel)
+      draggingPortId.current = null
+      document.body.classList.remove('port-dragging')
+    }
+    const onUp = (ev: PointerEvent) => {
+      finish()
+      const labelOffset = placeAt(ev)
+      if (!samePortLabelOffset(labelOffset, port.labelOffset)) {
+        d.onPortLabelDrag?.(port.id, labelOffset)
+      }
+    }
+    const onCancel = () => {
+      finish()
+      setLocalPorts(d.ports ?? [])
+    }
+
+    draggingPortId.current = port.id
+    document.body.classList.add('port-dragging')
+    window.addEventListener('pointermove', placeAt)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onCancel)
+  }
+
+  const onPortLabelDoubleClick = (port: PartPort, e: ReactMouseEvent) => {
+    if (!labelsMovable) return
+    e.stopPropagation()
+    if (!isMovedPortLabel(port.labelOffset)) return
+    setLocalPorts((prev) =>
+      prev.map((p) => (p.id === port.id ? { ...p, labelOffset: null } : p)),
+    )
+    d.onPortLabelDrag?.(port.id, null)
+  }
+
   const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light', {
     isBoundary: d.isBoundary,
   })
+  const portLabelColor = (port: PartPort) => {
+    const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
+    const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')
+    return portMode.textColor || parentMode.textColor
+  }
+  const leaderPorts = localPorts
+    .filter((port) => isMovedPortLabel(port.labelOffset))
+    .map((port) => ({ id: port.id, color: portLabelColor(port) || 'var(--ink)' }))
 
   return (
     <div
@@ -635,22 +773,30 @@ export function PartNode({ data, selected }: NodeProps) {
         // Parent/boundary: L/R labels outside. Child parts: always inside, centered on port.
         const outside =
           !!d.isBoundary && (port.side === 'left' || port.side === 'right')
-        const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
-        const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')
-        const labelColor = portMode.textColor || parentMode.textColor
+        const labelColor = portLabelColor(port)
         return (
           <span
             key={`label-${port.id}`}
-            className={`port-label port-label-${port.side}${outside ? ' outside' : ' inside'}`}
+            data-port-label={port.id}
+            className={`port-label port-label-${port.side}${outside ? ' outside' : ' inside'}${labelsMovable ? ' movable nodrag nopan' : ''}`}
             style={{
-              ...portLabelStyle(port.side, port.offset, outside),
+              ...portLabelStyle(port.side, port.offset, outside, port.labelOffset),
               ...(labelColor ? { color: labelColor } : {}),
+              ...(labelsMovable ? { pointerEvents: 'auto' } : {}),
             }}
+            title={
+              labelsMovable
+                ? `${port.name} — drag to move the name (double-click = default place)`
+                : undefined
+            }
+            onPointerDown={(e) => onPortLabelPointerDown(port, e)}
+            onDoubleClick={(e) => onPortLabelDoubleClick(port, e)}
           >
             {port.name}
           </span>
         )
       })}
+      {leaderPorts.length > 0 && <PortLabelLeaders ports={leaderPorts} />}
       {localPorts.map((port) => {
         const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
         const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')

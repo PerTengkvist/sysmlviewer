@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from adapters.api.static_paths import resolve_static_dir
 from adapters.parser.subset_parser import SubsetSysmlParser
+from adapters.persistence.event_log import JsonlEventLog, configure_event_logging
 from adapters.persistence.workspace_repo import WorkspaceProjectRepository
 from application.project_service import ProjectService
 from domain.models import Project
@@ -67,6 +68,24 @@ class VisualizationPatch(BaseModel):
     layoutRules: list[dict[str, Any]] | None = None
     # Present replaces the config (null clears); omit to leave unchanged.
     layeredLayout: dict[str, Any] | None = None
+
+
+class ViewSnapshotBody(BaseModel):
+    structureNotation: str | None = None
+    levels: int | None = None
+    parts: dict[str, dict[str, Any]] | None = None
+    ports: dict[str, dict[str, Any]] | None = None
+    edges: dict[str, dict[str, Any]] | None = None
+    # "restore" marks the automatic check after a view opens.
+    trigger: str | None = None
+
+
+class ClientEventBody(BaseModel):
+    message: str
+    level: str | None = None
+    viewId: str | None = None
+    viewName: str | None = None
+    details: list[dict[str, Any]] | None = None
 
 
 class AddConnectionBody(BaseModel):
@@ -134,6 +153,12 @@ class IconLibrariesPutBody(BaseModel):
     libraries: dict[str, IconLibrarySettingBody]
 
 
+def _layout_write_error(exc: OSError) -> HTTPException:
+    if isinstance(exc, PermissionError):
+        return HTTPException(status_code=403, detail=str(exc))
+    return HTTPException(status_code=500, detail=f"Could not save: {exc}")
+
+
 def create_api_app(
     data_dir: Path | None = None,
     *,
@@ -159,7 +184,11 @@ def create_api_app(
         repo = WorkspaceProjectRepository(folder)
         session["workspace_root"] = repo.root
         session["repo"] = repo
-        session["service"] = ProjectService(repo=repo, parser=session["parser"])
+        session["service"] = ProjectService(
+            repo=repo,
+            parser=session["parser"],
+            events=JsonlEventLog(repo.root),
+        )
         return repo
 
     def _service() -> ProjectService:
@@ -455,9 +484,12 @@ def create_api_app(
     def save_project(
         project_id: str, payload: Annotated[SaveProjectBody, Body()]
     ) -> dict:
-        project = _service().save_project(
-            project_id, payload.model_dump(exclude_none=True)
-        )
+        try:
+            project = _service().save_project(
+                project_id, payload.model_dump(exclude_none=True)
+            )
+        except OSError as exc:
+            raise _layout_write_error(exc) from exc
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         return project.to_dict()
@@ -505,12 +537,27 @@ def create_api_app(
     def patch_visualization(
         project_id: str, payload: Annotated[VisualizationPatch, Body()]
     ) -> dict:
-        project = _service().update_visualization(
-            project_id, payload.model_dump(exclude_unset=True)
-        )
+        try:
+            project = _service().update_visualization(
+                project_id, payload.model_dump(exclude_unset=True)
+            )
+        except OSError as exc:
+            raise _layout_write_error(exc) from exc
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         return project.to_dict()
+
+    # The log belongs to the open workspace, which holds a single project, so
+    # polling does not have to load the project to answer.
+    @app.get("/projects/{project_id}/events")
+    def get_events(project_id: str, after: int = 0, limit: int = 500) -> dict:
+        return {"events": _service().list_events(after=after, limit=limit)}
+
+    @app.post("/projects/{project_id}/events")
+    def post_event(
+        project_id: str, payload: Annotated[ClientEventBody, Body()]
+    ) -> dict:
+        return _service().record_client_event(payload.model_dump())
 
     @app.post("/projects/{project_id}/connections")
     def add_connection(
@@ -690,6 +737,33 @@ def create_api_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"path": path}
 
+    @app.post("/projects/{project_id}/views/{view_id:path}/save-snapshot")
+    def save_view_snapshot(
+        project_id: str,
+        view_id: str,
+        payload: Annotated[ViewSnapshotBody, Body()],
+    ) -> dict:
+        try:
+            result = _service().save_view_snapshot(
+                project_id, view_id, payload.model_dump()
+            )
+        except OSError as exc:
+            raise _layout_write_error(exc) from exc
+        if result is None:
+            raise HTTPException(status_code=404, detail="View not found")
+        return result
+
+    @app.post("/projects/{project_id}/views/{view_id:path}/compare")
+    def compare_view(
+        project_id: str,
+        view_id: str,
+        payload: Annotated[ViewSnapshotBody, Body()],
+    ) -> dict:
+        result = _service().compare_view(project_id, view_id, payload.model_dump())
+        if result is None:
+            raise HTTPException(status_code=404, detail="View not found")
+        return result
+
     @app.get("/projects/{project_id}/views/{view_id:path}")
     def get_view(
         project_id: str,
@@ -777,6 +851,7 @@ def create_app(
 
 
 def _app_from_env() -> FastAPI:
+    configure_event_logging()
     folder = os.environ.get("SYSMLVIEWER_FOLDER") or None
     project = os.environ.get("SYSMLVIEWER_PROJECT") or None
     workspace = Path(folder).resolve() if folder else None

@@ -193,6 +193,27 @@ class JsonFileProjectRepository:
             structure_notation=structure_notation,
         )
 
+    def duplicate_view_files(
+        self,
+        view_id: str,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> list[Path]:
+        project_id = getattr(self, "_current_project_id", None)
+        if not project_id:
+            return []
+        return view_file_store.duplicate_view_files(
+            self._project_dir(project_id),
+            view_id,
+            structure_notation=structure_notation,
+        )
+
+    def corrupt_view_files(self) -> list[Path]:
+        project_id = getattr(self, "_current_project_id", None)
+        if not project_id:
+            return []
+        return view_file_store.corrupt_view_files(self._project_dir(project_id))
+
     def write_sysml(self, rel: str, content: str, *, project_id: str | None = None) -> None:
         """Write a new SysML file. Requires project_id for multi-project roots."""
         if not project_id:

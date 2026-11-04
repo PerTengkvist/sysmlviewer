@@ -35,6 +35,7 @@ import type {
   PortSide,
   RoutingType,
   ViewPayload,
+  ViewSnapshot,
   VisualizationEdge,
   VisualizationNode,
 } from '../../api'
@@ -44,6 +45,14 @@ import { paperSizeMm } from '../sheet/sheet'
 import { PartNode, type PartNodeData } from './PartNode'
 import { PortAnnotationNode } from './PortAnnotationNode'
 import { SysmlEdge, type SysmlEdgeData } from './InternalEdge'
+import { DisplayedRoutesContext, type DisplayedRoutes } from './displayedRoutes'
+import {
+  buildDragStopPatch,
+  buildResizeEndPatch,
+  mergeMovedNodes,
+  withDescendants,
+} from './persistGeometry'
+import { buildViewSnapshot } from '../save/buildViewSnapshot'
 import {
   HighlightedSmoothStepEdge,
   HighlightedStraightEdge,
@@ -81,6 +90,11 @@ import {
 import { IconToolbarButton } from './IconToolbarButton'
 import { TOOLBAR_ICONS } from './iconRef'
 import { PortMarqueeLayer } from './PortMarqueeLayer'
+import {
+  applyPortLabelMoveToNodes,
+  syncPortLabelOffsets,
+  type PortLabelOffset,
+} from './portLabelOffset'
 import { VizHistory } from './vizHistory'
 import { collectFlipPortMoves } from './layout/flipPortPlacement'
 import { collectDistributePortMoves } from './layout/distributePorts'
@@ -470,9 +484,21 @@ function DiagramEditToolbar({
   )
 }
 
+const ARROW_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'])
+/** Long enough to store a run of key presses as one write. */
+const ARROW_MOVE_PERSIST_MS = 250
+
+/** Live diagram state for callers outside the canvas. */
+export type DiagramCanvasApi = {
+  getSnapshot: () => ViewSnapshot | null
+  /** The diagram is about to be routed and saved automatically. */
+  isAutoRoutePending: () => boolean
+}
+
 type Props = {
   view: ViewPayload | null
   diagramEpoch: number
+  canvasApiRef?: MutableRefObject<DiagramCanvasApi | null>
   viewMode?: ViewMode
   showAttributes?: boolean
   structureNotation?: import('../../settings').StructureNotation
@@ -508,7 +534,15 @@ type Props = {
   onNodesMoved: (
     nodes: Record<string, Partial<VisualizationNode>>,
     edges?: Record<string, Partial<VisualizationEdge>>,
+    /** Set when the write belongs to a view that may no longer be open. */
+    viewId?: string,
   ) => void
+  /** Lets SAVE wait for work that ends in a layout write. */
+  trackLayoutWrite?: <T>(work: Promise<T>) => Promise<T>
+  /** A failure only the browser can see. */
+  onClientError?: (message: string, viewId?: string) => void
+  /** The diagram has been laid out and measured after opening. */
+  onDiagramReady?: () => void
   onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
   onLayeredLayoutChange?: (layered: LayeredLayoutConfig | null) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
@@ -542,6 +576,10 @@ type Props = {
 export function DiagramCanvas({
   view,
   diagramEpoch,
+  canvasApiRef,
+  trackLayoutWrite,
+  onClientError,
+  onDiagramReady,
   viewMode = 'light',
   showAttributes = false,
   structureNotation = 'sysmlv2',
@@ -613,6 +651,27 @@ export function DiagramCanvas({
   viewRef.current = view
   edgesRef.current = edges
   nodesRef.current = nodes
+  const displayedRoutes = useRef<DisplayedRoutes>(new Map())
+
+  useEffect(() => {
+    if (!canvasApiRef) return
+    canvasApiRef.current = {
+      getSnapshot: () => {
+        const current = viewRef.current
+        if (!current) return null
+        return buildViewSnapshot(
+          nodesRef.current,
+          edgesRef.current,
+          current.visualization,
+          displayedRoutes.current,
+        )
+      },
+      isAutoRoutePending: () => pendingAutoRouteRef.current !== null,
+    }
+    return () => {
+      canvasApiRef.current = null
+    }
+  }, [canvasApiRef])
   showJumpersRef.current = showJumpers
   includeBindingsRef.current = includeBindingsInRouting
   const onOpenViewRef = useRef(onOpenView)
@@ -639,7 +698,11 @@ export function DiagramCanvas({
     (nodeId: string, side: PortSide, offset: number) => void
   >(() => {})
   const redrawConnectionsRef = useRef<
-    (overrideNodes?: Node[], overrideEdges?: Edge[]) => void
+    (
+      overrideNodes?: Node[],
+      overrideEdges?: Edge[],
+      opts?: { includeBindings?: boolean },
+    ) => void
   >(() => {})
   const applyRedrawConnectionsRef = useRef<
     (
@@ -652,6 +715,9 @@ export function DiagramCanvas({
     (portId: string, side: PortSide, offset: number) => void
   >(() => {})
   const handlePortsMovedRef = useRef<(moves: PortMove[]) => void>(() => {})
+  const handlePortLabelMovedRef = useRef<
+    (portId: string, offset: PortLabelOffset | null) => void
+  >(() => {})
   const handlePortSelectRef = useRef<(portId: string) => void>(() => {})
   const handleRelationEndDragRef = useRef<
     (
@@ -662,6 +728,10 @@ export function DiagramCanvas({
       persist?: boolean,
     ) => void
   >(() => {})
+  const trackLayoutWriteRef = useRef<<T>(work: Promise<T>) => Promise<T>>(
+    (work) => work,
+  )
+  const onClientErrorRef = useRef<Props['onClientError']>(undefined)
   const lastAutorouteSeqRef = useRef(0)
   /** Structure graph awaiting one-shot obstacle routing after view open. */
   const pendingAutoRouteRef = useRef<{
@@ -677,6 +747,8 @@ export function DiagramCanvas({
   onWaypointsMovedRef.current = onWaypointsMoved
   onLabelOffsetMovedRef.current = onLabelOffsetMoved
   onNodesMovedRef.current = onNodesMoved
+  trackLayoutWriteRef.current = trackLayoutWrite ?? ((work) => work)
+  onClientErrorRef.current = onClientError
   onSelectArtifactRef.current = onSelectArtifact
   onSelectionFromFlowRef.current = onSelectionFromFlow
   selectedIdsRef.current = selectedIds
@@ -769,6 +841,14 @@ export function DiagramCanvas({
   const nodeStyleSig = view
     ? Object.entries(view.visualization.nodes)
         .map(([id, n]) => `${id}:${n.style ? JSON.stringify(n.style) : ''}`)
+        .sort()
+        .join('|')
+    : ''
+
+  const portLabelSig = view
+    ? Object.entries(view.visualization.nodes)
+        .filter(([, n]) => n.labelOffset)
+        .map(([id, n]) => `${id}:${n.labelOffset!.x},${n.labelOffset!.y}`)
         .sort()
         .join('|')
     : ''
@@ -956,6 +1036,8 @@ export function DiagramCanvas({
             handlePortMovedRef.current(portId, side, offset),
           onPortsDrag: (moves: PortMove[]) =>
             handlePortsMovedRef.current(moves),
+          onPortLabelDrag: (portId: string, offset: PortLabelOffset | null) =>
+            handlePortLabelMovedRef.current(portId, offset),
           onPortSelect: (portId: string) => handlePortSelectRef.current(portId),
           onRelationEndDrag: (
             artifactId: string,
@@ -1150,6 +1232,13 @@ export function DiagramCanvas({
     })
   }, [selectedIds, portMoveMode])
 
+  // Sync port name places without rebuilding the graph, which undo relies on.
+  useEffect(() => {
+    const v = viewRef.current
+    if (!v) return
+    setNodes((current) => syncPortLabelOffsets(current, v.visualization.nodes))
+  }, [portLabelSig])
+
   // Sync waypoints into edges without resetting part/port layout.
   useEffect(() => {
     const v = viewRef.current
@@ -1190,6 +1279,8 @@ export function DiagramCanvas({
             handlePortMovedRef.current(portId, side, offset),
           onPortsDrag: (moves: PortMove[]) =>
             handlePortsMovedRef.current(moves),
+          onPortLabelDrag: (portId: string, offset: PortLabelOffset | null) =>
+            handlePortLabelMovedRef.current(portId, offset),
           onPortSelect: (portId: string) => handlePortSelectRef.current(portId),
           onRelationEndDrag: (
             artifactId: string,
@@ -1242,6 +1333,35 @@ export function DiagramCanvas({
     )
   }, [portMoveMode, syncRelationGeometry, lockSig, selectedPortIds])
 
+  /**
+   * Everything attached to what moved needs a new route, or the line only
+   * follows on screen and jumps back on reload.
+   */
+  const rerouteAfterMove = useCallback(
+    (moved: Node[], alreadyTranslated: ReadonlySet<string> = new Set()) => {
+      const liveNodes = mergeMovedNodes(nodesRef.current, moved)
+      if (!isStructure) return liveNodes
+      const movedIds = withDescendants(
+        liveNodes,
+        moved.map((n) => n.id),
+      )
+      const connected = edgesRef.current.filter(
+        (e) =>
+          !alreadyTranslated.has(e.id) &&
+          (movedIds.has(e.source) || movedIds.has(e.target)),
+      )
+      if (connected.length) {
+        queueMicrotask(() =>
+          redrawConnectionsRef.current(liveNodes, connected, {
+            includeBindings: true,
+          }),
+        )
+      }
+      return liveNodes
+    },
+    [isStructure],
+  )
+
   const onNodesChange: OnNodesChange = useCallback(
     (changes: NodeChange[]) => {
       setNodes((nds) => {
@@ -1264,23 +1384,23 @@ export function DiagramCanvas({
       )
       if (!resized.length) return
 
-      const patch: Record<string, Partial<VisualizationNode>> = {}
-      for (const c of resized) {
-        patch[c.id] = {
-          artifactId: c.id,
+      const live = applyDimensionChangesToStyle(
+        applyNodeChanges(changes, nodesRef.current),
+        changes,
+      )
+      const patch = buildResizeEndPatch(
+        resized.map((c) => ({
+          id: c.id,
           width: c.dimensions!.width,
           height: c.dimensions!.height,
-        }
-      }
-      for (const c of changes) {
-        if (c.type === 'position' && c.position && patch[c.id]) {
-          patch[c.id].x = c.position.x
-          patch[c.id].y = c.position.y
-        }
-      }
+        })),
+        live,
+      )
       onNodesMoved(patch)
+      // Resizing moves the ports, so what is attached needs a new route too.
+      rerouteAfterMove(live.filter((node) => patch[node.id]))
     },
-    [onNodesMoved],
+    [onNodesMoved, rerouteAfterMove],
   )
 
   const applyBoundaryEdgeDelta = useCallback((dx: number, dy: number) => {
@@ -1304,6 +1424,27 @@ export function DiagramCanvas({
       }),
     )
   }, [])
+
+  useEffect(() => {
+    if (printMode) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (!ARROW_KEYS.has(event.key)) return
+      if (!(event.target as Element | null)?.closest?.('.react-flow')) return
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        const moved = nodesRef.current.filter((node) => node.selected)
+        if (!moved.length) return
+        onNodesMovedRef.current(buildDragStopPatch(moved))
+        rerouteAfterMove(moved)
+      }, ARROW_MOVE_PERSIST_MS)
+    }
+    window.addEventListener('keyup', onKeyUp)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('keyup', onKeyUp)
+    }
+  }, [printMode, rerouteAfterMove])
 
   const onNodeDragStart: OnNodeDrag = useCallback((_event, node) => {
     const data = node.data as PartNodeData
@@ -1346,21 +1487,14 @@ export function DiagramCanvas({
   )
 
   const onNodeDragStop: OnNodeDrag = useCallback(
-    (_event, node, allNodes) => {
-      const { width, height } = nodeExtentSize(node)
-      const patch: Record<string, Partial<VisualizationNode>> = {
-        [node.id]: {
-          artifactId: node.id,
-          x: node.position.x,
-          y: node.position.y,
-          width,
-          height,
-        },
-      }
+    (_event, node, draggedNodes) => {
+      const dragged = draggedNodes.length ? draggedNodes : [node]
+      const patch = buildDragStopPatch(dragged)
 
       let edgePatch: Record<string, Partial<VisualizationEdge>> | undefined
       const snap = boundaryDragRef.current
       const data = node.data as PartNodeData | undefined
+      const translated = new Set<string>()
       if (snap && snap.nodeId === node.id) {
         const dx = node.position.x - snap.originX
         const dy = node.position.y - snap.originY
@@ -1368,6 +1502,7 @@ export function DiagramCanvas({
         if (dx !== 0 || dy !== 0) {
           edgePatch = {}
           for (const [id, base] of Object.entries(snap.edges)) {
+            translated.add(id)
             if (!base.waypoints.length) continue
             edgePatch[id] = {
               artifactId: id,
@@ -1377,18 +1512,11 @@ export function DiagramCanvas({
           if (!Object.keys(edgePatch).length) edgePatch = undefined
         }
         boundaryDragRef.current = null
-      } else if (isStructure && data && !data.isBoundary) {
-        // Child part moved — redraw only connections on this part's ports.
-        const connected = edgesRef.current.filter(
-          (e) => e.source === node.id || e.target === node.id,
-        )
-        if (connected.length) {
-          queueMicrotask(() =>
-            redrawConnectionsRef.current(allNodes, connected),
-          )
-        }
+      }
+      const liveNodes = rerouteAfterMove(dragged, translated)
+      if (isStructure && data && !data.isBoundary) {
         setEdges((current) => {
-          const oriented = orientRelationBoundaryHandles(current, allNodes)
+          const oriented = orientRelationBoundaryHandles(current, liveNodes)
           setNodes((ns) => applyRelationHandlesToNodes(ns, oriented))
           return oriented
         })
@@ -1396,7 +1524,7 @@ export function DiagramCanvas({
 
       onNodesMovedRef.current(patch, edgePatch)
     },
-    [applyBoundaryEdgeDelta, isStructure],
+    [applyBoundaryEdgeDelta, isStructure, rerouteAfterMove],
   )
 
   const onConnect: OnConnect = useCallback(
@@ -1493,7 +1621,8 @@ export function DiagramCanvas({
       const singleId =
         angularRoute.length === 1 ? angularRoute[0]!.id : undefined
       const viewBounds = currentViewBounds()
-      void planStructureRoutes({
+      const routedViewId = viewRef.current?.view.id
+      const reroute = planStructureRoutes({
         mode: singleId ? 'single' : 'full',
         edgeId: singleId,
         layoutNodes: false,
@@ -1506,6 +1635,7 @@ export function DiagramCanvas({
         computeJumpers: showJumpersRef.current,
         viewBounds,
       }).then((planned) => {
+        if (viewRef.current?.view.id !== routedViewId) return
         const outside = planned.skipped.filter(
           (s) => s.reason === 'endpoint-outside-view',
         )
@@ -1568,8 +1698,11 @@ export function DiagramCanvas({
             waypoints: r.waypoints,
           }
         }
-        onNodesMovedRef.current({}, edgePatch)
+        onNodesMovedRef.current({}, edgePatch, routedViewId)
+      }).catch((error: unknown) => {
+        onClientErrorRef.current?.(`Reroute failed: ${error}`, routedViewId)
       })
+      void trackLayoutWriteRef.current(reroute)
     },
     [nodes, edges, connectionSeparation, currentViewBounds],
   )
@@ -1588,7 +1721,8 @@ export function DiagramCanvas({
     }) => {
       const nodePatch: Record<string, Partial<VisualizationNode>> = {}
       for (const [id, node] of Object.entries(snap.nodes)) {
-        nodePatch[id] = { ...node }
+        // A name at its default place has no saved offset, so undo must clear it.
+        nodePatch[id] = { labelOffset: null, ...node }
       }
       const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
       for (const [id, edge] of Object.entries(snap.edges)) {
@@ -1745,6 +1879,19 @@ export function DiagramCanvas({
       handlePortsMovedRef.current([{ portId, side, offset }])
     },
     [],
+  )
+
+  const handlePortLabelMoved = useCallback(
+    (portId: string, labelOffset: PortLabelOffset | null) => {
+      pushVizHistory()
+      setNodes((current) => applyPortLabelMoveToNodes(current, portId, labelOffset))
+      onNodesMovedRef.current(
+        { [portId]: { artifactId: portId, labelOffset } },
+        undefined,
+        viewRef.current?.view.id,
+      )
+    },
+    [pushVizHistory],
   )
 
   const handlePortsMoved = useCallback((moves: PortMove[]) => {
@@ -2009,10 +2156,12 @@ export function DiagramCanvas({
   applyRedrawConnectionsRef.current = applyRedrawConnections
   handlePortMovedRef.current = handlePortMoved
   handlePortsMovedRef.current = handlePortsMoved
+  handlePortLabelMovedRef.current = handlePortLabelMoved
   handleRelationEndDragRef.current = handleRelationEndDrag
   handleAnchorDragRef.current = handleAnchorDrag
   handleAddAnchorRef.current = handleAddAnchor
-  redrawConnectionsRef.current = (n, e) => applyRedrawConnectionsRef.current(n, e)
+  redrawConnectionsRef.current = (n, e, opts) =>
+    applyRedrawConnectionsRef.current(n, e, opts)
 
   useEffect(() => {
     const req = autorouteRequest
@@ -2818,7 +2967,7 @@ export function DiagramCanvas({
           <div className="tool-banner" role="status">
             {shiftHeld
               ? 'Markera portar — klicka eller dra en rektangel'
-              : 'Move ports — dra längs partens kant (Option+Shift = markera)'}
+              : 'Move ports — dra längs partens kant, dra ett portnamn för att flytta det (Option+Shift = markera)'}
           </div>
         )}
         {!printMode && formatPaintMode && (
@@ -2862,6 +3011,7 @@ export function DiagramCanvas({
             </div>
           </div>
         )}
+        <DisplayedRoutesContext.Provider value={displayedRoutes.current}>
         <ReactFlow
           key={`${view.view.id}|${mode}`}
           nodes={nodes}
@@ -2968,12 +3118,13 @@ export function DiagramCanvas({
             layoutEpoch={layoutEpoch}
             printMode={printMode}
             viewportCache={viewportCache}
-            onReady={printMode ? onPrintReady : undefined}
+            onReady={printMode ? onPrintReady : onDiagramReady}
           />
           {!printMode && !captureLight && <Background gap={18} size={1} />}
           {!printMode && !captureLight && <Controls />}
           {!printMode && !captureLight && <MiniMap pannable zoomable />}
         </ReactFlow>
+        </DisplayedRoutesContext.Provider>
       </div>
       <AutoLayoutDialog
         open={autoLayoutOpen}

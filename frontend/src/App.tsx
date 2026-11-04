@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   api,
   type ElementStyle,
@@ -10,7 +10,13 @@ import {
   type VisualizationEdge,
   type VisualizationNode,
 } from './api'
-import { DiagramCanvas } from './features/diagram/DiagramCanvas'
+import { DiagramCanvas, type DiagramCanvasApi } from './features/diagram/DiagramCanvas'
+import { EventsDrawer } from './features/events/EventsDrawer'
+import { useEventLog } from './features/events/useEventLog'
+import { createPendingWrites } from './features/save/pendingWrites'
+import { createLatestRequest } from './features/save/latestRequest'
+import { createRestoreCheck } from './features/save/restoreCheck'
+import { neverReachedBackend, runSave } from './features/save/saveWorkflow'
 import { lockTargets } from './features/diagram/editLock'
 import { nextSelection, selectionFromFlow } from './features/diagram/selection'
 import { RightSidebar } from './features/details/RightSidebar'
@@ -86,6 +92,8 @@ type PaintMode = {
   sourceKind: string
 }
 
+const SETTLE_DELAY_MS = 50
+
 export default function App() {
   const [workspaceRoot, setWorkspaceRoot] = useState<string | null>(null)
   const [exampleProjects, setExampleProjects] = useState<ExampleProject[]>([])
@@ -157,6 +165,44 @@ export default function App() {
     seq: number
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
+  const canvasApiRef = useRef<DiagramCanvasApi | null>(null)
+  const pendingWrites = useRef(createPendingWrites()).current
+  const eventLog = useEventLog(project?.id ?? null)
+  const projectRef = useRef(project)
+  projectRef.current = project
+  const viewPayloadRef = useRef(viewPayload)
+  viewPayloadRef.current = viewPayload
+
+  const latestViewRequest = useRef(createLatestRequest()).current
+  const restoreCheck = useRef(createRestoreCheck()).current
+  const reportEvent = eventLog.report
+  const refreshEvents = eventLog.refresh
+  const diagramEpochRef = useRef(diagramEpoch)
+  diagramEpochRef.current = diagramEpoch
+
+  const patchVisualization = useCallback(
+    (...args: Parameters<typeof api.patchVisualization>) =>
+      pendingWrites.track(
+        api.patchVisualization(...args).catch((error: unknown) => {
+          if (neverReachedBackend(error)) {
+            void reportEvent({
+              message: `Layout not saved: ${error}`,
+              viewId: args[1].viewId,
+            })
+          }
+          throw error
+        }),
+      ),
+    [pendingWrites, reportEvent],
+  )
+
+  const settleLayoutWrites = useCallback(async () => {
+    await pendingWrites.settled()
+    // A port move queues its reroute two frames later, and React still has
+    // to commit the last write. A timer also runs in a hidden tab.
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_DELAY_MS))
+    await pendingWrites.settled()
+  }, [pendingWrites])
 
   const structureNotation = structureNotationForPatch(
     settings.showDiagramDetails.structureNotation,
@@ -266,12 +312,14 @@ export default function App() {
         syncTab?: boolean
       },
     ) => {
+      const isCurrent = latestViewRequest.begin()
       const payload = await api.getView(
         projectId,
         viewId,
         levels,
         structureNotation,
       )
+      if (!isCurrent()) return
       setViewPayload(payload)
       setActiveViewId(viewId)
       setDiagramEpoch((n) => n + 1)
@@ -288,7 +336,7 @@ export default function App() {
         void api.recordViewHistory(getBrowserSessionId(), viewId).catch(() => {})
       }
     },
-    [levels, structureNotation],
+    [levels, structureNotation, latestViewRequest],
   )
 
   const goBackView = useCallback(async () => {
@@ -422,20 +470,77 @@ export default function App() {
       ? workspaceRoot
       : ''
 
-  const saveProject = async () => {
-    if (!project) return
-    setBusy(true)
-    try {
-      const saved = await api.saveProject(project.id, {
-        name: project.name,
-        visualization: project.visualization,
-      })
-      setProject(saved)
-    } catch (e) {
-      setError(String(e))
-    } finally {
-      setBusy(false)
+  const snapshotRequest = () => {
+    const snapshot = canvasApiRef.current?.getSnapshot()
+    if (!snapshot) return null
+    return {
+      ...snapshot,
+      structureNotation,
+      levels: viewPayloadRef.current?.hierarchicalLevels ?? levels,
     }
+  }
+
+  const saveProject = async () => {
+    const projectId = project?.id
+    if (!projectId) return
+    setBusy(true)
+    setError(null)
+    const outcome = await runSave({
+      settle: settleLayoutWrites,
+      currentViewId: () => viewPayloadRef.current?.view.id ?? null,
+      readSnapshot: snapshotRequest,
+      saveProject: () => {
+        const latest = projectRef.current ?? project
+        return api.saveProject(projectId, {
+          name: latest.name,
+          visualization: latest.visualization,
+        })
+      },
+      saveSnapshot: (viewId, snapshot) =>
+        api.saveViewSnapshot(projectId, viewId, snapshot),
+      reportFailure: (message, viewId) =>
+        void eventLog.report({ message, viewId }),
+    })
+    if (outcome.project) setProject(outcome.project)
+    if (outcome.error) setError(outcome.error)
+    if (outcome.openDrawer) eventLog.setOpen(true)
+    await eventLog.refresh()
+    setBusy(false)
+  }
+
+  const checkRestoredDiagram = useCallback(() => {
+    const canvas = canvasApiRef.current
+    const projectId = projectRef.current?.id
+    const view = viewPayloadRef.current
+    if (!canvas || !projectId || !view) return
+    if (!restoreCheck.claim(diagramEpochRef.current, canvas.isAutoRoutePending())) {
+      return
+    }
+    const snapshot = canvas.getSnapshot()
+    if (!snapshot) return
+    void api
+      .compareView(projectId, view.view.id, {
+        ...snapshot,
+        structureNotation,
+        levels: view.hierarchicalLevels ?? levels,
+        trigger: 'restore',
+      })
+      .then((result) => {
+        if (result.events.length) void refreshEvents()
+      })
+      .catch(() => {})
+  }, [levels, refreshEvents, restoreCheck, structureNotation])
+
+  const compareWithSaved = async () => {
+    const viewId = viewPayloadRef.current?.view.id
+    const snapshot = snapshotRequest()
+    if (!project || !viewId || !snapshot) return
+    try {
+      await api.compareView(project.id, viewId, snapshot)
+    } catch (e) {
+      void eventLog.report({ message: String(e), viewId })
+    }
+    await eventLog.refresh()
   }
 
   const deleteProject = async () => {
@@ -552,11 +657,12 @@ export default function App() {
     async (
       nodes: Record<string, Partial<VisualizationNode>>,
       edges?: Record<string, Partial<VisualizationEdge>>,
+      targetViewId?: string,
     ) => {
       if (!project) return
       try {
-        const viewId = viewPayload?.view.id
-        const patched = await api.patchVisualization(project.id, {
+        const viewId = targetViewId ?? viewPayload?.view.id
+        const patched = await patchVisualization(project.id, {
           nodes,
           ...(edges && Object.keys(edges).length ? { edges } : {}),
           ...(viewId ? { viewId } : {}),
@@ -564,7 +670,7 @@ export default function App() {
         })
         setProject(patched)
         setViewPayload((prev) => {
-          if (!prev) return prev
+          if (!prev || (viewId && prev.view.id !== viewId)) return prev
           const nextNodes = { ...prev.visualization.nodes }
           for (const [id, patch] of Object.entries(nodes)) {
             nextNodes[id] = {
@@ -619,14 +725,14 @@ export default function App() {
         setError(String(e))
       }
     },
-    [project, viewPayload?.view.id, structureNotation],
+    [project, viewPayload?.view.id, structureNotation, patchVisualization],
   )
 
   const onHierarchyOverrideChange = useCallback(
     async (override: number | null) => {
       if (!project || !activeViewId) return
       try {
-        await api.patchVisualization(project.id, {
+        await patchVisualization(project.id, {
           viewId: activeViewId,
           hierarchicalLevelsOverride: override,
           structureNotation,
@@ -643,7 +749,7 @@ export default function App() {
     async (filters: import('./api').ViewFilterRow[]) => {
       if (!project || !activeViewId) return
       try {
-        await api.patchVisualization(project.id, {
+        await patchVisualization(project.id, {
           viewId: activeViewId,
           viewFilters: filters,
           structureNotation,
@@ -662,7 +768,7 @@ export default function App() {
     async (rules: import('./api').LayoutRuleRow[]) => {
       if (!project || !activeViewId) return
       try {
-        await api.patchVisualization(project.id, {
+        await patchVisualization(project.id, {
           viewId: activeViewId,
           layoutRules: rules,
           structureNotation,
@@ -681,7 +787,7 @@ export default function App() {
     async (layered: import('./api').LayeredLayoutConfig | null) => {
       if (!project || !activeViewId) return
       try {
-        await api.patchVisualization(project.id, {
+        await patchVisualization(project.id, {
           viewId: activeViewId,
           layeredLayout: layered,
           structureNotation,
@@ -709,7 +815,7 @@ export default function App() {
             { artifactId: m.portId, side: m.side, offset: m.offset },
           ]),
         )
-        const patched = await api.patchVisualization(project.id, {
+        const patched = await patchVisualization(project.id, {
           nodes,
           ...(viewId ? { viewId } : {}),
           structureNotation,
@@ -721,6 +827,7 @@ export default function App() {
           for (const m of moves) {
             const existing = nextNodes[m.portId]
             nextNodes[m.portId] = {
+              ...existing,
               artifactId: m.portId,
               x: existing?.x ?? 0,
               y: existing?.y ?? 0,
@@ -788,7 +895,7 @@ export default function App() {
             }
       try {
         const viewId = viewPayload?.view.id
-        const patched = await api.patchVisualization(project.id, {
+        const patched = await patchVisualization(project.id, {
           viewId: viewId || undefined,
           structureNotation,
           edges: { [artifactId]: { artifactId, ...patch } },
@@ -854,7 +961,7 @@ export default function App() {
       if (!project) return
       try {
         const viewId = viewPayload?.view.id
-        const patched = await api.patchVisualization(project.id, {
+        const patched = await patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, waypoints } },
           ...(viewId ? { viewId } : {}),
           structureNotation,
@@ -899,7 +1006,7 @@ export default function App() {
       if (!project) return
       try {
         const viewId = viewPayload?.view.id
-        const patched = await api.patchVisualization(project.id, {
+        const patched = await patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, labelOffset } },
           ...(viewId ? { viewId } : {}),
           structureNotation,
@@ -944,7 +1051,7 @@ export default function App() {
       if (!project) return
       try {
         const viewId = viewPayload?.view.id
-        const patched = await api.patchVisualization(project.id, {
+        const patched = await patchVisualization(project.id, {
           edges: { [connectionId]: { artifactId: connectionId, routing } },
           ...(viewId ? { viewId } : {}),
           structureNotation,
@@ -1009,7 +1116,7 @@ export default function App() {
                   ]),
                 ),
               }
-        const patched = await api.patchVisualization(project.id, patch)
+        const patched = await patchVisualization(project.id, patch)
         setProject(patched)
         setViewPayload((prev) => {
           if (!prev) return prev
@@ -1491,6 +1598,23 @@ export default function App() {
           </button>
           <button
             type="button"
+            className="events-btn"
+            disabled={!project}
+            aria-expanded={eventLog.open}
+            onClick={() => eventLog.setOpen(!eventLog.open)}
+          >
+            Events
+            {eventLog.unseenErrors > 0 && (
+              <span
+                className="events-badge"
+                aria-label={`${eventLog.unseenErrors} new errors`}
+              >
+                {eventLog.unseenErrors}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
             className="settings-btn"
             title="Settings"
             aria-label="Settings"
@@ -1691,6 +1815,7 @@ export default function App() {
         }
         center={
           <main className="canvas-area">
+            <div className="canvas-stage">
             <CanvasTabBar
               tabs={canvasTabs.tabs}
               activeId={canvasTabs.activeId}
@@ -1796,6 +1921,7 @@ export default function App() {
               <DiagramCanvas
                 view={viewPayload}
                 diagramEpoch={diagramEpoch}
+                canvasApiRef={canvasApiRef}
                 viewMode={settings.viewMode}
                 showAttributes={settings.showDiagramDetails.attributes}
                 structureNotation={settings.showDiagramDetails.structureNotation}
@@ -1847,7 +1973,14 @@ export default function App() {
                   const action = diagramDoubleClickAction(kind)
                   if (action === 'element-dialog') setElementDialogId(id)
                 }}
-                onNodesMoved={(nodes, edges) => void onNodesMoved(nodes, edges)}
+                onNodesMoved={(nodes, edges, viewId) =>
+                  void onNodesMoved(nodes, edges, viewId)
+                }
+                trackLayoutWrite={pendingWrites.track}
+                onDiagramReady={checkRestoredDiagram}
+                onClientError={(message, viewId) =>
+                  void eventLog.report({ message, viewId })
+                }
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
                 onLayeredLayoutChange={(layered) =>
                   void onLayeredLayoutChange(layered)
@@ -1861,6 +1994,15 @@ export default function App() {
                 onWaypointsMoved={(id, wps) => void onWaypointsMoved(id, wps)}
                 onLabelOffsetMoved={(id, off) => void onLabelOffsetMoved(id, off)}
                 autorouteRequest={autorouteRequest}
+              />
+            )}
+            </div>
+            {eventLog.open && (
+              <EventsDrawer
+                rows={eventLog.rows}
+                onClose={() => eventLog.setOpen(false)}
+                onCompare={() => void compareWithSaved()}
+                canCompare={!!viewPayload && canvasMode.type === 'diagram'}
               />
             )}
           </main>

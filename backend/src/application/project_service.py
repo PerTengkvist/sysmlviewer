@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 from adapters.persistence.workspace_repo import sanitize_rel_path
@@ -24,7 +25,15 @@ from domain.models import (
     new_id,
     utc_now,
 )
-from ports import ProjectRepository, SysmlParser
+from domain.view_layouts import ViewLayout, apply_view_snapshot
+from domain.view_verification import (
+    GeometrySnapshot,
+    Mismatch,
+    compare_geometry,
+    snapshot_from_layout,
+    snapshot_from_view_payload,
+)
+from ports import EventLog, NullEventLog, ProjectRepository, SysmlParser
 
 
 def _remap_stale_relation_layouts(before: dict, project: Project) -> bool:
@@ -68,10 +77,135 @@ def _split_use_edge(relation_id: str) -> tuple[str, str] | None:
     return actor_id, use_case_id
 
 
+# Diagram modes that draw no canvas, so there is no geometry to save or compare.
+_MODES_WITHOUT_GEOMETRY = frozenset({"requirementTable"})
+_MAX_NAMED_ELEMENTS = 10
+
+
+def _view_display_name(view_id: str) -> str:
+    return view_id.rsplit("::", 1)[-1]
+
+
+def _declared_view_name(project: Project, view_id: str) -> str | None:
+    """Name for the layout file. Generated artifact views have none."""
+    return next((v.name for v in project.views if v.id == view_id), None)
+
+
+def _normalize_notation(raw: object) -> str:
+    return "arcadia" if str(raw or "").strip().lower() == "arcadia" else "sysmlv2"
+
+
+class _ViewReport:
+    """Events and mismatch details for one save or compare of a diagram."""
+
+    def __init__(self, events: EventLog, view_id: str, semantic: dict) -> None:
+        self.events = events
+        self.view_id = view_id
+        self.view_name = _view_display_name(view_id)
+        self.semantic = semantic
+        self.recorded: list[dict] = []
+        self.details: list[dict] = []
+
+    def record(
+        self, level: str, code: str, message: str, details: list[dict] | None = None
+    ) -> None:
+        self.recorded.append(
+            self.events.record(
+                level,
+                code,
+                message,
+                view_id=self.view_id,
+                view_name=self.view_name,
+                details=details,
+            )
+        )
+
+    def describe(self, mismatches: list[Mismatch]) -> list[dict]:
+        return [self._detail(mismatch) for mismatch in mismatches]
+
+    def _detail(self, mismatch: Mismatch) -> dict:
+        element = self.semantic.get(mismatch.id) or {}
+        kind = mismatch.element
+        if kind == "edge":
+            kind = "binding" if element.get("kind") == "binding" else "connection"
+        return {
+            "element": kind,
+            "id": mismatch.id,
+            "name": element.get("name") or mismatch.id.rsplit("::", 1)[-1],
+            "field": mismatch.field,
+            "canvas": mismatch.canvas,
+            "saved": mismatch.saved,
+            "source": mismatch.source,
+        }
+
+    @staticmethod
+    def elements_named(details: list[dict]) -> str:
+        names = list(dict.fromkeys(f"{d['element']} {d['name']}" for d in details))
+        text = ", ".join(names[:_MAX_NAMED_ELEMENTS])
+        if len(names) > _MAX_NAMED_ELEMENTS:
+            text += f" and {len(names) - _MAX_NAMED_ELEMENTS} more"
+        return text
+
+    def report_result(self, canvas: GeometrySnapshot, mismatches: list[Mismatch]) -> None:
+        """Confirm or name the differences, separately for parts and connections."""
+        parts = self.describe(
+            [m for m in mismatches if m.element in ("part", "port")]
+        )
+        edges = self.describe([m for m in mismatches if m.element == "edge"])
+        self.details = parts + edges
+        if parts:
+            self.record(
+                "error",
+                "parts.mismatch",
+                f"Positions differ for diagram {self.view_name}: "
+                f"{self.elements_named(parts)}",
+                parts,
+            )
+        else:
+            self.record(
+                "info",
+                "parts.confirmed",
+                f"Parts positions confirmed for diagram {self.view_name} "
+                f"({len(canvas.parts)} parts, {len(canvas.ports)} ports)",
+            )
+        if edges:
+            self.record(
+                "error",
+                "connections.mismatch",
+                f"Routing differs for diagram {self.view_name}: "
+                f"{self.elements_named(edges)}",
+                edges,
+            )
+        else:
+            self.record(
+                "info",
+                "connections.confirmed",
+                f"Connections and bindings confirmed for diagram {self.view_name} "
+                f"({len(canvas.edges)})",
+            )
+
+    def result(self, status: str) -> dict:
+        return {
+            "status": status,
+            "mismatches": self.details,
+            "events": self.recorded,
+        }
+
+
 class ProjectService:
-    def __init__(self, repo: ProjectRepository, parser: SysmlParser) -> None:
+    def __init__(
+        self,
+        repo: ProjectRepository,
+        parser: SysmlParser,
+        events: EventLog | None = None,
+    ) -> None:
         self.repo = repo
         self.parser = parser
+        self.events: EventLog = events or NullEventLog()
+        self._reported_once: set[tuple] = set()
+        # Sync routes run in a threadpool; a view layout is read, merged and
+        # written back, so overlapping writers would drop each other's changes.
+        self._layout_lock = threading.RLock()
 
     def _todo_store(self) -> RelationTodoStore | None:
         root = getattr(self.repo, "root", None)
@@ -185,7 +319,13 @@ class ProjectService:
 
             project.visualization = VisualizationModel.from_dict(payload["visualization"])
         project.updated_at = utc_now()
-        return self.repo.save(project)
+        try:
+            saved = self.repo.save(project)
+        except OSError as exc:
+            self._record_write_failure(None, exc)
+            raise
+        self.events.record("info", "project.saved", f"Project saved: {saved.name}")
+        return saved
 
     def _resolve_file_path(
         self, name: str, source_path: str | None, existing_paths: set[str]
@@ -931,7 +1071,237 @@ class ProjectService:
             project_id, file_id, source_path=source_path
         )
 
+    def list_events(self, *, after: int = 0, limit: int = 500) -> list[dict]:
+        return self.events.read(after=after, limit=limit)
+
+    def record_client_event(self, payload: dict) -> dict:
+        """Store a failure only the browser saw. The code is not the client's to pick."""
+        return self.events.record(
+            "warning" if payload.get("level") == "warning" else "error",
+            "client.error",
+            str(payload.get("message") or ""),
+            view_id=payload.get("viewId"),
+            view_name=payload.get("viewName"),
+            details=payload.get("details"),
+        )
+
+    def _record_write_failure(self, view_id: str | None, exc: OSError) -> None:
+        view_name = _view_display_name(view_id) if view_id else None
+        if isinstance(exc, PermissionError):
+            target = Path(exc.filename).name if exc.filename else "view layout"
+            self.events.record(
+                "error",
+                "file.permissions.denied",
+                f"Cannot write {target}: {exc.strerror or exc}",
+                view_id=view_id,
+                view_name=view_name,
+            )
+        self.events.record(
+            "error",
+            "save.failed",
+            f"Save failed: {exc}",
+            view_id=view_id,
+            view_name=view_name,
+        )
+
+    def _report_view_file_problems(self, view_id: str, notation: str) -> None:
+        """Log unusable view files once, not on every request that meets them."""
+        for path in self.repo.corrupt_view_files():
+            key = ("corrupt", path, path.stat().st_mtime_ns)
+            if key in self._reported_once:
+                continue
+            self._reported_once.add(key)
+            self.events.record(
+                "error",
+                "view.file.corrupt",
+                f"View file {path.name} cannot be read and is ignored",
+            )
+        duplicates = self.repo.duplicate_view_files(
+            view_id, structure_notation=notation
+        )
+        key = ("duplicate", view_id, tuple(duplicates))
+        if duplicates and key not in self._reported_once:
+            self._reported_once.add(key)
+            names = ", ".join(path.name for path in duplicates)
+            view_name = _view_display_name(view_id)
+            self.events.record(
+                "warning",
+                "view.file.duplicate",
+                f"Several files hold diagram {view_name}: {names}. "
+                f"Using {duplicates[-1].name}.",
+                view_id=view_id,
+                view_name=view_name,
+            )
+
+    def save_view_snapshot(
+        self, project_id: str, view_id: str, payload: dict
+    ) -> dict | None:
+        """Store the diagram's geometry and check it against what a reload gets."""
+        try:
+            with self._layout_lock:
+                return self._save_view_snapshot(project_id, view_id, payload)
+        except OSError as exc:
+            self._record_write_failure(view_id, exc)
+            raise
+
+    def _save_view_snapshot(
+        self, project_id: str, view_id: str, payload: dict
+    ) -> dict | None:
+        notation = _normalize_notation(payload.get("structureNotation"))
+        levels = payload.get("levels") or 2
+        view = self.get_view(
+            project_id, view_id, levels, structure_notation=notation
+        )
+        if view is None:
+            return None
+        report = _ViewReport(self.events, view_id, view.get("semantic") or {})
+        if view.get("diagramMode") in _MODES_WITHOUT_GEOMETRY:
+            return self._skip_verification(report)
+
+        canvas = GeometrySnapshot.from_dict(payload)
+        before = (
+            self.repo.load_view_layout(view_id, structure_notation=notation)
+            or ViewLayout()
+        )
+        drift = compare_geometry(
+            canvas, snapshot_from_layout(before), source="disk", partial=True
+        )
+        if drift:
+            details = report.describe(drift)
+            report.record(
+                "warning",
+                "drift.before_save",
+                f"Diagram {report.view_name} differed from its saved layout "
+                f"before saving: {report.elements_named(details)}",
+                details,
+            )
+
+        project = self.repo.get(project_id)
+        path = self.repo.save_view_layout(
+            view_id,
+            _declared_view_name(project, view_id) if project else None,
+            apply_view_snapshot(
+                before, parts=canvas.parts, ports=canvas.ports, edges=canvas.edges
+            ),
+            structure_notation=notation,
+        )
+        report.record("info", "file.permissions.ok", f"File permissions OK: {path.name}")
+
+        # Read through the same paths a reload uses, not what was just written.
+        mismatches = self._compare_with_saved(
+            canvas, project_id, view_id, levels, notation, partial=False
+        )
+        report.report_result(canvas, mismatches)
+        if mismatches:
+            report.record(
+                "error",
+                "save.unverified",
+                f"Save finished with {len(mismatches)} mismatches "
+                f"for diagram {report.view_name}",
+            )
+            return report.result("mismatch")
+        report.record("info", "save.successful", f"Save successful: {path.name}")
+        return report.result("confirmed")
+
+    def _compare_with_saved(
+        self,
+        canvas: GeometrySnapshot,
+        project_id: str,
+        view_id: str,
+        levels: int,
+        notation: str,
+        *,
+        partial: bool,
+    ) -> list[Mismatch]:
+        layout = (
+            self.repo.load_view_layout(view_id, structure_notation=notation)
+            or ViewLayout()
+        )
+        served = self.get_view(
+            project_id, view_id, levels, structure_notation=notation
+        )
+        return compare_geometry(
+            canvas, snapshot_from_layout(layout), source="disk", partial=partial
+        ) + compare_geometry(
+            canvas, snapshot_from_view_payload(served or {}), source="served"
+        )
+
+    @staticmethod
+    def _skip_verification(report: _ViewReport) -> dict:
+        report.record(
+            "info",
+            "verify.skipped",
+            f"Diagram {report.view_name} has no canvas positions to verify",
+        )
+        return report.result("skipped")
+
+    def compare_view(
+        self, project_id: str, view_id: str, payload: dict
+    ) -> dict | None:
+        """Compare the diagram with what is saved, without writing the layout."""
+        with self._layout_lock:
+            notation = _normalize_notation(payload.get("structureNotation"))
+            levels = payload.get("levels") or 2
+            view = self.get_view(
+                project_id, view_id, levels, structure_notation=notation
+            )
+            if view is None:
+                return None
+            report = _ViewReport(self.events, view_id, view.get("semantic") or {})
+            if payload.get("trigger") == "restore":
+                return self._compare_restored(report, payload, notation)
+            if view.get("diagramMode") in _MODES_WITHOUT_GEOMETRY:
+                return self._skip_verification(report)
+            canvas = GeometrySnapshot.from_dict(payload)
+            mismatches = self._compare_with_saved(
+                canvas, project_id, view_id, levels, notation, partial=True
+            )
+            report.report_result(canvas, mismatches)
+            return report.result("mismatch" if mismatches else "confirmed")
+
+    def _compare_restored(
+        self, report: _ViewReport, payload: dict, notation: str
+    ) -> dict:
+        """Check a freshly opened diagram, which logs only when it found something.
+
+        Layouts hold what was placed by hand, so anything unsaved is not an error.
+        """
+        layout = (
+            self.repo.load_view_layout(report.view_id, structure_notation=notation)
+            or ViewLayout()
+        )
+        mismatches = compare_geometry(
+            GeometrySnapshot.from_dict(payload),
+            snapshot_from_layout(layout),
+            source="restored",
+            partial=True,
+        )
+        if not mismatches:
+            return report.result("confirmed")
+        report.details = report.describe(mismatches)
+        # A view opens many times; the same difference is news only once.
+        key = ("restore", report.view_id, repr(report.details))
+        if key in self._reported_once:
+            return report.result("mismatch")
+        self._reported_once.add(key)
+        report.record(
+            "warning",
+            "restore.mismatch",
+            f"Diagram {report.view_name} differs from its saved layout after "
+            f"opening: {report.elements_named(report.details)}",
+            report.details,
+        )
+        return report.result("mismatch")
+
     def update_visualization(self, project_id: str, patch: dict) -> Project | None:
+        try:
+            with self._layout_lock:
+                return self._update_visualization(project_id, patch)
+        except OSError as exc:
+            self._record_write_failure(patch.get("viewId"), exc)
+            raise
+
+    def _update_visualization(self, project_id: str, patch: dict) -> Project | None:
         # Always refresh semantic/views from SysML before persisting layout.
         # Otherwise a corrupted empty state.json is re-saved on every drag and
         # the Views tab clears in the UI (project.views becomes []).
@@ -950,13 +1320,6 @@ class ProjectService:
             apply_view_layout_patch,
         )
 
-        def _normalize_notation(raw: object) -> str:
-            return (
-                "arcadia"
-                if str(raw or "").strip().lower() == "arcadia"
-                else "sysmlv2"
-            )
-
         view_id = patch.get("viewId")
         notation = _normalize_notation(patch.get("structureNotation"))
         nodes_patch = dict(patch.get("nodes") or {})
@@ -969,11 +1332,8 @@ class ProjectService:
         layout_only = False
 
         if view_id:
-            load_fn = getattr(self.repo, "load_view_layout", None)
-            loaded = (
-                load_fn(view_id, structure_notation=notation)
-                if load_fn is not None
-                else None
+            loaded = self.repo.load_view_layout(
+                view_id, structure_notation=notation
             )
             # Arcadia layouts must not land on project.view_layouts — save() would
             # migrate them into the SysML v2 views/<name>.json file.
@@ -1041,6 +1401,7 @@ class ProjectService:
                         "offset",
                         "anchors",
                         "editLocked",
+                        "labelOffset",
                     ):
                         geo[key] = value
                     else:
@@ -1100,18 +1461,12 @@ class ProjectService:
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
-                    view_name = next(
-                        (v.name for v in project.views if v.id == view_id),
-                        None,
+                    self.repo.save_view_layout(
+                        view_id,
+                        _declared_view_name(project, view_id),
+                        layout,
+                        structure_notation=notation,
                     )
-                    save_fn = getattr(self.repo, "save_view_layout", None)
-                    if save_fn is not None:
-                        save_fn(
-                            view_id,
-                            view_name,
-                            layout,
-                            structure_notation=notation,
-                        )
                 # Relation-end / node moves with viewId only touch view files.
                 # Skip rewriting project.json+state.json (avoids PATCH races).
                 layout_only = not nodes_patch and not edges_patch
@@ -1262,12 +1617,8 @@ class ProjectService:
             if str(structure_notation or "").strip().lower() == "arcadia"
             else "sysmlv2"
         )
-        load_fn = getattr(self.repo, "load_view_layout", None)
-        loaded = (
-            load_fn(view_id, structure_notation=notation)
-            if load_fn is not None
-            else None
-        )
+        self._report_view_file_problems(view_id, notation)
+        loaded = self.repo.load_view_layout(view_id, structure_notation=notation)
         # Prefer notation file for this response. Keep Arcadia off project.view_layouts
         # so a later save() cannot migrate it into views/<name>.json.
         if loaded is not None:

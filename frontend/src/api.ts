@@ -118,6 +118,8 @@ export interface VisualizationNode {
   anchors?: BoundaryAnchor[] | null
   /** When true, the artifact cannot be moved or edited in this diagram. */
   editLocked?: boolean
+  /** A port name's distance from its default place. Absent is the default place. */
+  labelOffset?: { x: number; y: number } | null
 }
 
 export interface VisualizationEdge {
@@ -314,6 +316,76 @@ export interface ViewPayload {
   menus: Record<string, { viewId: string; name: string }[]>
 }
 
+export type EventLevel = 'info' | 'warning' | 'error'
+
+export interface EventDetail {
+  element: 'part' | 'port' | 'connection' | 'binding'
+  id: string
+  name: string
+  field: string
+  canvas: unknown
+  saved: unknown
+  source: 'disk' | 'served' | 'restored'
+}
+
+export interface EventRecord {
+  seq: number
+  ts: string
+  level: EventLevel
+  code: string
+  viewId: string | null
+  viewName: string | null
+  message: string
+  details: EventDetail[]
+}
+
+export type EdgeGeometry = Partial<
+  Pick<
+    VisualizationEdge,
+    | 'routing'
+    | 'waypoints'
+    | 'labelOffset'
+    | 'sourceSide'
+    | 'sourceOffset'
+    | 'targetSide'
+    | 'targetOffset'
+    | 'sourceAnchorId'
+    | 'targetAnchorId'
+  >
+>
+
+export interface ViewSnapshot {
+  parts: Record<
+    string,
+    { x: number; y: number; width?: number; height?: number }
+  >
+  ports: Record<
+    string,
+    { side: PortSide; offset: number; labelOffset: { x: number; y: number } }
+  >
+  edges: Record<string, EdgeGeometry>
+}
+
+export interface ViewSnapshotRequest extends ViewSnapshot {
+  structureNotation?: 'sysmlv2' | 'arcadia'
+  levels?: number
+  /** `restore` marks the automatic check after a view opens. */
+  trigger?: 'restore'
+}
+
+export interface SaveSnapshotResult {
+  status: 'confirmed' | 'mismatch' | 'skipped'
+  mismatches: EventDetail[]
+  events: EventRecord[]
+}
+
+export interface ClientEvent {
+  message: string
+  level?: 'warning' | 'error'
+  viewId?: string | null
+  viewName?: string | null
+}
+
 const BASE = '/api'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -459,6 +531,42 @@ export const api = {
     request<ViewPayload>(
       `/projects/${projectId}/views/${encodeURIComponent(viewId)}?levels=${levels}&notation=${structureNotation}`,
     ),
+  saveViewSnapshot: (
+    projectId: string,
+    viewId: string,
+    snapshot: ViewSnapshotRequest,
+  ) =>
+    request<SaveSnapshotResult>(
+      `/projects/${projectId}/views/${encodeURIComponent(viewId)}/save-snapshot`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(snapshot),
+      },
+    ),
+  compareView: (
+    projectId: string,
+    viewId: string,
+    snapshot: ViewSnapshotRequest,
+  ) =>
+    request<SaveSnapshotResult>(
+      `/projects/${projectId}/views/${encodeURIComponent(viewId)}/compare`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(snapshot),
+      },
+    ),
+  getEvents: (projectId: string, after = 0) =>
+    request<{ events: EventRecord[] }>(
+      `/projects/${projectId}/events?after=${after}`,
+    ),
+  postClientEvent: (projectId: string, event: ClientEvent) =>
+    request<EventRecord>(`/projects/${projectId}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    }),
   exportView: (projectId: string, viewId: string, path?: string) =>
     request<{ path: string | null }>(
       `/projects/${projectId}/views/${encodeURIComponent(viewId)}/export`,

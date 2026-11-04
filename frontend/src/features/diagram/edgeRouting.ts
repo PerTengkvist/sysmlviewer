@@ -2,12 +2,30 @@
 
 export type PortSide = 'left' | 'right' | 'top' | 'bottom'
 
-export type LabelStyleOpts = { outside?: boolean }
+export type LabelStyleOpts = {
+  outside?: boolean
+  /** Distance from the default place, added on top of the default alignment. */
+  labelOffset?: { x: number; y: number } | null
+}
 
 export function portLabelStyle(
   side: PortSide,
   offset: number,
   opts: LabelStyleOpts = {},
+): Record<string, string | number> {
+  const style = defaultPortLabelStyle(side, offset, !!opts.outside)
+  const moved = opts.labelOffset
+  if (!moved) return style
+  return {
+    ...style,
+    transform: `translate(${moved.x}px, ${moved.y}px) ${style.transform}`,
+  }
+}
+
+function defaultPortLabelStyle(
+  side: PortSide,
+  offset: number,
+  outside: boolean,
 ): Record<string, string | number> {
   const pct = `${Math.min(0.95, Math.max(0.05, offset)) * 100}%`
   const base: Record<string, string | number> = {
@@ -21,7 +39,6 @@ export function portLabelStyle(
     whiteSpace: 'nowrap',
     zIndex: 2,
   }
-  const outside = !!opts.outside
   switch (side) {
     case 'left':
       return {

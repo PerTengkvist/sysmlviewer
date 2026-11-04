@@ -33,6 +33,22 @@ describe('portLabelStyle', () => {
     expect(s.top).toBe('50%')
     expect(s.transform).toBe('translateY(-50%)')
   })
+
+  it('moves a label by its offset and keeps the default alignment', () => {
+    const s = portLabelStyle('left', 0.5, { labelOffset: { x: 30, y: -12 } })
+    expect(s.left).toBe(14)
+    expect(s.transform).toBe('translate(30px, -12px) translateY(-50%)')
+  })
+
+  it('moves top labels the same way', () => {
+    const s = portLabelStyle('top', 0.5, { labelOffset: { x: 5, y: 6 } })
+    expect(s.transform).toBe('translate(5px, 6px) translateX(-50%)')
+  })
+
+  it('leaves the default transform alone without an offset', () => {
+    const s = portLabelStyle('bottom', 0.5, { labelOffset: null })
+    expect(s.transform).toBe('translateX(-50%)')
+  })
 })
 
 describe('waypoints', () => {

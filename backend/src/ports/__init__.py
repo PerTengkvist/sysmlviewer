@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import Protocol
+from pathlib import Path
+from typing import Any, Protocol
 
 from domain.models import Project, SemanticElement, SysmlFile
+from domain.view_layouts import ViewLayout
 
 
 class ProjectRepository(Protocol):
@@ -17,6 +19,74 @@ class ProjectRepository(Protocol):
 
     def delete(self, project_id: str) -> bool:
         ...
+
+    def load_view_layout(
+        self, view_id: str, *, structure_notation: str = "sysmlv2"
+    ) -> ViewLayout | None:
+        ...
+
+    def save_view_layout(
+        self,
+        view_id: str,
+        name: str | None,
+        layout: ViewLayout,
+        *,
+        structure_notation: str = "sysmlv2",
+    ) -> Path:
+        ...
+
+    def duplicate_view_files(
+        self, view_id: str, *, structure_notation: str = "sysmlv2"
+    ) -> list[Path]:
+        ...
+
+    def corrupt_view_files(self) -> list[Path]:
+        ...
+
+
+class EventLog(Protocol):
+    def record(
+        self,
+        level: str,
+        code: str,
+        message: str,
+        *,
+        view_id: str | None = None,
+        view_name: str | None = None,
+        details: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        ...
+
+    def read(self, *, after: int = 0, limit: int = 500) -> list[dict[str, Any]]:
+        ...
+
+
+class NullEventLog:
+    """Used where no workspace log is bound. Records nothing."""
+
+    def record(
+        self,
+        level: str,
+        code: str,
+        message: str,
+        *,
+        view_id: str | None = None,
+        view_name: str | None = None,
+        details: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "seq": 0,
+            "ts": None,
+            "level": level,
+            "code": code,
+            "viewId": view_id,
+            "viewName": view_name,
+            "message": message,
+            "details": details or [],
+        }
+
+    def read(self, *, after: int = 0, limit: int = 500) -> list[dict[str, Any]]:
+        return []
 
 
 class ParseResult:

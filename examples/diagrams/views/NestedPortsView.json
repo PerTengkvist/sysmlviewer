@@ -413,6 +413,10 @@
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort": {
       "side": "left",
       "offset": 0.5080101648966472
+    },
+    "HierarchicalPartsPkg::NestedPortsExample::client::sPort": {
+      "side": "right",
+      "offset": 0.5653906635239695
     }
   },
   "edges": {
@@ -600,39 +604,45 @@
       "routing": "angular",
       "waypoints": [
         {
-          "x": 309.23070257277703,
-          "y": 143.9890025079636
+          "x": 309.1993687458133,
+          "y": 144.85761345304476
         },
         {
-          "x": 309.23070257277703,
-          "y": 88.59943167158455
+          "x": 309.1993687458133,
+          "y": 89.22447335164873
+        },
+        {
+          "x": 269.63174023276054,
+          "y": 89.22447335164873
         }
       ],
       "labelOffset": {
-        "x": 0.47020043967398806,
-        "y": 0.22757425097876194
+        "x": 2.84841837866486,
+        "y": 17.2778012640635
       },
       "sourceSide": "right",
-      "sourceOffset": 0.3443426234333894
+      "sourceOffset": 0.5,
+      "targetOffset": 0.5
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::bind4": {
       "routing": "angular",
       "waypoints": [
         {
-          "x": 276.6607611990845,
-          "y": 143.9890025079636
+          "x": 309.58687390520157,
+          "y": 145.22447335164873
         },
         {
-          "x": 276.6607611990845,
+          "x": 309.58687390520157,
           "y": 226.8788662155764
         }
       ],
       "labelOffset": {
-        "x": -1.4581674508046945,
-        "y": -0.2534600688030366
+        "x": -2.6662717712505355,
+        "y": -17.068144730102745
       },
       "sourceSide": "right",
-      "sourceOffset": 0.7756741238707259
+      "sourceOffset": 0.5,
+      "targetOffset": 0.5
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind1": {
       "routing": "angular",
@@ -644,8 +654,18 @@
         {
           "x": 588.8122230310232,
           "y": 84.69862329484238
+        },
+        {
+          "x": 663.7799829743346,
+          "y": 84.69862329484238
         }
-      ]
+      ],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceOffset": 0.5,
+      "targetOffset": 0.5
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind2": {
       "routing": "angular",
@@ -660,26 +680,21 @@
         }
       ],
       "labelOffset": {
-        "x": -48.35000004214044,
-        "y": -0.37809362814311953
-      }
+        "x": -0.49691192787668115,
+        "y": -27.97074041870337
+      },
+      "sourceOffset": 0.5,
+      "targetOffset": 0.5
     },
     "HierarchicalPartsPkg::NestedPortsExample::layered": {
       "routing": "angular",
-      "waypoints": [
-        {
-          "x": 562.8122230310232,
-          "y": 145.58228265763537
-        },
-        {
-          "x": 562.8122230310232,
-          "y": 143.9890025079636
-        }
-      ],
+      "waypoints": [],
       "labelOffset": {
-        "x": 63.41552734375,
+        "x": 28.224740173027158,
         "y": 0.3662109375
-      }
+      },
+      "sourceOffset": 0.5,
+      "targetOffset": 0.5
     }
   },
   "hierarchicalLevelsOverride": 3

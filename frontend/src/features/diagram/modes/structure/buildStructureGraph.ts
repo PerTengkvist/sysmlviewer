@@ -298,6 +298,7 @@ function buildPorts(
         name: port.name,
         side: (idx % 2 === 0 ? 'left' : 'right') as PortSide,
         offset: packed[ui++] ?? 0.7,
+        labelOffset: pv?.labelOffset,
         typeRef: port.typeRef ?? null,
         nestedPorts: nested,
       }
@@ -308,6 +309,7 @@ function buildPorts(
       name: port.name,
       side,
       offset: clampPortOffset(Number(pv!.offset), side, partH, { isBoundary }),
+      labelOffset: pv!.labelOffset,
       typeRef: port.typeRef ?? null,
       nestedPorts: nested,
     }

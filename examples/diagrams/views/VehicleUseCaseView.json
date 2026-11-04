@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "viewId": "UseCasesExample::VehicleUseCaseView",
+  "name": "VehicleUseCaseView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "UseCasesExample::Login::operator": {
+      "x": 86.45631067961165,
+      "y": 6019.077669902913,
+      "width": 200.0,
+      "height": 120.0
+    }
+  },
+  "edges": {}
+}

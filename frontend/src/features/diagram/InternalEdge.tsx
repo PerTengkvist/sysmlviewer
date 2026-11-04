@@ -6,7 +6,8 @@ import {
   useReactFlow,
   useStore,
 } from '@xyflow/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { DisplayedRoutesContext } from './displayedRoutes'
 import {
   angularSegmentHandles,
   clampWaypointsToFlow,
@@ -136,6 +137,15 @@ export function SysmlEdge({
   useEffect(() => {
     setLocalWps(d.waypoints || [])
   }, [d.waypoints])
+
+  const displayedRoutes = useContext(DisplayedRoutesContext)
+  useEffect(() => {
+    if (!displayedRoutes || routing !== 'angular') return
+    displayedRoutes.set(d.artifactId, localWps)
+    return () => {
+      displayedRoutes.delete(d.artifactId)
+    }
+  }, [displayedRoutes, d.artifactId, routing, localWps])
 
   // When port endpoints move, re-attach to nearest point on the existing route
   // (do not discard unlocked corners — that made wires jump to a default L).
