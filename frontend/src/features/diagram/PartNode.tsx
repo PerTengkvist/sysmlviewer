@@ -36,6 +36,7 @@ import {
 } from './partIcon'
 import { partMinSize } from './partSizeLimits'
 import { applyPortGroupDelta } from './layout/portGroupMove'
+import { portHandleColors } from './portGrabTargets'
 import { portHoverText } from './portHoverText'
 import {
   dragPortLabelOffset,
@@ -798,11 +799,11 @@ export function PartNode({ data, selected }: NodeProps) {
       })}
       {leaderPorts.length > 0 && <PortLabelLeaders ports={leaderPorts} />}
       {localPorts.map((port) => {
-        const portMode = resolveModeStyle(port.style, d.viewMode || 'light')
-        const parentMode = resolveModeStyle(d.formatStyle, d.viewMode || 'light')
-        // Ports keep their own fill; do not inherit the part backgroundColor.
-        const bg = portMode.backgroundColor
-        const border = portMode.lineColor || parentMode.lineColor
+        const { background: bg, borderColor: border } = portHandleColors(
+          port.style,
+          d.formatStyle,
+          d.viewMode || 'light',
+        )
         return (
         <Handle
           key={port.id}

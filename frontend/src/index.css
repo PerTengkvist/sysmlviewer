@@ -1384,6 +1384,28 @@ input {
   pointer-events: all !important;
 }
 
+/* Option mode draws ports again above connection and binding grips. */
+.react-flow__viewport-portal {
+  pointer-events: none;
+}
+
+.diagram-canvas.tool-move-ports .react-flow__viewport-portal {
+  z-index: 3;
+}
+
+.port-grab-target {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: 1px solid #fff;
+  border-radius: 100%;
+  background: #c45c26;
+  pointer-events: all;
+  cursor: move;
+}
+
+.port-grab-target.selected,
 .react-flow__handle.port-handle-selected {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
