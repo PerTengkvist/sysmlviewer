@@ -41,19 +41,31 @@ async function coveredPorts(page: Page): Promise<{ checked: number; covered: Cov
     let checked = 0
     for (const handle of handles) {
       const box = handle.getBoundingClientRect()
-      const x = box.left + box.width / 2
-      const y = box.top + box.height / 2
-      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) continue
+      const cx = box.left + box.width / 2
+      const cy = box.top + box.height / 2
+      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue
       checked += 1
-      const top = document.elementFromPoint(x, y)
-      // The port itself, or the copy drawn above connection grips in Option mode.
-      const grab = top?.closest<HTMLElement>('[data-port-grab]')
-      if (top === handle || handle.contains(top)) continue
-      if (grab?.dataset.portGrab === handle.dataset.portId) continue
-      covered.push({
-        port: handle.dataset.portId ?? '',
-        coveredBy: top ? `${top.tagName.toLowerCase()}.${String(top.className)}` : 'nothing',
-      })
+      // The centre and points near each corner, inside the round port.
+      const reach = Math.max(1, box.width / 2 - 3)
+      const points = [
+        [cx, cy],
+        [cx - reach * 0.7, cy - reach * 0.7],
+        [cx + reach * 0.7, cy - reach * 0.7],
+        [cx - reach * 0.7, cy + reach * 0.7],
+        [cx + reach * 0.7, cy + reach * 0.7],
+      ]
+      for (const [x, y] of points) {
+        const top = document.elementFromPoint(x!, y!)
+        // The port itself, or the copy drawn above connection grips in Option mode.
+        const grab = top?.closest<HTMLElement>('[data-port-grab]')
+        if (top === handle || handle.contains(top)) continue
+        if (grab?.dataset.portGrab === handle.dataset.portId) continue
+        covered.push({
+          port: handle.dataset.portId ?? '',
+          coveredBy: top ? `${top.tagName.toLowerCase()}.${String(top.className)}` : 'nothing',
+        })
+        break
+      }
     }
     return { checked, covered }
   })
