@@ -59,8 +59,8 @@ export function PortMarqueeLayer({
       if (!e.altKey || !e.shiftKey || e.button !== 0) return
       const el = e.target as Element | null
       if (!el?.closest?.('.diagram-canvas .react-flow')) return
-      // Port click-toggle owns handle hits.
-      if (el.closest('.react-flow__handle')) return
+      // Port click-toggle owns handle hits, including the ports drawn on top.
+      if (el.closest('.react-flow__handle, [data-port-grab]')) return
       if (
         el.closest(
           'button, input, textarea, a, .icon-toolbar-btn, .tool-banner',

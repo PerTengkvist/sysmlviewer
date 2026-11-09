@@ -90,6 +90,7 @@ import {
 import { IconToolbarButton } from './IconToolbarButton'
 import { TOOLBAR_ICONS } from './iconRef'
 import { PortMarqueeLayer } from './PortMarqueeLayer'
+import { PortGrabLayer } from './PortGrabLayer'
 import {
   applyPortLabelMoveToNodes,
   syncPortLabelOffsets,
@@ -3120,6 +3121,7 @@ export function DiagramCanvas({
             viewportCache={viewportCache}
             onReady={printMode ? onPrintReady : onDiagramReady}
           />
+          {!printMode && portMoveMode && <PortGrabLayer />}
           {!printMode && !captureLight && <Background gap={18} size={1} />}
           {!printMode && !captureLight && <Controls />}
           {!printMode && !captureLight && <MiniMap pannable zoomable />}
