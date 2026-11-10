@@ -135,13 +135,13 @@ package Functions {
   allocate Lighting::indicatorControl to LogicalArchitecture::Car::bodyController;
   allocate Lighting::lampDrive to LogicalArchitecture::Car::lamps;
 
-  view def FunctionsView : GeneralView {
+  view FunctionsView : GeneralView {
     doc /* Functional dependency view. Arrows are «Authorize», «Energy», «Stability», «Speed» and «Indicate» dependencies between functions. Allocations are filtered out; see FunctionAllocationView. */
     expose Functions;
     filter @PartUsage or @Dependency;
   }
 
-  view def FunctionAllocationView : GeneralView {
+  view FunctionAllocationView : GeneralView {
     doc /* Functional entities and the logical parts they are allocated to. One logical part comprises one or more entities. */
     expose Functions;
     expose LogicalArchitecture::Car;

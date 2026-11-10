@@ -34,7 +34,7 @@ package PartRelationships {
     flow power from logical.pout to physical.pin;
   }
 
-  view def RelationshipsView : GeneralView {
+  view RelationshipsView : GeneralView {
     expose System;
   }
 }

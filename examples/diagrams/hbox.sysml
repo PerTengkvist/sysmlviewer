@@ -42,11 +42,11 @@ package hbox {
       then message BoxA.event from EventBroker to BoxB;
     }
 
-  view def HBoxView : GeneralView {
+  view HBoxView : GeneralView {
       expose HBox;
       filter @status or @eventlog;
   }
-  view def HBoxEventView : SequenceView {
+  view HBoxEventView : SequenceView {
     expose EventInteraction;
   }
 

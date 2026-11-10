@@ -1040,8 +1040,10 @@ class SubsetSysmlParser:
 
             if tok.kind == "ident" and tok.value == "view":
                 take()
+                is_definition = False
                 if peek() and peek().value == "def":
                     take()
+                    is_definition = True
                 name = expect_ident()
                 if not name:
                     state.warnings.append(f"line {tok.line}: view without name")
@@ -1050,7 +1052,9 @@ class SubsetSysmlParser:
                 type_ref = None
                 if peek() and peek().value in {":", ":>"}:
                     take()
-                    type_ref = expect_ident()
+                    # `StandardViewDefinitions::GeneralView` names GeneralView.
+                    qualified = expect_qualified_name()
+                    type_ref = qualified.split("::")[-1] if qualified else None
                 element_id = state.qualify(name)
                 el = SemanticElement(
                     id=element_id,
@@ -1059,6 +1063,7 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     file_id=file_id,
+                    is_definition=is_definition,
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el

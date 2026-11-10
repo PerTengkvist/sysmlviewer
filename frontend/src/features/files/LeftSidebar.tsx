@@ -25,6 +25,7 @@ import {
   type ViewTreeOrder,
 } from './viewTreeOrder'
 import { viewTreeNameParts } from './viewTreeLabel'
+import { viewTreeRole } from './viewTreeRole'
 
 export type LeftTab = 'views' | 'files'
 
@@ -53,6 +54,7 @@ type Props = {
 function ViewTree({
   projectId,
   semantic,
+  diagramIds,
   selectedId,
   activeViewId,
   locateInModel,
@@ -64,6 +66,8 @@ function ViewTree({
 }: {
   projectId: string | null
   semantic: Record<string, SemanticElement>
+  /** Views the backend lists as diagrams; other views are definitions. */
+  diagramIds: ReadonlySet<string>
   selectedId: string | null
   activeViewId: string | null
   locateInModel?: LocateInModelRequest | null
@@ -292,7 +296,8 @@ function ViewTree({
       selectedId === el.id ||
       activeViewId === el.id ||
       activeViewId === `artifact::${el.id}`
-    const isView = el.kind === 'view'
+    const role = viewTreeRole(el, diagramIds)
+    const isView = role.opensDiagram
     const canReorder = Boolean(groupKey) && siblingIds.length > 1
     const isDragging = dragging?.groupKey === groupKey && dragging.id === el.id
     const dropHere = drop?.groupKey === groupKey && drop.id === el.id
@@ -325,7 +330,7 @@ function ViewTree({
             type="button"
             className="tree-label"
             onClick={() => {
-              if (el.kind === 'view') onSelectView(el.id)
+              if (role.opensDiagram) onSelectView(el.id)
               else onSelectArtifact(el.id)
             }}
             onDoubleClick={(e) => {
@@ -334,7 +339,7 @@ function ViewTree({
             }}
             title={el.id}
           >
-            <span className="artifact-kind">{el.kind}</span>{' '}
+            <span className="artifact-kind">{role.kindLabel}</span>{' '}
             <span className="tree-name">
               {viewTreeNameParts(el.name).map((part, index) => (
                 <span key={`${part}-${index}`} className="tree-name-part">
@@ -342,7 +347,7 @@ function ViewTree({
                 </span>
               ))}
             </span>
-            {isView && el.typeRef ? (
+            {el.kind === 'view' && el.typeRef ? (
               <span className="view-type-ref">«{el.typeRef}»</span>
             ) : null}
           </button>
@@ -574,6 +579,10 @@ export function LeftSidebar({
   const projectId = project?.id ?? null
   const semantic = project?.semantic
   const semanticKey = Object.keys(semantic || {}).sort().join('|')
+  const diagramIds = useMemo(
+    () => new Set((project?.views ?? []).map((view) => view.id)),
+    [project?.views],
+  )
   const availableKinds = useMemo(
     () => treeKindsInSemantic(semantic || {}),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -647,6 +656,7 @@ export function LeftSidebar({
           <ViewTree
             projectId={projectId}
             semantic={semantic || {}}
+            diagramIds={diagramIds}
             selectedId={selectedArtifactId}
             activeViewId={activeViewId}
             locateInModel={locateInModel}

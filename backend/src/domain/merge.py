@@ -12,6 +12,7 @@ from domain.models import (
     VisualizationNode,
     ViewDef,
 )
+from domain.view_usage import effective_view, is_diagram_view, used_definition_ids
 
 
 DEFAULT_PART_WIDTH = 200.0
@@ -422,11 +423,16 @@ def merge_visualization(
 def rebuild_views(semantic: dict[str, SemanticElement]) -> list[ViewDef]:
     """Build Views list from declared SysML `view` elements only (not parts/packages)."""
     views: list[ViewDef] = []
-    declared = [e for e in semantic.values() if e.kind == ArtifactKind.VIEW]
+    used = used_definition_ids(semantic)
+    declared = [
+        e for e in semantic.values() if is_diagram_view(e, semantic, used)
+    ]
     declared.sort(key=lambda e: e.id)
+    resolved = {el.id: effective_view(el, semantic) for el in declared}
 
     for el in declared:
-        root_id = el.expose_ref or (el.expose_refs[0] if el.expose_refs else None)
+        view_type, exposed, _ = resolved[el.id]
+        root_id = exposed[0] if exposed else None
         if not root_id or root_id not in semantic:
             # Fall back to parent package if expose missing/unresolved
             root_id = el.parent_id or el.id
@@ -434,10 +440,7 @@ def rebuild_views(semantic: dict[str, SemanticElement]) -> list[ViewDef]:
         if el.parent_id:
             # Nest under a view that exposes the parent package, if any
             for other in declared:
-                other_roots = list(other.expose_refs) or (
-                    [other.expose_ref] if other.expose_ref else []
-                )
-                if el.parent_id in other_roots or other.expose_ref == el.parent_id:
+                if el.parent_id in resolved[other.id][1]:
                     parent_view_id = other.id
                     break
         views.append(
@@ -446,7 +449,7 @@ def rebuild_views(semantic: dict[str, SemanticElement]) -> list[ViewDef]:
                 name=el.name,
                 root_artifact_id=root_id,
                 parent_view_id=parent_view_id,
-                type_ref=el.type_ref,
+                type_ref=view_type,
             )
         )
 

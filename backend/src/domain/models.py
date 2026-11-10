@@ -188,6 +188,8 @@ class SemanticElement:
     expose_refs: list[str] = field(default_factory=list)
     # For view elements: stored filter clauses (alpha: metaclass / nameStartsWith)
     view_filters: list[dict[str, Any]] = field(default_factory=list)
+    # For view elements: declared with `view def` rather than as a `view` usage
+    is_definition: bool = False
     # Optional default value for attributes/ports (SysML `= …`)
     default_value: str | None = None
     # Optional multiplicity for part usages, e.g. `0..*` from `part x [0..*] : Type`
@@ -204,6 +206,12 @@ class SemanticElement:
     file_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        out = self._to_dict()
+        if self.is_definition:
+            out["isDefinition"] = True
+        return out
+
+    def _to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "kind": self.kind.value,
@@ -241,6 +249,7 @@ class SemanticElement:
                 or ([data["exposeRef"]] if data.get("exposeRef") else [])
             ),
             view_filters=list(data.get("viewFilters") or []),
+            is_definition=bool(data.get("isDefinition", False)),
             default_value=data.get("defaultValue"),
             multiplicity=data.get("multiplicity"),
             is_reference=bool(data.get("isReference", False)),

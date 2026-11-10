@@ -9,7 +9,7 @@ package StateExample {
     transition lock from Closed to Locked;
   }
 
-  view def DoorStateView : StateTransitionView {
+  view DoorStateView : StateTransitionView {
     expose DoorMachine;
   }
 }

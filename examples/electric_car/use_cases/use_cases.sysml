@@ -184,7 +184,7 @@ package UseCases {
     #refine dependency from Charge to Requirements::ChargeAtHome, Requirements::ChargeAway;
   }
 
-  view def VehicleUseCaseView : UseCaseView {
+  view VehicleUseCaseView : UseCaseView {
     doc /* Use-case diagram. Driver, passenger and charger are associated with the cases they take part in. «include» and «extend» relate the cases. Driving cases on one side, Managing cases on the other. */
     expose UseCases;
   }

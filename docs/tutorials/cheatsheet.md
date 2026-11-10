@@ -76,11 +76,29 @@ Browse and search open-source sets on [Iconify](https://icon-sets.iconify.design
 
 ## Views
 
+A diagram is a `view` usage, typed by a standard view:
+
 ```sysml
-view def CarLogicalView : GeneralView {
+view CarLogicalView : GeneralView {
   expose LogicalArchitecture;
 }
 ```
+
+A `view def` defines a kind of view and is not a diagram itself. A usage takes
+its diagram type, `expose` and filters from the definition when it has none of
+its own:
+
+```sysml
+view def PartsOnly :> GeneralView {
+  filter @PartUsage;
+}
+view carParts : PartsOnly {
+  expose LogicalArchitecture;
+}
+```
+
+`view def X : GeneralView { expose … }` still opens as a diagram when no usage
+refers to it, with a warning.
 
 ## Connections
 
@@ -137,7 +155,7 @@ interaction def LockSequence {
   then #reply message indicateLocked from locks to Driver;
 }
 
-view def LockSequenceView : SequenceView {
+view LockSequenceView : SequenceView {
   expose LockSequence;
 }
 ```

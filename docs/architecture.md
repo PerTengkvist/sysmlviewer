@@ -97,7 +97,7 @@ Supported textual constructs:
 - `port name;` / `port name : Type;`
 - `connection name connect A.p to B.q;` / `connect A.p to B.q;`
 - `attribute` / `attribute def`
-- `view def Name : GeneralView|SequenceView|StateTransitionView|ActionFlowView|TreeView { expose … }`
+- `view name : GeneralView|SequenceView|StateTransitionView|ActionFlowView|TreeView { expose … }` is a diagram; `view def Name :> GeneralView { … }` defines a kind of view, and a usage typed by it takes its diagram type, `expose` and filters (`domain/view_usage.py`). A `view def` that no usage refers to is still shown as a diagram, with a warning.
 - `interaction def` / `lifeline` / `message … from … to …` / `then message …`
 - `state def` / nested `state` / `transition … from … to …`
 - `action def` / nested `action` / `succession … first … then …`

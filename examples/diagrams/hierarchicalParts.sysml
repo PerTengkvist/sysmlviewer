@@ -125,11 +125,11 @@ package HierarchicalPartsPkg {
         interface layered : LayeredInterface connect serviceA.sPort to client.sPort;
     }
 
-    view def HierarchicalPartsView : GeneralView;
-    view def FD1View : GeneralView;
-    view def FD2View : GeneralView;
-    view def FD3View : GeneralView;
-    view def NestedPortsView : GeneralView;
+    view HierarchicalPartsView : GeneralView;
+    view FD1View : GeneralView;
+    view FD2View : GeneralView;
+    view FD3View : GeneralView;
+    view NestedPortsView : GeneralView;
     view HierarchicalPartsView {
         expose PartDefinitions;
     }
