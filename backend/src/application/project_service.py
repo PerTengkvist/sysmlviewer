@@ -11,6 +11,7 @@ from domain.interface_naming import (
     suggest_port_name_for_type,
 )
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
+from domain.view_usage import effective_view, legacy_definition_warnings
 from domain.models import (
     ArtifactKind,
     ElementStyle,
@@ -259,7 +260,10 @@ class ProjectService:
         project.semantic = dict(result.elements)
         for sysml_file in project.files:
             sysml_file.warnings = list(result.file_warnings.get(sysml_file.id) or [])
-        for file_id, message in lint_interface_naming(project.semantic):
+        lint = lint_interface_naming(project.semantic) + legacy_definition_warnings(
+            project.semantic
+        )
+        for file_id, message in lint:
             if not file_id:
                 continue
             target = next((f for f in project.files if f.id == file_id), None)
@@ -1642,12 +1646,13 @@ class ProjectService:
                 return None
 
             if root.kind == ArtifactKind.PACKAGE:
+                diagrams = {v.id: v for v in project.views}
                 general_views = [
                     e
                     for e in project.semantic.values()
-                    if e.kind == ArtifactKind.VIEW
+                    if e.id in diagrams
                     and e.parent_id == artifact_id
-                    and (e.type_ref == "GeneralView" or e.type_ref is None)
+                    and diagrams[e.id].type_ref in ("GeneralView", None)
                 ]
                 general_views.sort(key=lambda e: e.id)
                 if general_views:
@@ -1681,15 +1686,11 @@ class ProjectService:
 
         view_el = project.semantic.get(view.id)
         expose_root_ids: list[str] = []
+        stored_filters: list[dict] | None = None
         if view_el is not None:
-            expose_root_ids = [
-                rid
-                for rid in (view_el.expose_refs or [])
-                if rid in project.semantic
-            ]
-            if not expose_root_ids and view_el.expose_ref:
-                if view_el.expose_ref in project.semantic:
-                    expose_root_ids = [view_el.expose_ref]
+            # A view usage takes what it lacks from its `view def`.
+            _, exposed, stored_filters = effective_view(view_el, project.semantic)
+            expose_root_ids = [rid for rid in exposed if rid in project.semantic]
         if not expose_root_ids:
             expose_root_ids = [root.id]
         expose_roots = [
@@ -1807,9 +1808,7 @@ class ProjectService:
         # SysML view filter clauses (alpha: @metaclass, name.startsWith)
         from domain.view_filter import apply_view_filters, parse_stored_filters
 
-        view_filters = parse_stored_filters(
-            view_el.view_filters if view_el is not None else None
-        )
+        view_filters = parse_stored_filters(stored_filters)
         if view_filters:
             artifact_ids = apply_view_filters(
                 project.semantic,

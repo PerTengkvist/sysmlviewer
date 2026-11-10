@@ -475,100 +475,100 @@ package Dynamics {
 
   // ---------------------------------------------------------------- Views
 
-  view def VehicleModesView : StateTransitionView {
+  view VehicleModesView : StateTransitionView {
     doc /* Modes of the car and the use cases that move it between them. */
     expose VehicleModes;
   }
 
-  view def UnlockSequenceView : SequenceView {
+  view UnlockSequenceView : SequenceView {
     doc /* Sequence for the Unlock use case. */
     expose UnlockSequence;
   }
-  view def UnlockDeniedSequenceView : SequenceView {
+  view UnlockDeniedSequenceView : SequenceView {
     doc /* Alternative flow of Unlock: the credential is rejected. */
     expose UnlockDeniedSequence;
   }
-  view def LockSequenceView : SequenceView {
+  view LockSequenceView : SequenceView {
     doc /* Sequence for the Lock use case. */
     expose LockSequence;
   }
-  view def OpenDoorSequenceView : SequenceView {
+  view OpenDoorSequenceView : SequenceView {
     doc /* Sequence for the OpenDoor use case. */
     expose OpenDoorSequence;
   }
-  view def CloseDoorSequenceView : SequenceView {
+  view CloseDoorSequenceView : SequenceView {
     doc /* Sequence for the CloseDoor use case. */
     expose CloseDoorSequence;
   }
-  view def OpenWindowSequenceView : SequenceView {
+  view OpenWindowSequenceView : SequenceView {
     doc /* Sequence for the OpenWindow use case. */
     expose OpenWindowSequence;
   }
-  view def CloseWindowSequenceView : SequenceView {
+  view CloseWindowSequenceView : SequenceView {
     doc /* Sequence for the CloseWindow use case. */
     expose CloseWindowSequence;
   }
-  view def AdjustClimateSequenceView : SequenceView {
+  view AdjustClimateSequenceView : SequenceView {
     doc /* Sequence for the AdjustClimate use case. */
     expose AdjustClimateSequence;
   }
-  view def PlayMediaSequenceView : SequenceView {
+  view PlayMediaSequenceView : SequenceView {
     doc /* Sequence for the PlayMedia use case. */
     expose PlayMediaSequence;
   }
-  view def ChargeSequenceView : SequenceView {
+  view ChargeSequenceView : SequenceView {
     doc /* Sequence for the Charge use case. */
     expose ChargeSequence;
   }
-  view def EndChargeSequenceView : SequenceView {
+  view EndChargeSequenceView : SequenceView {
     doc /* End of a charge session, back to Unlocked. */
     expose EndChargeSequence;
   }
-  view def StartVehicleSequenceView : SequenceView {
+  view StartVehicleSequenceView : SequenceView {
     doc /* Sequence for the StartVehicle use case. */
     expose StartVehicleSequence;
   }
-  view def StopVehicleSequenceView : SequenceView {
+  view StopVehicleSequenceView : SequenceView {
     doc /* Sequence for the StopVehicle use case. */
     expose StopVehicleSequence;
   }
-  view def ChangeGearSequenceView : SequenceView {
+  view ChangeGearSequenceView : SequenceView {
     doc /* Sequence for the ChangeGear use case. */
     expose ChangeGearSequence;
   }
-  view def AccelerateSequenceView : SequenceView {
+  view AccelerateSequenceView : SequenceView {
     doc /* Sequence for the Accelerate use case. */
     expose AccelerateSequence;
   }
-  view def BrakeSequenceView : SequenceView {
+  view BrakeSequenceView : SequenceView {
     doc /* Sequence for the Brake use case. */
     expose BrakeSequence;
   }
-  view def EmergencyStopSequenceView : SequenceView {
+  view EmergencyStopSequenceView : SequenceView {
     doc /* Sequence for the EmergencyStop use case. */
     expose EmergencyStopSequence;
   }
-  view def TurnLeftSequenceView : SequenceView {
+  view TurnLeftSequenceView : SequenceView {
     doc /* Sequence for the TurnLeft use case. */
     expose TurnLeftSequence;
   }
-  view def TurnRightSequenceView : SequenceView {
+  view TurnRightSequenceView : SequenceView {
     doc /* Sequence for the TurnRight use case. */
     expose TurnRightSequence;
   }
-  view def CleanWindshieldSequenceView : SequenceView {
+  view CleanWindshieldSequenceView : SequenceView {
     doc /* Sequence for the CleanWindshield use case. */
     expose CleanWindshieldSequence;
   }
-  view def ToggleHeadlightsSequenceView : SequenceView {
+  view ToggleHeadlightsSequenceView : SequenceView {
     doc /* Sequence for the ToggleHeadlights use case. */
     expose ToggleHeadlightsSequence;
   }
-  view def ParkSequenceView : SequenceView {
+  view ParkSequenceView : SequenceView {
     doc /* Sequence for the Park use case. */
     expose ParkSequence;
   }
-  view def DriveSequenceView : SequenceView {
+  view DriveSequenceView : SequenceView {
     doc /* Sequence for the Drive use case: the whole journey. */
     expose DriveSequence;
   }

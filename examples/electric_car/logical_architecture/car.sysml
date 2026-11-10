@@ -280,19 +280,19 @@ package LogicalArchitecture {
     connection clear connect wipers.clearOut to windshield.clearIn;
   }
 
-  view def CarLogicalView : GeneralView {
+  view CarLogicalView : GeneralView {
     doc /* Logical whitebox of Car: nested parts, ports and connections between them (dependencies filtered out). */
     expose Car;
     filter @PartUsage or @PortUsage or @ConnectionUsage;
   }
 
-  view def CarLogicalDependenciesView : GeneralView {
+  view CarLogicalDependenciesView : GeneralView {
     doc /* Logical car parts and their «Command», «Enable», «Inform», «Energy», «Mount», «Support», «Actuate» and «Clear» dependencies (connections filtered out). */
     expose Car;
     filter @PartUsage or @Dependency;
   }
 
-  view def CarLogicalTree : TreeView {
+  view CarLogicalTree : TreeView {
     doc /* Containment tree of the logical car. */
     expose Car;
   }

@@ -237,12 +237,12 @@ package Requirements {
   satisfy CabinClimate by LogicalArchitecture::Car::climateSystem;
   satisfy CabinMedia by LogicalArchitecture::Car::entertainmentSystem;
 
-  view def RequirementsGraphView : GeneralView {
+  view RequirementsGraphView : GeneralView {
     doc /* Requirement graph. Group requirements, leaf requirements and user stories, with «refine» dependencies. */
     expose Requirements;
   }
 
-  view def RequirementsTableView : GridView {
+  view RequirementsTableView : GridView {
     doc /* Requirement table. Flat list or hierarchy following «refine» links. User stories carry Type UserStory. */
     expose Requirements;
   }

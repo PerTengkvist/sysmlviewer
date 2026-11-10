@@ -450,20 +450,20 @@ package PhysicalArchitecture {
     connection clear connect wiperAsm.clearOut to windshieldGlass.clearIn;
   }
 
-  view def PhysicalView : GeneralView {
+  view PhysicalView : GeneralView {
     doc /* Physical whitebox. Software nested in its computer, mechanical parts beside them, provider and consumer ports with their connections. Climate and entertainment share infotainmentEcu. */
     expose VehiclePhysical;
     filter @PartUsage or @PortUsage or @ConnectionUsage or @BindingConnectorAsUsage;
   }
 
-  view def PhysicalDependenciesView : GeneralView {
+  view PhysicalDependenciesView : GeneralView {
     doc /* Physical parts and their «implements» dependencies to LogicalCounterparts (connections filtered out). */
     expose VehiclePhysical;
     expose LogicalCounterparts;
     filter @PartUsage or @Dependency;
   }
 
-  view def PhysicalTree : TreeView {
+  view PhysicalTree : TreeView {
     doc /* Containment tree of the physical car, including software hosted on each computer. */
     expose VehiclePhysical;
   }

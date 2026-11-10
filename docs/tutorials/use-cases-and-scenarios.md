@@ -92,7 +92,7 @@ interaction def UnlockSequence {
   then #reply message indicateUnlocked from locks to Driver;
 }
 
-view def UnlockSequenceView : SequenceView {
+view UnlockSequenceView : SequenceView {
   expose UnlockSequence;
 }
 ```

@@ -17,7 +17,7 @@ package ActionExample {
     succession s5 first reportFailure then stop;
   }
 
-  view def BootFlowView : ActionFlowView {
+  view BootFlowView : ActionFlowView {
     expose BootFlow;
   }
 }

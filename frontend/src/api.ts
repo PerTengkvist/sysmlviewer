@@ -52,6 +52,8 @@ export interface SemanticElement {
   multiplicity?: string | null
   /** True for `ref part` (non-composite reference feature). */
   isReference?: boolean | null
+  /** True for a `view def`, which defines a kind of view and is not a diagram itself. */
+  isDefinition?: boolean
   /** Prefix metadata keywords from `#Mount dependency …`. */
   metadataKeywords?: string[] | null
   /** Documentation body from SysML `doc` block comment. */

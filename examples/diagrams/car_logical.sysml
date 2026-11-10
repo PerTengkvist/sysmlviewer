@@ -52,7 +52,7 @@ package CarLogical {
     #Actuation dependency from brakes to frontAxle, rearAxle;
   }
 
-  view def CarLogicalView : GeneralView {
+  view CarLogicalView : GeneralView {
     expose Car;
   }
 }

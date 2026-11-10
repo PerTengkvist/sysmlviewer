@@ -31,11 +31,11 @@ package UseCasesExample {
   #extend dependency EmergencyStop to Drive;
   #use dependency Drive to Login;
 
-  view def VehicleUseCaseView : UseCaseView {
+  view VehicleUseCaseView : UseCaseView {
     expose UseCasesExample;
   }
 
-  view def UseCasesStructureView : GeneralView {
+  view UseCasesStructureView : GeneralView {
     expose UseCasesExample;
   }
 }

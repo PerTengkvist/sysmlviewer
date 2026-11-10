@@ -60,3 +60,36 @@ describe('LeftSidebar header/body split', () => {
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Filter</)
   })
 })
+
+describe('LeftSidebar view definitions', () => {
+  it('shows a view def that is not a diagram as an element, and its usage as a diagram', () => {
+    const base = tinyProject()
+    const element = (id: string, extra: Record<string, unknown>) => ({
+      id,
+      kind: 'view',
+      name: id.split('::').pop(),
+      parentId: null,
+      typeRef: 'GeneralView',
+      sourceId: null,
+      targetId: null,
+      children: [],
+      ...extra,
+    })
+    const project = {
+      ...base,
+      semantic: {
+        CarViewDef: element('CarViewDef', { isDefinition: true }),
+        carView: element('carView', { typeRef: 'CarViewDef' }),
+      },
+      views: [
+        { id: 'carView', name: 'carView', rootArtifactId: 'carView', parentViewId: null, typeRef: 'GeneralView' },
+      ],
+    } as unknown as Parameters<typeof LeftSidebar>[0]['project']
+
+    const html = render({ project })
+
+    expect(html).toMatch(/data-artifact-id="carView" class="tree-row is-view/)
+    expect(html).toMatch(/data-artifact-id="CarViewDef" class="tree-row is-other/)
+    expect(html).toContain('>view def<')
+  })
+})

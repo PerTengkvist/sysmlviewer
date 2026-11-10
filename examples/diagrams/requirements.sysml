@@ -35,11 +35,11 @@ package RequirementsExample {
 
   interface def PowerBus;
 
-  view def RequirementsGraphView : GeneralView {
+  view RequirementsGraphView : GeneralView {
     expose RequirementsExample;
   }
 
-  view def RequirementsTableView : GridView {
+  view RequirementsTableView : GridView {
     expose RequirementsExample;
   }
 }

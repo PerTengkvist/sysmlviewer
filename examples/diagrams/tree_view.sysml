@@ -9,11 +9,11 @@ package TreeExample {
     }
   }
 
-  view def VehicleTree : TreeView {
+  view VehicleTree : TreeView {
     expose Vehicle;
   }
 
-  view def PackageTree : TreeView {
+  view PackageTree : TreeView {
     expose TreeExample;
   }
 }

@@ -67,6 +67,7 @@ import {
 } from './features/diagram/openTarget'
 import { UseCaseFlowDialog } from './features/diagram/modes/useCase/UseCaseFlowDialog'
 import { CanvasTabBar } from './features/tabs/CanvasTabBar'
+import { packageDiagramId } from './features/files/viewTreeRole'
 import {
   activateTab,
   activeTab,
@@ -1777,16 +1778,9 @@ export default function App() {
               setSelectedId(artifactId)
               const el = project.semantic[artifactId]
               if (el?.kind === 'package') {
-                const general = Object.values(project.semantic)
-                  .filter(
-                    (v) =>
-                      v.kind === 'view' &&
-                      v.parentId === artifactId &&
-                      (v.typeRef === 'GeneralView' || !v.typeRef),
-                  )
-                  .sort((a, b) => a.id.localeCompare(b.id))[0]
+                const general = packageDiagramId(project, artifactId)
                 if (general) {
-                  void loadView(project.id, general.id)
+                  void loadView(project.id, general)
                   return
                 }
               }
