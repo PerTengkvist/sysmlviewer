@@ -100,6 +100,7 @@ import { VizHistory } from './vizHistory'
 import { collectFlipPortMoves } from './layout/flipPortPlacement'
 import { collectDistributePortMoves } from './layout/distributePorts'
 import { distributeFlowSelection } from './layout/distributeNodes'
+import { arrangeableNodeIds } from './layout/arrangeableNodes'
 import { allDiagramIds, handleCanvasShortcut } from './canvasShortcuts'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
 import {
@@ -2621,6 +2622,52 @@ export function DiagramCanvas({
     )
   }
 
+  // Align / distribute work on every movable diagram node (parts,
+  // interfaces, requirements, use cases, actors), not only parts.
+  const arrangeIds = arrangeableNodeIds(nodes, selectedIds)
+  const applyArrangePatch = (patch: Record<string, Partial<VisualizationNode>>) => {
+    if (!Object.keys(patch).length) return
+    pushVizHistory()
+    setNodes((current) => applyAlignPatchToFlowNodes(current, patch))
+    onNodesMoved(patch)
+  }
+  const distributeSelectedNodes = (axis: 'horizontal' | 'vertical') =>
+    applyArrangePatch(distributeFlowSelection(nodes, arrangeIds, axis).patch)
+  const alignSelectedNodes = (axis: 'horizontal' | 'vertical') =>
+    applyArrangePatch(alignFlowSelection(nodes, arrangeIds, axis).patch)
+  const renderNodeArrangeButtons = () => (
+    <>
+      {arrangeIds.length >= 3 ? (
+        <>
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.distributeH}
+            title="Distribute selected elements horizontally (even center spacing)"
+            onClick={() => distributeSelectedNodes('horizontal')}
+          />
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.distributeV}
+            title="Distribute selected elements vertically (even center spacing)"
+            onClick={() => distributeSelectedNodes('vertical')}
+          />
+        </>
+      ) : null}
+      {arrangeIds.length >= 2 ? (
+        <>
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.alignH}
+            title="Align selected to first selected (horizontal = same Y)"
+            onClick={() => alignSelectedNodes('horizontal')}
+          />
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.alignV}
+            title="Align selected to first selected (vertical = same X)"
+            onClick={() => alignSelectedNodes('vertical')}
+          />
+        </>
+      ) : null}
+    </>
+  )
+
   return (
     <div
       className={`diagram-canvas${portMoveMode ? ' tool-move-ports' : ' tool-connect'}${
@@ -2717,36 +2764,21 @@ export function DiagramCanvas({
                   }
                   onClick={() => handleFlipPorts('vertical')}
                 />
-                {selectedPortIds.length >= 2 ||
-                selectedIds.filter((id) => view.semantic[id]?.kind === 'part')
-                  .length >= 3 ? (
+                {selectedPortIds.length >= 2 || arrangeIds.length >= 3 ? (
                   <>
                     <IconToolbarButton
                       icon={TOOLBAR_ICONS.distributeH}
                       title={
                         selectedPortIds.length >= 2
                           ? 'Distribute selected ports horizontally (even spacing between extremes)'
-                          : 'Distribute selected parts horizontally (even center spacing)'
+                          : 'Distribute selected elements horizontally (even center spacing)'
                       }
                       onClick={() => {
                         if (selectedPortIds.length >= 2) {
                           handleDistributePorts('horizontal')
                           return
                         }
-                        const partIds = selectedIds.filter(
-                          (id) => view.semantic[id]?.kind === 'part',
-                        )
-                        const { patch } = distributeFlowSelection(
-                          nodes,
-                          partIds,
-                          'horizontal',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        distributeSelectedNodes('horizontal')
                       }}
                     />
                     <IconToolbarButton
@@ -2754,27 +2786,14 @@ export function DiagramCanvas({
                       title={
                         selectedPortIds.length >= 2
                           ? 'Distribute selected ports vertically (even spacing between extremes)'
-                          : 'Distribute selected parts vertically (even center spacing)'
+                          : 'Distribute selected elements vertically (even center spacing)'
                       }
                       onClick={() => {
                         if (selectedPortIds.length >= 2) {
                           handleDistributePorts('vertical')
                           return
                         }
-                        const partIds = selectedIds.filter(
-                          (id) => view.semantic[id]?.kind === 'part',
-                        )
-                        const { patch } = distributeFlowSelection(
-                          nodes,
-                          partIds,
-                          'vertical',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        distributeSelectedNodes('vertical')
                       }}
                     />
                   </>
@@ -2812,17 +2831,7 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameX')
                           return
                         }
-                        const { patch } = alignFlowSelection(
-                          nodes,
-                          selectedIds,
-                          'horizontal',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        alignSelectedNodes('horizontal')
                       }}
                     />
                     <IconToolbarButton
@@ -2849,17 +2858,7 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameY')
                           return
                         }
-                        const { patch } = alignFlowSelection(
-                          nodes,
-                          selectedIds,
-                          'vertical',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        alignSelectedNodes('vertical')
                       }}
                     />
                   </>
@@ -2894,6 +2893,7 @@ export function DiagramCanvas({
                     Redraw: Relations
                   </button>
                 ) : null}
+                {mode === 'useCase' ? renderNodeArrangeButtons() : null}
                 <IconToolbarButton
                   icon={TOOLBAR_ICONS.layoutRules}
                   title="Layout Rules"

@@ -30,8 +30,8 @@ describe('alignFlowSelection', () => {
     expect(patch.a).toBeUndefined()
     expect(patch.b?.x).toBe(0)
     expect(patch.b?.y).toBe(80)
-    expect(patch.b?.width).toBe(100)
-    expect(patch.b?.height).toBe(40)
+    expect(patch.b?.width).toBeUndefined()
+    expect(patch.b?.height).toBeUndefined()
   })
 
   it('returns empty patch for a single selection', () => {
