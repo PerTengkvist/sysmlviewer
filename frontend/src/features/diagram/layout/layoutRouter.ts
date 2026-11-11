@@ -39,6 +39,11 @@ export type PlanStructureRoutesInput = {
   nodes: Node[]
   /** Edges to (re)route. */
   edges: Edge[]
+  /**
+   * Edges that decide node placement (AutoLayout "Place by"); defaults to
+   * `edges`. Never routed — relations keep their own drawing.
+   */
+  placementEdges?: Edge[]
   /** All angular edges for jumper/separation context (defaults to `edges`). */
   contextEdges?: Edge[]
   /** Required for mode `single`. */
@@ -61,6 +66,7 @@ export type PlanStructureRoutesInput = {
     runElk?: (args: {
       nodes: Node[]
       edges: Edge[]
+      placementEdges?: Edge[]
       layoutNodes: boolean
       separation: number
       computeJumpers?: boolean
@@ -109,6 +115,7 @@ function edgeHasLockedVia(
 async function defaultRunElk(args: {
   nodes: Node[]
   edges: Edge[]
+  placementEdges?: Edge[]
   layoutNodes: boolean
   separation: number
   computeJumpers?: boolean
@@ -123,9 +130,10 @@ async function defaultRunElk(args: {
 
   if (args.layoutNodes) {
     // Placement via named pipeline (Simple/Advanced); no ELK edge sections.
+    const placement = args.placementEdges ?? args.edges
     const layout = args.directives
-      ? await runPlacementPipeline(args.nodes, args.edges, args.directives)
-      : await layoutStructureWithElk(args.nodes, args.edges, {
+      ? await runPlacementPipeline(args.nodes, placement, args.directives)
+      : await layoutStructureWithElk(args.nodes, placement, {
           includeEdges: false,
           layoutNodes: true,
         })
@@ -231,6 +239,7 @@ export async function planStructureRoutes(
   const elkResult = await runElk({
     nodes: input.nodes,
     edges: involved,
+    placementEdges: input.placementEdges,
     layoutNodes: true,
     separation,
     computeJumpers,

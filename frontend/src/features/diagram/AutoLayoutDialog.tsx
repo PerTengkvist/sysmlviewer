@@ -26,6 +26,20 @@ import {
   resolvePlacementPipeline,
   type PlacementPipelineId,
 } from './layout/placementPipelines'
+import type { LayoutEdgeKinds } from './layout/layoutEdgeKinds'
+
+const EDGE_KIND_LABELS = {
+  connections: 'Connections',
+  bindings: 'Bindings',
+  relations: 'Relations',
+} as const
+
+/** Without a saved choice: what AutoLayout always did (ports only). */
+const FALLBACK_EDGE_KINDS: LayoutEdgeKinds = {
+  connections: true,
+  bindings: true,
+  relations: false,
+}
 
 type Props = {
   open: boolean
@@ -59,6 +73,7 @@ export function AutoLayoutDialog({
   }
 
   const uiMode: AutoLayoutUiMode = directives.mode || 'simple'
+  const edgeKinds = directives.edgeKinds ?? FALLBACK_EDGE_KINDS
   const resolved = resolvePlacementPipeline(directives)
   const isCustom = uiMode === 'advanced' && resolved.id === 'custom'
   const isHierarchic = uiMode === 'advanced' && resolved.id === 'hierarchic'
@@ -131,6 +146,34 @@ export function AutoLayoutDialog({
                 <option value="advanced">Advanced</option>
               </select>
             </label>
+          </fieldset>
+
+          <fieldset className="settings-fieldset">
+            <legend>Place by</legend>
+            {(Object.keys(EDGE_KIND_LABELS) as (keyof LayoutEdgeKinds)[]).map(
+              (kind) => (
+                <label className="settings-row" key={kind}>
+                  <span>{EDGE_KIND_LABELS[kind]}</span>
+                  <input
+                    type="checkbox"
+                    data-testid={`al-edges-${kind}`}
+                    checked={edgeKinds[kind]}
+                    onChange={(e) =>
+                      patch({
+                        edgeKinds: { ...edgeKinds, [kind]: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+              ),
+            )}
+            <p className="muted settings-note">
+              Placement keeps the elements these edges link close together.
+              Relations are dependencies (refine, derive, objective …),
+              satisfy, include, allocation and specialization: use them for
+              requirement and traceability diagrams. Connections are routed
+              again either way. Saved with the view.
+            </p>
           </fieldset>
 
           <fieldset className="settings-fieldset">

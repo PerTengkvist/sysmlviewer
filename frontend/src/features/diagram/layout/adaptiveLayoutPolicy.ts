@@ -16,6 +16,7 @@ import {
   maxNestDepth,
   nestDepth,
 } from './nestBottomUp'
+import { isLayoutNode } from './layoutNodes'
 
 /** Same set as PipelineElkAlgorithm (kept local to avoid import cycles). */
 export type AdaptiveElkAlgorithm =
@@ -51,7 +52,7 @@ function isBoundary(node: Node): boolean {
 }
 
 function isPartNode(node: Node): boolean {
-  return !node.type || node.type === 'part'
+  return isLayoutNode(node)
 }
 
 function portsOf(node: Node): PartPort[] {

@@ -7,6 +7,7 @@ import type { PortSide, VisualizationNode } from '../../../api'
 import type { PartNodeData, PartPort } from '../PartNode'
 import { dependencyLayers } from './dependencyLayout'
 import { packBodyOffsets } from './portPlacement'
+import { isLayoutNode } from './layoutNodes'
 
 const CHAR_W = 7.2
 const TITLE_CHAR_W = 8
@@ -136,7 +137,7 @@ export function assignPortSidesAndOffsets(
   }
 
   for (const node of nodes) {
-    if (node.type && node.type !== 'part') continue
+    if (!isLayoutNode(node)) continue
     const ports = portsOf(node)
     if (!ports.length) continue
 
@@ -245,7 +246,7 @@ function placeParts(
   const children = nodes.filter(
     (n) =>
       !isBoundary(n) &&
-      (n.type === 'part' || !n.type) &&
+      isLayoutNode(n) &&
       (boundary ? n.parentId === boundary.id : !n.parentId),
   )
   const positions = new Map<string, { x: number; y: number }>()
@@ -317,7 +318,7 @@ export function autoLayoutStructure(nodes: Node[], edges: Edge[]): AutoLayoutRes
 
   const sizes = new Map<string, { width: number; height: number }>()
   for (const node of nodes) {
-    if (node.type && node.type !== 'part') continue
+    if (!isLayoutNode(node)) continue
     if (isBoundary(node)) continue
     const ports = portsOf(node).map((p) => {
       const placed = portPlacement.get(p.id)
@@ -334,7 +335,7 @@ export function autoLayoutStructure(nodes: Node[], edges: Edge[]): AutoLayoutRes
   const nodePatch: Record<string, Partial<VisualizationNode>> = {}
 
   for (const node of nodes) {
-    if (node.type && node.type !== 'part') continue
+    if (!isLayoutNode(node)) continue
     const sz = sizes.get(node.id)
     const pos = positions.get(node.id)
     if (sz && pos) {

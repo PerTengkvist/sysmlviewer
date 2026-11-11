@@ -798,6 +798,25 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
+  const onAutoLayoutEdgeKindsChange = useCallback(
+    async (kinds: import('./api').AutoLayoutEdgeKinds) => {
+      if (!project || !activeViewId) return
+      try {
+        await patchVisualization(project.id, {
+          viewId: activeViewId,
+          autoLayoutEdgeKinds: kinds,
+          structureNotation,
+        })
+        setViewPayload((prev) =>
+          prev ? { ...prev, autoLayoutEdgeKinds: kinds } : prev,
+        )
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
   const onLayeredLayoutChange = useCallback(
     async (layered: import('./api').LayeredLayoutConfig | null) => {
       if (!project || !activeViewId) return
@@ -1993,6 +2012,9 @@ export default function App() {
                   void eventLog.report({ message, viewId })
                 }
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
+                onAutoLayoutEdgeKindsChange={(kinds) =>
+                  void onAutoLayoutEdgeKindsChange(kinds)
+                }
                 onLayeredLayoutChange={(layered) =>
                   void onLayeredLayoutChange(layered)
                 }

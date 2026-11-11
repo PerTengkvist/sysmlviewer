@@ -13,6 +13,7 @@ import {
 } from './adaptiveLayoutPolicy'
 import type { LevelWeights } from './autoLayoutOptions'
 import { sizePartForPorts } from './structureAutoLayout'
+import { isLayoutNode } from './layoutNodes'
 
 export const DEFAULT_NEST_PAD = 24
 const MIN_W = 140
@@ -34,7 +35,7 @@ function isBoundary(node: Node): boolean {
 }
 
 function isPartNode(node: Node): boolean {
-  return !node.type || node.type === 'part'
+  return isLayoutNode(node)
 }
 
 function portsOf(node: Node): PartPort[] {
