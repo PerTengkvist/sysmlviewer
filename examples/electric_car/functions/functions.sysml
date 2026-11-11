@@ -1,7 +1,7 @@
 package Functions {
   doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. */
-
-  part def Security {
+  part def Function;
+  part def Security :> Function {
     doc /* Authenticate the driver, unlock and lock the doors, and release the immobilizer. Every driving function depends on Security before the car will move. */
     part authenticate {
       doc /* Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller. */
@@ -20,7 +20,7 @@ package Functions {
     }
   }
 
-  part def Charging {
+  part def Charging :> Function {
     doc /* Take energy from a home or fast charger and store it in the battery. Speed control, climate, entertainment, lighting and windshield cleaning draw on this energy. */
     part chargeConnection {
       doc /* Detect the plug and carry the charger's energy into the car. Allocated to the charge inlet. */
@@ -33,7 +33,7 @@ package Functions {
     }
   }
 
-  part def SpeedControl {
+  part def SpeedControl :> Function {
     doc /* Command traction torque and braking, including regenerative braking, so the driver can set and hold speed. Depends on Security for the immobilizer and on Charging for energy. */
     part torqueArbitration {
       doc /* Turn pedal travel into a torque command bounded by the battery limit. Allocated to the drive controller. */
@@ -49,7 +49,7 @@ package Functions {
     }
   }
 
-  part def Maneuvrability {
+  part def Maneuvrability :> Function {
     doc /* Steer the car left and right, select the direction of travel, and keep it directionally stable. Depends on Security, and on SpeedControl because steering response changes with speed. */
     part steeringControl {
       doc /* Turn the steering wheel angle into a wheel angle. Allocated to the drive controller. */
@@ -62,21 +62,21 @@ package Functions {
     }
   }
 
-  part def Entertainment {
+  part def Entertainment :> Function {
     doc /* Play audio and video for the driver and passengers. Depends on Security so the cabin systems wake only for an authorized user, and on Charging for power. */
     part mediaPlayback {
       doc /* Select and play titles on the cabin display and speakers. Allocated to the entertainment system. */
     }
   }
 
-  part def Climate {
+  part def Climate :> Function {
     doc /* Heat, cool and demist the cabin. Depends on Charging because the compressor and heater are electric. */
     part cabinTemperature {
       doc /* Hold the cabin at the set temperature with heater, compressor and fans. Allocated to the climate system. */
     }
   }
 
-  part def WindshieldCleaning {
+  part def WindshieldCleaning :> Function {
     doc /* Wipe and wash the windshield so the driver can see. Depends on Charging for the wiper motor and on SpeedControl so the wipe rate can follow vehicle speed. */
     part wipeControl {
       doc /* Turn the stalk position into wipe speed and washer pulses. Allocated to the body controller. */
@@ -86,7 +86,7 @@ package Functions {
     }
   }
 
-  part def Lighting {
+  part def Lighting :> Function {
     doc /* Headlamps, tail lamps, brake lamps and direction indicators. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn. */
     part headlampControl {
       doc /* Switch low and high beam on and off. Allocated to the body controller. */

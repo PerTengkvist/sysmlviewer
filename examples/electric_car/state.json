@@ -9075,14 +9075,23 @@
       "documentation": "Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases.",
       "shortId": null,
       "children": [
+        "Functions::Function",
         "Functions::Security",
+        "Functions::Security_specializes_Function",
         "Functions::Charging",
+        "Functions::Charging_specializes_Function",
         "Functions::SpeedControl",
+        "Functions::SpeedControl_specializes_Function",
         "Functions::Maneuvrability",
+        "Functions::Maneuvrability_specializes_Function",
         "Functions::Entertainment",
+        "Functions::Entertainment_specializes_Function",
         "Functions::Climate",
+        "Functions::Climate_specializes_Function",
         "Functions::WindshieldCleaning",
+        "Functions::WindshieldCleaning_specializes_Function",
         "Functions::Lighting",
+        "Functions::Lighting_specializes_Function",
         "Functions::dep1",
         "Functions::dep2",
         "Functions::dep3",
@@ -9122,12 +9131,32 @@
       ],
       "fileId": "functions/functions.sysml"
     },
+    "Functions::Function": {
+      "id": "Functions::Function",
+      "kind": "part",
+      "name": "Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
     "Functions::Security": {
       "id": "Functions::Security",
       "kind": "part",
       "name": "Security",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9146,6 +9175,26 @@
         "Functions::Security::lockControl",
         "Functions::Security::driverInformation"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security_specializes_Function": {
+      "id": "Functions::Security_specializes_Function",
+      "kind": "specialization",
+      "name": "Security_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Security",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::Security::authenticate": {
@@ -9253,7 +9302,7 @@
       "kind": "part",
       "name": "Charging",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9270,6 +9319,26 @@
         "Functions::Charging::chargeSession",
         "Functions::Charging::energyStorage"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Charging_specializes_Function": {
+      "id": "Functions::Charging_specializes_Function",
+      "kind": "specialization",
+      "name": "Charging_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Charging",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::Charging::chargeConnection": {
@@ -9337,7 +9406,7 @@
       "kind": "part",
       "name": "SpeedControl",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9355,6 +9424,26 @@
         "Functions::SpeedControl::tractionDrive",
         "Functions::SpeedControl::frictionBraking"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::SpeedControl_specializes_Function": {
+      "id": "Functions::SpeedControl_specializes_Function",
+      "kind": "specialization",
+      "name": "SpeedControl_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::SpeedControl::torqueArbitration": {
@@ -9442,7 +9531,7 @@
       "kind": "part",
       "name": "Maneuvrability",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9459,6 +9548,26 @@
         "Functions::Maneuvrability::gearSelection",
         "Functions::Maneuvrability::roadHolding"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Maneuvrability_specializes_Function": {
+      "id": "Functions::Maneuvrability_specializes_Function",
+      "kind": "specialization",
+      "name": "Maneuvrability_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::Maneuvrability::steeringControl": {
@@ -9526,7 +9635,7 @@
       "kind": "part",
       "name": "Entertainment",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9541,6 +9650,26 @@
       "children": [
         "Functions::Entertainment::mediaPlayback"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Entertainment_specializes_Function": {
+      "id": "Functions::Entertainment_specializes_Function",
+      "kind": "specialization",
+      "name": "Entertainment_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Entertainment",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::Entertainment::mediaPlayback": {
@@ -9568,7 +9697,7 @@
       "kind": "part",
       "name": "Climate",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9583,6 +9712,26 @@
       "children": [
         "Functions::Climate::cabinTemperature"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Climate_specializes_Function": {
+      "id": "Functions::Climate_specializes_Function",
+      "kind": "specialization",
+      "name": "Climate_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Climate",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::Climate::cabinTemperature": {
@@ -9610,7 +9759,7 @@
       "kind": "part",
       "name": "WindshieldCleaning",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9626,6 +9775,26 @@
         "Functions::WindshieldCleaning::wipeControl",
         "Functions::WindshieldCleaning::wipeSweep"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::WindshieldCleaning_specializes_Function": {
+      "id": "Functions::WindshieldCleaning_specializes_Function",
+      "kind": "specialization",
+      "name": "WindshieldCleaning_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::WindshieldCleaning",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::WindshieldCleaning::wipeControl": {
@@ -9673,7 +9842,7 @@
       "kind": "part",
       "name": "Lighting",
       "parentId": "Functions",
-      "typeRef": null,
+      "typeRef": "Function",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
@@ -9690,6 +9859,26 @@
         "Functions::Lighting::indicatorControl",
         "Functions::Lighting::lampDrive"
       ],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Lighting_specializes_Function": {
+      "id": "Functions::Lighting_specializes_Function",
+      "kind": "specialization",
+      "name": "Lighting_specializes_Function",
+      "parentId": "Functions",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting",
+      "targetId": "Functions::Function",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
       "fileId": "functions/functions.sysml"
     },
     "Functions::Lighting::headlampControl": {
@@ -26284,6 +26473,16 @@
         "side": null,
         "offset": null
       },
+      "Functions::Function": {
+        "artifactId": "Functions::Function",
+        "x": 360.0,
+        "y": 11060.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "Functions::Security": {
         "artifactId": "Functions::Security",
         "x": 640.0,
@@ -31900,6 +32099,158 @@
         "labelOffset": {
           "x": 0.0,
           "y": 0.0
+        }
+      },
+      "Functions::Security_specializes_Function": {
+        "artifactId": "Functions::Security_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::Charging_specializes_Function": {
+        "artifactId": "Functions::Charging_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::SpeedControl_specializes_Function": {
+        "artifactId": "Functions::SpeedControl_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::Maneuvrability_specializes_Function": {
+        "artifactId": "Functions::Maneuvrability_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::Entertainment_specializes_Function": {
+        "artifactId": "Functions::Entertainment_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::Climate_specializes_Function": {
+        "artifactId": "Functions::Climate_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::WindshieldCleaning_specializes_Function": {
+        "artifactId": "Functions::WindshieldCleaning_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
+        }
+      },
+      "Functions::Lighting_specializes_Function": {
+        "artifactId": "Functions::Lighting_specializes_Function",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          },
+          "dark": {
+            "lineStyle": "solid",
+            "markerEnd": "hollowTriangle"
+          }
         }
       },
       "Functions::dep1": {
