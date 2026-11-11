@@ -8,6 +8,7 @@ import {
   type AlignAxis,
   type AlignResult,
 } from './align'
+import { arrangeableNodeIds } from './arrangeableNodes'
 
 /** Map React Flow nodes to AlignableNode with absolute parent origins. */
 export function flowNodesToAlignable(nodes: Node[]): AlignableNode[] {
@@ -41,7 +42,9 @@ export function alignFlowSelection(
   axis: AlignAxis,
 ): AlignResult {
   const items = flowNodesToAlignable(nodes)
-  return alignSelection(items, axis, selectedIds)
+  // The anchor is the first selected *node*: a selected edge listed first
+  // must not turn align into a no-op.
+  return alignSelection(items, axis, arrangeableNodeIds(nodes, selectedIds))
 }
 
 /** Apply align x/y patches onto React Flow node positions. */

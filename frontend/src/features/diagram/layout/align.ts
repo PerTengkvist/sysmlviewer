@@ -248,24 +248,14 @@ export function alignSelection(
 
     const ox = n.parentAbs?.x ?? 0
     const oy = n.parentAbs?.y ?? 0
+    // Persist position only, as distribute does: width/height here may be a
+    // fallback (100×40) or a content measurement that must not be frozen.
     if (axis === 'horizontal') {
       const newAbsY = target.cy - n.height / 2
-      patch[id] = {
-        artifactId: id,
-        x: n.x,
-        y: newAbsY - oy,
-        width: n.width,
-        height: n.height,
-      }
+      patch[id] = { artifactId: id, x: n.x, y: newAbsY - oy }
     } else {
       const newAbsX = target.cx - n.width / 2
-      patch[id] = {
-        artifactId: id,
-        x: newAbsX - ox,
-        y: n.y,
-        width: n.width,
-        height: n.height,
-      }
+      patch[id] = { artifactId: id, x: newAbsX - ox, y: n.y }
     }
   }
   return { patch, skipped }
