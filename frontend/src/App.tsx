@@ -27,7 +27,10 @@ import {
   saveElementDialogSize,
   type ElementDialogSize,
 } from './features/details/elementDialogState'
-import { diagramDoubleClickAction } from './features/diagram/nodeDoubleClick'
+import {
+  diagramDoubleClickAction,
+  relatedDetailsAction,
+} from './features/diagram/nodeDoubleClick'
 import { LeftSidebar, type LeftTab } from './features/files/LeftSidebar'
 import { MarkdownCanvas } from './features/docs/MarkdownCanvas'
 import { MarkdownDialog } from './features/docs/MarkdownDialog'
@@ -171,6 +174,17 @@ export default function App() {
   const eventLog = useEventLog(project?.id ?? null)
   const projectRef = useRef(project)
   projectRef.current = project
+  /** Open the dialog of an element clicked in a relations / requirements list. */
+  const openRelatedDetails = useCallback((artifactId: string) => {
+    const kind = projectRef.current?.semantic[artifactId]?.kind
+    if (relatedDetailsAction(kind) === 'use-case-flow') {
+      setElementDialogId(null)
+      setUseCaseDialogId(artifactId)
+    } else {
+      setUseCaseDialogId(null)
+      setElementDialogId(artifactId)
+    }
+  }, [])
   const viewPayloadRef = useRef(viewPayload)
   viewPayloadRef.current = viewPayload
 
@@ -776,6 +790,25 @@ export default function App() {
         })
         setViewPayload((prev) =>
           prev ? { ...prev, layoutRules: rules } : prev,
+        )
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
+  const onAutoLayoutEdgeKindsChange = useCallback(
+    async (kinds: import('./api').AutoLayoutEdgeKinds) => {
+      if (!project || !activeViewId) return
+      try {
+        await patchVisualization(project.id, {
+          viewId: activeViewId,
+          autoLayoutEdgeKinds: kinds,
+          structureNotation,
+        })
+        setViewPayload((prev) =>
+          prev ? { ...prev, autoLayoutEdgeKinds: kinds } : prev,
         )
       } catch (e) {
         setError(String(e))
@@ -1457,6 +1490,7 @@ export default function App() {
         api.updateRelationEnds(project!.id, id, sourceId, targetId),
       )
     },
+    onOpenRelated: openRelatedDetails,
     onLocateInModelView: (artifactId) => {
       setLeftTab('views')
       setSelectedId(artifactId)
@@ -1667,6 +1701,7 @@ export default function App() {
           useCaseId={useCaseDialogId}
           semantic={project.semantic}
           onClose={() => setUseCaseDialogId(null)}
+          onOpenElement={openRelatedDetails}
           onOpenAction={(actionId) => {
             setUseCaseDialogId(null)
             void loadView(project.id, `artifact::${actionId}`, { newTab: true })
@@ -1921,6 +1956,7 @@ export default function App() {
                 structureNotation={settings.showDiagramDetails.structureNotation}
                 nestedPortReveal={settings.nestedPortReveal}
                 requirementDisplay={settings.requirementDisplay}
+                modelSemantic={project?.semantic}
                 selectedConnectionColor={settings.selectedConnectionColor}
                 selectedConnectionLinewidthFactor={
                   settings.selectedConnectionLinewidthFactor
@@ -1976,6 +2012,9 @@ export default function App() {
                   void eventLog.report({ message, viewId })
                 }
                 onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
+                onAutoLayoutEdgeKindsChange={(kinds) =>
+                  void onAutoLayoutEdgeKindsChange(kinds)
+                }
                 onLayeredLayoutChange={(layered) =>
                   void onLayeredLayoutChange(layered)
                 }

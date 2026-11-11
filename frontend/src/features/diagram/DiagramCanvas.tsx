@@ -34,6 +34,7 @@ import type {
   LayeredLayoutConfig,
   PortSide,
   RoutingType,
+  SemanticElement,
   ViewPayload,
   ViewSnapshot,
   VisualizationEdge,
@@ -100,6 +101,7 @@ import { VizHistory } from './vizHistory'
 import { collectFlipPortMoves } from './layout/flipPortPlacement'
 import { collectDistributePortMoves } from './layout/distributePorts'
 import { distributeFlowSelection } from './layout/distributeNodes'
+import { arrangeableNodeIds } from './layout/arrangeableNodes'
 import { allDiagramIds, handleCanvasShortcut } from './canvasShortcuts'
 import { EdgeMarkerDefs } from './EdgeMarkerDefs'
 import {
@@ -141,6 +143,11 @@ import {
   type AutoLayoutDirectives,
 } from './layout/autoLayoutOptions'
 import { asAngularForLayout } from './layout/elkStructureLayout'
+import {
+  layoutEdgesFor,
+  resolveLayoutEdgeKinds,
+  type LayoutEdgeKinds,
+} from './layout/layoutEdgeKinds'
 import { buildLayoutConstraints } from './layout/layoutConstraints'
 import { normalizeLayeredLayout, rootScope } from './layeredLayoutConfig'
 import { planStructureRoutes } from './layout/layoutRouter'
@@ -156,6 +163,18 @@ import {
   waitFrames,
   writeImageBlobToClipboard,
 } from './copyDiagramImage'
+
+function sameEdgeKinds(
+  a: LayoutEdgeKinds,
+  b: LayoutEdgeKinds | null | undefined,
+): boolean {
+  return (
+    !!b &&
+    a.connections === b.connections &&
+    a.bindings === b.bindings &&
+    a.relations === b.relations
+  )
+}
 
 /** All custom types registered together — React Flow caches nodeTypes on mount. */
 const allNodeTypes: NodeTypes = {
@@ -505,6 +524,8 @@ type Props = {
   structureNotation?: import('../../settings').StructureNotation
   nestedPortReveal?: import('../../settings').NestedPortReveal
   requirementDisplay?: import('../../settings').RequirementDisplaySettings
+  /** Whole-model semantic, for traceability the view does not expose. */
+  modelSemantic?: Record<string, SemanticElement>
   sheet?: ProjectSheet
   selectedConnectionColor?: string
   selectedConnectionLinewidthFactor?: number
@@ -546,6 +567,8 @@ type Props = {
   onDiagramReady?: () => void
   onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
   onLayeredLayoutChange?: (layered: LayeredLayoutConfig | null) => void
+  /** Save the AutoLayout "Place by" choice with the view. */
+  onAutoLayoutEdgeKindsChange?: (kinds: LayoutEdgeKinds) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
   onPortsMoved?: (
@@ -586,6 +609,7 @@ export function DiagramCanvas({
   structureNotation = 'sysmlv2',
   nestedPortReveal = 'hover',
   requirementDisplay,
+  modelSemantic,
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidthFactor = 3,
@@ -603,6 +627,7 @@ export function DiagramCanvas({
   onNodesMoved,
   onLayoutRulesChange,
   onLayeredLayoutChange,
+  onAutoLayoutEdgeKindsChange,
   onPortMoved,
   onPortsMoved,
   onRelationEndMoved,
@@ -634,6 +659,8 @@ export function DiagramCanvas({
   const [autoLayoutBusy, setAutoLayoutBusy] = useState(false)
   const [autoLayoutDirectives, setAutoLayoutDirectives] =
     useState<AutoLayoutDirectives>(DEFAULT_AUTO_LAYOUT_DIRECTIVES)
+  const onAutoLayoutEdgeKindsChangeRef = useRef(onAutoLayoutEdgeKindsChange)
+  onAutoLayoutEdgeKindsChangeRef.current = onAutoLayoutEdgeKindsChange
   const [routeNotice, setRouteNotice] = useState<string | null>(null)
   const pendingCopyRef = useRef(false)
   const sheetHostRef = useRef<HTMLDivElement>(null)
@@ -647,6 +674,21 @@ export function DiagramCanvas({
   const vizHistoryRef = useRef(new VizHistory())
   const showJumpersRef = useRef(showJumpers)
   const includeBindingsRef = useRef(includeBindingsInRouting)
+  // Dialog start values: the view's saved "Place by" choice, else a default
+  // from the diagram's edges. Recomputed when the dialog opens, then stable so
+  // the dialog keeps the user's edits while open.
+  const autoLayoutDialogInitial = useMemo<AutoLayoutDirectives>(
+    () => ({
+      ...autoLayoutDirectives,
+      edgeKinds: resolveLayoutEdgeKinds(
+        view?.autoLayoutEdgeKinds,
+        edgesRef.current,
+        includeBindingsInRouting,
+      ),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- edges read on open
+    [autoLayoutOpen, autoLayoutDirectives, view?.autoLayoutEdgeKinds, includeBindingsInRouting],
+  )
   /** Viewport per view, kept in memory for the session only. */
   const viewportCache = useRef(new Map<string, { x: number; y: number; zoom: number }>())
   viewRef.current = view
@@ -986,10 +1028,15 @@ export function DiagramCanvas({
         })
         break
       case 'useCase':
-        built = buildUseCaseGraph(filteredView, renderViewMode, {
-          selectedConnectionColor,
-          selectedConnectionLinewidthFactor,
-        })
+        built = buildUseCaseGraph(
+          filteredView,
+          renderViewMode,
+          {
+            selectedConnectionColor,
+            selectedConnectionLinewidthFactor,
+          },
+          requirementDisplay,
+        )
         break
       case 'requirementTable':
         built = { nodes: [], edges: [] }
@@ -1992,9 +2039,12 @@ export function DiagramCanvas({
       const node = nodesRef.current.find((n) => n.id === nodeId)
       const raw =
         (node?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors || []
-      // Use-case / actor diagrams own exact relation anchors — do not inject defaults.
+      // Use-case / actor diagrams own exact relation anchors — do not inject
+      // defaults (requirements on a use case diagram flag `exactAnchors`).
       const base =
-        node?.type === 'useCase' || node?.type === 'actor'
+        node?.type === 'useCase' ||
+        node?.type === 'actor' ||
+        (node?.data as { exactAnchors?: boolean } | undefined)?.exactAnchors
           ? raw
           : resolveAnchors(raw)
       const anchors = base.map((a) =>
@@ -2276,9 +2326,19 @@ export function DiagramCanvas({
             ),
           }
         : input
-    const structureEdges = asAngularForLayout(edges, {
-      includeBindings: includeBindingsRef.current,
-    })
+    const edgeKinds =
+      directives.edgeKinds ??
+      resolveLayoutEdgeKinds(
+        view?.autoLayoutEdgeKinds,
+        edges,
+        includeBindingsRef.current,
+      )
+    // Connections / bindings are routed as before; the "Place by" choice
+    // decides which edges (relations included) pull nodes together.
+    const { routed: structureEdges, placement: placementEdges } =
+      layoutEdgesFor(edges, edgeKinds, {
+        routeBindings: includeBindingsRef.current,
+      })
     const existing = structureEdges.map((edge) => {
       const data = (edge.data || {}) as SysmlEdgeData
       return { id: edge.id, waypoints: data.waypoints || [] }
@@ -2288,12 +2348,16 @@ export function DiagramCanvas({
       layoutNodes: true,
       nodes,
       edges: structureEdges,
+      placementEdges,
       existingRoutes: existing,
       separation: connectionSeparation,
       computeJumpers: showJumpersRef.current,
       directives,
     })
     if (!Object.keys(planned.nodes).length && !planned.routes.length) return
+    if (!sameEdgeKinds(edgeKinds, view?.autoLayoutEdgeKinds)) {
+      onAutoLayoutEdgeKindsChangeRef.current?.(edgeKinds)
+    }
 
     const layoutNodes = planned.nodes
     const nextNodes = Object.keys(layoutNodes).length
@@ -2392,13 +2456,26 @@ export function DiagramCanvas({
     setEdges(nextEdges)
     onNodesMovedRef.current(layoutNodes, edgePatch)
     setLayoutEpoch((n) => n + 1)
-    // Remember the choice without the per-run constraints snapshot.
-    setAutoLayoutDirectives({ ...directives, constraints: undefined })
+    // Remember the choice without the per-run constraints snapshot; the
+    // edge kinds belong to the view and come from it next time.
+    setAutoLayoutDirectives({
+      ...directives,
+      constraints: undefined,
+      edgeKinds: undefined,
+    })
     setAutoLayoutOpen(false)
     } finally {
       setAutoLayoutBusy(false)
     }
-  }, [nodes, edges, connectionSeparation, constraintsFor, view?.layoutRules, view?.layeredLayout])
+  }, [
+    nodes,
+    edges,
+    connectionSeparation,
+    constraintsFor,
+    view?.layoutRules,
+    view?.layeredLayout,
+    view?.autoLayoutEdgeKinds,
+  ])
 
   // Hide jumpers immediately when the setting turns off (keep waypoints).
   useEffect(() => {
@@ -2574,6 +2651,7 @@ export function DiagramCanvas({
       filteredReq.semantic,
       reqTableMode,
       requirementDisplay,
+      modelSemantic ?? view.semantic,
     )
     return (
       <div className="diagram-canvas requirement-table-canvas">
@@ -2620,6 +2698,52 @@ export function DiagramCanvas({
       </div>
     )
   }
+
+  // Align / distribute work on every movable diagram node (parts,
+  // interfaces, requirements, use cases, actors), not only parts.
+  const arrangeIds = arrangeableNodeIds(nodes, selectedIds)
+  const applyArrangePatch = (patch: Record<string, Partial<VisualizationNode>>) => {
+    if (!Object.keys(patch).length) return
+    pushVizHistory()
+    setNodes((current) => applyAlignPatchToFlowNodes(current, patch))
+    onNodesMoved(patch)
+  }
+  const distributeSelectedNodes = (axis: 'horizontal' | 'vertical') =>
+    applyArrangePatch(distributeFlowSelection(nodes, arrangeIds, axis).patch)
+  const alignSelectedNodes = (axis: 'horizontal' | 'vertical') =>
+    applyArrangePatch(alignFlowSelection(nodes, arrangeIds, axis).patch)
+  const renderNodeArrangeButtons = () => (
+    <>
+      {arrangeIds.length >= 3 ? (
+        <>
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.distributeH}
+            title="Distribute selected elements horizontally (even center spacing)"
+            onClick={() => distributeSelectedNodes('horizontal')}
+          />
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.distributeV}
+            title="Distribute selected elements vertically (even center spacing)"
+            onClick={() => distributeSelectedNodes('vertical')}
+          />
+        </>
+      ) : null}
+      {arrangeIds.length >= 2 ? (
+        <>
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.alignH}
+            title="Align selected to first selected (horizontal = same Y)"
+            onClick={() => alignSelectedNodes('horizontal')}
+          />
+          <IconToolbarButton
+            icon={TOOLBAR_ICONS.alignV}
+            title="Align selected to first selected (vertical = same X)"
+            onClick={() => alignSelectedNodes('vertical')}
+          />
+        </>
+      ) : null}
+    </>
+  )
 
   return (
     <div
@@ -2717,36 +2841,21 @@ export function DiagramCanvas({
                   }
                   onClick={() => handleFlipPorts('vertical')}
                 />
-                {selectedPortIds.length >= 2 ||
-                selectedIds.filter((id) => view.semantic[id]?.kind === 'part')
-                  .length >= 3 ? (
+                {selectedPortIds.length >= 2 || arrangeIds.length >= 3 ? (
                   <>
                     <IconToolbarButton
                       icon={TOOLBAR_ICONS.distributeH}
                       title={
                         selectedPortIds.length >= 2
                           ? 'Distribute selected ports horizontally (even spacing between extremes)'
-                          : 'Distribute selected parts horizontally (even center spacing)'
+                          : 'Distribute selected elements horizontally (even center spacing)'
                       }
                       onClick={() => {
                         if (selectedPortIds.length >= 2) {
                           handleDistributePorts('horizontal')
                           return
                         }
-                        const partIds = selectedIds.filter(
-                          (id) => view.semantic[id]?.kind === 'part',
-                        )
-                        const { patch } = distributeFlowSelection(
-                          nodes,
-                          partIds,
-                          'horizontal',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        distributeSelectedNodes('horizontal')
                       }}
                     />
                     <IconToolbarButton
@@ -2754,27 +2863,14 @@ export function DiagramCanvas({
                       title={
                         selectedPortIds.length >= 2
                           ? 'Distribute selected ports vertically (even spacing between extremes)'
-                          : 'Distribute selected parts vertically (even center spacing)'
+                          : 'Distribute selected elements vertically (even center spacing)'
                       }
                       onClick={() => {
                         if (selectedPortIds.length >= 2) {
                           handleDistributePorts('vertical')
                           return
                         }
-                        const partIds = selectedIds.filter(
-                          (id) => view.semantic[id]?.kind === 'part',
-                        )
-                        const { patch } = distributeFlowSelection(
-                          nodes,
-                          partIds,
-                          'vertical',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        distributeSelectedNodes('vertical')
                       }}
                     />
                   </>
@@ -2812,17 +2908,7 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameX')
                           return
                         }
-                        const { patch } = alignFlowSelection(
-                          nodes,
-                          selectedIds,
-                          'horizontal',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        alignSelectedNodes('horizontal')
                       }}
                     />
                     <IconToolbarButton
@@ -2849,17 +2935,7 @@ export function DiagramCanvas({
                           applyDirectConnectionAlign('sameY')
                           return
                         }
-                        const { patch } = alignFlowSelection(
-                          nodes,
-                          selectedIds,
-                          'vertical',
-                        )
-                        if (!Object.keys(patch).length) return
-                        pushVizHistory()
-                        setNodes((current) =>
-                          applyAlignPatchToFlowNodes(current, patch),
-                        )
-                        onNodesMoved(patch)
+                        alignSelectedNodes('vertical')
                       }}
                     />
                   </>
@@ -2894,6 +2970,7 @@ export function DiagramCanvas({
                     Redraw: Relations
                   </button>
                 ) : null}
+                {mode === 'useCase' ? renderNodeArrangeButtons() : null}
                 <IconToolbarButton
                   icon={TOOLBAR_ICONS.layoutRules}
                   title="Layout Rules"
@@ -3130,7 +3207,7 @@ export function DiagramCanvas({
       </div>
       <AutoLayoutDialog
         open={autoLayoutOpen}
-        initial={autoLayoutDirectives}
+        initial={autoLayoutDialogInitial}
         busy={autoLayoutBusy}
         onCancel={() => {
           if (!autoLayoutBusy) setAutoLayoutOpen(false)

@@ -34,3 +34,13 @@ export function nodeDoubleClickAction(
 ): NodeDoubleClickAction | null {
   return diagramDoubleClickAction(kind)
 }
+
+/**
+ * Which dialog opens when a related element is clicked in a details list.
+ * Unlike a diagram double-click this always opens something.
+ */
+export function relatedDetailsAction(
+  kind: ArtifactKind | undefined,
+): DiagramDoubleClickAction {
+  return kind === 'useCase' ? 'use-case-flow' : 'element-dialog'
+}

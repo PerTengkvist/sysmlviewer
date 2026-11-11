@@ -280,6 +280,9 @@ class ViewLayout:
     layout_rules: list[dict[str, Any]] = field(default_factory=list)
     # Layered layout config (enabled/direction/layers); None when never set.
     layered_layout: dict[str, Any] | None = None
+    # AutoLayout dialog: which edges place nodes ({connections, bindings,
+    # relations}); None when never chosen for this view.
+    auto_layout_edge_kinds: dict[str, bool] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
@@ -293,6 +296,8 @@ class ViewLayout:
             out["layoutRules"] = list(self.layout_rules)
         if self.layered_layout is not None:
             out["layeredLayout"] = dict(self.layered_layout)
+        if self.auto_layout_edge_kinds is not None:
+            out["autoLayoutEdgeKinds"] = dict(self.auto_layout_edge_kinds)
         return out
 
     @classmethod
@@ -324,7 +329,20 @@ class ViewLayout:
             view_filters=filters,
             layout_rules=rules,
             layered_layout=layered,
+            auto_layout_edge_kinds=normalize_auto_layout_edge_kinds(
+                data.get("autoLayoutEdgeKinds")
+            ),
         )
+
+
+AUTO_LAYOUT_EDGE_KINDS = ("connections", "bindings", "relations")
+
+
+def normalize_auto_layout_edge_kinds(raw: Any) -> dict[str, bool] | None:
+    """`{connections, bindings, relations}` as booleans; None when absent."""
+    if not isinstance(raw, dict):
+        return None
+    return {key: bool(raw.get(key, False)) for key in AUTO_LAYOUT_EDGE_KINDS}
 
 
 def _normalize_view_filters(raw: Any) -> list[dict[str, Any]]:
@@ -576,6 +594,7 @@ def _copy_view_layout(
     view_filters: list[dict[str, Any]] | None = None,
     layout_rules: list[dict[str, Any]] | None = None,
     layered_layout: dict[str, Any] | None | object = ...,
+    auto_layout_edge_kinds: dict[str, bool] | None | object = ...,
 ) -> ViewLayout:
     """Rebuild ViewLayout while preserving fields not explicitly overridden."""
     override = view_layout.hierarchical_levels_override
@@ -584,6 +603,9 @@ def _copy_view_layout(
     layered = view_layout.layered_layout
     if layered_layout is not ...:
         layered = layered_layout  # type: ignore[assignment]
+    edge_kinds = view_layout.auto_layout_edge_kinds
+    if auto_layout_edge_kinds is not ...:
+        edge_kinds = auto_layout_edge_kinds  # type: ignore[assignment]
     return ViewLayout(
         nodes=nodes if nodes is not None else dict(view_layout.nodes),
         edges=edges if edges is not None else dict(view_layout.edges),
@@ -599,6 +621,7 @@ def _copy_view_layout(
             else list(view_layout.layout_rules)
         ),
         layered_layout=dict(layered) if layered is not None else None,
+        auto_layout_edge_kinds=dict(edge_kinds) if edge_kinds is not None else None,
     )
 
 
@@ -719,6 +742,21 @@ def apply_layout_rules(
     by_view[view_id] = _copy_view_layout(
         view_layout,
         layout_rules=_normalize_layout_rules(rules or []),
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_auto_layout_edge_kinds(
+    layouts: ViewLayouts,
+    view_id: str,
+    raw: dict[str, Any] | None,
+) -> ViewLayouts:
+    """Replace per-view AutoLayout edge kinds (None clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        auto_layout_edge_kinds=normalize_auto_layout_edge_kinds(raw),
     )
     return ViewLayouts(by_view=by_view)
 

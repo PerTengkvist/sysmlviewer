@@ -1316,6 +1316,7 @@ class ProjectService:
         from domain.view_layouts import (
             ViewLayout,
             ViewLayouts,
+            apply_auto_layout_edge_kinds,
             apply_layered_layout,
             apply_layout_rules,
             apply_view_filters,
@@ -1332,6 +1333,7 @@ class ProjectService:
         view_filters_patch = "viewFilters" in patch
         layout_rules_patch = "layoutRules" in patch
         layered_layout_patch = "layeredLayout" in patch
+        edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1384,6 +1386,13 @@ class ProjectService:
             if layered_layout_patch:
                 working = apply_layered_layout(
                     working, view_id, patch.get("layeredLayout")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if edge_kinds_patch:
+                working = apply_auto_layout_edge_kinds(
+                    working, view_id, patch.get("autoLayoutEdgeKinds")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1462,6 +1471,7 @@ class ProjectService:
                 or view_filters_patch
                 or layout_rules_patch
                 or layered_layout_patch
+                or edge_kinds_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -2029,6 +2039,9 @@ class ProjectService:
 
         result: dict = {
             "view": view.to_dict(),
+            # Every `expose` of the view (inherited from its `view def` when
+            # it has none), so modes can place content from all of them.
+            "exposeRootIds": [r.id for r in expose_roots],
             "diagramMode": diagram_mode,
             "hierarchicalLevels": effective_levels,
             "hierarchicalLevelsOverride": levels_override,
@@ -2041,6 +2054,12 @@ class ProjectService:
             "layeredLayout": (
                 dict(layout_for_view.layered_layout)
                 if layout_for_view and layout_for_view.layered_layout is not None
+                else None
+            ),
+            "autoLayoutEdgeKinds": (
+                dict(layout_for_view.auto_layout_edge_kinds)
+                if layout_for_view
+                and layout_for_view.auto_layout_edge_kinds is not None
                 else None
             ),
             "semantic": semantic,

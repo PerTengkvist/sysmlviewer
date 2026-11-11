@@ -24,8 +24,8 @@ describe('alignSelection', () => {
     expect(patch.a).toBeUndefined()
     expect(patch.b?.y).toBe(0)
     expect(patch.b?.x).toBe(200)
-    expect(patch.b?.width).toBe(100)
-    expect(patch.b?.height).toBe(40)
+    expect(patch.b?.width).toBeUndefined()
+    expect(patch.b?.height).toBeUndefined()
   })
 
   it('aligns vertically to first selected center X', () => {

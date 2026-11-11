@@ -106,6 +106,8 @@ def layout_document(
         doc["layoutRules"] = list(layout.layout_rules)
     if layout.layered_layout is not None:
         doc["layeredLayout"] = dict(layout.layered_layout)
+    if layout.auto_layout_edge_kinds is not None:
+        doc["autoLayoutEdgeKinds"] = dict(layout.auto_layout_edge_kinds)
     return doc
 
 
@@ -276,6 +278,7 @@ def read_all(
                 "viewFilters": doc.get("viewFilters") or [],
                 "layoutRules": doc.get("layoutRules") or [],
                 "layeredLayout": doc.get("layeredLayout"),
+                "autoLayoutEdgeKinds": doc.get("autoLayoutEdgeKinds"),
             }
         )
     return ViewLayouts(by_view=by_view)

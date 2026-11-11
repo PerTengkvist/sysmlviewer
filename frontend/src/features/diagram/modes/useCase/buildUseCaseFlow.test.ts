@@ -188,3 +188,75 @@ describe('buildUseCaseFlow', () => {
     expect(link).toBeTruthy()
   })
 })
+
+describe('buildUseCaseFlow requirement links', () => {
+  const semantic: Record<string, SemanticElement> = {
+    'UC::Start': el({
+      id: 'UC::Start',
+      kind: 'useCase',
+      name: 'StartVehicle',
+      children: ['UC::Start::objective_1'],
+    }),
+    'UC::Start::objective_1': el({
+      id: 'UC::Start::objective_1',
+      kind: 'dependency',
+      name: 'objective_1',
+      parentId: 'UC::Start',
+      sourceId: 'UC::Start',
+      targetId: 'R::PowerModes',
+      metadataKeywords: ['objective'],
+    }),
+    'UC::dep2': el({
+      id: 'UC::dep2',
+      kind: 'dependency',
+      name: 'dep2',
+      sourceId: 'UC::Start',
+      targetId: 'R::DriveToDest',
+      metadataKeywords: ['refine'],
+    }),
+    'R::PowerModes': el({
+      id: 'R::PowerModes',
+      kind: 'requirement',
+      name: 'PowerModes',
+      shortId: 'REQ-PERF-06',
+    }),
+    'R::DriveToDest': el({
+      id: 'R::DriveToDest',
+      kind: 'requirement',
+      name: 'DriveToDestination',
+      shortId: 'US-DRIVE-01',
+    }),
+  }
+
+  it('names the objective requirement instead of the dependency', () => {
+    const { params } = buildUseCaseFlow('UC::Start', semantic)
+    expect(params.objective).toBe('REQ-PERF-06 PowerModes')
+  })
+
+  it('lists every traced requirement with its relation', () => {
+    const { params } = buildUseCaseFlow('UC::Start', semantic)
+    expect(params.requirements).toEqual([
+      { id: 'R::PowerModes', label: 'objective', name: 'REQ-PERF-06 PowerModes' },
+      { id: 'R::DriveToDest', label: 'refine', name: 'US-DRIVE-01 DriveToDestination' },
+    ])
+  })
+})
+
+describe('buildUseCaseFlow objective', () => {
+  it('prefers the objective requirement over the use case text', () => {
+    const semantic: Record<string, SemanticElement> = {
+      'UC::A': el({ id: 'UC::A', kind: 'useCase', name: 'A', documentation: 'Long description' }),
+      'UC::A::objective_1': el({
+        id: 'UC::A::objective_1',
+        kind: 'dependency',
+        name: 'objective_1',
+        parentId: 'UC::A',
+        sourceId: 'UC::A',
+        targetId: 'R::X',
+        metadataKeywords: ['objective'],
+      }),
+      'R::X': el({ id: 'R::X', kind: 'requirement', name: 'X', shortId: 'R-9' }),
+    }
+    expect(buildUseCaseFlow('UC::A', semantic).params.objective).toBe('R-9 X')
+  })
+})

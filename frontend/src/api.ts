@@ -298,8 +298,20 @@ export interface LayoutRuleRow {
   peerNamePattern: string | null
 }
 
+/** Which edges AutoLayout uses to place nodes. */
+export type AutoLayoutEdgeKinds = {
+  connections: boolean
+  bindings: boolean
+  relations: boolean
+}
+
 export interface ViewPayload {
   view: ViewDef
+  /**
+   * Every `expose` root of the view (inherited from its `view def` when it
+   * has none). `view.rootArtifactId` is the first of them.
+   */
+  exposeRootIds?: string[]
   diagramMode?: DiagramMode
   hierarchicalLevels?: number
   /** Per-view override; null/undefined means inherit global Settings. */
@@ -308,6 +320,8 @@ export interface ViewPayload {
   layoutRules?: LayoutRuleRow[]
   /** null/undefined → layered layout never configured for this view. */
   layeredLayout?: LayeredLayoutConfig | null
+  /** AutoLayout "Place by" choice saved for this view; null when never set. */
+  autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
   modeError?: string | null
   semantic: Record<string, SemanticElement>
   visualization: {
@@ -517,6 +531,8 @@ export const api = {
       layoutRules?: LayoutRuleRow[]
       /** Replaces the config when present; null clears. */
       layeredLayout?: LayeredLayoutConfig | null
+      /** AutoLayout "Place by" choice; null clears. */
+      autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {

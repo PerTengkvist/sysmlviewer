@@ -10,6 +10,7 @@ import {
   type RoutedPoly,
 } from './connectionSeparation'
 import { EDGE_LABEL_TEXT_HEIGHT_PX } from '../../../settings'
+import { isLayoutNode } from './layoutNodes'
 
 export type Rect = {
   minX: number
@@ -711,7 +712,7 @@ export function partObstacleRects(
 ): { id: string; minX: number; minY: number; maxX: number; maxY: number }[] {
   const byId = new Map(nodes.map((n) => [n.id, n]))
   return nodes
-    .filter((n) => n.type === 'part' || !n.type)
+    .filter((n) => isLayoutNode(n))
     .filter((n) => !isBoundary(n))
     .map((n) => {
       const r = nodeRect(n, byId)
@@ -931,7 +932,7 @@ export function redrawStructureConnections(
   options?: RedrawOptions,
 ): RoutedConnection[] {
   const byId = new Map(nodes.map((n) => [n.id, n]))
-  const parts = nodes.filter((n) => n.type === 'part' || !n.type)
+  const parts = nodes.filter((n) => isLayoutNode(n))
   const boundary = parts.find(isBoundary)
   const rects = new Map<string, Rect>()
   for (const n of parts) rects.set(n.id, nodeRect(n, byId))

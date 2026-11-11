@@ -57,6 +57,7 @@ import {
 } from './layoutQuality'
 import { separateAbsoluteOverlaps, type ParentOfMap } from './flowPlacement'
 import { connectedComponents, packComponents } from './componentPacking'
+import { isLayoutNode } from './layoutNodes'
 
 const MIN_W = 140
 const MIN_H = 72
@@ -84,7 +85,7 @@ type ConnLink = {
 }
 
 function isPartNode(node: Node): boolean {
-  return !node.type || node.type === 'part'
+  return isLayoutNode(node)
 }
 
 function isBoundary(node: Node): boolean {

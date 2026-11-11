@@ -25,7 +25,11 @@ type EdgeData = {
 function isUseCaseRelation(edge: Edge): boolean {
   if (edge.id.startsWith('use:')) return true
   const data = (edge.data || {}) as EdgeData
-  return data.relationKind === 'include' || data.relationKind === 'dependency'
+  return (
+    data.relationKind === 'include' ||
+    data.relationKind === 'dependency' ||
+    data.relationKind === 'satisfy'
+  )
 }
 
 function relId(edgeId: string): string {
@@ -56,7 +60,9 @@ export function redrawUseCaseRelations(
   // re-placed on the shortest path. Full redraw ignores all saved positions.
   const savedAnchors: Record<string, BoundaryAnchor[]> = {}
   for (const node of nodes) {
-    if (node.type !== 'useCase' && node.type !== 'actor') continue
+    if (node.type !== 'useCase' && node.type !== 'actor' && node.type !== 'requirement') {
+      continue
+    }
     const current =
       ((node.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors || [])
     if (onlyId == null) {

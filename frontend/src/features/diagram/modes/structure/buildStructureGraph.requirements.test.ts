@@ -198,3 +198,57 @@ describe('buildStructureGraph requirements mix', () => {
     expect(reqData.bodyText).toBe('Short summary')
   })
 })
+
+describe('buildStructureGraph requirement traceability (GeneralView)', () => {
+  function traceFixture(): ViewPayload {
+    const base = fixture()
+    const dep = (
+      id: string,
+      sourceId: string,
+      keyword: string,
+      name: string,
+    ) => ({
+      id,
+      kind: 'dependency' as const,
+      name,
+      parentId: sourceId,
+      typeRef: null,
+      sourceId,
+      targetId: 'P::R1',
+      children: [],
+      fileId: 'f',
+      metadataKeywords: [keyword],
+    })
+    return {
+      ...base,
+      semantic: {
+        ...base.semantic,
+        P: {
+          ...base.semantic.P!,
+          children: [...base.semantic.P!.children, 'P::Login::objective_1', 'P::dep2'],
+        },
+        'P::Login::objective_1': dep('P::Login::objective_1', 'P::Login', 'objective', 'objective_1'),
+        'P::dep2': dep('P::dep2', 'P::Login', 'refine', 'dep2'),
+      },
+    }
+  }
+
+  it('draws objective and refine edges from a use case to a requirement', () => {
+    const { edges } = buildStructureGraph({
+      view: traceFixture(),
+      onOpenView: () => {},
+      onPortMoved: () => {},
+      portMoveMode: false,
+      showAttributes: false,
+      viewMode: 'light',
+      onWaypointsChange: () => {},
+      onLabelOffsetChange: () => {},
+    })
+    const byId = new Map(edges.map((e) => [e.id, e]))
+    expect(byId.get('P::dep2')?.source).toBe('P::Login')
+    expect(byId.get('P::dep2')?.target).toBe('P::R1')
+    expect(byId.get('P::dep2')?.label).toBe('«refine»')
+    // The parser names `objective X;` objective_N: show only the stereotype.
+    expect(byId.get('P::Login::objective_1')?.label).toBe('«objective»')
+  })
+})

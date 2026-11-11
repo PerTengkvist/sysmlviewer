@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   diagramDoubleClickAction,
   nodeDoubleClickAction,
+  relatedDetailsAction,
 } from './nodeDoubleClick'
 
 describe('nodeDoubleClickAction', () => {
@@ -35,5 +36,15 @@ describe('diagramDoubleClickAction', () => {
 
   it('opens the element dialog for interface usages', () => {
     expect(diagramDoubleClickAction('interface')).toBe('element-dialog')
+  })
+})
+
+describe('relatedDetailsAction', () => {
+  it('opens use cases in the use case dialog and everything else in the element dialog', () => {
+    expect(relatedDetailsAction('useCase')).toBe('use-case-flow')
+    expect(relatedDetailsAction('requirement')).toBe('element-dialog')
+    expect(relatedDetailsAction('actor')).toBe('element-dialog')
+    expect(relatedDetailsAction('dependency')).toBe('element-dialog')
+    expect(relatedDetailsAction(undefined)).toBe('element-dialog')
   })
 })

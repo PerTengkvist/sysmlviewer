@@ -25,6 +25,11 @@ export type RequirementNodeData = {
   formatStyle?: ElementStyle | null
   viewMode?: ViewMode
   anchors?: BoundaryAnchor[]
+  /**
+   * Use case diagrams own one anchor per relation: draw exactly `anchors`,
+   * without the four default side anchors.
+   */
+  exactAnchors?: boolean
   editLocked?: boolean
   portMoveMode?: boolean
   onAnchorDrag?: (
@@ -40,7 +45,11 @@ function RequirementNodeInner({ id, data, selected, width, height }: NodeProps) 
   const d = data as unknown as RequirementNodeData
   const rootRef = useRef<HTMLDivElement>(null)
   const updateNodeInternals = useUpdateNodeInternals()
-  const anchors = resolveAnchors(d.anchors)
+  const anchors = d.exactAnchors
+    ? Array.isArray(d.anchors)
+      ? d.anchors
+      : []
+    : resolveAnchors(d.anchors)
   const anchorSig = anchors.map((a) => `${a.id}:${a.side}:${a.offset}`).join('|')
   const stereo = requirementStereotype({ typeAttr: d.typeAttr })
   const regions = nodeInlineStyles(d.formatStyle, d.viewMode || 'light')
