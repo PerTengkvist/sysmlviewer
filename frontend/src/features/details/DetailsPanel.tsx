@@ -23,6 +23,7 @@ import {
 } from './interfaceLocate'
 import { findPortDefId } from './portLocate'
 import { nestedPortsOf } from './nestedPorts'
+import { elementDisplayName, elementRelations } from './elementRelations'
 import { sizeFieldChange } from '../diagram/partSizeLimits'
 import {
   mergeStylePatch,
@@ -78,6 +79,8 @@ type Props = {
   ) => void
   /** Reveal an artifact in the left Model tree. */
   onLocateInModelView?: (artifactId: string) => void
+  /** Open the details of the element at the far end of a relation. */
+  onOpenRelated?: (artifactId: string) => void
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -227,21 +230,16 @@ function bucketsFor(project: Project, el: SemanticElement) {
   const ports: SemanticElement[] = []
   const attributes: SemanticElement[] = []
   const subParts: SemanticElement[] = []
-  const relations: SemanticElement[] = []
-  const portIds = new Set<string>()
 
   for (const cid of el.children || []) {
     const child = project.semantic[cid]
     if (!child) continue
     if (child.kind === 'port') {
       ports.push(child)
-      portIds.add(child.id)
     } else if (child.kind === 'attribute') {
       attributes.push(child)
     } else if (child.kind === 'part') {
       subParts.push(child)
-    } else if (isRelationElement(child)) {
-      relations.push(child)
     }
   }
 
@@ -256,19 +254,7 @@ function bucketsFor(project: Project, el: SemanticElement) {
     }
   }
 
-  for (const other of Object.values(project.semantic)) {
-    if (!isRelationElement(other)) continue
-    if (relations.some((r) => r.id === other.id)) continue
-    if (
-      (other.sourceId && portIds.has(other.sourceId)) ||
-      (other.targetId && portIds.has(other.targetId)) ||
-      other.parentId === el.id
-    ) {
-      relations.push(other)
-    }
-  }
-
-  return { ports, attributes, subParts, relations }
+  return { ports, attributes, subParts }
 }
 
 function FeatureList({
@@ -339,15 +325,54 @@ function SubPartsList({ items }: { items: SemanticElement[] }) {
   )
 }
 
-function RelationsList({ items }: { items: SemanticElement[] }) {
+/**
+ * Relations of the element across the whole model, with the element at the
+ * far end: `«refine» → US-DRIVE-01 DriveToDestination`, or `←` for incoming.
+ */
+function RelationsList({
+  semantic,
+  elementId,
+  onOpenRelated,
+}: {
+  semantic: Record<string, SemanticElement>
+  elementId: string
+  onOpenRelated?: (artifactId: string) => void
+}) {
+  const items = elementRelations(semantic, elementId)
   if (!items.length) return null
+  const name = (id: string | null) =>
+    id ? elementDisplayName(semantic[id], id) : '—'
   return (
-    <div className="children">
+    <div className="children relations-list">
       <h3>Relations</h3>
       <ul>
-        {items.map((c) => (
-          <li key={c.id} className="mono">
-            {c.name}
+        {items.map((r) => (
+          <li key={r.relationId} data-direction={r.direction}>
+            <span className="relation-stereotype">«{r.label}»</span>{' '}
+            {r.direction === 'owned' ? (
+              <span>
+                {name(r.sourceId)} → {name(r.targetId)}
+              </span>
+            ) : (
+              <>
+                <span aria-label={r.direction === 'out' ? 'to' : 'from'}>
+                  {r.direction === 'out' ? '→' : '←'}
+                </span>{' '}
+                {onOpenRelated && r.otherId && semantic[r.otherId] ? (
+                  <button
+                    type="button"
+                    className="link-button"
+                    data-related-id={r.otherId}
+                    title={`Open ${name(r.otherId)}`}
+                    onClick={() => onOpenRelated(r.otherId!)}
+                  >
+                    {name(r.otherId)}
+                  </button>
+                ) : (
+                  <span>{name(r.otherId)}</span>
+                )}
+              </>
+            )}
           </li>
         ))}
       </ul>
@@ -565,6 +590,7 @@ export function DetailsPanel({
   onPositionChange,
   onSizeChange,
   onLocateInModelView,
+  onOpenRelated,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const unlocked = elementUnlocked(viewVisualization, selectedId)
@@ -1391,7 +1417,11 @@ export function DetailsPanel({
       />
       <FeatureList title="Attributes" items={buckets.attributes} />
       <SubPartsList items={buckets.subParts} />
-      <RelationsList items={buckets.relations} />
+      <RelationsList
+        semantic={project.semantic}
+        elementId={el.id}
+        onOpenRelated={onOpenRelated}
+      />
 
       {editorMode && el.kind === 'part' && (
         <div className="editor-actions">

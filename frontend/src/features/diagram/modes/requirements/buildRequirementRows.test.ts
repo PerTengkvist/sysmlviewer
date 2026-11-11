@@ -138,3 +138,68 @@ describe('buildRequirementRows', () => {
     expect(rows.length).toBeLessThanOrEqual(4)
   })
 })
+
+describe('buildRequirementRows use cases', () => {
+  const uc = (id: string): SemanticElement => ({
+    id,
+    kind: 'useCase',
+    name: id.split('::').pop()!,
+    parentId: null,
+    typeRef: null,
+    sourceId: null,
+    targetId: null,
+    children: [],
+    fileId: 'f',
+  })
+  const dep = (id: string, sourceId: string, targetId: string, keyword: string): SemanticElement => ({
+    id,
+    kind: 'dependency',
+    name: id,
+    parentId: null,
+    typeRef: null,
+    sourceId,
+    targetId,
+    children: [],
+    fileId: 'f',
+    metadataKeywords: [keyword],
+  })
+  // The table view only exposes the requirements package…
+  const tableSemantic: Record<string, SemanticElement> = {
+    'R::Power': req('R::Power', 'PowerModes', { shortId: 'REQ-1' }),
+    'R::Drive': req('R::Drive', 'DriveToDestination', { shortId: 'US-1' }),
+  }
+  // …while the use cases and their links live elsewhere in the model.
+  const model: Record<string, SemanticElement> = {
+    ...tableSemantic,
+    'UC::Start': uc('UC::Start'),
+    'UC::Accelerate': uc('UC::Accelerate'),
+    'UC::Start::objective_1': dep('UC::Start::objective_1', 'UC::Start', 'R::Power', 'objective'),
+    'UC::dep2': dep('UC::dep2', 'UC::Start', 'R::Drive', 'refine'),
+    'UC::dep3': dep('UC::dep3', 'UC::Accelerate', 'R::Drive', 'refine'),
+  }
+
+  it('lists the use cases tracing to each requirement, from the whole model', () => {
+    const rows = buildRequirementRows(
+      tableSemantic,
+      'flat',
+      DEFAULT_REQUIREMENT_DISPLAY,
+      model,
+    )
+    const byId = new Map(rows.map((r) => [r.id, r]))
+    expect(byId.get('R::Power')?.useCases).toEqual(['Start'])
+    expect(byId.get('R::Drive')?.useCases).toEqual(['Accelerate', 'Start'])
+  })
+
+  it('a use case refining a requirement does not become its parent row', () => {
+    const rows = buildRequirementRows(
+      tableSemantic,
+      'hierarchical',
+      DEFAULT_REQUIREMENT_DISPLAY,
+      model,
+    )
+    expect(rows.map((r) => [r.id, r.depth])).toEqual([
+      ['R::Power', 0],
+      ['R::Drive', 0],
+    ])
+  })
+})

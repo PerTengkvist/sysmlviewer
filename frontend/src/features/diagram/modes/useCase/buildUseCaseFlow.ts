@@ -1,12 +1,26 @@
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { SemanticElement } from '../../../../api'
+import {
+  elementDisplayName,
+  useCaseRequirementLinks,
+} from '../../../details/elementRelations'
+
+export type UseCaseRequirement = {
+  id: string
+  /** objective, refine, derive, satisfy or requirement (declared inside). */
+  label: string
+  /** `REQ-PERF-06 PowerModes` */
+  name: string
+}
 
 export type UseCaseFlowParams = {
   title: string
   actors: string[]
   subjects: string[]
   objective: string
+  /** Requirements this use case traces to, from the whole model. */
+  requirements: UseCaseRequirement[]
 }
 
 export type UseCaseFlowGraph = {
@@ -63,22 +77,29 @@ export function buildUseCaseFlow(
         e.kind === 'part' && (e.metadataKeywords || []).includes('subject'),
     )
     .map((e) => e.name)
+  const requirements: UseCaseRequirement[] = uc
+    ? useCaseRequirementLinks(semantic, useCaseId).map((link) => ({
+        id: link.requirementId,
+        label: link.label,
+        name: elementDisplayName(semantic[link.requirementId], link.requirementId),
+      }))
+    : []
+  // The requirements named by `objective X;`, else the use case text (the
+  // parser folds `objective { doc }` into the use case documentation).
   const objective =
+    requirements
+      .filter((r) => r.label === 'objective')
+      .map((r) => r.name)
+      .join(', ') ||
     uc?.documentation ||
-    kids
-      .filter(
-        (e) =>
-          e.kind === 'dependency' &&
-          (e.metadataKeywords || []).includes('objective'),
-      )
-      .map((e) => e.name)
-      .join(', ')
+    ''
 
   const params: UseCaseFlowParams = {
     title: uc?.name || useCaseId,
     actors,
     subjects,
     objective,
+    requirements,
   }
 
   const actions = kids.filter((e) => e.kind === 'action')

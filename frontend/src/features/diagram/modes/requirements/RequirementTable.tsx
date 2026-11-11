@@ -21,6 +21,7 @@ export function RequirementTable({ rows, selectedIds, onSelect, onRowDoubleClick
             <th>Text</th>
             <th>Derived from</th>
             <th>Satisfied by</th>
+            <th>Use cases</th>
             <th>File</th>
           </tr>
         </thead>
@@ -44,6 +45,7 @@ export function RequirementTable({ rows, selectedIds, onSelect, onRowDoubleClick
               <td>{row.text}</td>
               <td className="mono">{row.derivedFrom.join(', ')}</td>
               <td className="mono">{row.satisfiedBy.join(', ')}</td>
+              <td>{row.useCases.join(', ')}</td>
               <td className="mono">{row.fileId}</td>
             </tr>
           ))}

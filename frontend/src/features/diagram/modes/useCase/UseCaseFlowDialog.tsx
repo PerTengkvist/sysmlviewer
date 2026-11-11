@@ -8,6 +8,7 @@ import {
 import type { SemanticElement } from '../../../../api'
 import { buildUseCaseFlow } from './buildUseCaseFlow'
 import { ActionNode } from '../actionFlow/ActionNode'
+import { UseCaseFlowParamsPanel } from './UseCaseFlowParamsPanel'
 
 const nodeTypes = { action: ActionNode }
 
@@ -16,6 +17,8 @@ type Props = {
   semantic: Record<string, SemanticElement>
   onClose: () => void
   onOpenAction?: (actionId: string) => void
+  /** Open the details of a traced requirement. */
+  onOpenElement?: (artifactId: string) => void
 }
 
 export function UseCaseFlowDialog({
@@ -23,6 +26,7 @@ export function UseCaseFlowDialog({
   semantic,
   onClose,
   onOpenAction,
+  onOpenElement,
 }: Props) {
   const flow = useMemo(
     () => buildUseCaseFlow(useCaseId, semantic),
@@ -44,33 +48,13 @@ export function UseCaseFlowDialog({
           </button>
         </header>
         <div className="usecase-flow-body">
-          <aside className="usecase-flow-params">
-            <h3>Parameters</h3>
-            <dl>
-              <dt>Title</dt>
-              <dd>{flow.params.title}</dd>
-              <dt>Actor</dt>
-              <dd>{flow.params.actors.join(', ') || '—'}</dd>
-              <dt>Subject</dt>
-              <dd>{flow.params.subjects.join(', ') || '—'}</dd>
-              <dt>Objective</dt>
-              <dd>{flow.params.objective || '—'}</dd>
-            </dl>
-            {flow.actionLinks.length > 0 && onOpenAction ? (
-              <div className="usecase-flow-action-links">
-                <h3>Actions</h3>
-                <ul>
-                  {flow.actionLinks.map((id) => (
-                    <li key={id}>
-                      <button type="button" onClick={() => onOpenAction(id)}>
-                        Open {semantic[id]?.name || id}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </aside>
+          <UseCaseFlowParamsPanel
+            params={flow.params}
+            actionLinks={flow.actionLinks}
+            semantic={semantic}
+            onOpenAction={onOpenAction}
+            onOpenElement={onOpenElement}
+          />
           <div className="usecase-flow-canvas">
             <ReactFlow
               nodes={flow.nodes}

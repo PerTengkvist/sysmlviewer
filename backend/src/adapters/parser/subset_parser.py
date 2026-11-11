@@ -54,6 +54,42 @@ class _ImportDecl:
     line: int
 
 
+def _resolve_expose_ref(
+    ref: str,
+    scope: str | None,
+    elements: dict[str, SemanticElement],
+    *,
+    allow_leaf: bool = True,
+    prefer_file: str | None = None,
+) -> str | None:
+    """Find the element an `expose ref;` names, seen from the view's package.
+
+    Tries the ref as written, then relative to each enclosing package, then
+    (if allowed) any non-view element with the same last name segment.
+    """
+    if ref in elements:
+        return ref
+    walk = scope
+    while walk:
+        candidate = f"{walk}::{ref}"
+        if candidate in elements:
+            return candidate
+        el = elements.get(walk)
+        walk = el.parent_id if el else None
+    if not allow_leaf:
+        return None
+    leaf = ref.split("::")[-1]
+    matches = [
+        e
+        for e in elements.values()
+        if e.name == leaf and e.kind != ArtifactKind.VIEW
+    ]
+    # A same-name element in the view's own file wins, as in a one-file parse.
+    same_file = [e for e in matches if prefer_file and e.file_id == prefer_file]
+    best = same_file or matches
+    return best[0].id if best else None
+
+
 @dataclass
 class _ParserState:
     elements: dict[str, SemanticElement] = field(default_factory=dict)
@@ -71,6 +107,11 @@ class _ParserState:
     imports: list[_ImportDecl] = field(default_factory=list)
     # When True, skip inheritance/type-warn (deferred to project link pass)
     defer_link: bool = False
+    # Exposes not found in this file: (view id, placeholder id, ref, scope),
+    # resolved against every file in parse_project.
+    pending_exposes: list[tuple[str, str, str, str | None]] = field(
+        default_factory=list
+    )
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -141,6 +182,7 @@ class SubsetSysmlParser:
 
         merged: dict[str, SemanticElement] = {}
         all_imports: list[_ImportDecl] = []
+        pending_exposes: list[tuple[str, str, str, str | None]] = []
         file_warnings: dict[str, list[str]] = {}
         warnings: list[str] = []
 
@@ -152,8 +194,11 @@ class SubsetSysmlParser:
             file_warnings[sysml_file.id] = list(state.warnings)
             warnings.extend(state.warnings)
             all_imports.extend(state.imports)
+            pending_exposes.extend(state.pending_exposes)
             for eid, element in state.elements.items():
                 merged[eid] = element
+
+        self._link_expose_refs(merged, pending_exposes)
 
         link_state = _ParserState(elements=merged, file_id="")
         link_state.imports = all_imports
@@ -181,6 +226,30 @@ class SubsetSysmlParser:
                 for imp in all_imports
             ],
         )
+
+    @staticmethod
+    def _link_expose_refs(
+        elements: dict[str, SemanticElement],
+        pending: list[tuple[str, str, str, str | None]],
+    ) -> None:
+        """Point exposes that named another file's element at that element."""
+        for view_id, placeholder, ref, scope in pending:
+            view = elements.get(view_id)
+            if view is None or placeholder in elements:
+                continue
+            resolved = _resolve_expose_ref(
+                ref, scope, elements, prefer_file=view.file_id
+            )
+            if resolved is None:
+                continue
+            refs: list[str] = []
+            for existing in view.expose_refs:
+                target = resolved if existing == placeholder else existing
+                if target not in refs:
+                    refs.append(target)
+            view.expose_refs = refs
+            if view.expose_ref == placeholder:
+                view.expose_ref = resolved
 
     def _parse_declarations(
         self, content: str, file_id: str, *, defer_link: bool
@@ -1512,34 +1581,23 @@ class SubsetSysmlParser:
                 if parent and parent in state.elements:
                     view_el = state.elements[parent]
                     if view_el.kind == ArtifactKind.VIEW:
-                        # Resolve relative to the view's enclosing package
+                        # Resolve relative to the view's enclosing package.
+                        # In a project parse the target may sit in another
+                        # file: keep a placeholder and resolve it at link time
+                        # (a same-name match in this file would be a guess).
                         scope = view_el.parent_id
-                        resolved: str | None = None
-                        if ref in state.elements:
-                            resolved = ref
-                        if resolved is None and scope:
-                            candidate = f"{scope}::{ref}"
-                            if candidate in state.elements:
-                                resolved = candidate
+                        resolved = _resolve_expose_ref(
+                            ref,
+                            scope,
+                            state.elements,
+                            allow_leaf=not state.defer_link,
+                        )
                         if resolved is None:
-                            walk = scope
-                            while walk:
-                                candidate = f"{walk}::{ref}"
-                                if candidate in state.elements:
-                                    resolved = candidate
-                                    break
-                                el = state.elements.get(walk)
-                                walk = el.parent_id if el else None
-                        if resolved is None:
-                            leaf = ref.split("::")[-1]
-                            matches = [
-                                e.id
-                                for e in state.elements.values()
-                                if e.name == leaf and e.kind != ArtifactKind.VIEW
-                            ]
-                            resolved = matches[0] if matches else (
-                                f"{scope}::{ref}" if scope else ref
-                            )
+                            resolved = f"{scope}::{ref}" if scope else ref
+                            if state.defer_link:
+                                state.pending_exposes.append(
+                                    (view_el.id, resolved, ref, scope)
+                                )
                         if resolved:
                             if resolved not in view_el.expose_refs:
                                 view_el.expose_refs.append(resolved)

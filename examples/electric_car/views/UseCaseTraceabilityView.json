@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "viewId": "UseCases::UseCaseTraceabilityView",
+  "name": "UseCaseTraceabilityView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "UseCases::Driving::StartVehicle": {
+      "x": 380,
+      "y": 40.0,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::StopVehicle": {
+      "x": 380,
+      "y": 153.5,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::ChangeGear": {
+      "x": 380,
+      "y": 266.9,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::Drive": {
+      "x": 380,
+      "y": 380.4,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::Accelerate": {
+      "x": 380,
+      "y": 493.8,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::Brake": {
+      "x": 380,
+      "y": 607.3,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::EmergencyStop": {
+      "x": 380,
+      "y": 720.7,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::TurnLeft": {
+      "x": 380,
+      "y": 834.2,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::TurnRight": {
+      "x": 380,
+      "y": 947.6,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::CleanWindshield": {
+      "x": 380,
+      "y": 1061.1,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::ToggleHeadlights": {
+      "x": 380,
+      "y": 1174.5,
+      "width": 168,
+      "height": 72
+    },
+    "UseCases::Driving::Park": {
+      "x": 380,
+      "y": 1288.0,
+      "width": 168,
+      "height": 72
+    },
+    "Requirements::PowerModes": {
+      "x": 720,
+      "y": 40,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::PropulsionModes": {
+      "x": 720,
+      "y": 190,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::Range": {
+      "x": 720,
+      "y": 340,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::Acceleration": {
+      "x": 720,
+      "y": 490,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::BrakingDistance": {
+      "x": 720,
+      "y": 640,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::DirectionalControl": {
+      "x": 720,
+      "y": 790,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::ForwardVisibility": {
+      "x": 720,
+      "y": 940,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::NightVisibility": {
+      "x": 720,
+      "y": 1090,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::LockIndication": {
+      "x": 720,
+      "y": 1240,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::DriveToDestination": {
+      "x": 24,
+      "y": 205.1,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::ControlSpeed": {
+      "x": 24,
+      "y": 583.3,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::ParkAndLeave": {
+      "x": 24,
+      "y": 733.3,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::FollowTheRoad": {
+      "x": 24,
+      "y": 923.6,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::DriveAtNight": {
+      "x": 24,
+      "y": 1150.5,
+      "width": 200,
+      "height": 120
+    }
+  },
+  "edges": {}
+}

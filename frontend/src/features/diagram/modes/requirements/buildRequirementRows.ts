@@ -8,6 +8,7 @@ import {
   requirementStereotype,
   requirementTypeAttr,
 } from '../../requirementStereotype'
+import { requirementUseCaseLinks } from '../../../details/elementRelations'
 
 export type RequirementRow = {
   id: string
@@ -17,6 +18,8 @@ export type RequirementRow = {
   text: string
   derivedFrom: string[]
   satisfiedBy: string[]
+  /** Names of the use cases tracing to this requirement (whole model). */
+  useCases: string[]
   fileId: string | null
   depth: number
   repeated: boolean
@@ -74,6 +77,7 @@ function toRow(
   parents: Map<string, string[]>,
   sat: Map<string, string[]>,
   display: RequirementDisplaySettings,
+  model: Record<string, SemanticElement>,
 ): RequirementRow {
   const typeAttr = requirementTypeAttr(el, semantic)
   return {
@@ -84,6 +88,13 @@ function toRow(
     text: resolveRequirementBody(el, semantic, display),
     derivedFrom: parents.get(el.id) || [],
     satisfiedBy: sat.get(el.id) || [],
+    useCases: [
+      ...new Set(
+        requirementUseCaseLinks(model, el.id).map(
+          (l) => model[l.useCaseId]?.name || l.useCaseId,
+        ),
+      ),
+    ],
     fileId: el.fileId,
     depth,
     repeated,
@@ -94,6 +105,11 @@ export function buildRequirementRows(
   semantic: Record<string, SemanticElement>,
   mode: RequirementTableMode,
   requirementDisplay: RequirementDisplaySettings = DEFAULT_REQUIREMENT_DISPLAY,
+  /**
+   * The whole model, for the Use cases column: a table view usually exposes
+   * only the requirements, not the use cases that trace to them.
+   */
+  modelSemantic: Record<string, SemanticElement> = semantic,
 ): RequirementRow[] {
   const reqs = Object.values(semantic)
     .filter(isRequirement)
@@ -103,7 +119,7 @@ export function buildRequirementRows(
 
   if (mode === 'flat') {
     return reqs.map((el) =>
-      toRow(el, semantic, 0, false, parents, sat, requirementDisplay),
+      toRow(el, semantic, 0, false, parents, sat, requirementDisplay, modelSemantic),
     )
   }
 
@@ -122,7 +138,16 @@ export function buildRequirementRows(
     const repeated = emitted.has(id)
     if (seenInPath.has(id)) return // cycle
     rows.push(
-      toRow(el, semantic, depth, repeated, parents, sat, requirementDisplay),
+      toRow(
+        el,
+        semantic,
+        depth,
+        repeated,
+        parents,
+        sat,
+        requirementDisplay,
+        modelSemantic,
+      ),
     )
     emitted.add(id)
     seenInPath.add(id)

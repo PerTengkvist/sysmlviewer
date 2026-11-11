@@ -1,7 +1,14 @@
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { PortSide, SemanticElement, ViewPayload } from '../../../../api'
-import type { ViewMode } from '../../../../settings'
+import type { RequirementDisplaySettings, ViewMode } from '../../../../settings'
+import {
+  DEFAULT_REQUIREMENT_DISPLAY,
+  resolveRequirementBody,
+  resolveRequirementHeader,
+} from '../../requirementDisplay'
+import { requirementTypeAttr } from '../../requirementStereotype'
+import type { RequirementNodeData } from '../requirements/RequirementNode'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { pickRelationBoundarySides } from '../../relationshipStyle'
 import { absoluteNodeOrigin } from '../structure/buildStructureGraph'
@@ -13,12 +20,33 @@ import type { BoundaryAnchor } from '../../boundaryAnchors'
 import { syncUseCaseAnchors } from './syncUseCaseAnchors'
 
 const LEFT = 24
+const PACKAGE_ONLY: ReadonlySet<string> = new Set(['package'])
+/** Requirements may nest in requirements and use cases as well as packages. */
+const REQUIREMENT_OWNERS: ReadonlySet<string> = new Set([
+  'package',
+  'requirement',
+  'useCase',
+])
 const TOP = 40
 const UC_W = 168
 const UC_H = 72
 const ACTOR_W = 88
 const ACTOR_H = 108
 const GAP = 28
+const REQ_W = 200
+const REQ_H = 120
+/** Requirements per column before the next column starts (at least). */
+const REQ_PER_COLUMN = 6
+/** Horizontal gap between the use cases and the requirement column. */
+const REQ_COLUMN_GAP = 96
+
+/** Requirement relations a use case diagram draws (traceability). */
+function traceLabel(el: SemanticElement): string | null {
+  if (el.kind === 'satisfy') return 'satisfy'
+  if (el.kind !== 'dependency') return null
+  const keyword = (el.metadataKeywords || [])[0]
+  return keyword && keyword !== 'extend' ? keyword : 'dependency'
+}
 
 /**
  * One shared coordinate on every element is the global merge placeholder,
@@ -60,28 +88,40 @@ export function buildUseCaseGraph(
   view: ViewPayload,
   viewMode: ViewMode,
   highlight: HighlightOpts = {},
+  requirementDisplay: RequirementDisplaySettings = DEFAULT_REQUIREMENT_DISPLAY,
 ): { nodes: Node[]; edges: Edge[] } {
   const selectedConnectionColor = highlight.selectedConnectionColor ?? '#2563eb'
   const selectedFactor = highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
   const elements = Object.values(semantic) as SemanticElement[]
+  // Every `expose` of the view; older payloads only carry the first.
+  const rootIds = new Set(
+    view.exposeRootIds?.length ? view.exposeRootIds : [rootId],
+  )
 
-  // Use cases directly under the exposed root, or nested in packages under it
-  // (for example UseCases::Driving and UseCases::Managing).
-  const underRoot = (e: SemanticElement): boolean => {
+  // Elements directly under an exposed root, or nested in packages under it
+  // (for example UseCases::Driving and UseCases::Managing). `through` lists
+  // the other owner kinds that may sit in between (nested requirements).
+  const underRoot = (
+    e: SemanticElement,
+    through: ReadonlySet<string> = PACKAGE_ONLY,
+  ): boolean => {
     let parentId = e.parentId
     while (parentId) {
-      if (parentId === rootId) return true
+      if (rootIds.has(parentId)) return true
       const parent = semantic[parentId]
-      if (!parent || parent.kind !== 'package') return false
+      if (!parent || !through.has(parent.kind)) return false
       parentId = parent.parentId
     }
     return false
   }
-  const useCases = elements.filter(
-    (e) => e.kind === 'useCase' && (e.id === rootId || underRoot(e)),
-  )
+  const exposed = (e: SemanticElement, through?: ReadonlySet<string>) =>
+    rootIds.has(e.id) || underRoot(e, through)
+  const useCases = elements.filter((e) => e.kind === 'useCase' && exposed(e))
+  const requirements = elements
+    .filter((e) => e.kind === 'requirement' && exposed(e, REQUIREMENT_OWNERS))
+    .sort((a, b) => (a.shortId || a.id).localeCompare(b.shortId || b.id))
   // Group by owning package: each package becomes a column of the diagram.
   const groupKeys: string[] = []
   const groupIndex = new Map<string, number>()
@@ -106,7 +146,8 @@ export function buildUseCaseGraph(
   const subject =
     elements.find(
       (e) =>
-        e.parentId === rootId &&
+        !!e.parentId &&
+        rootIds.has(e.parentId) &&
         e.kind === 'part' &&
         (e.metadataKeywords || []).includes('subject'),
     ) || null
@@ -255,6 +296,57 @@ export function buildUseCaseGraph(
     })
   })
 
+  // Requirements: a column to the right of the use cases (and subject).
+  const useCaseRight = Math.max(
+    subject ? subjectX + subjectW : 0,
+    ...nodes
+      .filter((n) => n.type === 'useCase' && !n.parentId)
+      .map((n) => n.position.x + Number(n.style?.width || UC_W)),
+    LEFT + cols * (UC_W + GAP),
+  )
+  const reqX = useCaseRight + REQ_COLUMN_GAP
+  // As many rows as the use cases take, so the columns stay level with them.
+  const reqPerColumn = Math.max(REQ_PER_COLUMN, rows)
+  requirements.forEach((req, i) => {
+    const col = Math.floor(i / reqPerColumn)
+    const row = i % reqPerColumn
+    const box = savedBox(
+      visualization.nodes[req.id],
+      {
+        x: reqX + col * (REQ_W + GAP),
+        y: TOP + row * (REQ_H + GAP),
+        width: REQ_W,
+        height: REQ_H,
+      },
+      placeholder,
+    )
+    const data: RequirementNodeData = {
+      label: req.name,
+      artifactId: req.id,
+      shortId: req.shortId,
+      headerText: resolveRequirementHeader(req, semantic, requirementDisplay),
+      bodyText: resolveRequirementBody(req, semantic, requirementDisplay),
+      documentation: req.documentation,
+      typeAttr: requirementTypeAttr(req, semantic),
+      formatStyle: visualization.nodes[req.id]?.style,
+      viewMode,
+      anchors: visualization.nodes[req.id]?.anchors || [],
+      exactAnchors: true,
+    }
+    nodes.push({
+      id: req.id,
+      type: 'requirement',
+      position: { x: box.x, y: box.y },
+      style: {
+        width: box.width,
+        height: box.height,
+        background: 'transparent',
+        border: 'none',
+      },
+      data,
+    })
+  })
+
   const idSet = new Set(nodes.map((n) => n.id))
   const byId = new Map(nodes.map((n) => [n.id, n]))
   const edges: Edge[] = []
@@ -307,7 +399,7 @@ export function buildUseCaseGraph(
   const pushRelation = (
     el: SemanticElement,
     label: string,
-    kind: 'include' | 'dependency',
+    kind: 'include' | 'dependency' | 'satisfy',
   ) => {
     if (!el.sourceId || !el.targetId) return
     if (!idSet.has(el.sourceId) || !idSet.has(el.targetId)) return
@@ -353,10 +445,18 @@ export function buildUseCaseGraph(
 
   for (const inc of includes) pushRelation(inc, '«include»', 'include')
   for (const ext of extends_) pushRelation(ext, '«extend»', 'dependency')
+  // Traceability: objective / refine / derive / satisfy … to a requirement.
+  const requirementIds = new Set(requirements.map((r) => r.id))
+  for (const rel of elements) {
+    const label = traceLabel(rel)
+    if (!label || !rel.sourceId || !rel.targetId) continue
+    if (!requirementIds.has(rel.sourceId) && !requirementIds.has(rel.targetId)) continue
+    pushRelation(rel, `«${label}»`, rel.kind === 'satisfy' ? 'satisfy' : 'dependency')
+  }
 
   const savedAnchors: Record<string, BoundaryAnchor[] | null | undefined> = {}
   for (const n of nodes) {
-    if (n.type !== 'useCase' && n.type !== 'actor') continue
+    if (n.type !== 'useCase' && n.type !== 'actor' && n.type !== 'requirement') continue
     savedAnchors[n.id] = visualization.nodes[n.id]?.anchors
   }
   const synced = syncUseCaseAnchors(nodes, edges, { savedAnchors })

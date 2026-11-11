@@ -300,6 +300,11 @@ export interface LayoutRuleRow {
 
 export interface ViewPayload {
   view: ViewDef
+  /**
+   * Every `expose` root of the view (inherited from its `view def` when it
+   * has none). `view.rootArtifactId` is the first of them.
+   */
+  exposeRootIds?: string[]
   diagramMode?: DiagramMode
   hierarchicalLevels?: number
   /** Per-view override; null/undefined means inherit global Settings. */
