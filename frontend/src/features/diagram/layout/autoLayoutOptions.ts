@@ -6,6 +6,7 @@ import type { LayerDirection, PortSide } from '../../../api'
 import type { PlacementPipelineId } from './placementPipelines'
 import type { LayoutConstraints } from './layoutConstraints'
 import { chooseSideAmong } from './portSideChoice'
+import type { LayoutEdgeKinds } from './layoutEdgeKinds'
 
 /**
  * Port placement mode. It is a hard contract that every placement pipeline
@@ -329,6 +330,8 @@ export type AutoLayoutDirectives = {
   hierarchic?: HierarchicOptions
   /** Layout Rules / layered layout as hard constraints (hierarchic pipeline). */
   constraints?: LayoutConstraints
+  /** Which edges decide placement; saved per view. */
+  edgeKinds?: LayoutEdgeKinds
 }
 
 export const DEFAULT_AUTO_LAYOUT_DIRECTIVES: AutoLayoutDirectives = {

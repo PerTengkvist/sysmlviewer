@@ -16,6 +16,7 @@ import {
 } from './nestBottomUp'
 import { sizePartForPorts } from './structureAutoLayout'
 import { packAroundCore } from './clusteredPack'
+import { isLayoutNode } from './layoutNodes'
 
 const MIN_W = 140
 const MIN_H = 72
@@ -38,7 +39,7 @@ function isBoundary(node: Node): boolean {
 }
 
 function isPartNode(node: Node): boolean {
-  return !node.type || node.type === 'part'
+  return isLayoutNode(node)
 }
 
 function portsOf(node: Node): PartPort[] {
@@ -521,6 +522,45 @@ export function layoutBalancedBottomUp(
         y: parentPrev?.y ?? parentNode.position.y,
         width: Math.max(placed.parentWidth, portSized.width),
         height: Math.max(placed.parentHeight, portSized.height),
+      }
+    }
+  }
+
+  // No enclosing part (a package or requirement diagram): the top level is a
+  // scope of its own, arranged the same way and kept where it was on screen.
+  if (!boundaryId) {
+    const topIds = nodes
+      .filter((n) => isPartNode(n) && !isBoundary(n) && !n.parentId)
+      .map((n) => n.id)
+    if (topIds.length >= 2) {
+      const boxes: BalancedBox[] = topIds.map((id) => {
+        const prev = nodePatch[id]
+        const base = readSize(byId.get(id)!)
+        return {
+          id,
+          w: prev?.width && prev.width > 0 ? prev.width : base.width,
+          h: prev?.height && prev.height > 0 ? prev.height : base.height,
+        }
+      })
+      const topSet = new Set(topIds)
+      const placed = placeBalancedSiblings(
+        boxes,
+        edges.filter((e) => topSet.has(e.source) && topSet.has(e.target)),
+        { gapFraction, aspectRatio, variant },
+      )
+      strategies[''] = placed.strategy
+      const originX = Math.min(...topIds.map((id) => byId.get(id)!.position.x))
+      const originY = Math.min(...topIds.map((id) => byId.get(id)!.position.y))
+      for (const id of topIds) {
+        const c = placed.children[id]
+        if (!c) continue
+        nodePatch[id] = {
+          artifactId: id,
+          x: originX + c.x,
+          y: originY + c.y,
+          width: c.width,
+          height: c.height,
+        }
       }
     }
   }

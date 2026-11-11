@@ -142,6 +142,11 @@ import {
   type AutoLayoutDirectives,
 } from './layout/autoLayoutOptions'
 import { asAngularForLayout } from './layout/elkStructureLayout'
+import {
+  layoutEdgesFor,
+  resolveLayoutEdgeKinds,
+  type LayoutEdgeKinds,
+} from './layout/layoutEdgeKinds'
 import { buildLayoutConstraints } from './layout/layoutConstraints'
 import { normalizeLayeredLayout, rootScope } from './layeredLayoutConfig'
 import { planStructureRoutes } from './layout/layoutRouter'
@@ -157,6 +162,18 @@ import {
   waitFrames,
   writeImageBlobToClipboard,
 } from './copyDiagramImage'
+
+function sameEdgeKinds(
+  a: LayoutEdgeKinds,
+  b: LayoutEdgeKinds | null | undefined,
+): boolean {
+  return (
+    !!b &&
+    a.connections === b.connections &&
+    a.bindings === b.bindings &&
+    a.relations === b.relations
+  )
+}
 
 /** All custom types registered together — React Flow caches nodeTypes on mount. */
 const allNodeTypes: NodeTypes = {
@@ -547,6 +564,8 @@ type Props = {
   onDiagramReady?: () => void
   onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
   onLayeredLayoutChange?: (layered: LayeredLayoutConfig | null) => void
+  /** Save the AutoLayout "Place by" choice with the view. */
+  onAutoLayoutEdgeKindsChange?: (kinds: LayoutEdgeKinds) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
   onPortsMoved?: (
@@ -604,6 +623,7 @@ export function DiagramCanvas({
   onNodesMoved,
   onLayoutRulesChange,
   onLayeredLayoutChange,
+  onAutoLayoutEdgeKindsChange,
   onPortMoved,
   onPortsMoved,
   onRelationEndMoved,
@@ -635,6 +655,8 @@ export function DiagramCanvas({
   const [autoLayoutBusy, setAutoLayoutBusy] = useState(false)
   const [autoLayoutDirectives, setAutoLayoutDirectives] =
     useState<AutoLayoutDirectives>(DEFAULT_AUTO_LAYOUT_DIRECTIVES)
+  const onAutoLayoutEdgeKindsChangeRef = useRef(onAutoLayoutEdgeKindsChange)
+  onAutoLayoutEdgeKindsChangeRef.current = onAutoLayoutEdgeKindsChange
   const [routeNotice, setRouteNotice] = useState<string | null>(null)
   const pendingCopyRef = useRef(false)
   const sheetHostRef = useRef<HTMLDivElement>(null)
@@ -648,6 +670,21 @@ export function DiagramCanvas({
   const vizHistoryRef = useRef(new VizHistory())
   const showJumpersRef = useRef(showJumpers)
   const includeBindingsRef = useRef(includeBindingsInRouting)
+  // Dialog start values: the view's saved "Place by" choice, else a default
+  // from the diagram's edges. Recomputed when the dialog opens, then stable so
+  // the dialog keeps the user's edits while open.
+  const autoLayoutDialogInitial = useMemo<AutoLayoutDirectives>(
+    () => ({
+      ...autoLayoutDirectives,
+      edgeKinds: resolveLayoutEdgeKinds(
+        view?.autoLayoutEdgeKinds,
+        edgesRef.current,
+        includeBindingsInRouting,
+      ),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- edges read on open
+    [autoLayoutOpen, autoLayoutDirectives, view?.autoLayoutEdgeKinds, includeBindingsInRouting],
+  )
   /** Viewport per view, kept in memory for the session only. */
   const viewportCache = useRef(new Map<string, { x: number; y: number; zoom: number }>())
   viewRef.current = view
@@ -2277,9 +2314,19 @@ export function DiagramCanvas({
             ),
           }
         : input
-    const structureEdges = asAngularForLayout(edges, {
-      includeBindings: includeBindingsRef.current,
-    })
+    const edgeKinds =
+      directives.edgeKinds ??
+      resolveLayoutEdgeKinds(
+        view?.autoLayoutEdgeKinds,
+        edges,
+        includeBindingsRef.current,
+      )
+    // Connections / bindings are routed as before; the "Place by" choice
+    // decides which edges (relations included) pull nodes together.
+    const { routed: structureEdges, placement: placementEdges } =
+      layoutEdgesFor(edges, edgeKinds, {
+        routeBindings: includeBindingsRef.current,
+      })
     const existing = structureEdges.map((edge) => {
       const data = (edge.data || {}) as SysmlEdgeData
       return { id: edge.id, waypoints: data.waypoints || [] }
@@ -2289,12 +2336,16 @@ export function DiagramCanvas({
       layoutNodes: true,
       nodes,
       edges: structureEdges,
+      placementEdges,
       existingRoutes: existing,
       separation: connectionSeparation,
       computeJumpers: showJumpersRef.current,
       directives,
     })
     if (!Object.keys(planned.nodes).length && !planned.routes.length) return
+    if (!sameEdgeKinds(edgeKinds, view?.autoLayoutEdgeKinds)) {
+      onAutoLayoutEdgeKindsChangeRef.current?.(edgeKinds)
+    }
 
     const layoutNodes = planned.nodes
     const nextNodes = Object.keys(layoutNodes).length
@@ -2393,13 +2444,26 @@ export function DiagramCanvas({
     setEdges(nextEdges)
     onNodesMovedRef.current(layoutNodes, edgePatch)
     setLayoutEpoch((n) => n + 1)
-    // Remember the choice without the per-run constraints snapshot.
-    setAutoLayoutDirectives({ ...directives, constraints: undefined })
+    // Remember the choice without the per-run constraints snapshot; the
+    // edge kinds belong to the view and come from it next time.
+    setAutoLayoutDirectives({
+      ...directives,
+      constraints: undefined,
+      edgeKinds: undefined,
+    })
     setAutoLayoutOpen(false)
     } finally {
       setAutoLayoutBusy(false)
     }
-  }, [nodes, edges, connectionSeparation, constraintsFor, view?.layoutRules, view?.layeredLayout])
+  }, [
+    nodes,
+    edges,
+    connectionSeparation,
+    constraintsFor,
+    view?.layoutRules,
+    view?.layeredLayout,
+    view?.autoLayoutEdgeKinds,
+  ])
 
   // Hide jumpers immediately when the setting turns off (keep waypoints).
   useEffect(() => {
@@ -3130,7 +3194,7 @@ export function DiagramCanvas({
       </div>
       <AutoLayoutDialog
         open={autoLayoutOpen}
-        initial={autoLayoutDirectives}
+        initial={autoLayoutDialogInitial}
         busy={autoLayoutBusy}
         onCancel={() => {
           if (!autoLayoutBusy) setAutoLayoutOpen(false)

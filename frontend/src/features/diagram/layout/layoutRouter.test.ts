@@ -184,3 +184,38 @@ describe('planStructureRoutes', () => {
     expect(elk).not.toHaveBeenCalled()
   })
 })
+
+describe('planStructureRoutes placement edges', () => {
+  it('passes placement-only edges to placement and routes only the routed edges', async () => {
+    const elk = vi.fn(async (_args: { edges: Edge[]; placementEdges?: Edge[] }) => ({
+      nodes: {},
+      edges: {},
+      routes: [],
+    }))
+    const nodes = [part('a'), part('b')]
+    const routed: Edge[] = [
+      {
+        id: 'c1',
+        source: 'a',
+        target: 'b',
+        sourceHandle: 'a::out',
+        targetHandle: 'target:b::in',
+        data: { routing: 'angular', waypoints: [] },
+      },
+    ]
+    const placement: Edge[] = [
+      { id: 'd1', source: 'a', target: 'b', sourceHandle: null, targetHandle: null },
+    ]
+    await planStructureRoutes({
+      mode: 'full',
+      layoutNodes: true,
+      nodes,
+      edges: routed,
+      placementEdges: placement,
+      deps: { runElk: elk, runOwn: vi.fn(() => []) },
+    })
+    const args = elk.mock.calls[0]![0]
+    expect(args.edges.map((e) => e.id)).toEqual(['c1'])
+    expect(args.placementEdges?.map((e) => e.id)).toEqual(['d1'])
+  })
+})

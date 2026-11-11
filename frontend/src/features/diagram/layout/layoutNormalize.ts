@@ -6,6 +6,7 @@
 import type { Node } from '@xyflow/react'
 import type { VisualizationNode } from '../../../api'
 import type { PartNodeData } from '../PartNode'
+import { isLayoutNode } from './layoutNodes'
 
 /** Preferred max coordinate for AutoLayout content (inclusive span from origin). */
 export const AUTO_LAYOUT_CANVAS_MAX = 3000
@@ -15,7 +16,7 @@ function isBoundary(node: Node): boolean {
 }
 
 function isPartNode(node: Node): boolean {
-  return !node.type || node.type === 'part'
+  return isLayoutNode(node)
 }
 
 function readSize(

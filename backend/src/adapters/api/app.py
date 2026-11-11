@@ -68,6 +68,8 @@ class VisualizationPatch(BaseModel):
     layoutRules: list[dict[str, Any]] | None = None
     # Present replaces the config (null clears); omit to leave unchanged.
     layeredLayout: dict[str, Any] | None = None
+    # AutoLayout dialog edge kinds {connections, bindings, relations}; null clears.
+    autoLayoutEdgeKinds: dict[str, Any] | None = None
 
 
 class ViewSnapshotBody(BaseModel):

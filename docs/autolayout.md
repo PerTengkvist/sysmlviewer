@@ -79,6 +79,29 @@ What is added around ELK:
   - when layered layout is enabled the top-level parts are snapped into
     exact bands (`layerBands.ts`).
 
+## Place by: connections, bindings, relations
+
+The *Place by* checkboxes decide which edges pull nodes together
+(`layoutEdgeKinds.ts`):
+
+- **Connections** and **Bindings**: port-to-port links, as before.
+- **Relations**: dependencies (refine, derive, objective, …), satisfy,
+  include, allocation and specialization. They are drawn node to node, so
+  they reach placement as edges without handles; every pipeline treats them as
+  plain node links.
+
+Placement and routing are separate. Connections and bindings are routed
+again whichever boxes are ticked; relations are never routed (they keep their
+own drawing). Requirements, use cases and actors are placed like parts
+(`layoutNodes.ts`). In a diagram without an enclosing part (a package or
+requirement diagram), favour-grid and clustered arrange the top level too.
+
+The choice is saved per view (`autoLayoutEdgeKinds` in `views/<View>.json`).
+A view without one starts with Connections, Bindings as the *include bindings
+in routing* setting says, and Relations when the diagram has no connections.
+For a traceability diagram, *Advanced → hierarchic* with Relations gives
+layers: user stories, requirements, then the requirements they refine.
+
 ## Port placement modes
 
 The *Port placement* mode in the AutoLayout dialog is a hard contract that
