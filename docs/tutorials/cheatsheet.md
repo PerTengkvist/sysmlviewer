@@ -100,6 +100,20 @@ view carParts : PartsOnly {
 `view def X : GeneralView { expose … }` still opens as a diagram when no usage
 refers to it, with a warning.
 
+A view can have several `expose` statements; the diagram shows all of them.
+An `expose` may name an element in another file. The first `expose` decides
+the diagram type for a GeneralView (part or not). Wildcards (`::*`, `::**`)
+are read as the element itself.
+
+```sysml
+view UseCaseTraceabilityView : UseCaseView {
+  expose Driving;
+  expose Requirements::PowerModes;
+  expose Requirements::DriveToDestination;
+  filter @UseCaseUsage or @RequirementUsage or @Dependency;
+}
+```
+
 ## Connections
 
 ```sysml
@@ -142,6 +156,25 @@ use case def Drive {
   include use case Accelerate;
 }
 ```
+
+### Requirement traceability
+
+A use case traces to requirements with `objective`, `#refine dependency`,
+`#derive dependency` or `satisfy`:
+
+```sysml
+#refine dependency from StartVehicle to Requirements::DriveToDestination;
+```
+
+- Double-click a use case: the dialog lists its requirements under
+  **Requirements**; click one to open it.
+- The **Relations** list in Details shows incoming and outgoing relations
+  with the element at the other end, so a requirement shows the use cases
+  that trace to it.
+- A UseCaseView draws the requirements it exposes, with «objective»,
+  «refine» and «satisfy» edges. A GeneralView draws them too.
+- The requirement table (GridView) has a **Use cases** column, taken from the
+  whole model, so the use cases need not be exposed.
 
 ## Sequences
 

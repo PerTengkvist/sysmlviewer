@@ -34,6 +34,7 @@ import type {
   LayeredLayoutConfig,
   PortSide,
   RoutingType,
+  SemanticElement,
   ViewPayload,
   ViewSnapshot,
   VisualizationEdge,
@@ -505,6 +506,8 @@ type Props = {
   structureNotation?: import('../../settings').StructureNotation
   nestedPortReveal?: import('../../settings').NestedPortReveal
   requirementDisplay?: import('../../settings').RequirementDisplaySettings
+  /** Whole-model semantic, for traceability the view does not expose. */
+  modelSemantic?: Record<string, SemanticElement>
   sheet?: ProjectSheet
   selectedConnectionColor?: string
   selectedConnectionLinewidthFactor?: number
@@ -586,6 +589,7 @@ export function DiagramCanvas({
   structureNotation = 'sysmlv2',
   nestedPortReveal = 'hover',
   requirementDisplay,
+  modelSemantic,
   sheet,
   selectedConnectionColor = '#2563eb',
   selectedConnectionLinewidthFactor = 3,
@@ -986,10 +990,15 @@ export function DiagramCanvas({
         })
         break
       case 'useCase':
-        built = buildUseCaseGraph(filteredView, renderViewMode, {
-          selectedConnectionColor,
-          selectedConnectionLinewidthFactor,
-        })
+        built = buildUseCaseGraph(
+          filteredView,
+          renderViewMode,
+          {
+            selectedConnectionColor,
+            selectedConnectionLinewidthFactor,
+          },
+          requirementDisplay,
+        )
         break
       case 'requirementTable':
         built = { nodes: [], edges: [] }
@@ -1992,9 +2001,12 @@ export function DiagramCanvas({
       const node = nodesRef.current.find((n) => n.id === nodeId)
       const raw =
         (node?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors || []
-      // Use-case / actor diagrams own exact relation anchors — do not inject defaults.
+      // Use-case / actor diagrams own exact relation anchors — do not inject
+      // defaults (requirements on a use case diagram flag `exactAnchors`).
       const base =
-        node?.type === 'useCase' || node?.type === 'actor'
+        node?.type === 'useCase' ||
+        node?.type === 'actor' ||
+        (node?.data as { exactAnchors?: boolean } | undefined)?.exactAnchors
           ? raw
           : resolveAnchors(raw)
       const anchors = base.map((a) =>
@@ -2574,6 +2586,7 @@ export function DiagramCanvas({
       filteredReq.semantic,
       reqTableMode,
       requirementDisplay,
+      modelSemantic ?? view.semantic,
     )
     return (
       <div className="diagram-canvas requirement-table-canvas">

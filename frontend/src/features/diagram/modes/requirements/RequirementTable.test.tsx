@@ -12,6 +12,7 @@ function row(partial: Partial<RequirementRow> & Pick<RequirementRow, 'id'>): Req
     text: '',
     derivedFrom: [],
     satisfiedBy: [],
+    useCases: [],
     fileId: 'f',
     depth: 0,
     repeated: false,
@@ -45,5 +46,11 @@ describe('RequirementTable', () => {
     const html = render([row({ id: 'P::R1', name: 'Safety', depth: 1, repeated: true })])
     expect(html).toContain('padding-left:24px')
     expect(html).toContain('↺ Safety')
+  })
+
+  it('has a Use cases column naming the traced use cases', () => {
+    const html = render([row({ id: 'P::R1', useCases: ['StartVehicle', 'Accelerate'] })])
+    expect(html).toContain('<th>Use cases</th>')
+    expect(html).toContain('StartVehicle, Accelerate')
   })
 })

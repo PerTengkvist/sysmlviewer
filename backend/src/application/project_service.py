@@ -2029,6 +2029,9 @@ class ProjectService:
 
         result: dict = {
             "view": view.to_dict(),
+            # Every `expose` of the view (inherited from its `view def` when
+            # it has none), so modes can place content from all of them.
+            "exposeRootIds": [r.id for r in expose_roots],
             "diagramMode": diagram_mode,
             "hierarchicalLevels": effective_levels,
             "hierarchicalLevelsOverride": levels_override,

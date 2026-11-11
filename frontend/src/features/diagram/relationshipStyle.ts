@@ -73,7 +73,8 @@ export function usesPortHandles(
   return false
 }
 
-const AUTO_DEP_NAME = /^dep\d+$/
+/** Names the parser generates: `dep3` for dependencies, `objective_2` for `objective X;`. */
+const AUTO_DEP_NAME = /^(dep|objective_)\d+$/
 
 /** Edge label: `«Mount»` (+ optional user name) when metadata keywords present. */
 export function relationEdgeLabel(el: {

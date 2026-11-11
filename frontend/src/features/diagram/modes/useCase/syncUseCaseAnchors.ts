@@ -40,7 +40,20 @@ type EdgeData = {
 function isRelationEdge(edge: Edge): boolean {
   if (edge.id.startsWith('use:')) return true
   const data = (edge.data || {}) as EdgeData
-  return data.relationKind === 'include' || data.relationKind === 'dependency'
+  return (
+    data.relationKind === 'include' ||
+    data.relationKind === 'dependency' ||
+    data.relationKind === 'satisfy'
+  )
+}
+
+/** Nodes whose relation ends sit on their own boundary anchors. */
+function isAnchoredEnd(node: Node): boolean {
+  return node.type === 'useCase' || node.type === 'requirement'
+}
+
+function ownsAnchors(node: Node): boolean {
+  return isAnchoredEnd(node) || node.type === 'actor'
 }
 
 function relAnchorId(edgeId: string): string {
@@ -114,12 +127,10 @@ export function syncUseCaseAnchors(
       })
     }
 
-    if (src.type === 'useCase' || src.type === 'actor') {
-      if (src.type === 'useCase' || edge.id.startsWith('use:')) {
-        pushEnd(src, srcHit)
-      }
+    if (isAnchoredEnd(src) || (src.type === 'actor' && edge.id.startsWith('use:'))) {
+      pushEnd(src, srcHit)
     }
-    if (tgt.type === 'useCase') {
+    if (isAnchoredEnd(tgt)) {
       pushEnd(tgt, tgtHit)
     }
   }
@@ -136,13 +147,13 @@ export function syncUseCaseAnchors(
   }
 
   for (const node of nodes) {
-    if (node.type !== 'useCase' && node.type !== 'actor') continue
+    if (!ownsAnchors(node)) continue
     if (!anchorsByNode.has(node.id)) anchorsByNode.set(node.id, [])
   }
 
   const nodePatch: Record<string, Partial<VisualizationNode>> = {}
   const nextNodes = nodes.map((node) => {
-    if (node.type !== 'useCase' && node.type !== 'actor') return node
+    if (!ownsAnchors(node)) return node
     const anchors = anchorsByNode.get(node.id) || []
     nodePatch[node.id] = { artifactId: node.id, anchors }
     return {
@@ -169,8 +180,8 @@ export function syncUseCaseAnchors(
     const tgtAnchors =
       (tgt?.data as { anchors?: BoundaryAnchor[] } | undefined)?.anchors || []
 
-    if (src && (src.type === 'useCase' || src.type === 'actor')) {
-      if (src.type === 'useCase' || edge.id.startsWith('use:')) {
+    if (src && (isAnchoredEnd(src) || src.type === 'actor')) {
+      if (isAnchoredEnd(src) || edge.id.startsWith('use:')) {
         const a = srcAnchors.find((x) => x.id === anchorId)
         if (a) {
           sourceHandle = a.id
@@ -181,7 +192,7 @@ export function syncUseCaseAnchors(
       }
     }
 
-    if (tgt?.type === 'useCase') {
+    if (tgt && isAnchoredEnd(tgt)) {
       const a = tgtAnchors.find((x) => x.id === anchorId)
       if (a) {
         targetHandle = `target:${a.id}`
