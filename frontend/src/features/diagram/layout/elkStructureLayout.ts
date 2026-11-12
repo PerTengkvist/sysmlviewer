@@ -64,6 +64,7 @@ import {
   separateUnrelatedRoutes,
 } from './connectionSeparation'
 import { isLayoutNode } from './layoutNodes'
+import { normalizeLayoutBoundary } from './layoutBoundary'
 
 export type ElkEdgeLike = {
   id: string
@@ -208,20 +209,26 @@ function readSize(n: Node): { width: number; height: number } {
   return { width: Number(w) || MIN_W, height: Number(h) || MIN_H }
 }
 
-/** Normalize child coords to PAD and grow the whitebox so content stays inside. */
-function fitBoundaryAroundChildren(
+/**
+ * Normalize the frame's direct children to PAD and size the whitebox around
+ * them. Only direct children share the frame's coordinates: grandchildren are
+ * relative to their own parent, and nodes outside the frame are not in it.
+ */
+export function fitBoundaryAroundChildren(
   boundaryId: string,
   boundary: Node | undefined,
   nodePatch: Record<string, Partial<VisualizationNode>>,
   sizeMap: Map<string, { width: number; height: number }>,
   posMap: Map<string, { x: number; y: number }>,
+  parentOf: Map<string, string | undefined>,
 ): void {
+  const isChild = (id: string) => parentOf.get(id) === boundaryId
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity
   let maxY = -Infinity
   for (const [id, pos] of posMap) {
-    if (id === boundaryId) continue
+    if (id === boundaryId || !isChild(id)) continue
     const sz = sizeMap.get(id) || { width: MIN_W, height: MIN_H }
     minX = Math.min(minX, pos.x)
     minY = Math.min(minY, pos.y)
@@ -233,7 +240,7 @@ function fitBoundaryAroundChildren(
   const shiftX = PAD - minX
   const shiftY = PAD - minY
   for (const [id, pos] of posMap) {
-    if (id === boundaryId) continue
+    if (id === boundaryId || !isChild(id)) continue
     const next = { x: pos.x + shiftX, y: pos.y + shiftY }
     posMap.set(id, next)
     if (nodePatch[id]) {
@@ -750,7 +757,9 @@ export async function layoutStructureWithElk(
   options: ElkGraphBuildOptions = {},
 ): Promise<ElkStructureLayoutResult> {
   const nodes =
-    options.layoutNodes !== false ? demoteNestedBoundaries(inputNodes) : inputNodes
+    options.layoutNodes !== false
+      ? normalizeLayoutBoundary(demoteNestedBoundaries(inputNodes))
+      : inputNodes
   const includeEdges = options.includeEdges === true
   const layoutNodes = options.layoutNodes !== false
   const directives = options.directives || DEFAULT_AUTO_LAYOUT_DIRECTIVES
@@ -1136,12 +1145,17 @@ export async function layoutStructureWithElk(
   // edges are routed separately (includeEdges: false). Previously this only
   // ran in the ELK-edge path, so AutoLayout left parts/wires outside Car.
   if (boundaryId && layoutNodes) {
+    const parentOfFit = new Map<string, string | undefined>()
+    for (const node of workingNodes) {
+      if (isLayoutNode(node)) parentOfFit.set(node.id, node.parentId)
+    }
     fitBoundaryAroundChildren(
       boundaryId,
       boundary,
       nodePatch,
       sizeMap,
       posMap,
+      parentOfFit,
     )
   }
 

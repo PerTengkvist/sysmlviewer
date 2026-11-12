@@ -33,7 +33,7 @@ export async function openView(page: Page, viewId: string): Promise<void> {
 export type AutoLayoutChoice =
   | {
       mode: 'simple'
-      algorithm: 'stress' | 'layered' | 'clustered' | 'favour-grid'
+      algorithm: 'stress' | 'layered' | 'clustered' | 'favour-grid' | 'force-grid'
       portPlacement?: PortPlacementMode
       spacing?: 'compact' | 'normal' | 'spacious'
     }

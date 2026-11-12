@@ -36,3 +36,10 @@ describe('AutoLayoutDialog edge kinds', () => {
     expect(checkbox(html, 'al-edges-relations')).not.toContain('checked')
   })
 })
+
+describe('AutoLayoutDialog force grid', () => {
+  it('offers Force grid as a simple algorithm', () => {
+    const html = render()
+    expect(html).toMatch(/<option value="force-grid"[^>]*>Force grid \(shrink to fit\)<\/option>/)
+  })
+})

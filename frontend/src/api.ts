@@ -289,6 +289,22 @@ export interface LayeredLayoutConfig {
   scopes: LayeredScope[]
 }
 
+/** What a Layout Rules scope arranges: the whole diagram or one container. */
+export type LayoutScopeTarget = { kind: 'diagram' } | { kind: 'element'; id: string }
+
+/**
+ * One tab of the Layout Rules dialog. Its rules and layers arrange the
+ * direct children of the target (the top level for the whole diagram).
+ */
+export interface LayoutScope {
+  id: string
+  target: LayoutScopeTarget
+  /** Off: the scope is kept but AutoLayout and Apply ignore it. */
+  enabled: boolean
+  layering: { enabled: boolean; direction: LayerDirection; layers: LayerDef[] }
+  rules: LayoutRuleRow[]
+}
+
 export interface LayoutRuleRow {
   id: string
   kind: string
@@ -317,9 +333,8 @@ export interface ViewPayload {
   /** Per-view override; null/undefined means inherit global Settings. */
   hierarchicalLevelsOverride?: number | null
   viewFilters?: ViewFilterRow[]
-  layoutRules?: LayoutRuleRow[]
-  /** null/undefined → layered layout never configured for this view. */
-  layeredLayout?: LayeredLayoutConfig | null
+  /** Layout Rules scopes (dialog tabs); [] when none. */
+  layoutScopes?: LayoutScope[]
   /** AutoLayout "Place by" choice saved for this view; null when never set. */
   autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
   modeError?: string | null
@@ -528,9 +543,8 @@ export const api = {
       hierarchicalLevelsOverride?: number | null
       /** Replaces the whole list when present. */
       viewFilters?: ViewFilterRow[]
-      layoutRules?: LayoutRuleRow[]
-      /** Replaces the config when present; null clears. */
-      layeredLayout?: LayeredLayoutConfig | null
+      /** Layout Rules scopes; replaces the list when present. */
+      layoutScopes?: LayoutScope[]
       /** AutoLayout "Place by" choice; null clears. */
       autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
     },

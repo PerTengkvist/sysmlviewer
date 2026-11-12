@@ -30,8 +30,7 @@ import {
 import type {
   ArtifactKind,
   DiagramMode,
-  LayoutRuleRow,
-  LayeredLayoutConfig,
+  LayoutScope,
   PortSide,
   RoutingType,
   SemanticElement,
@@ -85,6 +84,7 @@ import {
 } from './edgeRouting'
 import { computeUpdateJumpers } from './layout/updateJumpers'
 import { keepFixedNodeSizes } from './layout/layoutNodes'
+import { layoutBoundaryId } from './layout/layoutBoundary'
 import { applySavedGeometry } from './applySavedGeometry'
 import { diagramFitOptions, diagramZoomLimits } from './diagramZoom'
 import {
@@ -155,8 +155,7 @@ import {
   resolveLayoutEdgeKinds,
   type LayoutEdgeKinds,
 } from './layout/layoutEdgeKinds'
-import { buildLayoutConstraints } from './layout/layoutConstraints'
-import { normalizeLayeredLayout, rootScope } from './layeredLayoutConfig'
+import { buildScopeConstraints, normalizeLayoutScopes } from './layoutScopes'
 import { planStructureRoutes } from './layout/layoutRouter'
 import { flowViewportBounds } from './layout/layoutNormalize'
 import {
@@ -582,8 +581,8 @@ type Props = {
   onClientError?: (message: string, viewId?: string) => void
   /** The diagram has been laid out and measured after opening. */
   onDiagramReady?: () => void
-  onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
-  onLayeredLayoutChange?: (layered: LayeredLayoutConfig | null) => void
+  /** Layout Rules dialog: the view's scopes changed. */
+  onLayoutScopesChange?: (scopes: LayoutScope[]) => void
   /** Save the AutoLayout "Place by" choice with the view. */
   onAutoLayoutEdgeKindsChange?: (kinds: LayoutEdgeKinds) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
@@ -650,8 +649,7 @@ export function DiagramCanvas({
   onNodeDoubleClick,
   onEdgeDoubleClick,
   onNodesMoved,
-  onLayoutRulesChange,
-  onLayeredLayoutChange,
+  onLayoutScopesChange,
   onAutoLayoutEdgeKindsChange,
   onPortMoved,
   onPortsMoved,
@@ -948,12 +946,6 @@ export function DiagramCanvas({
   const filterSig = view?.viewFilters
     ? JSON.stringify(view.viewFilters)
     : ''
-  const layeredSig = view?.layeredLayout
-    ? JSON.stringify(view.layeredLayout)
-    : ''
-  const layoutRulesSig = view?.layoutRules
-    ? JSON.stringify(view.layoutRules) + layeredSig
-    : ''
 
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
@@ -961,7 +953,7 @@ export function DiagramCanvas({
     ? JSON.stringify(requirementDisplay)
     : ''
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -2341,28 +2333,24 @@ export function DiagramCanvas({
       })
   }, [nodes, view])
 
-  /** Root boundary id (whitebox); null for package-style views. */
-  const boundaryIdForConstraints = useCallback((): string | null => {
-    const partIds = new Set(nodes.filter((n) => !n.type || n.type === 'part').map((n) => n.id))
-    const root = nodes.find(
-      (n) =>
-        (!n.type || n.type === 'part') &&
-        (n.data as PartNodeData | undefined)?.isBoundary &&
-        !(n.parentId && partIds.has(n.parentId)),
-    )
-    return root?.id ?? null
-  }, [nodes])
+  /**
+   * Root boundary id: the frame AutoLayout keeps in place (a drawn whitebox
+   * root that holds every other node); null for package-style views, so the
+   * scopes and the layout agree on what "whole diagram" means.
+   */
+  const boundaryIdForConstraints = useCallback(
+    (): string | null => layoutBoundaryId(nodes),
+    [nodes],
+  )
 
   /** Hard constraints for the hierarchic pipeline from rules + layered config. */
   const constraintsFor = useCallback(
     (
-      rules: LayoutRuleRow[],
-      layered: LayeredLayoutConfig | null,
+      scopes: LayoutScope[],
       directives: AutoLayoutDirectives,
     ) =>
-      buildLayoutConstraints(
-        rules,
-        layered,
+      buildScopeConstraints(
+        normalizeLayoutScopes(scopes),
         layoutArtefacts(),
         asAngularForLayout(edges, {
           includeBindings: includeBindingsRef.current,
@@ -2388,11 +2376,7 @@ export function DiagramCanvas({
       isHierarchic && !input.constraints
         ? {
             ...input,
-            constraints: constraintsFor(
-              view?.layoutRules || [],
-              view?.layeredLayout ?? null,
-              input,
-            ),
+            constraints: constraintsFor(view?.layoutScopes || [], input),
           }
         : input
     const edgeKinds =
@@ -2542,8 +2526,7 @@ export function DiagramCanvas({
     edges,
     connectionSeparation,
     constraintsFor,
-    view?.layoutRules,
-    view?.layeredLayout,
+    view?.layoutScopes,
     view?.autoLayoutEdgeKinds,
   ])
 
@@ -3074,13 +3057,16 @@ export function DiagramCanvas({
       {view && (
         <LayoutWizardDialog
           open={layoutWizardOpen}
-          rules={view.layoutRules || []}
-          layered={view.layeredLayout ?? null}
-          onChangeLayered={(layered) => onLayeredLayoutChange?.(layered)}
+          scopes={normalizeLayoutScopes(view.layoutScopes)}
           semantic={view.semantic}
           artefacts={layoutArtefacts()}
-          onChangeRules={(rules) => onLayoutRulesChange?.(rules)}
-          onApplyLayered={(layered, rules) => {
+          boundaryId={boundaryIdForConstraints()}
+          onChangeScopes={(scopes) => onLayoutScopesChange?.(scopes)}
+          onApplyLayered={(scopes) => {
+            // The whole-diagram scope's layers set the overall direction.
+            const top =
+              scopes.find((s) => s.enabled && s.target.kind === 'diagram' && s.layering.enabled) ??
+              scopes.find((s) => s.enabled && s.layering.enabled)
             const base: AutoLayoutDirectives = {
               ...autoLayoutDirectives,
               mode: 'advanced',
@@ -3088,7 +3074,7 @@ export function DiagramCanvas({
               hierarchic: {
                 ...clampHierarchicOptions(autoLayoutDirectives.hierarchic),
                 direction: hierarchicDirectionForLayers(
-                  rootScope(normalizeLayeredLayout(layered)).direction,
+                  top?.layering.direction ?? 'top-down',
                 ),
               },
             }
@@ -3096,7 +3082,7 @@ export function DiagramCanvas({
             setLayoutWizardOpen(false)
             void applyAutoLayout({
               ...base,
-              constraints: constraintsFor(rules, layered, base),
+              constraints: constraintsFor(scopes, base),
             })
           }}
           onApplyPositions={(positions) => {
