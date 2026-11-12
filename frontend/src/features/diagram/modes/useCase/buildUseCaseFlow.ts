@@ -1,6 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { SemanticElement } from '../../../../api'
+import { orientEdgeHandles } from '../../layout/dependencyLayout'
 import {
   elementDisplayName,
   useCaseRequirementLinks,
@@ -219,5 +220,76 @@ export function buildUseCaseFlow(
     }
   }
 
-  return { params, nodes, edges, actionLinks }
+  return { params, nodes, edges: orientFlowPorts(nodes, edges, start?.id), actionLinks }
+}
+
+/**
+ * Edge ids that loop back: depth-first from start, an edge whose target is
+ * still on the walk's stack. Converging branches are not loops, so the
+ * order of the column (a preorder walk) is not used for this.
+ */
+export function feedbackEdgeIds(edges: Edge[], startId: string | undefined): Set<string> {
+  const out = new Map<string, Edge[]>()
+  for (const e of edges) {
+    const list = out.get(e.source)
+    if (list) list.push(e)
+    else out.set(e.source, [e])
+  }
+  const feedback = new Set<string>()
+  const done = new Set<string>()
+  const onStack = new Set<string>()
+  const visit = (id: string) => {
+    onStack.add(id)
+    for (const e of out.get(id) || []) {
+      if (onStack.has(e.target)) feedback.add(e.id)
+      else if (!done.has(e.target)) visit(e.target)
+    }
+    onStack.delete(id)
+    done.add(id)
+  }
+  if (startId) visit(startId)
+  return feedback
+}
+
+function isDecision(n: Node | undefined): boolean {
+  return !!(n?.data as { isDecision?: boolean } | undefined)?.isDecision
+}
+
+/**
+ * Top-down ports: in at the top, out at the bottom; decision branches as in
+ * the action flow (yes left, else right). A loop back leaves on the right and
+ * enters the earlier step on its right side, drawn as a step line beside the
+ * column; the other branch of a looping decision then goes down.
+ */
+function orientFlowPorts(nodes: Node[], edges: Edge[], startId: string | undefined): Edge[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const feedback = feedbackEdgeIds(edges, startId)
+  // `then if g then a else b` names its branches if_g_yes / if_g_else.
+  const hinted = edges.map((e) => {
+    if (!isDecision(byId.get(e.source))) return e
+    const name = String(e.label ?? e.id)
+    if (/_yes$/i.test(name)) return { ...e, sourceHandle: 'yes', label: 'yes' }
+    if (/_else$/i.test(name)) return { ...e, sourceHandle: 'no', label: 'else' }
+    if (/_no$/i.test(name)) return { ...e, sourceHandle: 'no', label: 'no' }
+    return e
+  })
+  const oriented = orientEdgeHandles(hinted, 'TD', nodes)
+  const loopingDecisions = new Set(
+    oriented.filter((e) => feedback.has(e.id) && isDecision(byId.get(e.source))).map((e) => e.source),
+  )
+  return oriented.map((e) => {
+    if (feedback.has(e.id)) {
+      return {
+        ...e,
+        sourceHandle: isDecision(byId.get(e.source)) ? 'out-right' : 'out',
+        targetHandle: 'in-right',
+        type: 'smoothstep',
+        data: { ...(e.data as Record<string, unknown>), feedback: true },
+      }
+    }
+    if (loopingDecisions.has(e.source) && e.sourceHandle === 'out-right') {
+      return { ...e, sourceHandle: 'out-bottom' }
+    }
+    return e
+  })
 }
