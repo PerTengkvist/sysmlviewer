@@ -23,6 +23,7 @@ running-session.json
 frontend/e2e/*
 !frontend/e2e/traceability.spec.ts
 !frontend/e2e/save_verification.spec.ts
+!frontend/e2e/view_filter.spec.ts
 !frontend/e2e/port_label_move.spec.ts
 !frontend/e2e/usecase_name_only.spec.ts
 !frontend/e2e/ports_above_edges.spec.ts

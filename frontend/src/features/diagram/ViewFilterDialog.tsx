@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { SemanticElement, ViewFilterRow } from '../../api'
 import { kindsInSemantic, type ViewFilterMatchField } from './viewFilters'
+import { useDialogDraft } from './dialogDraft'
 
 type Props = {
   open: boolean
@@ -24,11 +25,9 @@ export function ViewFilterDialog({
   onClose,
 }: Props) {
   const kinds = useMemo(() => kindsInSemantic(semantic), [semantic])
-  const [draft, setDraft] = useState<ViewFilterRow[]>(filters)
-
-  useEffect(() => {
-    if (open) setDraft(filters)
-  }, [open, filters])
+  // Saved rows seed the draft when the dialog opens; while it is open, an
+  // echo of an older save must never replace what is being typed.
+  const [draft, setDraft] = useDialogDraft(open, filters)
 
   if (!open) return null
 
@@ -53,6 +52,12 @@ export function ViewFilterDialog({
     setDraft(next)
     onChange(next)
   }
+
+  /** Typing only edits the draft; the pattern is saved on blur or Enter. */
+  const editPattern = (id: string, namePattern: string) => {
+    setDraft(draft.map((r) => (r.id === id ? { ...r, namePattern } : r)))
+  }
+  const savePattern = () => onChange(draft)
 
   const removeRow = (id: string) => {
     const next = draft.filter((r) => r.id !== id)
@@ -132,9 +137,11 @@ export function ViewFilterDialog({
                     <input
                       className="inline-edit"
                       value={row.namePattern}
-                      onChange={(e) =>
-                        updateRow(row.id, { namePattern: e.target.value })
-                      }
+                      onChange={(e) => editPattern(row.id, e.target.value)}
+                      onBlur={savePattern}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') savePattern()
+                      }}
                       aria-label="Filter pattern"
                     />
                   </td>

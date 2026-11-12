@@ -31,6 +31,9 @@ import {
   sharedNumericField,
 } from './multiSelectDetails'
 
+/** Stable empty list, so the filter dialog never sees a new array per render. */
+const NO_VIEW_FILTERS: ViewFilterRow[] = []
+
 export type DetailsPanelProps = Props
 
 type Props = {
@@ -1103,7 +1106,7 @@ export function DetailsPanel({
               </button>
               <ViewFilterDialog
                 open={filterOpen}
-                filters={viewPayload.viewFilters || []}
+                filters={viewPayload.viewFilters || NO_VIEW_FILTERS}
                 semantic={viewPayload.semantic}
                 onChange={onViewFiltersChange}
                 onClose={() => setFilterOpen(false)}

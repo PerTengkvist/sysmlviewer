@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type {
   LayerDirection,
   LayeredLayoutConfig,
@@ -80,7 +80,12 @@ export function LayoutWizardDialog({
   const [conflictIds, setConflictIds] = useState<string[]>([])
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  // Reset from the saved rules only when the dialog opens. Every edit is
+  // saved at once and echoes back while the dialog is open; resetting then
+  // lost typed text and jumped the scope selection back to the root.
+  const [wasOpen, setWasOpen] = useState(false)
+  if (open !== wasOpen) {
+    setWasOpen(open)
     if (open) {
       const next = layered ? normalizeLayeredLayout(layered) : defaultLayeredLayout()
       setDraft(rules)
@@ -89,7 +94,7 @@ export function LayoutWizardDialog({
       setConflictIds([])
       setError('')
     }
-  }, [open, rules, layered])
+  }
 
   const selectedScope =
     layeredDraft.scopes.find((s) => s.id === scopeId) ?? rootScope(layeredDraft)
