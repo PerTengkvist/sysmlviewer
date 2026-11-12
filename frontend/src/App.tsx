@@ -714,12 +714,12 @@ export default function App() {
                 labelOffset:
                   patch.labelOffset ?? existing?.labelOffset ?? { x: 0, y: 0 },
                 style: patch.style ?? existing?.style,
-                sourceSide: patch.sourceSide ?? existing?.sourceSide,
-                sourceOffset: patch.sourceOffset ?? existing?.sourceOffset,
-                targetSide: patch.targetSide ?? existing?.targetSide,
-                targetOffset: patch.targetOffset ?? existing?.targetOffset,
-                sourceAnchorId: patch.sourceAnchorId ?? existing?.sourceAnchorId,
-                targetAnchorId: patch.targetAnchorId ?? existing?.targetAnchorId,
+                sourceSide: 'sourceSide' in patch ? patch.sourceSide : existing?.sourceSide,
+                sourceOffset: 'sourceOffset' in patch ? patch.sourceOffset : existing?.sourceOffset,
+                targetSide: 'targetSide' in patch ? patch.targetSide : existing?.targetSide,
+                targetOffset: 'targetOffset' in patch ? patch.targetOffset : existing?.targetOffset,
+                sourceAnchorId: 'sourceAnchorId' in patch ? patch.sourceAnchorId : existing?.sourceAnchorId,
+                targetAnchorId: 'targetAnchorId' in patch ? patch.targetAnchorId : existing?.targetAnchorId,
                 editLocked:
                   patch.editLocked !== undefined
                     ? patch.editLocked

@@ -28,3 +28,4 @@ frontend/e2e/*
 !frontend/e2e/view_usages.spec.ts
 !frontend/e2e/arrange_nodes.spec.ts
 !frontend/e2e/autolayout_edge_kinds.spec.ts
+!frontend/e2e/redraw_relations.spec.ts

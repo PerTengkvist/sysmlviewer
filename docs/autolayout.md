@@ -102,6 +102,18 @@ in routing* setting says, and Relations when the diagram has no connections.
 For a traceability diagram, *Advanced → hierarchic* with Relations gives
 layers: user stories, requirements, then the requirements they refine.
 
+## Redraw: Relations
+
+*Redraw: Connections* reroutes port-to-port connections and leaves relations
+alone. *Redraw: Relations* (every GeneralView) does the opposite: it keeps all
+nodes where they are and redraws each relation as a straight line from where
+the centre-to-centre line leaves one node to where it enters the other
+(`redrawStructureRelations.ts`). Waypoints are dropped. A part end gets its
+own handle at that point; a requirement or use case gets an extra anchor
+`rel:<relation id>` beside its four default anchors. The result is saved in
+the view and Undo puts the previous attachments back. Run it after moving
+nodes, or after AutoLayout with *Relations* ticked.
+
 ## Port placement modes
 
 The *Port placement* mode in the AutoLayout dialog is a hard contract that

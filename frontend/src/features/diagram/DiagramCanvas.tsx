@@ -129,6 +129,10 @@ import { UseCaseNode } from './modes/useCase/UseCaseNode'
 import { buildUseCaseGraph } from './modes/useCase/buildUseCaseGraph'
 import { redrawUseCaseRelations } from './modes/useCase/redrawUseCaseRelations'
 import {
+  hasRedrawableRelations,
+  redrawStructureRelations,
+} from './layout/redrawStructureRelations'
+import {
   layoutByDependency,
   orientEdgeHandles,
   type RedrawDirection,
@@ -152,7 +156,12 @@ import { buildLayoutConstraints } from './layout/layoutConstraints'
 import { normalizeLayeredLayout, rootScope } from './layeredLayoutConfig'
 import { planStructureRoutes } from './layout/layoutRouter'
 import { flowViewportBounds } from './layout/layoutNormalize'
-import { preserveExistingGeometry } from './preserveDiagramGeometry'
+import {
+  changedEdgeAttachments,
+  changedNodeAnchors,
+  preserveExistingGeometry,
+  withoutRestoredAttachments,
+} from './preserveDiagramGeometry'
 import {
   applyDimensionChangesToStyle,
   nodeBoxSize,
@@ -163,6 +172,16 @@ import {
   waitFrames,
   writeImageBlobToClipboard,
 } from './copyDiagramImage'
+
+/** Undo sends these so attachments a later redraw added are removed. */
+const CLEARED_ATTACHMENT = {
+  sourceSide: null,
+  sourceOffset: null,
+  sourceAnchorId: null,
+  targetSide: null,
+  targetOffset: null,
+  targetAnchorId: null,
+} as unknown as Partial<VisualizationEdge>
 
 function sameEdgeKinds(
   a: LayoutEdgeKinds,
@@ -668,6 +687,14 @@ export function DiagramCanvas({
     getViewport: () => { x: number; y: number; zoom: number }
   } | null>(null)
   const viewKeyRef = useRef<string | null>(null)
+  /**
+   * Undo/redo changed these attachments in the saved layout; the next rebuild
+   * takes them from the layout instead of keeping what is on screen.
+   */
+  const restoredAttachmentRef = useRef<{ edges: Set<string>; nodes: Set<string> }>({
+    edges: new Set(),
+    nodes: new Set(),
+  })
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
   const nodesRef = useRef<Node[]>([])
@@ -1066,10 +1093,14 @@ export function DiagramCanvas({
         ? preserveExistingGeometry(
             built.nodes,
             built.edges,
-            nodesRef.current,
-            edgesRef.current,
+            ...withoutRestoredAttachments(
+              nodesRef.current,
+              edgesRef.current,
+              restoredAttachmentRef.current,
+            ),
           )
         : { nodes: built.nodes, edges: built.edges }
+    restoredAttachmentRef.current = { edges: new Set(), nodes: new Set() }
     setNodes(
       geometry.nodes.map((node) => ({
         ...node,
@@ -1763,18 +1794,41 @@ export function DiagramCanvas({
   }, [])
 
   const restoreVizSnapshot = useCallback(
-    (snap: {
-      nodes: Record<string, VisualizationNode>
-      edges: Record<string, VisualizationEdge>
-    }) => {
+    (
+      snap: {
+        nodes: Record<string, VisualizationNode>
+        edges: Record<string, VisualizationEdge>
+      },
+      current?: {
+        nodes: Record<string, VisualizationNode>
+        edges: Record<string, VisualizationEdge>
+      },
+    ) => {
+      if (current) {
+        const marked = restoredAttachmentRef.current
+        for (const id of changedEdgeAttachments(snap.edges, current.edges)) {
+          marked.edges.add(id)
+        }
+        for (const id of changedNodeAnchors(snap.nodes, current.nodes)) {
+          marked.nodes.add(id)
+        }
+      }
       const nodePatch: Record<string, Partial<VisualizationNode>> = {}
       for (const [id, node] of Object.entries(snap.nodes)) {
         // A name at its default place has no saved offset, so undo must clear it.
-        nodePatch[id] = { labelOffset: null, ...node }
+        // Same for boundary anchors a relation redraw added.
+        nodePatch[id] = { labelOffset: null, anchors: null, ...node }
       }
       const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
       for (const [id, edge] of Object.entries(snap.edges)) {
-        edgePatch[id] = { ...edge }
+        // An edge that had no saved attachment gets it cleared again.
+        edgePatch[id] = { ...CLEARED_ATTACHMENT, ...edge }
+      }
+      // An edge first saved after the snapshot goes back to its default.
+      for (const id of Object.keys(current?.edges || {})) {
+        if (!snap.edges[id]) {
+          edgePatch[id] = { ...CLEARED_ATTACHMENT, artifactId: id, waypoints: [] }
+        }
       }
       onNodesMovedRef.current(nodePatch, edgePatch)
       setLayoutEpoch((n) => n + 1)
@@ -1790,7 +1844,7 @@ export function DiagramCanvas({
       nodes: viz.nodes,
       edges: viz.edges,
     })
-    if (prev) restoreVizSnapshot(prev)
+    if (prev) restoreVizSnapshot(prev, viz)
   }, [restoreVizSnapshot])
 
   const handleRedo = useCallback(() => {
@@ -1800,7 +1854,7 @@ export function DiagramCanvas({
       nodes: viz.nodes,
       edges: viz.edges,
     })
-    if (next) restoreVizSnapshot(next)
+    if (next) restoreVizSnapshot(next, viz)
   }, [restoreVizSnapshot])
 
   const handleFlipPorts = useCallback(
@@ -2820,6 +2874,26 @@ export function DiagramCanvas({
                   title="Reroute connections around parts using current port placement (does not move parts or ports)"
                 >
                   Redraw: Connections
+                </button>
+                <button
+                  type="button"
+                  disabled={!hasRedrawableRelations(edges)}
+                  onClick={() => {
+                    const {
+                      nodes: nextNodes,
+                      edges: next,
+                      edgePatch,
+                      nodePatch,
+                    } = redrawStructureRelations(nodes, edges)
+                    if (!Object.keys(edgePatch).length) return
+                    pushVizHistory()
+                    setNodes(nextNodes)
+                    setEdges(next)
+                    onNodesMovedRef.current(nodePatch, edgePatch)
+                  }}
+                  title="Redraw dependency, satisfy, include, allocation and other relations as straight lines between the facing borders (does not move nodes)"
+                >
+                  Redraw: Relations
                 </button>
                 <IconToolbarButton
                   icon={TOOLBAR_ICONS.flipH}
