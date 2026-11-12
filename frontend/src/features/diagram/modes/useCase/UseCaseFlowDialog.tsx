@@ -9,6 +9,7 @@ import type { SemanticElement } from '../../../../api'
 import { buildUseCaseFlow } from './buildUseCaseFlow'
 import { ActionNode } from '../actionFlow/ActionNode'
 import { UseCaseFlowParamsPanel } from './UseCaseFlowParamsPanel'
+import { DIAGRAM_MAX_ZOOM, DIAGRAM_MIN_ZOOM, diagramFitOptions } from '../../diagramZoom'
 
 const nodeTypes = { action: ActionNode }
 
@@ -61,6 +62,9 @@ export function UseCaseFlowDialog({
               edges={flow.edges}
               nodeTypes={nodeTypes}
               fitView
+              fitViewOptions={diagramFitOptions(false)}
+              minZoom={DIAGRAM_MIN_ZOOM}
+              maxZoom={DIAGRAM_MAX_ZOOM}
               nodesDraggable={false}
               nodesConnectable={false}
               proOptions={{ hideAttribution: true }}

@@ -82,6 +82,7 @@ import {
   openTutorialNewTab,
   type CanvasTabsState,
 } from './features/tabs/canvasTabs'
+import { fittedPartMinimum } from './features/diagram/modes/structure/buildStructureGraph'
 
 type CanvasMode =
   | { type: 'diagram' }
@@ -166,6 +167,10 @@ export default function App() {
   const [printPreparing, setPrintPreparing] = useState(false)
   const [autorouteRequest, setAutorouteRequest] = useState<{
     connectionId: string
+    seq: number
+  } | null>(null)
+  const [geometryRequest, setGeometryRequest] = useState<{
+    nodes: Record<string, Partial<VisualizationNode>>
     seq: number
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
@@ -742,6 +747,12 @@ export default function App() {
     },
     [project, viewPayload?.view.id, structureNotation, patchVisualization],
   )
+
+  /** Save a Details-panel geometry change and show it on the canvas at once. */
+  const applyDetailsGeometry = (patch: Record<string, Partial<VisualizationNode>>) => {
+    setGeometryRequest((prev) => ({ nodes: patch, seq: (prev?.seq ?? 0) + 1 }))
+    void onNodesMoved(patch)
+  }
 
   const onHierarchyOverrideChange = useCallback(
     async (override: number | null) => {
@@ -1499,8 +1510,8 @@ export default function App() {
         seq: (prev?.seq ?? 0) + 1,
       }))
     },
-    onPositionChange: (id, x, y) =>
-      void onNodesMoved({ [id]: { x, y } }),
+    onPositionChange: (id, position) =>
+      applyDetailsGeometry({ [id]: { artifactId: id, ...position } }),
     onSizeChange: (ids, size) => {
       const semantic =
         viewPayload?.semantic ?? project?.semantic ?? {}
@@ -1514,6 +1525,10 @@ export default function App() {
       for (const id of ids) {
         const isBoundary = isWhitebox && rootId === id
         const clamped = clampPartSize(size, { isBoundary })
+        // Never below what the port labels need: the field shows what is drawn.
+        const fitted = fittedPartMinimum(id, semantic, { nodes: vizNodes, edges: {} })
+        if (clamped.width != null) clamped.width = Math.max(clamped.width, fitted.width)
+        if (clamped.height != null) clamped.height = Math.max(clamped.height, fitted.height)
         patch[id] = { artifactId: id, ...clamped }
         if (clamped.height == null) continue
         const part = semantic[id]
@@ -1536,7 +1551,7 @@ export default function App() {
           }
         }
       }
-      void onNodesMoved(patch)
+      applyDetailsGeometry(patch)
     },
     onEditLockChange: (id, locked) => {
       if (!viewPayload) return
@@ -2027,6 +2042,7 @@ export default function App() {
                 onWaypointsMoved={(id, wps) => void onWaypointsMoved(id, wps)}
                 onLabelOffsetMoved={(id, off) => void onLabelOffsetMoved(id, off)}
                 autorouteRequest={autorouteRequest}
+                geometryRequest={geometryRequest}
               />
             )}
             </div>

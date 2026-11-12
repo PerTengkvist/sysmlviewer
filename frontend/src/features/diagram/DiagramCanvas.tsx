@@ -85,6 +85,8 @@ import {
 } from './edgeRouting'
 import { computeUpdateJumpers } from './layout/updateJumpers'
 import { keepFixedNodeSizes } from './layout/layoutNodes'
+import { applySavedGeometry } from './applySavedGeometry'
+import { diagramFitOptions, diagramZoomLimits } from './diagramZoom'
 import {
   applyPortMovesToNodes,
   type PortMove,
@@ -270,12 +272,7 @@ function FitViewOnViewKey({
     }
 
     const doFit = () => {
-      fitView({
-        padding: printMode ? 0.04 : 0.15,
-        duration: 0,
-        minZoom: printMode ? 0.01 : undefined,
-        maxZoom: printMode ? 8 : undefined,
-      })
+      fitView({ ...diagramFitOptions(!!printMode), duration: 0 })
     }
 
     const run = () => {
@@ -612,6 +609,14 @@ type Props = {
   ) => void
   /** Bump `seq` to trigger obstacle-aware reroute for one connection (Autoroute). */
   autorouteRequest?: { connectionId: string; seq: number } | null
+  /**
+   * Bump `seq` to put a saved geometry patch (Details Size / Position) on the
+   * canvas at once, without rebuilding the diagram.
+   */
+  geometryRequest?: {
+    nodes: Record<string, Partial<VisualizationNode>>
+    seq: number
+  } | null
   /** Read-only rendering for print output. */
   printMode?: boolean
   onPrintReady?: () => void
@@ -655,6 +660,7 @@ export function DiagramCanvas({
   onWaypointsMoved,
   onLabelOffsetMoved,
   autorouteRequest,
+  geometryRequest,
   printMode = false,
   onPrintReady,
 }: Props) {
@@ -2293,6 +2299,14 @@ export function DiagramCanvas({
     applyRedrawConnectionsRef.current(nodesRef.current, [edge])
   }, [autorouteRequest?.connectionId, autorouteRequest?.seq, isStructure, mode])
 
+  const lastGeometrySeqRef = useRef<number | null>(null)
+  useEffect(() => {
+    const req = geometryRequest
+    if (!req || req.seq === lastGeometrySeqRef.current) return
+    lastGeometrySeqRef.current = req.seq
+    setNodes((current) => applySavedGeometry(current, req.nodes))
+  }, [geometryRequest?.seq])
+
   // One-shot obstacle routing after opening a structure view (not during edge render).
   useEffect(() => {
     const pending = pendingAutoRouteRef.current
@@ -3226,11 +3240,7 @@ export function DiagramCanvas({
           multiSelectionKeyCode="Shift"
           selectionKeyCode={portMoveMode ? null : 'Shift'}
           fitView={!printMode && !viewportCache.current.has(view.view.id)}
-          fitViewOptions={
-            printMode
-              ? { padding: 0.04, minZoom: 0.01, maxZoom: 8 }
-              : { padding: 0.15 }
-          }
+          fitViewOptions={diagramFitOptions(!!printMode)}
           onMove={
             printMode
               ? undefined
@@ -3242,8 +3252,8 @@ export function DiagramCanvas({
                   })
                 }
           }
-          minZoom={printMode ? 0.01 : 0.5}
-          maxZoom={printMode ? 8 : 2}
+          minZoom={diagramZoomLimits(!!printMode).minZoom}
+          maxZoom={diagramZoomLimits(!!printMode).maxZoom}
           nodesDraggable={!printMode && !portMoveMode}
           nodesConnectable={!printMode && isStructure && !portMoveMode}
           elementsSelectable={!printMode}
