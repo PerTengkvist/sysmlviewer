@@ -22,6 +22,31 @@ mode. Simple maps onto a subset of the Advanced pipelines
 | `compact-pack`           | –             | ELK rectpacking                              |
 | `custom`                 | –             | Per nest level, chosen from weights          |
 | `hierarchic`             | –             | **yEd-style Sugiyama** (see below)           |
+| `force-grid`             | Force grid    | Shrink to fit, compact grid (see below)      |
+
+### The frame (boundary)
+
+`layoutBoundary.ts`. buildStructureGraph flags every container as
+`isBoundary`, but AutoLayout keeps only one frame: a flagged node that every
+other placed node sits inside — the whitebox root. In a package root with
+several top-level containers, or a whitebox root with a second exposed root
+beside it (`expose A; expose B;`), there is no frame: every top-level node is
+placed among its siblings and each container is fitted to its own children
+only. The frame is fitted to its direct children, so AutoLayout run again does
+not grow it.
+
+### Force grid (shrink to fit)
+
+`forceGrid.ts`. Use it when parts have grown too big after earlier layouts:
+
+- A leaf part gets the size its name and ports need, whatever its size was.
+  Requirements, use cases and actors keep their size.
+- A container gets the size of its children's grid plus its header and port
+  names; a saved size is never a lower bound.
+- Siblings are packed in a grid (about √n columns, scaled by the aspect
+  ratio) with one width per column and one height per row, in the order they
+  are on screen. Running it again gives the same result.
+- Port sides follow the port placement mode; the frame keeps its own ports.
 
 ### Clustered (packed core)
 

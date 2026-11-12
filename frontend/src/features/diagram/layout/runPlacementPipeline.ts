@@ -10,6 +10,7 @@ import {
 } from './elkStructureLayout'
 import { resolvePlacementPipeline } from './placementPipelines'
 import { layoutHierarchic } from './hierarchicLayout'
+import { layoutForceGrid } from './forceGrid'
 
 /**
  * Place parts/ports according to directives (Simple or Advanced pipeline).
@@ -21,6 +22,14 @@ export async function runPlacementPipeline(
   directives: AutoLayoutDirectives,
 ): Promise<ElkStructureLayoutResult> {
   const resolved = resolvePlacementPipeline(directives)
+  if (resolved.id === 'force-grid') {
+    return layoutForceGrid(nodes, edges, {
+      ...directives,
+      spacing: resolved.spacing,
+      aspectRatio: resolved.aspectRatio,
+      portPlacement: resolved.portPlacement,
+    })
+  }
   if (resolved.id === 'hierarchic') {
     const r = await layoutHierarchic(nodes, edges, {
       ...directives,

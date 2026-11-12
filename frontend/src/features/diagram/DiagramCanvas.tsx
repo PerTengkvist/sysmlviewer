@@ -85,6 +85,7 @@ import {
 } from './edgeRouting'
 import { computeUpdateJumpers } from './layout/updateJumpers'
 import { keepFixedNodeSizes } from './layout/layoutNodes'
+import { layoutBoundaryId } from './layout/layoutBoundary'
 import {
   applyPortMovesToNodes,
   type PortMove,
@@ -2328,16 +2329,10 @@ export function DiagramCanvas({
   }, [nodes, view])
 
   /** Root boundary id (whitebox); null for package-style views. */
-  const boundaryIdForConstraints = useCallback((): string | null => {
-    const partIds = new Set(nodes.filter((n) => !n.type || n.type === 'part').map((n) => n.id))
-    const root = nodes.find(
-      (n) =>
-        (!n.type || n.type === 'part') &&
-        (n.data as PartNodeData | undefined)?.isBoundary &&
-        !(n.parentId && partIds.has(n.parentId)),
-    )
-    return root?.id ?? null
-  }, [nodes])
+  const boundaryIdForConstraints = useCallback(
+    (): string | null => layoutBoundaryId(nodes),
+    [nodes],
+  )
 
   /** Hard constraints for the hierarchic pipeline from rules + layered config. */
   const constraintsFor = useCallback(

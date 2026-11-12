@@ -104,6 +104,7 @@ describe('resolvePlacementPipeline', () => {
       'clustered',
       'favour-grid',
       'hierarchic',
+      'force-grid',
     ] satisfies PlacementPipelineId[])
   })
 
