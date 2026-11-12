@@ -3,9 +3,10 @@ import type { PortSide, VisualizationNode } from '../../../../api'
 import type { BoundaryAnchor } from '../../boundaryAnchors'
 import { absoluteNodeOrigin } from '../structure/buildStructureGraph'
 import { shortestBoundaryHit } from './shortestBoundaryHit'
+import { USE_CASE_H, USE_CASE_W } from './useCaseSize'
 
-const UC_W = 168
-const UC_H = 72
+const UC_W = USE_CASE_W
+const UC_H = USE_CASE_H
 const ACTOR_W = 88
 const ACTOR_H = 108
 
