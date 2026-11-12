@@ -286,9 +286,9 @@ class ViewLayout:
     # None → inherit global Settings hierarchical levels for this view
     hierarchical_levels_override: int | None = None
     view_filters: list[dict[str, Any]] = field(default_factory=list)
-    layout_rules: list[dict[str, Any]] = field(default_factory=list)
-    # Layered layout config (enabled/direction/layers); None when never set.
-    layered_layout: dict[str, Any] | None = None
+    # Layout Rules: one scope per tab, each with its own rules and layers
+    # (see _normalize_layout_scopes).
+    layout_scopes: list[dict[str, Any]] = field(default_factory=list)
     # AutoLayout dialog: which edges place nodes ({connections, bindings,
     # relations}); None when never chosen for this view.
     auto_layout_edge_kinds: dict[str, bool] | None = None
@@ -301,10 +301,8 @@ class ViewLayout:
             out["hierarchicalLevelsOverride"] = self.hierarchical_levels_override
         if self.view_filters:
             out["viewFilters"] = list(self.view_filters)
-        if self.layout_rules:
-            out["layoutRules"] = list(self.layout_rules)
-        if self.layered_layout is not None:
-            out["layeredLayout"] = dict(self.layered_layout)
+        if self.layout_scopes:
+            out["layoutScopes"] = [dict(s) for s in self.layout_scopes]
         if self.auto_layout_edge_kinds is not None:
             out["autoLayoutEdgeKinds"] = dict(self.auto_layout_edge_kinds)
         return out
@@ -329,15 +327,18 @@ class ViewLayout:
             except (TypeError, ValueError):
                 override = None
         filters = _normalize_view_filters(data.get("viewFilters"))
-        rules = _normalize_layout_rules(data.get("layoutRules"))
-        layered = _normalize_layered_layout(data.get("layeredLayout"))
+        if isinstance(data.get("layoutScopes"), list):
+            scopes = _normalize_layout_scopes(data.get("layoutScopes"))
+        else:
+            scopes = migrate_legacy_layout(
+                data.get("layoutRules"), data.get("layeredLayout")
+            )
         return cls(
             nodes=nodes,
             edges=edges,
             hierarchical_levels_override=override,
             view_filters=filters,
-            layout_rules=rules,
-            layered_layout=layered,
+            layout_scopes=scopes,
             auto_layout_edge_kinds=normalize_auto_layout_edge_kinds(
                 data.get("autoLayoutEdgeKinds")
             ),
@@ -472,6 +473,137 @@ def _normalize_layered_layout(raw: Any) -> dict[str, Any] | None:
     return {"enabled": bool(raw.get("enabled")), "scopes": scopes}
 
 
+LAYOUT_SCOPE_TARGET_KINDS = ("diagram", "element", "pattern")
+
+
+def _normalize_scope_target(raw: Any) -> dict[str, str] | None:
+    """`{kind:'diagram'}` or `{kind:'element', id}`.
+
+    `{kind:'pattern', pattern}` is only produced when migrating the old
+    name-pattern scopes; get_view resolves it to an element id.
+    """
+    if not isinstance(raw, dict):
+        return None
+    kind = str(raw.get("kind") or "").strip()
+    if kind == "diagram":
+        return {"kind": "diagram"}
+    if kind == "element":
+        element_id = str(raw.get("id") or "").strip()
+        return {"kind": "element", "id": element_id} if element_id else None
+    if kind == "pattern":
+        pattern = str(raw.get("pattern") or "").strip()
+        return {"kind": "pattern", "pattern": pattern} if pattern else None
+    return None
+
+
+def _scope_target_key(target: dict[str, str]) -> str:
+    return "|".join(f"{k}={target[k]}" for k in sorted(target))
+
+
+def _normalize_layering(raw: Any) -> dict[str, Any]:
+    raw = raw if isinstance(raw, dict) else {}
+    direction = str(raw.get("direction") or "").strip().lower()
+    if direction not in LAYER_DIRECTIONS:
+        direction = "top-down"
+    return {
+        "enabled": bool(raw.get("enabled", False)),
+        "direction": direction,
+        "layers": _normalize_layers(raw.get("layers")),
+    }
+
+
+def _normalize_layout_scopes(raw: Any) -> list[dict[str, Any]]:
+    """Normalize `[{id, target, enabled, layering, rules}]`.
+
+    A scope without a valid target is dropped, and only the first scope per
+    target is kept. `enabled` defaults to true, `layering.enabled` to false.
+    """
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    used_ids: set[str] = set()
+    used_targets: set[str] = set()
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        target = _normalize_scope_target(item.get("target"))
+        if target is None:
+            continue
+        key = _scope_target_key(target)
+        if key in used_targets:
+            continue
+        used_targets.add(key)
+        scope_id = str(item.get("id") or "").strip() or f"scope-{len(out) + 1}"
+        while scope_id in used_ids:
+            scope_id = f"{scope_id}-{len(out) + 1}"
+        used_ids.add(scope_id)
+        out.append(
+            {
+                "id": scope_id,
+                "target": target,
+                "enabled": bool(item.get("enabled", True)),
+                "layering": _normalize_layering(item.get("layering")),
+                "rules": _normalize_layout_rules(item.get("rules")),
+            }
+        )
+    return out
+
+
+def migrate_legacy_layout(rules_raw: Any, layered_raw: Any) -> list[dict[str, Any]]:
+    """Old flat `layoutRules` + `layeredLayout` → scopes.
+
+    The `*` scope becomes the diagram scope; a name-pattern scope gets a
+    `pattern` target (resolved to an element by get_view). A `belong to`
+    rule moves to the scope that owns its layer; other rules go to the
+    diagram scope.
+    """
+    rules = _normalize_layout_rules(rules_raw)
+    layered = _normalize_layered_layout(layered_raw)
+    if not rules and layered is None:
+        return []
+    layering_on = bool(layered and layered.get("enabled"))
+    legacy_scopes = list(layered["scopes"]) if layered else []
+    if not any(s["scopePattern"] == "*" for s in legacy_scopes):
+        legacy_scopes.insert(
+            0, {"id": "scope-1", "scopePattern": "*", "direction": "top-down", "layers": []}
+        )
+    scopes: list[dict[str, Any]] = []
+    for legacy in legacy_scopes:
+        pattern = legacy["scopePattern"]
+        scopes.append(
+            {
+                "id": legacy["id"],
+                "target": {"kind": "diagram"}
+                if pattern == "*"
+                else {"kind": "pattern", "pattern": pattern},
+                "enabled": True,
+                "layering": {
+                    "enabled": layering_on,
+                    "direction": legacy["direction"],
+                    "layers": list(legacy["layers"]),
+                },
+                "rules": [],
+            }
+        )
+    diagram = next(s for s in scopes if s["target"]["kind"] == "diagram")
+    for rule in rules:
+        home = diagram
+        if rule["placement"] == "belong to":
+            layer = rule.get("peerNamePattern") or ""
+            owners = [
+                s
+                for s in scopes
+                if any(l["name"] == layer for l in s["layering"]["layers"])
+            ]
+            # Prefer a container scope: the root scope rarely names the
+            # same layer, and the old dialog picked the subject's container.
+            owners.sort(key=lambda s: s["target"]["kind"] == "diagram")
+            if owners:
+                home = owners[0]
+        home["rules"].append(rule)
+    return _normalize_layout_scopes(scopes)
+
+
 @dataclass
 class ViewLayouts:
     """Map viewId → per-view node geometry."""
@@ -601,17 +733,13 @@ def _copy_view_layout(
     edges: dict[str, ViewEdgeLayout] | None = None,
     hierarchical_levels_override: int | None | object = ...,
     view_filters: list[dict[str, Any]] | None = None,
-    layout_rules: list[dict[str, Any]] | None = None,
-    layered_layout: dict[str, Any] | None | object = ...,
+    layout_scopes: list[dict[str, Any]] | None = None,
     auto_layout_edge_kinds: dict[str, bool] | None | object = ...,
 ) -> ViewLayout:
     """Rebuild ViewLayout while preserving fields not explicitly overridden."""
     override = view_layout.hierarchical_levels_override
     if hierarchical_levels_override is not ...:
         override = hierarchical_levels_override  # type: ignore[assignment]
-    layered = view_layout.layered_layout
-    if layered_layout is not ...:
-        layered = layered_layout  # type: ignore[assignment]
     edge_kinds = view_layout.auto_layout_edge_kinds
     if auto_layout_edge_kinds is not ...:
         edge_kinds = auto_layout_edge_kinds  # type: ignore[assignment]
@@ -624,12 +752,11 @@ def _copy_view_layout(
             if view_filters is not None
             else list(view_layout.view_filters)
         ),
-        layout_rules=(
-            list(layout_rules)
-            if layout_rules is not None
-            else list(view_layout.layout_rules)
+        layout_scopes=(
+            [dict(s) for s in layout_scopes]
+            if layout_scopes is not None
+            else [dict(s) for s in view_layout.layout_scopes]
         ),
-        layered_layout=dict(layered) if layered is not None else None,
         auto_layout_edge_kinds=dict(edge_kinds) if edge_kinds is not None else None,
     )
 
@@ -740,17 +867,34 @@ def apply_view_filters(
     return ViewLayouts(by_view=by_view)
 
 
-def apply_layout_rules(
+def apply_layout_scopes(
     layouts: ViewLayouts,
     view_id: str,
-    rules: list[dict[str, Any]] | None,
+    raw: list[dict[str, Any]] | None,
 ) -> ViewLayouts:
-    """Replace per-view layoutRules list (None or [] clears)."""
+    """Replace the per-view Layout Rules scopes (None or [] clears)."""
     by_view = dict(layouts.by_view)
     view_layout = by_view.get(view_id) or ViewLayout()
     by_view[view_id] = _copy_view_layout(
         view_layout,
-        layout_rules=_normalize_layout_rules(rules or []),
+        layout_scopes=_normalize_layout_scopes(raw or []),
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_legacy_layout_rules(
+    layouts: ViewLayouts,
+    view_id: str,
+    rules: list[dict[str, Any]] | None,
+    layered: dict[str, Any] | None,
+) -> ViewLayouts:
+    """Old `layoutRules` / `layeredLayout` patch: replace the scopes with
+    their migration (see migrate_legacy_layout)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        layout_scopes=migrate_legacy_layout(rules, layered),
     )
     return ViewLayouts(by_view=by_view)
 
@@ -769,17 +913,3 @@ def apply_auto_layout_edge_kinds(
     )
     return ViewLayouts(by_view=by_view)
 
-
-def apply_layered_layout(
-    layouts: ViewLayouts,
-    view_id: str,
-    raw: dict[str, Any] | None,
-) -> ViewLayouts:
-    """Replace per-view layeredLayout config (None clears)."""
-    by_view = dict(layouts.by_view)
-    view_layout = by_view.get(view_id) or ViewLayout()
-    by_view[view_id] = _copy_view_layout(
-        view_layout,
-        layered_layout=_normalize_layered_layout(raw),
-    )
-    return ViewLayouts(by_view=by_view)

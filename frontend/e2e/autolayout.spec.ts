@@ -149,12 +149,13 @@ test.describe('Layout Rules — layered layout', () => {
         data: {
           viewId,
           structureNotation: 'sysmlv2',
-          layeredLayout: {
-            enabled: true,
-            scopes: [
-              {
-                id: 's1',
-                scopePattern: '*',
+          layoutScopes: [
+            {
+              id: 's1',
+              target: { kind: 'diagram' },
+              enabled: true,
+              layering: {
+                enabled: true,
                 direction: 'top-down',
                 layers: [
                   { id: 'l1', name: 'Driver' },
@@ -162,15 +163,15 @@ test.describe('Layout Rules — layered layout', () => {
                   { id: 'l3', name: 'Actuation' },
                 ],
               },
-            ],
-          },
-          layoutRules: [
-            { id: 'r1', kind: 'part', namePattern: 'steeringWheel', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Driver' },
-            { id: 'r2', kind: 'part', namePattern: '*Pedal', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Driver' },
-            { id: 'r3', kind: 'part', namePattern: 'engine', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Control' },
-            { id: 'r4', kind: 'part', namePattern: 'battery', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Control' },
-            { id: 'r5', kind: 'part', namePattern: 'wheels', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Actuation' },
-            { id: 'r6', kind: 'part', namePattern: 'battery', placement: 'to the left of', peerKind: 'part', peerNamePattern: 'engine' },
+              rules: [
+                { id: 'r1', kind: 'part', namePattern: 'steeringWheel', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Driver' },
+                { id: 'r2', kind: 'part', namePattern: '*Pedal', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Driver' },
+                { id: 'r3', kind: 'part', namePattern: 'engine', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Control' },
+                { id: 'r4', kind: 'part', namePattern: 'battery', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Control' },
+                { id: 'r5', kind: 'part', namePattern: 'wheels', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Actuation' },
+                { id: 'r6', kind: 'part', namePattern: 'battery', placement: 'to the left of', peerKind: 'part', peerNamePattern: 'engine' },
+              ],
+            },
           ],
         },
       },
@@ -221,12 +222,13 @@ test.describe('Layout Rules — scoped layers inside a container', () => {
         data: {
           viewId,
           structureNotation: 'sysmlv2',
-          layeredLayout: {
-            enabled: true,
-            scopes: [
-              {
-                id: 's1',
-                scopePattern: '*',
+          layoutScopes: [
+            {
+              id: 's1',
+              target: { kind: 'diagram' },
+              enabled: true,
+              layering: {
+                enabled: true,
                 direction: 'top-down',
                 layers: [
                   { id: 'l1', name: 'Body' },
@@ -234,23 +236,29 @@ test.describe('Layout Rules — scoped layers inside a container', () => {
                   { id: 'l3', name: 'Drive' },
                 ],
               },
-              {
-                id: 's2',
-                scopePattern: 'infotainmentEcu',
+              rules: [
+                { id: 'r1', kind: 'part', namePattern: 'infotainmentEcu', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Control' },
+                { id: 'r2', kind: 'part', namePattern: 'bodyShell', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Body' },
+                { id: 'r3', kind: 'part', namePattern: 'wheelSet', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Drive' },
+              ],
+            },
+            {
+              id: 's2',
+              target: { kind: 'element', id: 'PhysicalArchitecture::VehiclePhysical::infotainmentEcu' },
+              enabled: true,
+              layering: {
+                enabled: true,
                 direction: 'top-down',
                 layers: [
                   { id: 'l1', name: 'Comfort' },
                   { id: 'l2', name: 'Media' },
                 ],
               },
-            ],
-          },
-          layoutRules: [
-            { id: 'r1', kind: 'part', namePattern: 'infotainmentEcu', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Control' },
-            { id: 'r2', kind: 'part', namePattern: 'bodyShell', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Body' },
-            { id: 'r3', kind: 'part', namePattern: 'wheelSet', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Drive' },
-            { id: 'r4', kind: 'part', namePattern: 'climateControlSw', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Comfort' },
-            { id: 'r5', kind: 'part', namePattern: 'entertainmentSw', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Media' },
+              rules: [
+                { id: 'r4', kind: 'part', namePattern: 'climateControlSw', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Comfort' },
+                { id: 'r5', kind: 'part', namePattern: 'entertainmentSw', placement: 'belong to', peerKind: 'layer', peerNamePattern: 'Media' },
+              ],
+            },
           ],
         },
       },
@@ -261,8 +269,9 @@ test.describe('Layout Rules — scoped layers inside a container', () => {
     const dlg = page.getByRole('dialog', { name: 'LayoutWizard' })
     await dlg.waitFor()
     await expect(dlg.getByTestId('lw-layered-enabled')).toBeChecked()
-    // The scope selector lists the container scope and shows its layer names.
-    await dlg.getByTestId('lw-scope-select').selectOption('s2')
+    // The container scope has its own tab with its own layer names.
+    await expect(dlg.getByTestId('lw-scope-tab-s2')).toHaveText('Part infotainmentEcu')
+    await dlg.getByTestId('lw-scope-tab-s2').click()
     await expect(dlg.getByTestId('lw-layer-name-0')).toHaveValue('Comfort')
     await dlg.getByTestId('lw-apply').click()
     await dlg.waitFor({ state: 'detached', timeout: 150_000 })

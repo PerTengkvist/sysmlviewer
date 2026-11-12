@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import threading
+from typing import Any
 from pathlib import Path
 
 from adapters.persistence.workspace_repo import sanitize_rel_path
@@ -12,6 +14,8 @@ from domain.interface_naming import (
 )
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.view_usage import effective_view, legacy_definition_warnings
+
+logger = logging.getLogger(__name__)
 from domain.models import (
     ArtifactKind,
     ElementStyle,
@@ -149,6 +153,56 @@ def _use_case_member_relations(
             added.add(rel.id)
             added.update(ends)
     return added
+
+
+def _resolve_layout_scopes(
+    scopes: list[dict[str, Any]], semantic: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Turn migrated name-pattern targets into element targets.
+
+    Old Layout Rules matched a scope to containers by name. The first
+    container in the view whose name matches becomes the target; a pattern
+    that matches nothing, or a container another scope already targets, is
+    dropped.
+    """
+    import fnmatch
+
+    containers = sorted(
+        (
+            el
+            for el in semantic.values()
+            if el.get("kind") in ("part", "package") and el.get("children")
+        ),
+        key=lambda el: el["id"],
+    )
+    used = {
+        s["target"]["id"] for s in scopes if s["target"].get("kind") == "element"
+    }
+    out: list[dict[str, Any]] = []
+    for scope in scopes:
+        target = scope["target"]
+        if target.get("kind") != "pattern":
+            out.append(scope)
+            continue
+        match = next(
+            (
+                el["id"]
+                for el in containers
+                if fnmatch.fnmatchcase(el.get("name") or "", target["pattern"])
+                and el["id"] not in used
+            ),
+            None,
+        )
+        if match is None:
+            logger.warning(
+                "Layout Rules scope %s: no container matches %r; scope dropped",
+                scope.get("id"),
+                target["pattern"],
+            )
+            continue
+        used.add(match)
+        out.append({**scope, "target": {"kind": "element", "id": match}})
+    return out
 
 
 def _declared_view_name(project: Project, view_id: str) -> str | None:
@@ -1381,8 +1435,8 @@ class ProjectService:
             ViewLayout,
             ViewLayouts,
             apply_auto_layout_edge_kinds,
-            apply_layered_layout,
-            apply_layout_rules,
+            apply_layout_scopes,
+            apply_legacy_layout_rules,
             apply_view_filters,
             apply_view_hierarchy_override,
             apply_view_layout_edge_patch,
@@ -1395,8 +1449,8 @@ class ProjectService:
         edges_patch = dict(patch.get("edges") or {})
         hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
         view_filters_patch = "viewFilters" in patch
-        layout_rules_patch = "layoutRules" in patch
-        layered_layout_patch = "layeredLayout" in patch
+        layout_scopes_patch = "layoutScopes" in patch
+        legacy_layout_patch = "layoutRules" in patch or "layeredLayout" in patch
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
@@ -1440,16 +1494,18 @@ class ProjectService:
                 if notation != "arcadia":
                     project.view_layouts = working
 
-            if layout_rules_patch:
-                working = apply_layout_rules(
-                    working, view_id, patch.get("layoutRules")
+            if layout_scopes_patch:
+                working = apply_layout_scopes(
+                    working, view_id, patch.get("layoutScopes")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
-
-            if layered_layout_patch:
-                working = apply_layered_layout(
-                    working, view_id, patch.get("layeredLayout")
+            elif legacy_layout_patch:
+                working = apply_legacy_layout_rules(
+                    working,
+                    view_id,
+                    patch.get("layoutRules"),
+                    patch.get("layeredLayout"),
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1533,8 +1589,8 @@ class ProjectService:
                 or geo_edge_patch
                 or hierarchy_override_patch
                 or view_filters_patch
-                or layout_rules_patch
-                or layered_layout_patch
+                or layout_scopes_patch
+                or legacy_layout_patch
                 or edge_kinds_patch
             ):
                 layout = working.by_view.get(view_id)
@@ -2117,13 +2173,9 @@ class ProjectService:
             "viewFilters": list(layout_for_view.view_filters)
             if layout_for_view
             else [],
-            "layoutRules": list(layout_for_view.layout_rules)
-            if layout_for_view
-            else [],
-            "layeredLayout": (
-                dict(layout_for_view.layered_layout)
-                if layout_for_view and layout_for_view.layered_layout is not None
-                else None
+            "layoutScopes": _resolve_layout_scopes(
+                list(layout_for_view.layout_scopes) if layout_for_view else [],
+                semantic,
             ),
             "autoLayoutEdgeKinds": (
                 dict(layout_for_view.auto_layout_edge_kinds)
