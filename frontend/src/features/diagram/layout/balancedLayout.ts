@@ -17,6 +17,7 @@ import {
 import { sizePartForPorts } from './structureAutoLayout'
 import { packAroundCore } from './clusteredPack'
 import { isLayoutNode } from './layoutNodes'
+import { normalizeLayoutBoundary } from './layoutBoundary'
 
 const MIN_W = 140
 const MIN_H = 72
@@ -418,6 +419,9 @@ export function layoutBalancedBottomUp(
   const aspectRatio = opts.aspectRatio ?? 1
   const variant = opts.variant ?? 'clustered'
   const gapFraction = balancedGapFraction(spacing)
+  // Only a frame around every node is the boundary; other containers are
+  // arranged among their siblings.
+  nodes = normalizeLayoutBoundary(nodes)
   const byId = new Map(nodes.map((n) => [n.id, n]))
   let boundaryId: string | undefined
   for (const n of nodes) {

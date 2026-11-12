@@ -5,15 +5,11 @@
  */
 import type { Node } from '@xyflow/react'
 import type { VisualizationNode } from '../../../api'
-import type { PartNodeData } from '../PartNode'
 import { isLayoutNode } from './layoutNodes'
+import { layoutBoundaryId } from './layoutBoundary'
 
 /** Preferred max coordinate for AutoLayout content (inclusive span from origin). */
 export const AUTO_LAYOUT_CANVAS_MAX = 3000
-
-function isBoundary(node: Node): boolean {
-  return !!(node.data as PartNodeData | undefined)?.isBoundary
-}
 
 function isPartNode(node: Node): boolean {
   return isLayoutNode(node)
@@ -61,7 +57,10 @@ export function normalizeAutoLayoutCanvas(
   const pad = opts.pad ?? 0
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
-  const boundary = nodes.find((n) => isPartNode(n) && isBoundary(n))
+  // Only a frame around every node may be pinned alone; otherwise all
+  // top-level nodes move together.
+  const boundaryId = layoutBoundaryId(nodes)
+  const boundary = boundaryId ? byId.get(boundaryId) : undefined
   if (boundary && nodePatch[boundary.id]) {
     const sz = readSize(nodePatch[boundary.id], boundary)
     const prevX = nodePatch[boundary.id]?.x ?? boundary.position.x

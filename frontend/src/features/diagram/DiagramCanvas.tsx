@@ -84,6 +84,7 @@ import {
 } from './edgeRouting'
 import { computeUpdateJumpers } from './layout/updateJumpers'
 import { keepFixedNodeSizes } from './layout/layoutNodes'
+import { layoutBoundaryId } from './layout/layoutBoundary'
 import {
   applyPortMovesToNodes,
   type PortMove,
@@ -2319,14 +2320,14 @@ export function DiagramCanvas({
   }, [nodes, view])
 
   /**
-   * Root boundary id: the view's root part when it is drawn (whitebox);
-   * null for package-style views. A top-level container with children is
-   * flagged as a boundary too, but it is not the view's root.
+   * Root boundary id: the frame AutoLayout keeps in place (a drawn whitebox
+   * root that holds every other node); null for package-style views, so the
+   * scopes and the layout agree on what "whole diagram" means.
    */
-  const boundaryIdForConstraints = useCallback((): string | null => {
-    const rootId = view?.view.rootArtifactId
-    return rootId && nodes.some((n) => n.id === rootId) ? rootId : null
-  }, [nodes, view?.view.rootArtifactId])
+  const boundaryIdForConstraints = useCallback(
+    (): string | null => layoutBoundaryId(nodes),
+    [nodes],
+  )
 
   /** Hard constraints for the hierarchic pipeline from rules + layered config. */
   const constraintsFor = useCallback(

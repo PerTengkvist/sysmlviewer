@@ -90,3 +90,25 @@ describe('flowViewportBounds', () => {
     expect(pointInFlowBounds({ x: 900, y: 10 }, b)).toBe(false)
   })
 })
+
+describe('normalizeAutoLayoutCanvas with several top-level containers', () => {
+  it('moves every top-level node by the same amount, not just a flagged one', () => {
+    // buildStructureGraph flags every container; only a frame around all
+    // nodes may be pinned alone.
+    const nodes = [
+      part('C1', { isBoundary: true, x: 500, y: 400, w: 300, h: 200 }),
+      part('c1', { parentId: 'C1', x: 20, y: 50 }),
+      part('C2', { isBoundary: true, x: 900, y: 400, w: 300, h: 200 }),
+    ]
+    const patch: Record<string, Partial<VisualizationNode>> = {
+      C1: { artifactId: 'C1', x: 500, y: 400, width: 300, height: 200 },
+      c1: { artifactId: 'c1', x: 20, y: 50 },
+      C2: { artifactId: 'C2', x: 900, y: 400, width: 300, height: 200 },
+    }
+    normalizeAutoLayoutCanvas(patch, nodes)
+    expect(patch.C1).toMatchObject({ x: 0, y: 0 })
+    expect(patch.C2).toMatchObject({ x: 400, y: 0 })
+    // Children stay relative to their container.
+    expect(patch.c1).toMatchObject({ x: 20, y: 50 })
+  })
+})

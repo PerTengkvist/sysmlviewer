@@ -58,6 +58,7 @@ import {
 import { separateAbsoluteOverlaps, type ParentOfMap } from './flowPlacement'
 import { connectedComponents, packComponents } from './componentPacking'
 import { isLayoutNode } from './layoutNodes'
+import { normalizeLayoutBoundary } from './layoutBoundary'
 
 const MIN_W = 140
 const MIN_H = 72
@@ -1023,6 +1024,9 @@ export async function layoutHierarchic(
   directives: AutoLayoutDirectives,
   deps: { layout?: (graph: ElkNode) => Promise<ElkNode> } = {},
 ): Promise<HierarchicLayoutResult> {
+  // Only a frame around every node is the root; other containers are
+  // ordinary nodes (otherwise every parentless node became its child).
+  nodes = normalizeLayoutBoundary(nodes)
   const opts = clampHierarchicOptions(directives.hierarchic)
   const constraints = directives.constraints
   const tree = buildTree(nodes)
