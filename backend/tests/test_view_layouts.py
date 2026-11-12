@@ -304,8 +304,7 @@ def _saved_layout() -> ViewLayout:
         },
         hierarchical_levels_override=3,
         view_filters=[{"id": "f"}],
-        layout_rules=[{"id": "r"}],
-        layered_layout={"enabled": True},
+        layout_scopes=[{"id": "s"}],
     )
 
 
@@ -360,8 +359,7 @@ def test_apply_snapshot_keeps_locks_and_view_settings():
     assert result.edges["Pkg::conn"].edit_locked is True
     assert result.hierarchical_levels_override == 3
     assert result.view_filters == [{"id": "f"}]
-    assert result.layout_rules == [{"id": "r"}]
-    assert result.layered_layout == {"enabled": True}
+    assert result.layout_scopes == [{"id": "s"}]
 
 
 def test_apply_snapshot_leaves_the_input_untouched():

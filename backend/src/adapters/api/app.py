@@ -65,6 +65,9 @@ class VisualizationPatch(BaseModel):
     hierarchicalLevelsOverride: int | None = None
     # Present replaces the whole list; omit to leave unchanged.
     viewFilters: list[dict[str, Any]] | None = None
+    # Layout Rules scopes; present replaces the list.
+    layoutScopes: list[dict[str, Any]] | None = None
+    # Older clients: migrated into layoutScopes.
     layoutRules: list[dict[str, Any]] | None = None
     # Present replaces the config (null clears); omit to leave unchanged.
     layeredLayout: dict[str, Any] | None = None

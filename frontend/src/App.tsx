@@ -779,17 +779,17 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
-  const onLayoutRulesChange = useCallback(
-    async (rules: import('./api').LayoutRuleRow[]) => {
+  const onLayoutScopesChange = useCallback(
+    async (scopes: import('./api').LayoutScope[]) => {
       if (!project || !activeViewId) return
       try {
         await patchVisualization(project.id, {
           viewId: activeViewId,
-          layoutRules: rules,
+          layoutScopes: scopes,
           structureNotation,
         })
         setViewPayload((prev) =>
-          prev ? { ...prev, layoutRules: rules } : prev,
+          prev ? { ...prev, layoutScopes: scopes } : prev,
         )
       } catch (e) {
         setError(String(e))
@@ -809,25 +809,6 @@ export default function App() {
         })
         setViewPayload((prev) =>
           prev ? { ...prev, autoLayoutEdgeKinds: kinds } : prev,
-        )
-      } catch (e) {
-        setError(String(e))
-      }
-    },
-    [project, activeViewId, structureNotation],
-  )
-
-  const onLayeredLayoutChange = useCallback(
-    async (layered: import('./api').LayeredLayoutConfig | null) => {
-      if (!project || !activeViewId) return
-      try {
-        await patchVisualization(project.id, {
-          viewId: activeViewId,
-          layeredLayout: layered,
-          structureNotation,
-        })
-        setViewPayload((prev) =>
-          prev ? { ...prev, layeredLayout: layered } : prev,
         )
       } catch (e) {
         setError(String(e))
@@ -2011,12 +1992,9 @@ export default function App() {
                 onClientError={(message, viewId) =>
                   void eventLog.report({ message, viewId })
                 }
-                onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
+                onLayoutScopesChange={(scopes) => void onLayoutScopesChange(scopes)}
                 onAutoLayoutEdgeKindsChange={(kinds) =>
                   void onAutoLayoutEdgeKindsChange(kinds)
-                }
-                onLayeredLayoutChange={(layered) =>
-                  void onLayeredLayoutChange(layered)
                 }
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
                 onPortsMoved={(moves) => void onPortsMoved(moves)}

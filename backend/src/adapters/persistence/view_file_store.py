@@ -102,10 +102,8 @@ def layout_document(
         doc["hierarchicalLevelsOverride"] = layout.hierarchical_levels_override
     if layout.view_filters:
         doc["viewFilters"] = list(layout.view_filters)
-    if layout.layout_rules:
-        doc["layoutRules"] = list(layout.layout_rules)
-    if layout.layered_layout is not None:
-        doc["layeredLayout"] = dict(layout.layered_layout)
+    if layout.layout_scopes:
+        doc["layoutScopes"] = [dict(s) for s in layout.layout_scopes]
     if layout.auto_layout_edge_kinds is not None:
         doc["autoLayoutEdgeKinds"] = dict(layout.auto_layout_edge_kinds)
     return doc
@@ -276,8 +274,16 @@ def read_all(
                     "hierarchicalLevelsOverride"
                 ),
                 "viewFilters": doc.get("viewFilters") or [],
-                "layoutRules": doc.get("layoutRules") or [],
-                "layeredLayout": doc.get("layeredLayout"),
+                # Older files hold layoutRules + layeredLayout instead;
+                # ViewLayout.from_dict migrates them.
+                **(
+                    {"layoutScopes": doc["layoutScopes"]}
+                    if isinstance(doc.get("layoutScopes"), list)
+                    else {
+                        "layoutRules": doc.get("layoutRules") or [],
+                        "layeredLayout": doc.get("layeredLayout"),
+                    }
+                ),
                 "autoLayoutEdgeKinds": doc.get("autoLayoutEdgeKinds"),
             }
         )
