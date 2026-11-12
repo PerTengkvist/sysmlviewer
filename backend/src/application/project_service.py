@@ -87,6 +87,70 @@ def _view_display_name(view_id: str) -> str:
     return view_id.rsplit("::", 1)[-1]
 
 
+# Relations a general view draws to a use case when they start or end at a
+# member of it (subject, actor, a part inside the subject). Connections,
+# interfaces, bindings and flows need ports and are not lifted.
+_LIFTABLE_RELATION_KINDS = {
+    ArtifactKind.DEPENDENCY,
+    ArtifactKind.SATISFY,
+    ArtifactKind.INCLUDE,
+    ArtifactKind.ALLOCATION,
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
+}
+
+
+def _use_case_member_relations(
+    semantic: dict[str, SemanticElement], artifact_ids: set[str]
+) -> set[str]:
+    """Relations with an end inside a use case on the diagram.
+
+    Returns the relations plus each hidden end and its owners up to the use
+    case, so the frontend can draw the relation to that use case.
+    """
+    use_cases = {
+        aid
+        for aid in artifact_ids
+        if (el := semantic.get(aid)) is not None and el.kind == ArtifactKind.USE_CASE
+    }
+    if not use_cases:
+        return set()
+
+    def chain(end_id: str) -> list[str] | None:
+        out: list[str] = []
+        current = semantic.get(end_id)
+        while current is not None:
+            if current.id in use_cases:
+                return out
+            out.append(current.id)
+            current = semantic.get(current.parent_id) if current.parent_id else None
+        return None
+
+    added: set[str] = set()
+    for rel in semantic.values():
+        if rel.kind not in _LIFTABLE_RELATION_KINDS:
+            continue
+        if not rel.source_id or not rel.target_id:
+            continue
+        ends: list[str] = []
+        lifted = False
+        ok = True
+        for end in (rel.source_id, rel.target_id):
+            if end in artifact_ids:
+                continue
+            path = chain(end)
+            if path is None:
+                ok = False
+                break
+            ends.extend(path)
+            lifted = True
+        if ok and lifted:
+            added.add(rel.id)
+            added.update(ends)
+    return added
+
+
 def _declared_view_name(project: Project, view_id: str) -> str | None:
     """Name for the layout file. Generated artifact views have none."""
     return next((v.name for v in project.views if v.id == view_id), None)
@@ -1734,6 +1798,7 @@ class ProjectService:
             )
 
         artifact_ids: set[str] = set()
+        lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
             for eroot in expose_roots:
@@ -1814,6 +1879,7 @@ class ProjectService:
                 artifact_ids |= collect_artifacts_to_depth(
                     project.semantic, eroot.id, effective_levels
                 )
+            lift_use_case_members = True
 
         # SysML view filter clauses (alpha: @metaclass, name.startsWith)
         from domain.view_filter import apply_view_filters, parse_stored_filters
@@ -1829,6 +1895,9 @@ class ProjectService:
             )
 
         from domain.merge import STRUCTURE_EDGE_KINDS as structure_edge_kinds
+
+        if lift_use_case_members:
+            artifact_ids |= _use_case_member_relations(project.semantic, artifact_ids)
 
         # Drop relations to/from parts outside the depth window (even if nested
         # under an included parent as a child feature).

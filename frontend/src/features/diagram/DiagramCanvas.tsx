@@ -84,6 +84,7 @@ import {
   type Pt,
 } from './edgeRouting'
 import { computeUpdateJumpers } from './layout/updateJumpers'
+import { keepFixedNodeSizes } from './layout/layoutNodes'
 import {
   applyPortMovesToNodes,
   type PortMove,
@@ -2359,7 +2360,8 @@ export function DiagramCanvas({
       onAutoLayoutEdgeKindsChangeRef.current?.(edgeKinds)
     }
 
-    const layoutNodes = planned.nodes
+    // Use cases keep their fixed size; only their place changes.
+    const layoutNodes = keepFixedNodeSizes(planned.nodes, nodes)
     const nextNodes = Object.keys(layoutNodes).length
       ? nodes.map((node) => {
           const patch = layoutNodes[node.id]

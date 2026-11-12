@@ -18,6 +18,7 @@ import type { ActorNodeData } from './ActorNode'
 import type { UseCaseNodeData } from './UseCaseNode'
 import type { BoundaryAnchor } from '../../boundaryAnchors'
 import { syncUseCaseAnchors } from './syncUseCaseAnchors'
+import { USE_CASE_H, USE_CASE_W } from './useCaseSize'
 
 const LEFT = 24
 const PACKAGE_ONLY: ReadonlySet<string> = new Set(['package'])
@@ -28,8 +29,8 @@ const REQUIREMENT_OWNERS: ReadonlySet<string> = new Set([
   'useCase',
 ])
 const TOP = 40
-const UC_W = 168
-const UC_H = 72
+const UC_W = USE_CASE_W
+const UC_H = USE_CASE_H
 const ACTOR_W = 88
 const ACTOR_H = 108
 const GAP = 28

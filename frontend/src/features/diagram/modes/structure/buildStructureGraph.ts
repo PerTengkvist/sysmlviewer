@@ -48,6 +48,7 @@ import {
   packBodyOffsets,
 } from '../../layout/portPlacement'
 import { resolveNestedPartPosition } from '../../nestedPartPosition'
+import { USE_CASE_H, USE_CASE_W } from '../useCase/useCaseSize'
 
 function nodeBox(
   node: Node,
@@ -226,6 +227,48 @@ export function findOwnerPart(
   }
   if (!current || !OWNER_KINDS.has(current.kind)) return null
   return displayIds.has(current.id) ? current.id : null
+}
+
+/**
+ * Lifted relations of use case members: one edge per kind, label and end
+ * pair, and none where the use case already has that relation itself.
+ */
+function dropDuplicateLiftedEdges(
+  edges: Edge[],
+  semantic: Record<string, SemanticElement>,
+): Edge[] {
+  const key = (e: Edge) => {
+    const rel = semantic[e.id]
+    return `${rel?.kind}|${(rel?.metadataKeywords || []).join(',')}|${e.source}|${e.target}`
+  }
+  const isLifted = (e: Edge) =>
+    Boolean((e.data as { liftedFrom?: string[] })?.liftedFrom)
+  const seen = new Set(edges.filter((e) => !isLifted(e)).map(key))
+  return edges.filter((e) => {
+    if (!isLifted(e)) return true
+    const k = key(e)
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+}
+
+/**
+ * The use case on the diagram that holds a hidden endpoint (its subject,
+ * an actor or anything inside them). Use cases are drawn with only their
+ * name, so relations of their members are drawn to the use case.
+ */
+export function enclosingUseCase(
+  endpointId: string,
+  semantic: Record<string, SemanticElement>,
+  displayIds: Set<string>,
+): string | null {
+  let current = semantic[semantic[endpointId]?.parentId || '']
+  while (current) {
+    if (current.kind === 'useCase' && displayIds.has(current.id)) return current.id
+    current = semantic[current.parentId || '']
+  }
+  return null
 }
 
 /**
@@ -418,6 +461,8 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     fallbackW: number,
     fallbackH: number,
   ): { width: number; height: number } => {
+    // Use cases cannot be resized and look the same in every diagram.
+    if (el.kind === 'useCase') return { width: USE_CASE_W, height: USE_CASE_H }
     const viz = visualization.nodes[id]
     const baseW = viz?.width ?? fallbackW
     const baseH = viz?.height ?? fallbackH
@@ -498,7 +543,9 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       const el = semantic[id]
       if (!el) return
       if (isStructureNode(el)) partDepth.set(id, depth)
-      if (depth >= levels) return
+      // A use case shows only its name: its subject, actors and parts are
+      // never drawn inside it.
+      if (depth >= levels || el.kind === 'useCase') return
       for (const cid of el.children || []) {
         const child = semantic[cid]
         if (!child) continue
@@ -985,7 +1032,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
         }
       : undefined
 
-  const builtEdges: Edge[] = Object.values(semantic)
+  const relationEdges: Edge[] = Object.values(semantic)
     .filter((el) => {
       if (!STRUCTURE_EDGE_KINDS.includes(el.kind)) return false
       if (el.kind === 'interface') return Boolean(el.sourceId && el.targetId)
@@ -1000,15 +1047,27 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       const targetEndpoint = conn.targetId || ''
       const sourceEl = semantic[sourceEndpoint]
       const targetEl = semantic[targetEndpoint]
-      const sourcePart = findOwnerPart(sourceEndpoint, semantic, displaySet)
-      const targetPart = findOwnerPart(targetEndpoint, semantic, displaySet)
-      if (!sourcePart || !targetPart) return null
-
+      let sourcePart = findOwnerPart(sourceEndpoint, semantic, displaySet)
+      let targetPart = findOwnerPart(targetEndpoint, semantic, displaySet)
       const portHandles = usesPortHandles(
         relationKind,
         sourceEl?.kind,
         targetEl?.kind,
       )
+      const liftedFrom: string[] = []
+      if (!portHandles) {
+        if (!sourcePart) {
+          sourcePart = enclosingUseCase(sourceEndpoint, semantic, displaySet)
+          if (sourcePart) liftedFrom.push(sourceEndpoint)
+        }
+        if (!targetPart) {
+          targetPart = enclosingUseCase(targetEndpoint, semantic, displaySet)
+          if (targetPart) liftedFrom.push(targetEndpoint)
+        }
+      }
+      if (!sourcePart || !targetPart) return null
+      // Both ends inside the same use case: nothing to draw.
+      if (liftedFrom.length && sourcePart === targetPart) return null
       const srcNode = nodesById.get(sourcePart)
       const tgtNode = nodesById.get(targetPart)
       const srcAnchored =
@@ -1169,6 +1228,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
           manualAttachment,
           markerStartKind,
           onRelationEndMoved,
+          ...(liftedFrom.length ? { liftedFrom } : {}),
         },
         zIndex: 0,
         style: {
@@ -1179,6 +1239,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
       } as Edge
     })
     .filter((e): e is Edge => e !== null)
+  const builtEdges = dropDuplicateLiftedEdges(relationEdges, semantic)
 
   // Orient composition edges to facing borders
   let orientedComposition = orientRelationBoundaryHandles(

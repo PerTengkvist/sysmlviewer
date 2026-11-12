@@ -173,6 +173,9 @@ A use case traces to requirements with `objective`, `#refine dependency`,
   that trace to it.
 - A UseCaseView draws the requirements it exposes, with «objective»,
   «refine» and «satisfy» edges. A GeneralView draws them too.
+- Every diagram draws a use case as an ellipse with only its name, at the
+  same size as in a UseCaseView. Its actors, subject and parts are not drawn
+  inside it; a relation to one of them is drawn to the use case.
 - The requirement table (GridView) has a **Use cases** column, taken from the
   whole model, so the use cases need not be exposed.
 
