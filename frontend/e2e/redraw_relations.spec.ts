@@ -83,6 +83,20 @@ function exitPoint(box: Box, peer: Box): Pt {
   return { x: c.x + dx * t, y: c.y + dy * t }
 }
 
+/**
+ * The same path, up to 0.05 px per number. Handles are measured at the zoom
+ * the diagram had when it was drawn, so a redraw at another zoom differs by
+ * float noise (around 1e-4 px), not by geometry.
+ */
+const NUM = /-?\d+(?:\.\d+)?(?:e-?\d+)?/g
+function samePath(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return a === b
+  if (a.replace(NUM, '#') !== b.replace(NUM, '#')) return false
+  const na = a.match(NUM)!.map(Number)
+  const nb = b.match(NUM)!.map(Number)
+  return na.every((n, i) => Math.abs(n - nb[i]!) <= 0.05)
+}
+
 const near = (a: Pt, b: Pt, tol = 8) => Math.hypot(a.x - b.x, a.y - b.y) <= tol
 
 type Ends = Record<string, { source: string; target: string }>
@@ -157,7 +171,8 @@ test('redraws relations to the facing borders, undoes, and survives a reload', a
   await page.waitForTimeout(500)
   const undone = await geometry(page)
   for (const id of changed) {
-    expect(undone.edges[id]?.d, id).toBe(before.edges[id]?.d)
+    const [u, b] = [undone.edges[id]?.d, before.edges[id]?.d]
+    expect(samePath(u, b), `${id}: ${u} vs ${b}`).toBe(true)
   }
   await page.getByTitle('Redo (Ctrl/Cmd+Y)').click()
   await page.waitForTimeout(500)
@@ -169,7 +184,8 @@ test('redraws relations to the facing borders, undoes, and survives a reload', a
   await fitView(page)
   const reloaded = await geometry(page)
   for (const id of Object.keys(ends)) {
-    expect(reloaded.edges[id]?.d, id).toBe(after.edges[id]?.d)
+    const [r, a] = [reloaded.edges[id]?.d, after.edges[id]?.d]
+    expect(samePath(r, a), `${id}: ${r} vs ${a}`).toBe(true)
   }
 })
 

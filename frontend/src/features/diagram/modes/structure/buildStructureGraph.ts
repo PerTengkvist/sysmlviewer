@@ -305,6 +305,38 @@ export function resolvePortHandleId(
   return null
 }
 
+/**
+ * Smallest size a part is drawn at: tall enough for its port labels, and
+ * wide enough for them while some port still sits at its default place.
+ * The Details panel clamps a typed size to this, so it shows what is drawn.
+ */
+export function fittedPartMinimum(
+  id: string,
+  semantic: Record<string, SemanticElement>,
+  visualization: ViewPayload['visualization'],
+): { width: number; height: number } {
+  const el = semantic[id]
+  if (!el) return { width: 0, height: 0 }
+  const ports = buildPorts(el, semantic, visualization)
+  if (!ports.length) return { width: 0, height: 0 }
+  return fittedMinimumFor(el, ports, semantic, visualization)
+}
+
+function fittedMinimumFor(
+  el: SemanticElement,
+  ports: { name: string; side: PortSide }[],
+  semantic: Record<string, SemanticElement>,
+  visualization: ViewPayload['visualization'],
+): { width: number; height: number } {
+  const fitted = sizePartForPorts(el.name, ports)
+  // Default (unsaved) placement: grow to fit port names in the body.
+  // Saved placement: still never shrink below the height the labels need.
+  const unsaved = directPortsForPart(el, semantic).some(
+    (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
+  )
+  return { width: unsaved ? fitted.width : 0, height: fitted.height }
+}
+
 /** Direct port children of a part (OMG: hierarchical face = one handle). */
 function directPortsForPart(
   el: SemanticElement,
@@ -473,22 +505,8 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     const baseW = viz?.width ?? fallbackW
     const baseH = viz?.height ?? fallbackH
     if (!ports.length) return { width: baseW, height: baseH }
-    const fitted = sizePartForPorts(el.name, ports)
-    const unsaved = directPortsForPart(el, semantic).some(
-      (p) => !hasSavedPortPlacement(visualization.nodes[p.id]),
-    )
-    // Default (unsaved) placement: grow to fit port names in the body.
-    // Saved placement: still never shrink below fitted height needed for body band.
-    if (unsaved) {
-      return {
-        width: Math.max(baseW, fitted.width),
-        height: Math.max(baseH, fitted.height),
-      }
-    }
-    return {
-      width: baseW,
-      height: Math.max(baseH, fitted.height),
-    }
+    const min = fittedMinimumFor(el, ports, semantic, visualization)
+    return { width: Math.max(baseW, min.width), height: Math.max(baseH, min.height) }
   }
 
   const partData = (

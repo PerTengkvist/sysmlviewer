@@ -75,7 +75,11 @@ type Props = {
   onDelete?: (artifactId: string) => void
   onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
   onEditLockChange?: (artifactId: string, locked: boolean) => void
-  onPositionChange?: (artifactId: string, x: number, y: number) => void
+  /** Each field sends only its own axis, so two quick edits never undo each other. */
+  onPositionChange?: (
+    artifactId: string,
+    position: { x?: number; y?: number },
+  ) => void
   onSizeChange?: (
     ids: string[],
     size: { width?: number; height?: number },
@@ -1224,11 +1228,11 @@ export function DetailsPanel({
                     disabled={!unlocked}
                     aria-label="X position"
                     onBlur={(e) => {
+                      if (!e.target.value.trim()) return
                       const x = Number(e.target.value)
-                      const y = node.y
-                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (!Number.isFinite(x)) return
                       if (Math.round(x) !== Math.round(node.x)) {
-                        onPositionChange(el.id, x, y)
+                        onPositionChange(el.id, { x })
                       }
                     }}
                   />
@@ -1240,11 +1244,11 @@ export function DetailsPanel({
                     disabled={!unlocked}
                     aria-label="Y position"
                     onBlur={(e) => {
+                      if (!e.target.value.trim()) return
                       const y = Number(e.target.value)
-                      const x = node.x
-                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (!Number.isFinite(y)) return
                       if (Math.round(y) !== Math.round(node.y)) {
-                        onPositionChange(el.id, x, y)
+                        onPositionChange(el.id, { y })
                       }
                     }}
                   />
