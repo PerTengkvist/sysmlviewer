@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+from domain.expose import SUFFIX as EXPOSE_SUFFIX
+from domain.expose import kind_of
 from domain.models import ArtifactKind, SemanticElement
 
 
@@ -191,7 +193,8 @@ def _emit_element(
         for ref in refs:
             exposed = semantic.get(ref)
             name = exposed.name if exposed else ref.split("::")[-1]
-            lines.append(f"{pad}  expose {name};")
+            suffix = EXPOSE_SUFFIX.get(kind_of(el.expose_kinds, ref), "")
+            lines.append(f"{pad}  expose {name}{suffix};")
         for filt in el.view_filters or []:
             op = filt.get("op")
             if op == "metaclass" and filt.get("ref"):

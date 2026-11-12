@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "viewId": "HierarchicalPartsPkg::PartDefinitionsMembersView",
+  "name": "PartDefinitionsMembersView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "HierarchicalPartsPkg::PartDefinitions::FD1": {
+      "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD1",
+      "x": 40,
+      "y": 40,
+      "width": 200,
+      "height": 120
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD2": {
+      "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD2",
+      "x": 300,
+      "y": 40,
+      "width": 200,
+      "height": 120
+    },
+    "HierarchicalPartsPkg::PartDefinitions::FD3": {
+      "artifactId": "HierarchicalPartsPkg::PartDefinitions::FD3",
+      "x": 560,
+      "y": 40,
+      "width": 200,
+      "height": 120
+    }
+  },
+  "edges": {}
+}

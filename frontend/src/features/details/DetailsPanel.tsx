@@ -506,7 +506,7 @@ function FormatControls({
   )
 }
 
-function HierarchyLevelsSection({
+export function HierarchyLevelsSection({
   viewPayload,
   globalHierarchicalLevels,
   onHierarchyOverrideChange,
@@ -520,6 +520,8 @@ function HierarchyLevelsSection({
     return null
   }
   const override = viewPayload.hierarchicalLevelsOverride
+  // `expose P::*;` / `expose P::**;` decide the depth, not the levels.
+  const exposeSetsDepth = !!viewPayload.exposeControlsDepth
   return (
     <div className="view-hierarchy-control">
       <h3>Diagram levels</h3>
@@ -531,6 +533,7 @@ function HierarchyLevelsSection({
         <input
           type="checkbox"
           checked={override != null}
+          disabled={exposeSetsDepth}
           onChange={(e) => {
             if (e.target.checked) {
               onHierarchyOverrideChange(
@@ -551,7 +554,7 @@ function HierarchyLevelsSection({
           type="number"
           min={1}
           max={8}
-          disabled={override == null}
+          disabled={exposeSetsDepth || override == null}
           value={override != null ? override : globalHierarchicalLevels}
           onChange={(e) => {
             const n = Math.max(1, Number(e.target.value) || 1)
@@ -560,9 +563,11 @@ function HierarchyLevelsSection({
         />
       </label>
       <p className="muted settings-note">
-        {override != null
-          ? `This diagram uses ${override} levels.`
-          : `Using global setting (${globalHierarchicalLevels}).`}
+        {exposeSetsDepth
+          ? "Depth is set by this view's expose (::* / ::**)."
+          : override != null
+            ? `This diagram uses ${override} levels.`
+            : `Using global setting (${globalHierarchicalLevels}).`}
       </p>
     </div>
   )

@@ -149,5 +149,16 @@ package HierarchicalPartsPkg {
     view NestedPortsView {
         expose NestedPortsExample;
     }
+
+    // `::*` exposes only the direct members of PartDefinitions (FD1-FD3,
+    // without their functions); `::**` exposes everything under it at any
+    // depth, whatever the diagram levels are set to.
+    view PartDefinitionsMembersView : GeneralView {
+        expose PartDefinitions::*;
+    }
+
+    view PartDefinitionsAllView : GeneralView {
+        expose PartDefinitions::**;
+    }
 }
 

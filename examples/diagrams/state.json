@@ -2092,7 +2092,9 @@
         "HierarchicalPartsPkg::FD1View",
         "HierarchicalPartsPkg::FD2View",
         "HierarchicalPartsPkg::FD3View",
-        "HierarchicalPartsPkg::NestedPortsView"
+        "HierarchicalPartsPkg::NestedPortsView",
+        "HierarchicalPartsPkg::PartDefinitionsMembersView",
+        "HierarchicalPartsPkg::PartDefinitionsAllView"
       ],
       "fileId": "hierarchicalParts.sysml"
     },
@@ -3432,6 +3434,56 @@
       "exposeRefs": [
         "HierarchicalPartsPkg::NestedPortsExample"
       ],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitionsMembersView": {
+      "id": "HierarchicalPartsPkg::PartDefinitionsMembersView",
+      "kind": "view",
+      "name": "PartDefinitionsMembersView",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "HierarchicalPartsPkg::PartDefinitions",
+      "exposeRefs": [
+        "HierarchicalPartsPkg::PartDefinitions"
+      ],
+      "exposeKinds": {
+        "HierarchicalPartsPkg::PartDefinitions": "members"
+      },
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "hierarchicalParts.sysml"
+    },
+    "HierarchicalPartsPkg::PartDefinitionsAllView": {
+      "id": "HierarchicalPartsPkg::PartDefinitionsAllView",
+      "kind": "view",
+      "name": "PartDefinitionsAllView",
+      "parentId": "HierarchicalPartsPkg",
+      "typeRef": "GeneralView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "HierarchicalPartsPkg::PartDefinitions",
+      "exposeRefs": [
+        "HierarchicalPartsPkg::PartDefinitions"
+      ],
+      "exposeKinds": {
+        "HierarchicalPartsPkg::PartDefinitions": "recursive"
+      },
       "viewFilters": [],
       "defaultValue": null,
       "multiplicity": null,
@@ -10765,6 +10817,20 @@
       "rootArtifactId": "HierarchicalPartsPkg::NestedPortsExample",
       "parentViewId": null,
       "typeRef": null
+    },
+    {
+      "id": "HierarchicalPartsPkg::PartDefinitionsAllView",
+      "name": "PartDefinitionsAllView",
+      "rootArtifactId": "HierarchicalPartsPkg::PartDefinitions",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
+    },
+    {
+      "id": "HierarchicalPartsPkg::PartDefinitionsMembersView",
+      "name": "PartDefinitionsMembersView",
+      "rootArtifactId": "HierarchicalPartsPkg::PartDefinitions",
+      "parentViewId": null,
+      "typeRef": "GeneralView"
     },
     {
       "id": "PartRelationships::RelationshipsView",
