@@ -200,3 +200,55 @@ def test_use_case_merge_preserves_layout():
     assert merged.nodes["P::Login"].x == 10
     assert merged.nodes["P::Login"].y == 20
     assert "P::Auth" in merged.nodes
+
+
+def _successions(result, parent: str) -> set[tuple[str, str]]:
+    return {
+        (e.source_id, e.target_id)
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.SUCCESSION and e.parent_id == parent
+    }
+
+
+def test_then_to_an_earlier_step_is_a_loop_back():
+    content = """
+    package P {
+      use case def Charge {
+        first start;
+        then action a;
+        then action b;
+        then a;
+      }
+    }
+    """
+    result = _parse(content)
+    succ = _successions(result, "P::Charge")
+    assert ("P::Charge::b", "P::Charge::a") in succ
+    assert ("P::Charge::a", "P::Charge::b") in succ
+    actions = [
+        e
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.ACTION and e.name == "a"
+    ]
+    assert len(actions) == 1, "the loop must reuse the step, not add a second one"
+
+
+def test_decision_branch_back_to_an_earlier_step():
+    content = """
+    package P {
+      use case def Charge {
+        first start;
+        then action transferEnergy;
+        then action reportCharge;
+        then if pluggedIn then transferEnergy else unplug;
+        first unplug then done;
+      }
+    }
+    """
+    result = _parse(content)
+    succ = _successions(result, "P::Charge")
+    assert ("P::Charge::pluggedIn", "P::Charge::transferEnergy") in succ
+    assert ("P::Charge::pluggedIn", "P::Charge::unplug") in succ
+    assert ("P::Charge::unplug", "P::Charge::done") in succ
+    assert ("P::Charge::transferEnergy", "P::Charge::done") not in succ
+    assert result.elements["P::Charge::done"].type_ref == "done"

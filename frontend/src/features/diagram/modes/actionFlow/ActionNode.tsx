@@ -65,6 +65,8 @@ function ActionNodeInner({ data, selected }: NodeProps) {
         <Handle type="target" position={Position.Top} id="top" />
         <Handle type="source" position={Position.Right} id="out" />
         <Handle type="source" position={Position.Bottom} id="bottom" />
+        {/* Last, so edges without a handle id keep their old default. */}
+        <Handle type="target" position={Position.Right} id="in-right" />
       </div>
     )
   }
@@ -116,6 +118,13 @@ function ActionNodeInner({ data, selected }: NodeProps) {
           id="out-top"
           className="action-decision-handle"
         />
+        {/* Loop back into the decision; last so defaults stay unchanged. */}
+        <Handle
+          type="target"
+          position={Position.Right}
+          id="in-right"
+          className="action-decision-handle"
+        />
       </div>
     )
   }
@@ -133,6 +142,8 @@ function ActionNodeInner({ data, selected }: NodeProps) {
       <Handle type="target" position={Position.Left} id="in" />
       <Handle type="source" position={Position.Bottom} id="bottom" />
       <Handle type="target" position={Position.Top} id="top" />
+      {/* Loop back from a later step; last so defaults stay unchanged. */}
+      <Handle type="target" position={Position.Right} id="in-right" />
     </div>
   )
 }
