@@ -155,9 +155,13 @@ export function applyRelationHandlesToNodes(
     }
     const srcHandle = e.sourceHandle || ''
     const tgtHandle = e.targetHandle || ''
-    if (!srcHandle.startsWith('rel-src-') && !srcHandle.startsWith('rel-out-')) {
-      continue
-    }
+    const srcIsRel =
+      srcHandle.startsWith('rel-src-') || srcHandle.startsWith('rel-out-')
+    // A requirement or use case source sits on an anchor; its part target
+    // still needs a rel- handle.
+    const tgtIsRel =
+      tgtHandle.startsWith('rel-tgt-') || tgtHandle.startsWith('rel-in-')
+    if (!srcIsRel && !tgtIsRel) continue
     let sourceSide = data.sourceSide
     let targetSide = data.targetSide
     let sourceOffset = data.sourceOffset ?? 0.5
@@ -171,13 +175,15 @@ export function applyRelationHandlesToNodes(
     }
     if (!sourceSide) sourceSide = 'right'
     if (!targetSide) targetSide = 'left'
-    ensure(e.source).push({
-      id: `rel-src-${e.id}`,
-      type: 'source',
-      side: sourceSide,
-      offset: sourceOffset,
-    })
-    ensure(e.target).push({
+    if (srcIsRel) {
+      ensure(e.source).push({
+        id: `rel-src-${e.id}`,
+        type: 'source',
+        side: sourceSide,
+        offset: sourceOffset,
+      })
+    }
+    if (tgtIsRel || !tgtHandle) ensure(e.target).push({
       id: `rel-tgt-${e.id}`,
       type: 'target',
       side: targetSide,

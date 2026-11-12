@@ -10,6 +10,10 @@ from domain.models import VisualizationEdge, VisualizationNode, Waypoint
 _ANCHOR_SIDES = frozenset({"left", "right", "top", "bottom"})
 
 
+def _optional_float(raw: Any) -> float | None:
+    return float(raw) if raw is not None else None
+
+
 def parse_boundary_anchors(raw: Any) -> list[dict[str, Any]] | None:
     """Keep id/side/offset points. None means the patch did not set anchors."""
     if raw is None:
@@ -241,18 +245,23 @@ class ViewEdgeLayout:
             lo = patch["labelOffset"] or {}
             label_offset_x = float(lo.get("x", 0) or 0)
             label_offset_y = float(lo.get("y", 0) or 0)
-        if "sourceSide" in patch and patch["sourceSide"]:
-            source_side = str(patch["sourceSide"])
-        if "sourceOffset" in patch and patch["sourceOffset"] is not None:
-            source_offset = float(patch["sourceOffset"])
-        if "targetSide" in patch and patch["targetSide"]:
-            target_side = str(patch["targetSide"])
-        if "targetOffset" in patch and patch["targetOffset"] is not None:
-            target_offset = float(patch["targetOffset"])
-        if "sourceAnchorId" in patch and patch["sourceAnchorId"]:
-            source_anchor_id = str(patch["sourceAnchorId"])
-        if "targetAnchorId" in patch and patch["targetAnchorId"]:
-            target_anchor_id = str(patch["targetAnchorId"])
+        # An explicit null clears an attachment (undo of a first redraw).
+        if "sourceSide" in patch:
+            source_side = str(patch["sourceSide"]) if patch["sourceSide"] else None
+        if "sourceOffset" in patch:
+            source_offset = _optional_float(patch["sourceOffset"])
+        if "targetSide" in patch:
+            target_side = str(patch["targetSide"]) if patch["targetSide"] else None
+        if "targetOffset" in patch:
+            target_offset = _optional_float(patch["targetOffset"])
+        if "sourceAnchorId" in patch:
+            source_anchor_id = (
+                str(patch["sourceAnchorId"]) if patch["sourceAnchorId"] else None
+            )
+        if "targetAnchorId" in patch:
+            target_anchor_id = (
+                str(patch["targetAnchorId"]) if patch["targetAnchorId"] else None
+            )
         if "editLocked" in patch:
             edit_locked = bool(patch["editLocked"])
         return ViewEdgeLayout(

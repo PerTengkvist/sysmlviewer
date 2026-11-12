@@ -1987,17 +1987,17 @@ class ProjectService:
 
         for index, aid in enumerate(sorted(pending_local)):
             global_node = project.visualization.nodes[aid]
-            out = global_node.to_dict()
-            x, y = default_view_local_xy(index)
-            out["x"] = x
-            out["y"] = y
             pending_overlay = (
                 overlay_layouts.get_node(view.id, aid)
                 if overlay_layouts is not None
                 else None
             )
-            if pending_overlay is not None:
-                stamp_edit_lock(out, pending_overlay.edit_locked)
+            # Keep what the view saved without a position (boundary anchors,
+            # size, lock); only the position is the view's default.
+            out = resolve_view_node(global_node, pending_overlay)
+            x, y = default_view_local_xy(index)
+            out["x"] = x
+            out["y"] = y
             nodes[aid] = out
 
         # Edges: only relations whose endpoints are both in the depth-limited set.

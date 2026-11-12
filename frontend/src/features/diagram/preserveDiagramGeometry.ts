@@ -95,3 +95,67 @@ export function preserveExistingGeometry<N extends GeomNode, E extends GeomEdge>
 
   return { nodes, edges }
 }
+
+const ATTACHMENT_KEYS = [
+  'sourceSide',
+  'sourceOffset',
+  'sourceAnchorId',
+  'targetSide',
+  'targetOffset',
+  'targetAnchorId',
+] as const
+
+type AttachmentRecord = Partial<Record<(typeof ATTACHMENT_KEYS)[number], unknown>>
+
+/** Edge ids whose saved attachment differs between two layouts. */
+export function changedEdgeAttachments(
+  a: Record<string, AttachmentRecord>,
+  b: Record<string, AttachmentRecord>,
+): Set<string> {
+  const out = new Set<string>()
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const x = a[id] || {}
+    const y = b[id] || {}
+    if (ATTACHMENT_KEYS.some((k) => (x[k] ?? null) !== (y[k] ?? null))) out.add(id)
+  }
+  return out
+}
+
+/** Node ids whose saved boundary anchors differ between two layouts. */
+export function changedNodeAnchors(
+  a: Record<string, { anchors?: unknown }>,
+  b: Record<string, { anchors?: unknown }>,
+): Set<string> {
+  const out = new Set<string>()
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const x = JSON.stringify(a[id]?.anchors ?? null)
+    const y = JSON.stringify(b[id]?.anchors ?? null)
+    if (x !== y) out.add(id)
+  }
+  return out
+}
+
+/**
+ * Drop the on-screen attachment of edges and anchors an undo restored, so
+ * `preserveExistingGeometry` takes them from the rebuilt (saved) diagram.
+ * Positions and everything else on screen are kept.
+ */
+export function withoutRestoredAttachments<N extends GeomNode, E extends GeomEdge>(
+  nodes: N[],
+  edges: E[],
+  restored: { edges: Set<string>; nodes: Set<string> },
+): [N[], E[]] {
+  if (!restored.edges.size && !restored.nodes.size) return [nodes, edges]
+  const nextNodes = nodes.map((node) =>
+    restored.nodes.has(node.id)
+      ? { ...node, data: { ...node.data, anchors: undefined } }
+      : node,
+  )
+  const nextEdges = edges.map((edge) => {
+    if (!restored.edges.has(edge.id)) return edge
+    const data = { ...edge.data } as Record<string, unknown>
+    for (const k of ATTACHMENT_KEYS) delete data[k]
+    return { ...edge, sourceHandle: undefined, targetHandle: undefined, data }
+  })
+  return [nextNodes, nextEdges]
+}
