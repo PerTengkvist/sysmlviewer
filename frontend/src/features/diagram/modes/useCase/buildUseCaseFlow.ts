@@ -34,6 +34,10 @@ export type UseCaseFlowGraph = {
 
 const COL_X = 80
 const ROW_H = 90
+const STEP_W = 160
+const STEP_H = 48
+/** Start and done are small filled circles, centred on the step column. */
+export const FLOW_TERMINAL_SIZE = 24
 
 function childrenOf(
   parentId: string,
@@ -175,22 +179,27 @@ export function buildUseCaseFlow(
     if (!ordered.includes(s)) ordered.push(s)
   }
 
-  const nodes: Node[] = ordered.map((step, i) => ({
-    id: step.id,
-    type: 'action',
-    position: { x: COL_X, y: 40 + i * ROW_H },
-    data: {
-      label: step.label,
-      kind: step.kind,
-      artifactId: step.id.startsWith('exp:') ? step.id.slice(4) : step.id,
-      isStart: step.kind === 'start',
-      isDone: step.kind === 'done',
-      isDecision: step.kind === 'decide',
-      flowDir: 'TD' as const,
-      viewMode: 'light' as const,
-    },
-    style: { width: 160, height: 48 },
-  }))
+  const nodes: Node[] = ordered.map((step, i) => {
+    const terminal = step.kind === 'start' || step.kind === 'done'
+    const w = terminal ? FLOW_TERMINAL_SIZE : STEP_W
+    const h = terminal ? FLOW_TERMINAL_SIZE : STEP_H
+    return {
+      id: step.id,
+      type: 'action',
+      position: { x: COL_X + (STEP_W - w) / 2, y: 40 + i * ROW_H + (STEP_H - h) / 2 },
+      data: {
+        label: step.label,
+        kind: step.kind,
+        artifactId: step.id.startsWith('exp:') ? step.id.slice(4) : step.id,
+        isStart: step.kind === 'start',
+        isDone: step.kind === 'done',
+        isDecision: step.kind === 'decide',
+        flowDir: 'TD' as const,
+        viewMode: 'light' as const,
+      },
+      style: { width: w, height: h },
+    }
+  })
 
   const nodeIds = new Set(nodes.map((n) => n.id))
   const edges: Edge[] = []

@@ -408,6 +408,35 @@ describe('buildUseCaseFlow ports', () => {
   })
 })
 
+describe('buildUseCaseFlow start and done', () => {
+  const size = (n: { style?: { width?: unknown; height?: unknown } }) => ({
+    w: Number(n.style?.width),
+    h: Number(n.style?.height),
+  })
+  const centerX = (n: { position: { x: number }; style?: { width?: unknown } }) =>
+    n.position.x + Number(n.style?.width) / 2
+
+  it('draws start and done as small circles, not action-wide ellipses', () => {
+    const { nodes } = buildUseCaseFlow('P::Pay', payWithDone())
+    const action = nodes.find((n) => n.id === 'P::Pay::stepD')!
+    const a = size(action)
+    for (const id of ['P::Pay::start', 'P::Pay::done']) {
+      const n = nodes.find((x) => x.id === id)!
+      const s = size(n)
+      expect(s.w).toBe(s.h)
+      expect(s.w).toBeLessThanOrEqual(a.h / 2)
+      expect(s.w).toBeLessThan(a.w / 4)
+    }
+  })
+
+  it('keeps the circles centred on the action column', () => {
+    const { nodes } = buildUseCaseFlow('P::Pay', payWithDone())
+    const column = centerX(nodes.find((n) => n.id === 'P::Pay::stepD')!)
+    expect(centerX(nodes.find((n) => n.id === 'P::Pay::start')!)).toBe(column)
+    expect(centerX(nodes.find((n) => n.id === 'P::Pay::done')!)).toBe(column)
+  })
+})
+
 /** The Pay use case with both branches converging on done. */
 function payWithDone(): Record<string, SemanticElement> {
   const sem: Record<string, SemanticElement> = {}
