@@ -1291,6 +1291,12 @@ input {
   box-shadow: inset 0 0 0 3px var(--canvas);
 }
 
+/* Use case flow: the small done circle shows no port dots (start has none). */
+.usecase-flow-canvas .action-pseudo.done .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .action-pseudo.selected {
   outline: 2px solid var(--accent, #3d6b8c);
   outline-offset: 2px;
