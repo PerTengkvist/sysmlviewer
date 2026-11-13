@@ -13,7 +13,16 @@ from domain.interface_naming import (
     suggest_port_name_for_type,
 )
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
-from domain.view_usage import effective_view, legacy_definition_warnings
+from domain.expose import MEMBER as EXPOSE_MEMBER
+from domain.expose import MEMBERS as EXPOSE_MEMBERS
+from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
+from domain.expose import RECURSIVE as EXPOSE_RECURSIVE
+from domain.expose import controls_depth, includes_root, kind_of
+from domain.view_usage import (
+    effective_expose_kinds,
+    effective_view,
+    legacy_definition_warnings,
+)
 
 logger = logging.getLogger(__name__)
 from domain.models import (
@@ -1763,7 +1772,11 @@ class ProjectService:
                 project.view_layouts = overlay_layouts
         else:
             overlay_layouts = project.view_layouts
-        from domain.details import collect_artifacts_to_depth
+        from domain.details import (
+            collect_artifacts_to_depth,
+            collect_exposed,
+            structural_depth,
+        )
         from domain.diagram_mode import expected_root_kinds, resolve_diagram_mode
         from domain.merge import artifact_diagram_view_id
         from domain.models import ViewDef
@@ -1821,8 +1834,15 @@ class ProjectService:
             # A view usage takes what it lacks from its `view def`.
             _, exposed, stored_filters = effective_view(view_el, project.semantic)
             expose_root_ids = [rid for rid in exposed if rid in project.semantic]
+            expose_kinds = effective_expose_kinds(view_el, project.semantic)
+        else:
+            expose_kinds = {}
         if not expose_root_ids:
             expose_root_ids = [root.id]
+        expose_kinds = {rid: kind_of(expose_kinds, rid) for rid in expose_root_ids}
+        expose_controls_depth = any(
+            controls_depth(kind) for kind in expose_kinds.values()
+        )
         expose_roots = [
             project.semantic[rid] for rid in expose_root_ids if rid in project.semantic
         ]
@@ -1845,6 +1865,11 @@ class ProjectService:
         )
 
         diagram_mode = resolve_diagram_mode(view, root)
+        # `expose Car::*;` shows Car's members without Car: no frame to draw.
+        if diagram_mode == "whitebox" and not includes_root(
+            expose_kinds.get(root.id, EXPOSE_MEMBER)
+        ):
+            diagram_mode = "structure"
         mode_error: str | None = None
         expected = expected_root_kinds(diagram_mode)
         if expected is not None and root.kind not in expected:
@@ -1867,8 +1892,11 @@ class ProjectService:
                             artifact_ids.add(gc)
         elif diagram_mode == "tree":
             for eroot in expose_roots:
-                artifact_ids |= collect_artifacts_to_depth(
-                    project.semantic, eroot.id, effective_levels
+                artifact_ids |= collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    effective_levels,
                 )
             # Include non-part children for tree browsing
             extra: set[str] = set()
@@ -1930,12 +1958,27 @@ class ProjectService:
                     if el.target_id:
                         artifact_ids.add(el.target_id)
         else:
-            # Structure / whitebox: depth-limit parts & packages (incl. package roots)
+            # Structure / whitebox: depth-limit parts & packages (incl. package
+            # roots); `::*` / `::**` exposes set their own depth.
             for eroot in expose_roots:
-                artifact_ids |= collect_artifacts_to_depth(
-                    project.semantic, eroot.id, effective_levels
+                artifact_ids |= collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    effective_levels,
                 )
             lift_use_case_members = True
+
+        # The frontend nests nodes down to `hierarchicalLevels`; a wildcard
+        # expose sends exactly what it shows, so let every level through.
+        payload_levels = effective_levels
+        for rid, kind in expose_kinds.items():
+            if kind == EXPOSE_MEMBERS:
+                payload_levels = max(payload_levels, 2)
+            elif kind in (EXPOSE_RECURSIVE, EXPOSE_MEMBERS_RECURSIVE):
+                payload_levels = max(
+                    payload_levels, structural_depth(project.semantic, rid)
+                )
 
         # SysML view filter clauses (alpha: @metaclass, name.startsWith)
         from domain.view_filter import apply_view_filters, parse_stored_filters
@@ -2167,8 +2210,10 @@ class ProjectService:
             # Every `expose` of the view (inherited from its `view def` when
             # it has none), so modes can place content from all of them.
             "exposeRootIds": [r.id for r in expose_roots],
+            "exposeKinds": dict(expose_kinds),
+            "exposeControlsDepth": expose_controls_depth,
             "diagramMode": diagram_mode,
-            "hierarchicalLevels": effective_levels,
+            "hierarchicalLevels": payload_levels,
             "hierarchicalLevelsOverride": levels_override,
             "viewFilters": list(layout_for_view.view_filters)
             if layout_for_view

@@ -102,8 +102,32 @@ refers to it, with a warning.
 
 A view can have several `expose` statements; the diagram shows all of them.
 An `expose` may name an element in another file. The first `expose` decides
-the diagram type for a GeneralView (part or not). Wildcards (`::*`, `::**`)
-are read as the element itself.
+the diagram type for a GeneralView (part or not).
+
+A wildcard sets what the view shows and how deep:
+
+| Statement | Shows |
+|---|---|
+| `expose P;` | P with its contents down to the **Diagram levels** setting |
+| `expose P::*;` | P's direct members only, without P and without their contents |
+| `expose P::**;` | P and everything under it, at every depth |
+| `expose P::*::**;` | everything under P, without P |
+
+With a wildcard the Diagram levels setting does not apply to the view.
+`expose Car::*;` on a part draws Car's parts side by side, without a Car
+frame. Wildcards apply in GeneralView, UseCaseView, GridView and TreeView;
+sequence, state, action flow and allocation views read them as `expose P;`.
+Filter brackets on an expose (`expose P::*[@PartUsage];`) are not
+supported; use a `filter` statement instead.
+
+```sysml
+view FunctionDomains : GeneralView {
+  expose PartDefinitions::*;
+}
+view AllFunctions : GeneralView {
+  expose PartDefinitions::**;
+}
+```
 
 ```sysml
 view UseCaseTraceabilityView : UseCaseView {

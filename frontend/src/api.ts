@@ -321,6 +321,8 @@ export type AutoLayoutEdgeKinds = {
   relations: boolean
 }
 
+export type ExposeKind = 'member' | 'members' | 'recursive' | 'membersRecursive'
+
 export interface ViewPayload {
   view: ViewDef
   /**
@@ -328,6 +330,13 @@ export interface ViewPayload {
    * has none). `view.rootArtifactId` is the first of them.
    */
   exposeRootIds?: string[]
+  /**
+   * Expose kind per exposed root: `member` (`expose P;`), `members`
+   * (`P::*`), `recursive` (`P::**`) or `membersRecursive` (`P::*::**`).
+   */
+  exposeKinds?: Record<string, ExposeKind>
+  /** True when a wildcard expose, not the diagram levels, sets the depth. */
+  exposeControlsDepth?: boolean
   diagramMode?: DiagramMode
   hierarchicalLevels?: number
   /** Per-view override; null/undefined means inherit global Settings. */
