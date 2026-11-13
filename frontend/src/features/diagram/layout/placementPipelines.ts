@@ -20,6 +20,7 @@ export const PIPELINE_IDS = [
   'clustered',
   'favour-grid',
   'hierarchic',
+  'force-grid',
 ] as const
 
 export type PlacementPipelineId = (typeof PIPELINE_IDS)[number]
@@ -63,6 +64,8 @@ const ELK_BY_PIPELINE: Record<PlacementPipelineId, PipelineElkAlgorithm> = {
   'favour-grid': 'rectpacking',
   // yEd-style Sugiyama: ELK layered with ports, nesting, rules and iteration.
   hierarchic: 'layered',
+  // Own bottom-up grid; no ELK.
+  'force-grid': 'rectpacking',
 }
 
 function isCompositionPipeline(id: PlacementPipelineId): boolean {
@@ -76,6 +79,10 @@ function stepsFor(
   if (isCompositionPipeline(id)) {
     // Composition owns H/V; ports still follow portPlacement after place.
     return ['nest-layout', 'nest-fit', 'non-overlap', 'fit-boundary']
+  }
+  if (id === 'force-grid') {
+    // Sizes and places every level itself; no grow-only post-steps.
+    return ['nest-layout', 'fit-boundary']
   }
   if (id === 'hierarchic') {
     // ELK layered places every nest level itself; no post-steps that could
@@ -105,6 +112,7 @@ function pipelineFromSimpleAlgorithm(
   if (algorithm === 'layered') return 'flow-layered'
   if (algorithm === 'clustered') return 'clustered'
   if (algorithm === 'favour-grid') return 'favour-grid'
+  if (algorithm === 'force-grid') return 'force-grid'
   return 'connection-aware'
 }
 
@@ -159,5 +167,7 @@ export function pipelineLabel(id: PlacementPipelineId): string {
       return 'Favour grid (matrix-leaning)'
     case 'hierarchic':
       return 'Hierarchic (yEd-style Sugiyama)'
+    case 'force-grid':
+      return 'Force grid (shrink to fit)'
   }
 }

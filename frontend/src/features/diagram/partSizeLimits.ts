@@ -37,6 +37,8 @@ export function sizeFieldChange(
   current: PartSize,
   opts?: { isBoundary?: boolean; force?: boolean },
 ): { width?: number; height?: number } | null {
+  // An empty field (a "mixed" multi-selection left alone) changes nothing.
+  if (!raw.trim()) return null
   const n = Number(raw)
   if (!Number.isFinite(n)) return null
   if (!opts?.force && Math.round(n) === Math.round(current[field])) return null

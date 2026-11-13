@@ -260,3 +260,185 @@ describe('buildUseCaseFlow objective', () => {
     expect(buildUseCaseFlow('UC::A', semantic).params.objective).toBe('R-9 X')
   })
 })
+
+type Ends = { sourceHandle?: string | null; targetHandle?: string | null; type?: string; feedback?: boolean }
+
+function endsOf(edges: ReturnType<typeof buildUseCaseFlow>['edges'], source: string, target: string): Ends {
+  const e = edges.find((x) => x.source === source && x.target === target)
+  expect(e, `edge ${source} -> ${target}`).toBeTruthy()
+  return {
+    sourceHandle: e!.sourceHandle,
+    targetHandle: e!.targetHandle,
+    type: e!.type,
+    feedback: !!(e!.data as { feedback?: boolean } | undefined)?.feedback,
+  }
+}
+
+/** A use case with steps `names` (start/done/decide by typeRef) and successions. */
+function flowModel(
+  steps: Array<[string, string | null]>,
+  successions: Array<[string, string, string?]>,
+): Record<string, SemanticElement> {
+  const sem: Record<string, SemanticElement> = {
+    'U::C': el({ id: 'U::C', kind: 'useCase', name: 'C' }),
+  }
+  for (const [name, typeRef] of steps) {
+    sem[`U::C::${name}`] = el({
+      id: `U::C::${name}`,
+      kind: 'action',
+      name,
+      parentId: 'U::C',
+      typeRef,
+    })
+  }
+  successions.forEach(([s, t, name], i) => {
+    const n = name || `succ${i + 1}`
+    sem[`U::C::${n}`] = el({
+      id: `U::C::${n}`,
+      kind: 'succession',
+      name: n,
+      parentId: 'U::C',
+      sourceId: `U::C::${s}`,
+      targetId: `U::C::${t}`,
+    })
+  })
+  return sem
+}
+
+describe('buildUseCaseFlow ports', () => {
+  it('enters every step at the top and leaves it at the bottom', () => {
+    const sem = flowModel(
+      [['start', 'start'], ['a', null], ['b', null], ['done', 'done']],
+      [['start', 'a'], ['a', 'b'], ['b', 'done']],
+    )
+    const { edges } = buildUseCaseFlow('U::C', sem)
+    for (const [s, t] of [['start', 'a'], ['a', 'b'], ['b', 'done']]) {
+      expect(endsOf(edges, `U::C::${s}`, `U::C::${t}`)).toEqual({
+        sourceHandle: 'bottom',
+        targetHandle: 'top',
+        type: undefined,
+        feedback: false,
+      })
+    }
+  })
+
+  it('enters a decision at the top and leaves yes to the left, else to the right', () => {
+    const sem = flowModel(
+      [['start', 'start'], ['ok', 'decide'], ['y', null], ['n', null]],
+      [['start', 'ok'], ['ok', 'y', 'if_ok_yes'], ['ok', 'n', 'if_ok_else']],
+    )
+    const { edges } = buildUseCaseFlow('U::C', sem)
+    expect(endsOf(edges, 'U::C::start', 'U::C::ok').targetHandle).toBe('in-top')
+    expect(endsOf(edges, 'U::C::ok', 'U::C::y').sourceHandle).toBe('out-left')
+    expect(endsOf(edges, 'U::C::ok', 'U::C::n').sourceHandle).toBe('out-right')
+    // Branch names (if_ok_yes) read as the outcome only.
+    expect(edges.find((e) => e.target === 'U::C::y')?.label).toBe('yes')
+    expect(edges.find((e) => e.target === 'U::C::n')?.label).toBe('else')
+  })
+
+  it('draws a loop back on the right side, from the later step into the earlier one', () => {
+    const sem = flowModel(
+      [['start', 'start'], ['a', null], ['b', null]],
+      [['start', 'a'], ['a', 'b'], ['b', 'a']],
+    )
+    const { edges } = buildUseCaseFlow('U::C', sem)
+    expect(endsOf(edges, 'U::C::b', 'U::C::a')).toEqual({
+      sourceHandle: 'out',
+      targetHandle: 'in-right',
+      type: 'smoothstep',
+      feedback: true,
+    })
+    expect(endsOf(edges, 'U::C::a', 'U::C::b').feedback).toBe(false)
+  })
+
+  it('loops from a decision on its right side and sends the other branch down', () => {
+    const sem = flowModel(
+      [
+        ['start', 'start'],
+        ['transfer', null],
+        ['report', null],
+        ['pluggedIn', 'decide'],
+        ['unplug', null],
+        ['done', 'done'],
+      ],
+      [
+        ['start', 'transfer'],
+        ['transfer', 'report'],
+        ['report', 'pluggedIn'],
+        ['pluggedIn', 'transfer', 'if_pluggedIn_yes'],
+        ['pluggedIn', 'unplug', 'if_pluggedIn_else'],
+        ['unplug', 'done'],
+      ],
+    )
+    const { edges } = buildUseCaseFlow('U::C', sem)
+    expect(endsOf(edges, 'U::C::pluggedIn', 'U::C::transfer')).toEqual({
+      sourceHandle: 'out-right',
+      targetHandle: 'in-right',
+      type: 'smoothstep',
+      feedback: true,
+    })
+    expect(endsOf(edges, 'U::C::pluggedIn', 'U::C::unplug')).toMatchObject({
+      sourceHandle: 'out-bottom',
+      targetHandle: 'top',
+      feedback: false,
+    })
+  })
+
+  it('does not take converging branches for a loop', () => {
+    const { edges } = buildUseCaseFlow('P::Pay', {
+      ...payWithDone(),
+    })
+    for (const e of edges) {
+      expect((e.data as { feedback?: boolean } | undefined)?.feedback ?? false).toBe(false)
+    }
+    expect(endsOf(edges, 'P::Pay::stepD', 'P::Pay::done')).toMatchObject({
+      sourceHandle: 'bottom',
+      targetHandle: 'top',
+    })
+  })
+
+  it('gives expanded case steps top and bottom ports too', () => {
+    const { edges } = buildUseCaseFlow('P::Pay', payWithDone())
+    const chain = edges.filter((e) => e.id.startsWith('flow-'))
+    expect(chain.length).toBeGreaterThan(0)
+    for (const e of chain) {
+      expect(e.sourceHandle).toBe('bottom')
+      expect(e.targetHandle === 'top' || e.targetHandle === 'in-top').toBe(true)
+    }
+  })
+})
+
+/** The Pay use case with both branches converging on done. */
+function payWithDone(): Record<string, SemanticElement> {
+  const sem: Record<string, SemanticElement> = {}
+  const add = (e: SemanticElement) => {
+    sem[e.id] = e
+  }
+  add(el({ id: 'P::Pay', kind: 'useCase', name: 'Pay' }))
+  add(el({ id: 'P::Pay::start', kind: 'action', name: 'start', parentId: 'P::Pay', typeRef: 'start' }))
+  add(
+    el({
+      id: 'P::Pay::scenarioA',
+      kind: 'action',
+      name: 'scenarioA',
+      parentId: 'P::Pay',
+      typeRef: 'scenarioA',
+      metadataKeywords: ['perform'],
+    }),
+  )
+  add(el({ id: 'P::scenarioA', kind: 'case', name: 'scenarioA', typeRef: 'CaseScenario' }))
+  add(el({ id: 'P::scenarioA::doA', kind: 'action', name: 'doA', parentId: 'P::scenarioA' }))
+  add(el({ id: 'P::Pay::chooseC', kind: 'action', name: 'chooseC', parentId: 'P::Pay', typeRef: 'decide' }))
+  add(el({ id: 'P::Pay::stepC', kind: 'action', name: 'stepC', parentId: 'P::Pay' }))
+  add(el({ id: 'P::Pay::stepD', kind: 'action', name: 'stepD', parentId: 'P::Pay' }))
+  add(el({ id: 'P::Pay::done', kind: 'action', name: 'done', parentId: 'P::Pay', typeRef: 'done' }))
+  const succ = (id: string, s: string, t: string) =>
+    add(el({ id: `P::Pay::${id}`, kind: 'succession', name: id, parentId: 'P::Pay', sourceId: s, targetId: t }))
+  succ('succ1', 'P::Pay::start', 'P::Pay::scenarioA')
+  succ('succ2', 'P::Pay::scenarioA', 'P::Pay::chooseC')
+  succ('if_chooseC_yes', 'P::Pay::chooseC', 'P::Pay::stepC')
+  succ('if_chooseC_else', 'P::Pay::chooseC', 'P::Pay::stepD')
+  succ('succ3', 'P::Pay::stepC', 'P::Pay::done')
+  succ('succ4', 'P::Pay::stepD', 'P::Pay::done')
+  return sem
+}

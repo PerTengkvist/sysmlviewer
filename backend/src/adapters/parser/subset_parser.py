@@ -6,6 +6,12 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.expose import MEMBER as EXPOSE_MEMBER
+from domain.expose import MEMBERS as EXPOSE_MEMBERS
+from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
+from domain.expose import RECURSIVE as EXPOSE_RECURSIVE
+from domain.expose import kind_of as kind_of_expose
+from domain.expose import set_kind as set_expose_kind
 from domain.view_filter import (
     MetaclassAnyFilter,
     MetaclassFilter,
@@ -52,6 +58,16 @@ class _ImportDecl:
     visibility: str  # private | public
     path: str  # e.g. Types::* or Types::Box
     line: int
+
+
+_EXPOSE_SUFFIX_KINDS = {
+    "": EXPOSE_MEMBER,
+    "::*": EXPOSE_MEMBERS,
+    ".*": EXPOSE_MEMBERS,
+    "::**": EXPOSE_RECURSIVE,
+    ".**": EXPOSE_RECURSIVE,
+    "::*::**": EXPOSE_MEMBERS_RECURSIVE,
+}
 
 
 def _resolve_expose_ref(
@@ -242,12 +258,16 @@ class SubsetSysmlParser:
             )
             if resolved is None:
                 continue
+            seen = resolved in view.expose_refs
             refs: list[str] = []
             for existing in view.expose_refs:
                 target = resolved if existing == placeholder else existing
                 if target not in refs:
                     refs.append(target)
             view.expose_refs = refs
+            moved = kind_of_expose(view.expose_kinds, placeholder)
+            view.expose_kinds.pop(placeholder, None)
+            set_expose_kind(view.expose_kinds, resolved, moved, seen=seen)
             if view.expose_ref == placeholder:
                 view.expose_ref = resolved
 
@@ -1572,9 +1592,36 @@ class SubsetSysmlParser:
                     state.warnings.append(f"line {tok.line}: expose without target")
                     skip_until_semicolon_or_brace()
                     continue
-                # optional wildcard suffix (::*, .*, .**) — ignore for root selection
+                # Wildcard suffix: `::*` (members), `::**` (recursive),
+                # `::*::**` (recursive members). expect_qualified_name has
+                # already taken the `::` before a `*`.
+                suffix = ""
                 while peek() and peek().value in {".", "::", "*"}:
-                    take()
+                    suffix += take().value
+                if suffix.startswith("*"):
+                    suffix = "::" + suffix
+                expose_kind = _EXPOSE_SUFFIX_KINDS.get(suffix)
+                if expose_kind is None:
+                    if suffix:
+                        state.warnings.append(
+                            f"line {tok.line}: unsupported expose suffix '{suffix}', "
+                            "read as a plain expose"
+                        )
+                    expose_kind = EXPOSE_MEMBER
+                if peek() and peek().value == "[":
+                    state.warnings.append(
+                        f"line {tok.line}: expose filter brackets [...] are not "
+                        "supported and are ignored; use a filter statement"
+                    )
+                    depth = 0
+                    while peek():
+                        val = take().value
+                        if val == "[":
+                            depth += 1
+                        elif val == "]":
+                            depth -= 1
+                            if depth <= 0:
+                                break
                 if peek() and peek().value == ";":
                     take()
                 parent = state.current_parent()
@@ -1599,8 +1646,15 @@ class SubsetSysmlParser:
                                     (view_el.id, resolved, ref, scope)
                                 )
                         if resolved:
-                            if resolved not in view_el.expose_refs:
+                            seen = resolved in view_el.expose_refs
+                            if not seen:
                                 view_el.expose_refs.append(resolved)
+                            set_expose_kind(
+                                view_el.expose_kinds,
+                                resolved,
+                                expose_kind,
+                                seen=seen,
+                            )
                             # Primary root = first expose (unchanged on later exposes)
                             if not view_el.expose_ref:
                                 view_el.expose_ref = resolved

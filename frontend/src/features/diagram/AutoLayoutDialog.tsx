@@ -85,8 +85,10 @@ export function AutoLayoutDialog({
   const isCompositionAlgo =
     directives.algorithm === 'clustered' ||
     directives.algorithm === 'favour-grid' ||
+    directives.algorithm === 'force-grid' ||
     resolved.id === 'clustered' ||
-    resolved.id === 'favour-grid'
+    resolved.id === 'favour-grid' ||
+    resolved.id === 'force-grid'
   const showAspect =
     uiMode === 'simple'
       ? directives.algorithm === 'stress' || isCompositionAlgo
@@ -219,6 +221,9 @@ export function AutoLayoutDialog({
                   <option value="favour-grid">
                     Favour grid (matrix at N≥4)
                   </option>
+                  <option value="force-grid">
+                    Force grid (shrink to fit)
+                  </option>
                   <option value="clustered">
                     Clustered (packed core at N≥4)
                   </option>
@@ -257,7 +262,9 @@ export function AutoLayoutDialog({
                 </select>
               </label>
               <p className="muted settings-note">
-                {directives.algorithm === 'favour-grid'
+                {directives.algorithm === 'force-grid'
+                  ? 'Force grid: every part shrinks to its name, ports and child parts, and siblings are packed in a compact grid (rows and columns as on screen). Use it when parts have grown too big.'
+                  : directives.algorithm === 'favour-grid'
                   ? 'Favour grid: 1→center+25%, 2→stack, 3→onion, 4+→matrix (orphans fill grid). Combines with port mode above.'
                   : directives.algorithm === 'clustered'
                     ? 'Clustered: same as favour-grid for N≤3; at N≥4 a dense core of 1–4 parts with the rest packed in rings around it, leaving channels for connections. Combines with port mode above.'

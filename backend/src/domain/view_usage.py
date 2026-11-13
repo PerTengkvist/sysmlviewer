@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from domain.expose import kind_of
 from domain.diagram_mode import TYPE_REF_TO_MODE
 from domain.models import ArtifactKind, SemanticElement
 
@@ -75,6 +76,18 @@ def effective_view(
         if not filters:
             filters = list(link.view_filters)
     return view_type, exposed, filters
+
+
+def effective_expose_kinds(
+    element: SemanticElement, semantic: dict[str, SemanticElement]
+) -> dict[str, str]:
+    """Expose kind per exposed id, from the same link `effective_view` takes the exposes from."""
+    chain, _ = view_definition_chain(element, semantic)
+    for link in chain:
+        refs = list(link.expose_refs) or ([link.expose_ref] if link.expose_ref else [])
+        if refs:
+            return {ref: kind_of(link.expose_kinds, ref) for ref in refs}
+    return {}
 
 
 def used_definition_ids(semantic: dict[str, SemanticElement]) -> set[str]:

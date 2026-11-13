@@ -22,6 +22,31 @@ mode. Simple maps onto a subset of the Advanced pipelines
 | `compact-pack`           | –             | ELK rectpacking                              |
 | `custom`                 | –             | Per nest level, chosen from weights          |
 | `hierarchic`             | –             | **yEd-style Sugiyama** (see below)           |
+| `force-grid`             | Force grid    | Shrink to fit, compact grid (see below)      |
+
+### The frame (boundary)
+
+`layoutBoundary.ts`. buildStructureGraph flags every container as
+`isBoundary`, but AutoLayout keeps only one frame: a flagged node that every
+other placed node sits inside — the whitebox root. In a package root with
+several top-level containers, or a whitebox root with a second exposed root
+beside it (`expose A; expose B;`), there is no frame: every top-level node is
+placed among its siblings and each container is fitted to its own children
+only. The frame is fitted to its direct children, so AutoLayout run again does
+not grow it.
+
+### Force grid (shrink to fit)
+
+`forceGrid.ts`. Use it when parts have grown too big after earlier layouts:
+
+- A leaf part gets the size its name and ports need, whatever its size was.
+  Requirements, use cases and actors keep their size.
+- A container gets the size of its children's grid plus its header and port
+  names; a saved size is never a lower bound.
+- Siblings are packed in a grid (about √n columns, scaled by the aspect
+  ratio) with one width per column and one height per row, in the order they
+  are on screen. Running it again gives the same result.
+- Port sides follow the port placement mode; the frame keeps its own ports.
 
 ### Clustered (packed core)
 
@@ -102,6 +127,18 @@ in routing* setting says, and Relations when the diagram has no connections.
 For a traceability diagram, *Advanced → hierarchic* with Relations gives
 layers: user stories, requirements, then the requirements they refine.
 
+## Redraw: Relations
+
+*Redraw: Connections* reroutes port-to-port connections and leaves relations
+alone. *Redraw: Relations* (every GeneralView) does the opposite: it keeps all
+nodes where they are and redraws each relation as a straight line from where
+the centre-to-centre line leaves one node to where it enters the other
+(`redrawStructureRelations.ts`). Waypoints are dropped. A part end gets its
+own handle at that point; a requirement or use case gets an extra anchor
+`rel:<relation id>` beside its four default anchors. The result is saved in
+the view and Undo puts the previous attachments back. Run it after moving
+nodes, or after AutoLayout with *Relations* ticked.
+
 ## Port placement modes
 
 The *Port placement* mode in the AutoLayout dialog is a hard contract that
@@ -135,53 +172,59 @@ How it is enforced:
 
 ## Layout Rules and layered layout
 
-Toolbar → *Layout Rules*. The dialog has a **Layered layout** section above
-the rule table:
+Toolbar → *Layout Rules*. The dialog has one **tab per scope**. **+** adds a
+scope and asks what it arranges; **×** on a tab removes that scope.
 
-- *Enable*, *Direction* (top-down, bottom-up, left-right, right-left),
-  *Layers* (count) and a name per layer (defaults to the ordinal).
-- Rules gain the placement **belong to** with peer artefact `layer` and the
-  layer name as peer name.
-- Parts without a `belong to` rule are auto-assigned from their connections:
-  after their sources, before their targets (rounded barycentre), last layer
-  when unconnected. A side-by-side rule (e.g. *A to the left of B*) pulls an
-  unassigned peer into the same layer.
+A scope targets one of:
+
+- **Whole diagram**: the top level (the boundary's direct children in a
+  whitebox view, the top-level elements in a package view);
+- a **package** in the diagram;
+- a **part with children** in the diagram.
+
+Each target can have one scope. A scope's rules and layers arrange only the
+target's **direct children**; a rule in one scope never moves elements of
+another, even when the names match.
+
+Per tab:
+
+- **Enable**: off keeps the scope but AutoLayout and *Apply* ignore it.
+- **Layers**: *Use layers*, *Direction* (top-down, bottom-up, left-right,
+  right-left), *Layers* (count) and a name per layer (defaults to the
+  ordinal).
+- **Rules**: the relative placement rules, plus **belong to** with peer
+  artefact `layer` and one of this scope's layer names.
+
+Behaviour:
+
+- Children without a `belong to` rule are auto-assigned from their
+  connections: after their sources, before their targets (rounded
+  barycentre), last layer when unconnected. A side-by-side rule (e.g. *A to
+  the left of B*) pulls an unassigned peer into the same layer.
 - Geometry: each band is twice as thick as its largest part (parts take
   50 %), parts are centred in the band and every row/column is centred on a
   common axis.
-- *Apply* with layered layout enabled runs the Hierarchic pipeline with the
-  rules as constraints. With it disabled the original relative-rule solver
-  (`layoutWizard.ts`) is used.
-- Conflicts reported: unknown layer name, one part in two layers, side-by-side
-  rules across layers, order rules contradicting explicit layers, plus the
-  existing cycle/empty-peer checks.
+- *Apply* runs the Hierarchic pipeline with every enabled scope as
+  constraints when one of them uses layers; otherwise the relative-rule
+  solver (`layoutWizard.ts`) places each scope's children.
+- Conflicts are checked per scope and the tab with the conflict is opened:
+  unknown layer name, one part in two layers, side-by-side rules across
+  layers, order rules contradicting explicit layers, cycles and empty peers.
+- Hierarchic lays out a scoped container with layers first as its own run,
+  then uses it as a fixed-size leaf in the outer run. Containers without a
+  scope are laid out by ELK inside the compound graph.
+- Text fields (names, patterns, layer names) are saved on blur; the other
+  controls save at once.
 
-### Scopes: layers inside a part
+Code: `layoutScopes.ts` (targets, scope list, per-scope constraints, conflicts
+and solver) runs the engine in `layout/layoutConstraints.ts` once per scope.
 
-A layered layout consists of *scopes*. The root scope (container pattern
-`*`, "Whole diagram") arranges the boundary's direct children. Any other
-scope names a container by pattern (e.g. `infotainmentEcu` or `*Ecu`) and
-arranges the children of every matching container with its own direction
-and layers.
-
-- `layeredLayout = { enabled, scopes: [{ id, scopePattern, direction, layers }] }`.
-  The earlier single-scope shape is migrated to a root scope on read.
-- A `belong to` rule resolves the layer name in the scope of the subject's
-  **parent**: `climateControlSw belong to Comfort` looks for `Comfort` in the
-  scope matching `infotainmentEcu`. The dialog's layer select shows the right
-  scope's layers per row.
-- Auto-assignment, order rules and precedence are computed per container
-  (`ScopeConstraints` in `layoutConstraints.ts`). Rules pairing parts of
-  different containers are reported as conflicts.
-- Hierarchic lays out a scoped container first as its own run (the container
-  is the boundary, its scope is the root scope, nested scopes follow), then
-  uses it as a fixed-size leaf in the outer run. Edges into the container
-  attach to the container itself in that outer run.
-- Containers without a matching scope are laid out by ELK inside the
-  compound graph as before.
-
-Persistence: `layeredLayout` and `layoutRules` are stored per view in
-`views/<name>.json` (`PATCH /api/projects/{id}/visualization`).
+Persistence: `layoutScopes = [{ id, target, enabled, layering: { enabled,
+direction, layers }, rules }]` per view in `views/<name>.json`
+(`PATCH /api/projects/{id}/visualization`). Older files with `layoutRules` +
+`layeredLayout` are migrated on read: the `*` scope becomes *Whole diagram*,
+a name-pattern scope targets the first container in the view with a matching
+name, and a `belong to` rule moves to the scope that has its layer.
 
 ## E2E layout evaluation (Playwright)
 

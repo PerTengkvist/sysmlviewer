@@ -31,6 +31,9 @@ import {
   sharedNumericField,
 } from './multiSelectDetails'
 
+/** Stable empty list, so the filter dialog never sees a new array per render. */
+const NO_VIEW_FILTERS: ViewFilterRow[] = []
+
 export type DetailsPanelProps = Props
 
 type Props = {
@@ -72,7 +75,11 @@ type Props = {
   onDelete?: (artifactId: string) => void
   onRetargetRelation?: (relationId: string, sourceId: string, targetId: string) => void
   onEditLockChange?: (artifactId: string, locked: boolean) => void
-  onPositionChange?: (artifactId: string, x: number, y: number) => void
+  /** Each field sends only its own axis, so two quick edits never undo each other. */
+  onPositionChange?: (
+    artifactId: string,
+    position: { x?: number; y?: number },
+  ) => void
   onSizeChange?: (
     ids: string[],
     size: { width?: number; height?: number },
@@ -499,7 +506,7 @@ function FormatControls({
   )
 }
 
-function HierarchyLevelsSection({
+export function HierarchyLevelsSection({
   viewPayload,
   globalHierarchicalLevels,
   onHierarchyOverrideChange,
@@ -513,6 +520,8 @@ function HierarchyLevelsSection({
     return null
   }
   const override = viewPayload.hierarchicalLevelsOverride
+  // `expose P::*;` / `expose P::**;` decide the depth, not the levels.
+  const exposeSetsDepth = !!viewPayload.exposeControlsDepth
   return (
     <div className="view-hierarchy-control">
       <h3>Diagram levels</h3>
@@ -524,6 +533,7 @@ function HierarchyLevelsSection({
         <input
           type="checkbox"
           checked={override != null}
+          disabled={exposeSetsDepth}
           onChange={(e) => {
             if (e.target.checked) {
               onHierarchyOverrideChange(
@@ -544,7 +554,7 @@ function HierarchyLevelsSection({
           type="number"
           min={1}
           max={8}
-          disabled={override == null}
+          disabled={exposeSetsDepth || override == null}
           value={override != null ? override : globalHierarchicalLevels}
           onChange={(e) => {
             const n = Math.max(1, Number(e.target.value) || 1)
@@ -553,9 +563,11 @@ function HierarchyLevelsSection({
         />
       </label>
       <p className="muted settings-note">
-        {override != null
-          ? `This diagram uses ${override} levels.`
-          : `Using global setting (${globalHierarchicalLevels}).`}
+        {exposeSetsDepth
+          ? "Depth is set by this view's expose (::* / ::**)."
+          : override != null
+            ? `This diagram uses ${override} levels.`
+            : `Using global setting (${globalHierarchicalLevels}).`}
       </p>
     </div>
   )
@@ -1103,7 +1115,7 @@ export function DetailsPanel({
               </button>
               <ViewFilterDialog
                 open={filterOpen}
-                filters={viewPayload.viewFilters || []}
+                filters={viewPayload.viewFilters || NO_VIEW_FILTERS}
                 semantic={viewPayload.semantic}
                 onChange={onViewFiltersChange}
                 onClose={() => setFilterOpen(false)}
@@ -1221,11 +1233,11 @@ export function DetailsPanel({
                     disabled={!unlocked}
                     aria-label="X position"
                     onBlur={(e) => {
+                      if (!e.target.value.trim()) return
                       const x = Number(e.target.value)
-                      const y = node.y
-                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (!Number.isFinite(x)) return
                       if (Math.round(x) !== Math.round(node.x)) {
-                        onPositionChange(el.id, x, y)
+                        onPositionChange(el.id, { x })
                       }
                     }}
                   />
@@ -1237,11 +1249,11 @@ export function DetailsPanel({
                     disabled={!unlocked}
                     aria-label="Y position"
                     onBlur={(e) => {
+                      if (!e.target.value.trim()) return
                       const y = Number(e.target.value)
-                      const x = node.x
-                      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+                      if (!Number.isFinite(y)) return
                       if (Math.round(y) !== Math.round(node.y)) {
-                        onPositionChange(el.id, x, y)
+                        onPositionChange(el.id, { y })
                       }
                     }}
                   />

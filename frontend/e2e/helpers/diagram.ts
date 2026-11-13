@@ -33,7 +33,7 @@ export async function openView(page: Page, viewId: string): Promise<void> {
 export type AutoLayoutChoice =
   | {
       mode: 'simple'
-      algorithm: 'stress' | 'layered' | 'clustered' | 'favour-grid'
+      algorithm: 'stress' | 'layered' | 'clustered' | 'favour-grid' | 'force-grid'
       portPlacement?: PortPlacementMode
       spacing?: 'compact' | 'normal' | 'spacious'
     }
@@ -75,6 +75,18 @@ export async function runAutoLayout(
   await page.waitForTimeout(800)
 }
 
+/** Zoom of the diagram viewport (1 = 100 %). */
+export async function viewportZoom(page: Page): Promise<number> {
+  return page.locator('.react-flow__viewport').first().evaluate((el) => {
+    const m = /scale\(([-\d.]+)\)/.exec((el as HTMLElement).style.transform)
+    return m ? Number(m[1]) : 1
+  })
+}
+
+/**
+ * Fit the diagram, but never below 50 %. Fit view may zoom out to 5 % now;
+ * tests measure and click elements at the scale they were written for.
+ */
 export async function fitView(page: Page): Promise<void> {
   const btn = page.locator('.react-flow__controls-fitview')
   if (await btn.count()) {
@@ -82,6 +94,12 @@ export async function fitView(page: Page): Promise<void> {
     await page.waitForTimeout(500)
     await btn.first().click()
     await page.waitForTimeout(300)
+  }
+  const zoomIn = page.locator('.react-flow__controls-zoomin').first()
+  for (let i = 0; i < 20 && (await viewportZoom(page)) < 0.5; i++) {
+    if (!(await zoomIn.count())) break
+    await zoomIn.click()
+    await page.waitForTimeout(150)
   }
 }
 

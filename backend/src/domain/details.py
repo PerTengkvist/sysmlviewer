@@ -153,3 +153,72 @@ def collect_artifacts_to_depth(
 
     included |= collect_related_edges(semantic, included)
     return included
+
+
+def _is_member_node(el: SemanticElement) -> bool:
+    """A member an `expose P::*;` shows: a structural node, not a port or feature."""
+    if el.kind in _DEPTH_KINDS or el.kind == ArtifactKind.ACTOR:
+        return True
+    return el.kind == ArtifactKind.INTERFACE and not (el.source_id and el.target_id)
+
+
+def structural_depth(semantic: dict[str, SemanticElement], root_id: str) -> int:
+    """Levels of structural nodes from root (root alone = 1)."""
+    root = semantic.get(root_id)
+    if root is None:
+        return 1
+    best = 1
+    stack = [(root, 1)]
+    seen: set[str] = set()
+    while stack:
+        el, depth = stack.pop()
+        if el.id in seen:
+            continue
+        seen.add(el.id)
+        best = max(best, depth)
+        for cid in el.children:
+            child = semantic.get(cid)
+            if child is not None and child.kind in _DEPTH_KINDS:
+                stack.append((child, depth + 1))
+    return best
+
+
+def collect_exposed(
+    semantic: dict[str, SemanticElement],
+    root_id: str,
+    kind: str,
+    levels: int,
+) -> set[str]:
+    """What one expose of `root_id` puts in a view, by expose kind.
+
+    member: root with contents to `levels` (as before); members: the root's
+    direct members only; recursive: root and everything under it;
+    membersRecursive: everything under the root, without it.
+    """
+    from domain.expose import MEMBER, MEMBERS, MEMBERS_RECURSIVE, RECURSIVE
+    from domain.relationships import collect_related_edges
+
+    if kind == RECURSIVE:
+        return collect_artifacts_to_depth(
+            semantic, root_id, structural_depth(semantic, root_id)
+        )
+    if kind not in (MEMBERS, MEMBERS_RECURSIVE):
+        if kind != MEMBER:
+            kind = MEMBER
+        return collect_artifacts_to_depth(semantic, root_id, levels)
+
+    root = semantic.get(root_id)
+    if root is None:
+        return set()
+    included: set[str] = set()
+    for cid in root.children:
+        child = semantic.get(cid)
+        if child is None or not _is_member_node(child):
+            continue
+        depth = 1 if kind == MEMBERS else structural_depth(semantic, cid)
+        included |= collect_artifacts_to_depth(semantic, cid, depth)
+    # Relations the root owns between its members (e.g. a package's
+    # `dependency from A to B;`).
+    included |= collect_related_edges(semantic, included)
+    included.discard(root_id)
+    return included

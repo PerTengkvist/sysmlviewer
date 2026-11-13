@@ -69,3 +69,11 @@ describe('sizeFieldChange', () => {
     ).toEqual({ width: BOUNDARY_MIN_WIDTH })
   })
 })
+
+describe('an empty mixed size field', () => {
+  it('changes nothing when left empty, even for a multi-selection', () => {
+    const current = { width: 200, height: 120 }
+    expect(sizeFieldChange('width', '', current, { force: true })).toBeNull()
+    expect(sizeFieldChange('height', '  ', current, { force: true })).toBeNull()
+  })
+})

@@ -122,6 +122,7 @@ export type PlacementAlgorithm =
   | 'layered'
   | 'clustered'
   | 'favour-grid'
+  | 'force-grid'
 
 export type SpacingPreset = 'compact' | 'normal' | 'spacious'
 

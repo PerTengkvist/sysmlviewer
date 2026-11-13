@@ -23,6 +23,9 @@ DEFAULT_STATE_WIDTH = 140.0
 DEFAULT_STATE_HEIGHT = 72.0
 DEFAULT_ACTION_WIDTH = 140.0
 DEFAULT_ACTION_HEIGHT = 56.0
+# Same size as a use case ellipse in the frontend (useCaseSize.ts).
+DEFAULT_USE_CASE_WIDTH = 168.0
+DEFAULT_USE_CASE_HEIGHT = 72.0
 DEFAULT_LIFELINE_WIDTH = 120.0
 DEFAULT_LIFELINE_HEIGHT = 48.0
 DEFAULT_TREE_WIDTH = 160.0
@@ -248,6 +251,15 @@ def _default_node(
             width=DEFAULT_ACTION_WIDTH,
             height=DEFAULT_ACTION_HEIGHT,
             symbol_ref="default-action",
+        )
+    if element.kind == ArtifactKind.USE_CASE:
+        return VisualizationNode(
+            artifact_id=element.id,
+            x=x,
+            y=y,
+            width=DEFAULT_USE_CASE_WIDTH,
+            height=DEFAULT_USE_CASE_HEIGHT,
+            symbol_ref="default-part",
         )
     if element.kind == ArtifactKind.INTERACTION:
         return VisualizationNode(

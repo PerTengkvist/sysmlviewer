@@ -30,8 +30,7 @@ import {
 import type {
   ArtifactKind,
   DiagramMode,
-  LayoutRuleRow,
-  LayeredLayoutConfig,
+  LayoutScope,
   PortSide,
   RoutingType,
   SemanticElement,
@@ -84,6 +83,10 @@ import {
   type Pt,
 } from './edgeRouting'
 import { computeUpdateJumpers } from './layout/updateJumpers'
+import { keepFixedNodeSizes } from './layout/layoutNodes'
+import { layoutBoundaryId } from './layout/layoutBoundary'
+import { applySavedGeometry } from './applySavedGeometry'
+import { diagramFitOptions, diagramZoomLimits } from './diagramZoom'
 import {
   applyPortMovesToNodes,
   type PortMove,
@@ -129,6 +132,10 @@ import { UseCaseNode } from './modes/useCase/UseCaseNode'
 import { buildUseCaseGraph } from './modes/useCase/buildUseCaseGraph'
 import { redrawUseCaseRelations } from './modes/useCase/redrawUseCaseRelations'
 import {
+  hasRedrawableRelations,
+  redrawStructureRelations,
+} from './layout/redrawStructureRelations'
+import {
   layoutByDependency,
   orientEdgeHandles,
   type RedrawDirection,
@@ -148,11 +155,15 @@ import {
   resolveLayoutEdgeKinds,
   type LayoutEdgeKinds,
 } from './layout/layoutEdgeKinds'
-import { buildLayoutConstraints } from './layout/layoutConstraints'
-import { normalizeLayeredLayout, rootScope } from './layeredLayoutConfig'
+import { buildScopeConstraints, normalizeLayoutScopes } from './layoutScopes'
 import { planStructureRoutes } from './layout/layoutRouter'
 import { flowViewportBounds } from './layout/layoutNormalize'
-import { preserveExistingGeometry } from './preserveDiagramGeometry'
+import {
+  changedEdgeAttachments,
+  changedNodeAnchors,
+  preserveExistingGeometry,
+  withoutRestoredAttachments,
+} from './preserveDiagramGeometry'
 import {
   applyDimensionChangesToStyle,
   nodeBoxSize,
@@ -163,6 +174,16 @@ import {
   waitFrames,
   writeImageBlobToClipboard,
 } from './copyDiagramImage'
+
+/** Undo sends these so attachments a later redraw added are removed. */
+const CLEARED_ATTACHMENT = {
+  sourceSide: null,
+  sourceOffset: null,
+  sourceAnchorId: null,
+  targetSide: null,
+  targetOffset: null,
+  targetAnchorId: null,
+} as unknown as Partial<VisualizationEdge>
 
 function sameEdgeKinds(
   a: LayoutEdgeKinds,
@@ -250,12 +271,7 @@ function FitViewOnViewKey({
     }
 
     const doFit = () => {
-      fitView({
-        padding: printMode ? 0.04 : 0.15,
-        duration: 0,
-        minZoom: printMode ? 0.01 : undefined,
-        maxZoom: printMode ? 8 : undefined,
-      })
+      fitView({ ...diagramFitOptions(!!printMode), duration: 0 })
     }
 
     const run = () => {
@@ -565,8 +581,8 @@ type Props = {
   onClientError?: (message: string, viewId?: string) => void
   /** The diagram has been laid out and measured after opening. */
   onDiagramReady?: () => void
-  onLayoutRulesChange?: (rules: LayoutRuleRow[]) => void
-  onLayeredLayoutChange?: (layered: LayeredLayoutConfig | null) => void
+  /** Layout Rules dialog: the view's scopes changed. */
+  onLayoutScopesChange?: (scopes: LayoutScope[]) => void
   /** Save the AutoLayout "Place by" choice with the view. */
   onAutoLayoutEdgeKindsChange?: (kinds: LayoutEdgeKinds) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
@@ -592,6 +608,14 @@ type Props = {
   ) => void
   /** Bump `seq` to trigger obstacle-aware reroute for one connection (Autoroute). */
   autorouteRequest?: { connectionId: string; seq: number } | null
+  /**
+   * Bump `seq` to put a saved geometry patch (Details Size / Position) on the
+   * canvas at once, without rebuilding the diagram.
+   */
+  geometryRequest?: {
+    nodes: Record<string, Partial<VisualizationNode>>
+    seq: number
+  } | null
   /** Read-only rendering for print output. */
   printMode?: boolean
   onPrintReady?: () => void
@@ -625,8 +649,7 @@ export function DiagramCanvas({
   onNodeDoubleClick,
   onEdgeDoubleClick,
   onNodesMoved,
-  onLayoutRulesChange,
-  onLayeredLayoutChange,
+  onLayoutScopesChange,
   onAutoLayoutEdgeKindsChange,
   onPortMoved,
   onPortsMoved,
@@ -635,6 +658,7 @@ export function DiagramCanvas({
   onWaypointsMoved,
   onLabelOffsetMoved,
   autorouteRequest,
+  geometryRequest,
   printMode = false,
   onPrintReady,
 }: Props) {
@@ -668,6 +692,14 @@ export function DiagramCanvas({
     getViewport: () => { x: number; y: number; zoom: number }
   } | null>(null)
   const viewKeyRef = useRef<string | null>(null)
+  /**
+   * Undo/redo changed these attachments in the saved layout; the next rebuild
+   * takes them from the layout instead of keeping what is on screen.
+   */
+  const restoredAttachmentRef = useRef<{ edges: Set<string>; nodes: Set<string> }>({
+    edges: new Set(),
+    nodes: new Set(),
+  })
   const viewRef = useRef(view)
   const edgesRef = useRef<Edge[]>([])
   const nodesRef = useRef<Node[]>([])
@@ -914,12 +946,6 @@ export function DiagramCanvas({
   const filterSig = view?.viewFilters
     ? JSON.stringify(view.viewFilters)
     : ''
-  const layeredSig = view?.layeredLayout
-    ? JSON.stringify(view.layeredLayout)
-    : ''
-  const layoutRulesSig = view?.layoutRules
-    ? JSON.stringify(view.layoutRules) + layeredSig
-    : ''
 
   // flowDir is applied by redraw / buildActionFlowGraph; omit from viewKey so
   // Redraw does not rebuild from stale visualization and wipe layout positions.
@@ -927,7 +953,7 @@ export function DiagramCanvas({
     ? JSON.stringify(requirementDisplay)
     : ''
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${layoutRulesSig}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${Object.keys(view.semantic).sort().join(',')}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -1066,10 +1092,14 @@ export function DiagramCanvas({
         ? preserveExistingGeometry(
             built.nodes,
             built.edges,
-            nodesRef.current,
-            edgesRef.current,
+            ...withoutRestoredAttachments(
+              nodesRef.current,
+              edgesRef.current,
+              restoredAttachmentRef.current,
+            ),
           )
         : { nodes: built.nodes, edges: built.edges }
+    restoredAttachmentRef.current = { edges: new Set(), nodes: new Set() }
     setNodes(
       geometry.nodes.map((node) => ({
         ...node,
@@ -1763,18 +1793,41 @@ export function DiagramCanvas({
   }, [])
 
   const restoreVizSnapshot = useCallback(
-    (snap: {
-      nodes: Record<string, VisualizationNode>
-      edges: Record<string, VisualizationEdge>
-    }) => {
+    (
+      snap: {
+        nodes: Record<string, VisualizationNode>
+        edges: Record<string, VisualizationEdge>
+      },
+      current?: {
+        nodes: Record<string, VisualizationNode>
+        edges: Record<string, VisualizationEdge>
+      },
+    ) => {
+      if (current) {
+        const marked = restoredAttachmentRef.current
+        for (const id of changedEdgeAttachments(snap.edges, current.edges)) {
+          marked.edges.add(id)
+        }
+        for (const id of changedNodeAnchors(snap.nodes, current.nodes)) {
+          marked.nodes.add(id)
+        }
+      }
       const nodePatch: Record<string, Partial<VisualizationNode>> = {}
       for (const [id, node] of Object.entries(snap.nodes)) {
         // A name at its default place has no saved offset, so undo must clear it.
-        nodePatch[id] = { labelOffset: null, ...node }
+        // Same for boundary anchors a relation redraw added.
+        nodePatch[id] = { labelOffset: null, anchors: null, ...node }
       }
       const edgePatch: Record<string, Partial<VisualizationEdge>> = {}
       for (const [id, edge] of Object.entries(snap.edges)) {
-        edgePatch[id] = { ...edge }
+        // An edge that had no saved attachment gets it cleared again.
+        edgePatch[id] = { ...CLEARED_ATTACHMENT, ...edge }
+      }
+      // An edge first saved after the snapshot goes back to its default.
+      for (const id of Object.keys(current?.edges || {})) {
+        if (!snap.edges[id]) {
+          edgePatch[id] = { ...CLEARED_ATTACHMENT, artifactId: id, waypoints: [] }
+        }
       }
       onNodesMovedRef.current(nodePatch, edgePatch)
       setLayoutEpoch((n) => n + 1)
@@ -1790,7 +1843,7 @@ export function DiagramCanvas({
       nodes: viz.nodes,
       edges: viz.edges,
     })
-    if (prev) restoreVizSnapshot(prev)
+    if (prev) restoreVizSnapshot(prev, viz)
   }, [restoreVizSnapshot])
 
   const handleRedo = useCallback(() => {
@@ -1800,7 +1853,7 @@ export function DiagramCanvas({
       nodes: viz.nodes,
       edges: viz.edges,
     })
-    if (next) restoreVizSnapshot(next)
+    if (next) restoreVizSnapshot(next, viz)
   }, [restoreVizSnapshot])
 
   const handleFlipPorts = useCallback(
@@ -2238,6 +2291,14 @@ export function DiagramCanvas({
     applyRedrawConnectionsRef.current(nodesRef.current, [edge])
   }, [autorouteRequest?.connectionId, autorouteRequest?.seq, isStructure, mode])
 
+  const lastGeometrySeqRef = useRef<number | null>(null)
+  useEffect(() => {
+    const req = geometryRequest
+    if (!req || req.seq === lastGeometrySeqRef.current) return
+    lastGeometrySeqRef.current = req.seq
+    setNodes((current) => applySavedGeometry(current, req.nodes))
+  }, [geometryRequest?.seq])
+
   // One-shot obstacle routing after opening a structure view (not during edge render).
   useEffect(() => {
     const pending = pendingAutoRouteRef.current
@@ -2272,28 +2333,24 @@ export function DiagramCanvas({
       })
   }, [nodes, view])
 
-  /** Root boundary id (whitebox); null for package-style views. */
-  const boundaryIdForConstraints = useCallback((): string | null => {
-    const partIds = new Set(nodes.filter((n) => !n.type || n.type === 'part').map((n) => n.id))
-    const root = nodes.find(
-      (n) =>
-        (!n.type || n.type === 'part') &&
-        (n.data as PartNodeData | undefined)?.isBoundary &&
-        !(n.parentId && partIds.has(n.parentId)),
-    )
-    return root?.id ?? null
-  }, [nodes])
+  /**
+   * Root boundary id: the frame AutoLayout keeps in place (a drawn whitebox
+   * root that holds every other node); null for package-style views, so the
+   * scopes and the layout agree on what "whole diagram" means.
+   */
+  const boundaryIdForConstraints = useCallback(
+    (): string | null => layoutBoundaryId(nodes),
+    [nodes],
+  )
 
   /** Hard constraints for the hierarchic pipeline from rules + layered config. */
   const constraintsFor = useCallback(
     (
-      rules: LayoutRuleRow[],
-      layered: LayeredLayoutConfig | null,
+      scopes: LayoutScope[],
       directives: AutoLayoutDirectives,
     ) =>
-      buildLayoutConstraints(
-        rules,
-        layered,
+      buildScopeConstraints(
+        normalizeLayoutScopes(scopes),
         layoutArtefacts(),
         asAngularForLayout(edges, {
           includeBindings: includeBindingsRef.current,
@@ -2319,11 +2376,7 @@ export function DiagramCanvas({
       isHierarchic && !input.constraints
         ? {
             ...input,
-            constraints: constraintsFor(
-              view?.layoutRules || [],
-              view?.layeredLayout ?? null,
-              input,
-            ),
+            constraints: constraintsFor(view?.layoutScopes || [], input),
           }
         : input
     const edgeKinds =
@@ -2359,7 +2412,8 @@ export function DiagramCanvas({
       onAutoLayoutEdgeKindsChangeRef.current?.(edgeKinds)
     }
 
-    const layoutNodes = planned.nodes
+    // Use cases keep their fixed size; only their place changes.
+    const layoutNodes = keepFixedNodeSizes(planned.nodes, nodes)
     const nextNodes = Object.keys(layoutNodes).length
       ? nodes.map((node) => {
           const patch = layoutNodes[node.id]
@@ -2472,8 +2526,7 @@ export function DiagramCanvas({
     edges,
     connectionSeparation,
     constraintsFor,
-    view?.layoutRules,
-    view?.layeredLayout,
+    view?.layoutScopes,
     view?.autoLayoutEdgeKinds,
   ])
 
@@ -2821,6 +2874,26 @@ export function DiagramCanvas({
                 >
                   Redraw: Connections
                 </button>
+                <button
+                  type="button"
+                  disabled={!hasRedrawableRelations(edges)}
+                  onClick={() => {
+                    const {
+                      nodes: nextNodes,
+                      edges: next,
+                      edgePatch,
+                      nodePatch,
+                    } = redrawStructureRelations(nodes, edges)
+                    if (!Object.keys(edgePatch).length) return
+                    pushVizHistory()
+                    setNodes(nextNodes)
+                    setEdges(next)
+                    onNodesMovedRef.current(nodePatch, edgePatch)
+                  }}
+                  title="Redraw dependency, satisfy, include, allocation and other relations as straight lines between the facing borders (does not move nodes)"
+                >
+                  Redraw: Relations
+                </button>
                 <IconToolbarButton
                   icon={TOOLBAR_ICONS.flipH}
                   title="Flip port placement horizontal"
@@ -2984,13 +3057,16 @@ export function DiagramCanvas({
       {view && (
         <LayoutWizardDialog
           open={layoutWizardOpen}
-          rules={view.layoutRules || []}
-          layered={view.layeredLayout ?? null}
-          onChangeLayered={(layered) => onLayeredLayoutChange?.(layered)}
+          scopes={normalizeLayoutScopes(view.layoutScopes)}
           semantic={view.semantic}
           artefacts={layoutArtefacts()}
-          onChangeRules={(rules) => onLayoutRulesChange?.(rules)}
-          onApplyLayered={(layered, rules) => {
+          boundaryId={boundaryIdForConstraints()}
+          onChangeScopes={(scopes) => onLayoutScopesChange?.(scopes)}
+          onApplyLayered={(scopes) => {
+            // The whole-diagram scope's layers set the overall direction.
+            const top =
+              scopes.find((s) => s.enabled && s.target.kind === 'diagram' && s.layering.enabled) ??
+              scopes.find((s) => s.enabled && s.layering.enabled)
             const base: AutoLayoutDirectives = {
               ...autoLayoutDirectives,
               mode: 'advanced',
@@ -2998,7 +3074,7 @@ export function DiagramCanvas({
               hierarchic: {
                 ...clampHierarchicOptions(autoLayoutDirectives.hierarchic),
                 direction: hierarchicDirectionForLayers(
-                  rootScope(normalizeLayeredLayout(layered)).direction,
+                  top?.layering.direction ?? 'top-down',
                 ),
               },
             }
@@ -3006,7 +3082,7 @@ export function DiagramCanvas({
             setLayoutWizardOpen(false)
             void applyAutoLayout({
               ...base,
-              constraints: constraintsFor(rules, layered, base),
+              constraints: constraintsFor(scopes, base),
             })
           }}
           onApplyPositions={(positions) => {
@@ -3150,11 +3226,7 @@ export function DiagramCanvas({
           multiSelectionKeyCode="Shift"
           selectionKeyCode={portMoveMode ? null : 'Shift'}
           fitView={!printMode && !viewportCache.current.has(view.view.id)}
-          fitViewOptions={
-            printMode
-              ? { padding: 0.04, minZoom: 0.01, maxZoom: 8 }
-              : { padding: 0.15 }
-          }
+          fitViewOptions={diagramFitOptions(!!printMode)}
           onMove={
             printMode
               ? undefined
@@ -3166,8 +3238,8 @@ export function DiagramCanvas({
                   })
                 }
           }
-          minZoom={printMode ? 0.01 : 0.5}
-          maxZoom={printMode ? 8 : 2}
+          minZoom={diagramZoomLimits(!!printMode).minZoom}
+          maxZoom={diagramZoomLimits(!!printMode).maxZoom}
           nodesDraggable={!printMode && !portMoveMode}
           nodesConnectable={!printMode && isStructure && !portMoveMode}
           elementsSelectable={!printMode}

@@ -171,6 +171,14 @@ package UseCases {
       actor Charger;
       objective Requirements::ChargeTime;
       doc /* The driver connects a home or fast charger. The car and the charger negotiate a session, the battery takes energy and the state of charge is reported until the driver unplugs. */
+      first start;
+      then action connectCharger;
+      then action negotiateSession;
+      then action transferEnergy;
+      then action reportCharge;
+      // Loop: keep charging while the charger stays plugged in.
+      then if pluggedIn then transferEnergy else endSession;
+      first endSession then done;
     }
 
     #refine dependency from Unlock to Requirements::ParkAndLeave;

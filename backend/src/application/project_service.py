@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import threading
+from typing import Any
 from pathlib import Path
 
 from adapters.persistence.workspace_repo import sanitize_rel_path
@@ -11,7 +13,18 @@ from domain.interface_naming import (
     suggest_port_name_for_type,
 )
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
-from domain.view_usage import effective_view, legacy_definition_warnings
+from domain.expose import MEMBER as EXPOSE_MEMBER
+from domain.expose import MEMBERS as EXPOSE_MEMBERS
+from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
+from domain.expose import RECURSIVE as EXPOSE_RECURSIVE
+from domain.expose import controls_depth, includes_root, kind_of
+from domain.view_usage import (
+    effective_expose_kinds,
+    effective_view,
+    legacy_definition_warnings,
+)
+
+logger = logging.getLogger(__name__)
 from domain.models import (
     ArtifactKind,
     ElementStyle,
@@ -85,6 +98,120 @@ _MAX_NAMED_ELEMENTS = 10
 
 def _view_display_name(view_id: str) -> str:
     return view_id.rsplit("::", 1)[-1]
+
+
+# Relations a general view draws to a use case when they start or end at a
+# member of it (subject, actor, a part inside the subject). Connections,
+# interfaces, bindings and flows need ports and are not lifted.
+_LIFTABLE_RELATION_KINDS = {
+    ArtifactKind.DEPENDENCY,
+    ArtifactKind.SATISFY,
+    ArtifactKind.INCLUDE,
+    ArtifactKind.ALLOCATION,
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
+}
+
+
+def _use_case_member_relations(
+    semantic: dict[str, SemanticElement], artifact_ids: set[str]
+) -> set[str]:
+    """Relations with an end inside a use case on the diagram.
+
+    Returns the relations plus each hidden end and its owners up to the use
+    case, so the frontend can draw the relation to that use case.
+    """
+    use_cases = {
+        aid
+        for aid in artifact_ids
+        if (el := semantic.get(aid)) is not None and el.kind == ArtifactKind.USE_CASE
+    }
+    if not use_cases:
+        return set()
+
+    def chain(end_id: str) -> list[str] | None:
+        out: list[str] = []
+        current = semantic.get(end_id)
+        while current is not None:
+            if current.id in use_cases:
+                return out
+            out.append(current.id)
+            current = semantic.get(current.parent_id) if current.parent_id else None
+        return None
+
+    added: set[str] = set()
+    for rel in semantic.values():
+        if rel.kind not in _LIFTABLE_RELATION_KINDS:
+            continue
+        if not rel.source_id or not rel.target_id:
+            continue
+        ends: list[str] = []
+        lifted = False
+        ok = True
+        for end in (rel.source_id, rel.target_id):
+            if end in artifact_ids:
+                continue
+            path = chain(end)
+            if path is None:
+                ok = False
+                break
+            ends.extend(path)
+            lifted = True
+        if ok and lifted:
+            added.add(rel.id)
+            added.update(ends)
+    return added
+
+
+def _resolve_layout_scopes(
+    scopes: list[dict[str, Any]], semantic: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Turn migrated name-pattern targets into element targets.
+
+    Old Layout Rules matched a scope to containers by name. The first
+    container in the view whose name matches becomes the target; a pattern
+    that matches nothing, or a container another scope already targets, is
+    dropped.
+    """
+    import fnmatch
+
+    containers = sorted(
+        (
+            el
+            for el in semantic.values()
+            if el.get("kind") in ("part", "package") and el.get("children")
+        ),
+        key=lambda el: el["id"],
+    )
+    used = {
+        s["target"]["id"] for s in scopes if s["target"].get("kind") == "element"
+    }
+    out: list[dict[str, Any]] = []
+    for scope in scopes:
+        target = scope["target"]
+        if target.get("kind") != "pattern":
+            out.append(scope)
+            continue
+        match = next(
+            (
+                el["id"]
+                for el in containers
+                if fnmatch.fnmatchcase(el.get("name") or "", target["pattern"])
+                and el["id"] not in used
+            ),
+            None,
+        )
+        if match is None:
+            logger.warning(
+                "Layout Rules scope %s: no container matches %r; scope dropped",
+                scope.get("id"),
+                target["pattern"],
+            )
+            continue
+        used.add(match)
+        out.append({**scope, "target": {"kind": "element", "id": match}})
+    return out
 
 
 def _declared_view_name(project: Project, view_id: str) -> str | None:
@@ -1317,8 +1444,8 @@ class ProjectService:
             ViewLayout,
             ViewLayouts,
             apply_auto_layout_edge_kinds,
-            apply_layered_layout,
-            apply_layout_rules,
+            apply_layout_scopes,
+            apply_legacy_layout_rules,
             apply_view_filters,
             apply_view_hierarchy_override,
             apply_view_layout_edge_patch,
@@ -1331,8 +1458,8 @@ class ProjectService:
         edges_patch = dict(patch.get("edges") or {})
         hierarchy_override_patch = "hierarchicalLevelsOverride" in patch
         view_filters_patch = "viewFilters" in patch
-        layout_rules_patch = "layoutRules" in patch
-        layered_layout_patch = "layeredLayout" in patch
+        layout_scopes_patch = "layoutScopes" in patch
+        legacy_layout_patch = "layoutRules" in patch or "layeredLayout" in patch
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
@@ -1376,16 +1503,18 @@ class ProjectService:
                 if notation != "arcadia":
                     project.view_layouts = working
 
-            if layout_rules_patch:
-                working = apply_layout_rules(
-                    working, view_id, patch.get("layoutRules")
+            if layout_scopes_patch:
+                working = apply_layout_scopes(
+                    working, view_id, patch.get("layoutScopes")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
-
-            if layered_layout_patch:
-                working = apply_layered_layout(
-                    working, view_id, patch.get("layeredLayout")
+            elif legacy_layout_patch:
+                working = apply_legacy_layout_rules(
+                    working,
+                    view_id,
+                    patch.get("layoutRules"),
+                    patch.get("layeredLayout"),
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1469,8 +1598,8 @@ class ProjectService:
                 or geo_edge_patch
                 or hierarchy_override_patch
                 or view_filters_patch
-                or layout_rules_patch
-                or layered_layout_patch
+                or layout_scopes_patch
+                or legacy_layout_patch
                 or edge_kinds_patch
             ):
                 layout = working.by_view.get(view_id)
@@ -1643,7 +1772,11 @@ class ProjectService:
                 project.view_layouts = overlay_layouts
         else:
             overlay_layouts = project.view_layouts
-        from domain.details import collect_artifacts_to_depth
+        from domain.details import (
+            collect_artifacts_to_depth,
+            collect_exposed,
+            structural_depth,
+        )
         from domain.diagram_mode import expected_root_kinds, resolve_diagram_mode
         from domain.merge import artifact_diagram_view_id
         from domain.models import ViewDef
@@ -1701,8 +1834,15 @@ class ProjectService:
             # A view usage takes what it lacks from its `view def`.
             _, exposed, stored_filters = effective_view(view_el, project.semantic)
             expose_root_ids = [rid for rid in exposed if rid in project.semantic]
+            expose_kinds = effective_expose_kinds(view_el, project.semantic)
+        else:
+            expose_kinds = {}
         if not expose_root_ids:
             expose_root_ids = [root.id]
+        expose_kinds = {rid: kind_of(expose_kinds, rid) for rid in expose_root_ids}
+        expose_controls_depth = any(
+            controls_depth(kind) for kind in expose_kinds.values()
+        )
         expose_roots = [
             project.semantic[rid] for rid in expose_root_ids if rid in project.semantic
         ]
@@ -1725,6 +1865,11 @@ class ProjectService:
         )
 
         diagram_mode = resolve_diagram_mode(view, root)
+        # `expose Car::*;` shows Car's members without Car: no frame to draw.
+        if diagram_mode == "whitebox" and not includes_root(
+            expose_kinds.get(root.id, EXPOSE_MEMBER)
+        ):
+            diagram_mode = "structure"
         mode_error: str | None = None
         expected = expected_root_kinds(diagram_mode)
         if expected is not None and root.kind not in expected:
@@ -1734,6 +1879,7 @@ class ProjectService:
             )
 
         artifact_ids: set[str] = set()
+        lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
             for eroot in expose_roots:
@@ -1746,8 +1892,11 @@ class ProjectService:
                             artifact_ids.add(gc)
         elif diagram_mode == "tree":
             for eroot in expose_roots:
-                artifact_ids |= collect_artifacts_to_depth(
-                    project.semantic, eroot.id, effective_levels
+                artifact_ids |= collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    effective_levels,
                 )
             # Include non-part children for tree browsing
             extra: set[str] = set()
@@ -1809,10 +1958,26 @@ class ProjectService:
                     if el.target_id:
                         artifact_ids.add(el.target_id)
         else:
-            # Structure / whitebox: depth-limit parts & packages (incl. package roots)
+            # Structure / whitebox: depth-limit parts & packages (incl. package
+            # roots); `::*` / `::**` exposes set their own depth.
             for eroot in expose_roots:
-                artifact_ids |= collect_artifacts_to_depth(
-                    project.semantic, eroot.id, effective_levels
+                artifact_ids |= collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    effective_levels,
+                )
+            lift_use_case_members = True
+
+        # The frontend nests nodes down to `hierarchicalLevels`; a wildcard
+        # expose sends exactly what it shows, so let every level through.
+        payload_levels = effective_levels
+        for rid, kind in expose_kinds.items():
+            if kind == EXPOSE_MEMBERS:
+                payload_levels = max(payload_levels, 2)
+            elif kind in (EXPOSE_RECURSIVE, EXPOSE_MEMBERS_RECURSIVE):
+                payload_levels = max(
+                    payload_levels, structural_depth(project.semantic, rid)
                 )
 
         # SysML view filter clauses (alpha: @metaclass, name.startsWith)
@@ -1829,6 +1994,9 @@ class ProjectService:
             )
 
         from domain.merge import STRUCTURE_EDGE_KINDS as structure_edge_kinds
+
+        if lift_use_case_members:
+            artifact_ids |= _use_case_member_relations(project.semantic, artifact_ids)
 
         # Drop relations to/from parts outside the depth window (even if nested
         # under an included parent as a child feature).
@@ -1918,17 +2086,17 @@ class ProjectService:
 
         for index, aid in enumerate(sorted(pending_local)):
             global_node = project.visualization.nodes[aid]
-            out = global_node.to_dict()
-            x, y = default_view_local_xy(index)
-            out["x"] = x
-            out["y"] = y
             pending_overlay = (
                 overlay_layouts.get_node(view.id, aid)
                 if overlay_layouts is not None
                 else None
             )
-            if pending_overlay is not None:
-                stamp_edit_lock(out, pending_overlay.edit_locked)
+            # Keep what the view saved without a position (boundary anchors,
+            # size, lock); only the position is the view's default.
+            out = resolve_view_node(global_node, pending_overlay)
+            x, y = default_view_local_xy(index)
+            out["x"] = x
+            out["y"] = y
             nodes[aid] = out
 
         # Edges: only relations whose endpoints are both in the depth-limited set.
@@ -2042,19 +2210,17 @@ class ProjectService:
             # Every `expose` of the view (inherited from its `view def` when
             # it has none), so modes can place content from all of them.
             "exposeRootIds": [r.id for r in expose_roots],
+            "exposeKinds": dict(expose_kinds),
+            "exposeControlsDepth": expose_controls_depth,
             "diagramMode": diagram_mode,
-            "hierarchicalLevels": effective_levels,
+            "hierarchicalLevels": payload_levels,
             "hierarchicalLevelsOverride": levels_override,
             "viewFilters": list(layout_for_view.view_filters)
             if layout_for_view
             else [],
-            "layoutRules": list(layout_for_view.layout_rules)
-            if layout_for_view
-            else [],
-            "layeredLayout": (
-                dict(layout_for_view.layered_layout)
-                if layout_for_view and layout_for_view.layered_layout is not None
-                else None
+            "layoutScopes": _resolve_layout_scopes(
+                list(layout_for_view.layout_scopes) if layout_for_view else [],
+                semantic,
             ),
             "autoLayoutEdgeKinds": (
                 dict(layout_for_view.auto_layout_edge_kinds)

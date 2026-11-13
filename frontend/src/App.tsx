@@ -82,6 +82,7 @@ import {
   openTutorialNewTab,
   type CanvasTabsState,
 } from './features/tabs/canvasTabs'
+import { fittedPartMinimum } from './features/diagram/modes/structure/buildStructureGraph'
 
 type CanvasMode =
   | { type: 'diagram' }
@@ -166,6 +167,10 @@ export default function App() {
   const [printPreparing, setPrintPreparing] = useState(false)
   const [autorouteRequest, setAutorouteRequest] = useState<{
     connectionId: string
+    seq: number
+  } | null>(null)
+  const [geometryRequest, setGeometryRequest] = useState<{
+    nodes: Record<string, Partial<VisualizationNode>>
     seq: number
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
@@ -714,12 +719,12 @@ export default function App() {
                 labelOffset:
                   patch.labelOffset ?? existing?.labelOffset ?? { x: 0, y: 0 },
                 style: patch.style ?? existing?.style,
-                sourceSide: patch.sourceSide ?? existing?.sourceSide,
-                sourceOffset: patch.sourceOffset ?? existing?.sourceOffset,
-                targetSide: patch.targetSide ?? existing?.targetSide,
-                targetOffset: patch.targetOffset ?? existing?.targetOffset,
-                sourceAnchorId: patch.sourceAnchorId ?? existing?.sourceAnchorId,
-                targetAnchorId: patch.targetAnchorId ?? existing?.targetAnchorId,
+                sourceSide: 'sourceSide' in patch ? patch.sourceSide : existing?.sourceSide,
+                sourceOffset: 'sourceOffset' in patch ? patch.sourceOffset : existing?.sourceOffset,
+                targetSide: 'targetSide' in patch ? patch.targetSide : existing?.targetSide,
+                targetOffset: 'targetOffset' in patch ? patch.targetOffset : existing?.targetOffset,
+                sourceAnchorId: 'sourceAnchorId' in patch ? patch.sourceAnchorId : existing?.sourceAnchorId,
+                targetAnchorId: 'targetAnchorId' in patch ? patch.targetAnchorId : existing?.targetAnchorId,
                 editLocked:
                   patch.editLocked !== undefined
                     ? patch.editLocked
@@ -742,6 +747,12 @@ export default function App() {
     },
     [project, viewPayload?.view.id, structureNotation, patchVisualization],
   )
+
+  /** Save a Details-panel geometry change and show it on the canvas at once. */
+  const applyDetailsGeometry = (patch: Record<string, Partial<VisualizationNode>>) => {
+    setGeometryRequest((prev) => ({ nodes: patch, seq: (prev?.seq ?? 0) + 1 }))
+    void onNodesMoved(patch)
+  }
 
   const onHierarchyOverrideChange = useCallback(
     async (override: number | null) => {
@@ -779,17 +790,17 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
-  const onLayoutRulesChange = useCallback(
-    async (rules: import('./api').LayoutRuleRow[]) => {
+  const onLayoutScopesChange = useCallback(
+    async (scopes: import('./api').LayoutScope[]) => {
       if (!project || !activeViewId) return
       try {
         await patchVisualization(project.id, {
           viewId: activeViewId,
-          layoutRules: rules,
+          layoutScopes: scopes,
           structureNotation,
         })
         setViewPayload((prev) =>
-          prev ? { ...prev, layoutRules: rules } : prev,
+          prev ? { ...prev, layoutScopes: scopes } : prev,
         )
       } catch (e) {
         setError(String(e))
@@ -809,25 +820,6 @@ export default function App() {
         })
         setViewPayload((prev) =>
           prev ? { ...prev, autoLayoutEdgeKinds: kinds } : prev,
-        )
-      } catch (e) {
-        setError(String(e))
-      }
-    },
-    [project, activeViewId, structureNotation],
-  )
-
-  const onLayeredLayoutChange = useCallback(
-    async (layered: import('./api').LayeredLayoutConfig | null) => {
-      if (!project || !activeViewId) return
-      try {
-        await patchVisualization(project.id, {
-          viewId: activeViewId,
-          layeredLayout: layered,
-          structureNotation,
-        })
-        setViewPayload((prev) =>
-          prev ? { ...prev, layeredLayout: layered } : prev,
         )
       } catch (e) {
         setError(String(e))
@@ -1499,8 +1491,8 @@ export default function App() {
         seq: (prev?.seq ?? 0) + 1,
       }))
     },
-    onPositionChange: (id, x, y) =>
-      void onNodesMoved({ [id]: { x, y } }),
+    onPositionChange: (id, position) =>
+      applyDetailsGeometry({ [id]: { artifactId: id, ...position } }),
     onSizeChange: (ids, size) => {
       const semantic =
         viewPayload?.semantic ?? project?.semantic ?? {}
@@ -1514,6 +1506,10 @@ export default function App() {
       for (const id of ids) {
         const isBoundary = isWhitebox && rootId === id
         const clamped = clampPartSize(size, { isBoundary })
+        // Never below what the port labels need: the field shows what is drawn.
+        const fitted = fittedPartMinimum(id, semantic, { nodes: vizNodes, edges: {} })
+        if (clamped.width != null) clamped.width = Math.max(clamped.width, fitted.width)
+        if (clamped.height != null) clamped.height = Math.max(clamped.height, fitted.height)
         patch[id] = { artifactId: id, ...clamped }
         if (clamped.height == null) continue
         const part = semantic[id]
@@ -1536,7 +1532,7 @@ export default function App() {
           }
         }
       }
-      void onNodesMoved(patch)
+      applyDetailsGeometry(patch)
     },
     onEditLockChange: (id, locked) => {
       if (!viewPayload) return
@@ -2011,12 +2007,9 @@ export default function App() {
                 onClientError={(message, viewId) =>
                   void eventLog.report({ message, viewId })
                 }
-                onLayoutRulesChange={(rules) => void onLayoutRulesChange(rules)}
+                onLayoutScopesChange={(scopes) => void onLayoutScopesChange(scopes)}
                 onAutoLayoutEdgeKindsChange={(kinds) =>
                   void onAutoLayoutEdgeKindsChange(kinds)
-                }
-                onLayeredLayoutChange={(layered) =>
-                  void onLayeredLayoutChange(layered)
                 }
                 onPortMoved={(portId, side, offset) => void onPortMoved(portId, side, offset)}
                 onPortsMoved={(moves) => void onPortsMoved(moves)}
@@ -2027,6 +2020,7 @@ export default function App() {
                 onWaypointsMoved={(id, wps) => void onWaypointsMoved(id, wps)}
                 onLabelOffsetMoved={(id, off) => void onLabelOffsetMoved(id, off)}
                 autorouteRequest={autorouteRequest}
+                geometryRequest={geometryRequest}
               />
             )}
             </div>

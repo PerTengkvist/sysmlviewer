@@ -186,6 +186,9 @@ class SemanticElement:
     expose_ref: str | None = None
     # For view elements: all expose targets (`expose A; expose B;`)
     expose_refs: list[str] = field(default_factory=list)
+    # For view elements: expose kind per exposed id (see EXPOSE_KINDS);
+    # an id missing here is a plain `expose X;` (member).
+    expose_kinds: dict[str, str] = field(default_factory=dict)
     # For view elements: stored filter clauses (alpha: metaclass / nameStartsWith)
     view_filters: list[dict[str, Any]] = field(default_factory=list)
     # For view elements: declared with `view def` rather than as a `view` usage
@@ -222,6 +225,7 @@ class SemanticElement:
             "targetId": self.target_id,
             "exposeRef": self.expose_ref,
             "exposeRefs": list(self.expose_refs),
+            **({"exposeKinds": dict(self.expose_kinds)} if self.expose_kinds else {}),
             "viewFilters": list(self.view_filters),
             "defaultValue": self.default_value,
             "multiplicity": self.multiplicity,
@@ -248,6 +252,7 @@ class SemanticElement:
                 data.get("exposeRefs")
                 or ([data["exposeRef"]] if data.get("exposeRef") else [])
             ),
+            expose_kinds=dict(data.get("exposeKinds") or {}),
             view_filters=list(data.get("viewFilters") or []),
             is_definition=bool(data.get("isDefinition", False)),
             default_value=data.get("defaultValue"),
