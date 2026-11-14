@@ -22663,7 +22663,16 @@
       "shortId": null,
       "children": [
         "UseCases::Driving::Brake::Driver",
-        "UseCases::Driving::Brake::objective_6"
+        "UseCases::Driving::Brake::objective_6",
+        "UseCases::Driving::Brake::start",
+        "UseCases::Driving::Brake::pressBrake",
+        "UseCases::Driving::Brake::succ1",
+        "UseCases::Driving::Brake::applyBrake",
+        "UseCases::Driving::Brake::succ2",
+        "UseCases::Driving::Brake::applyBrakeLights",
+        "UseCases::Driving::Brake::succ3",
+        "UseCases::Driving::Brake::done",
+        "UseCases::Driving::Brake::succ4"
       ],
       "fileId": "use_cases/use_cases.sysml"
     },
@@ -22704,6 +22713,186 @@
       "metadataKeywords": [
         "objective"
       ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::start": {
+      "id": "UseCases::Driving::Brake::start",
+      "kind": "action",
+      "name": "start",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": "start",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::pressBrake": {
+      "id": "UseCases::Driving::Brake::pressBrake",
+      "kind": "action",
+      "name": "pressBrake",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::succ1": {
+      "id": "UseCases::Driving::Brake::succ1",
+      "kind": "succession",
+      "name": "succ1",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": "UseCases::Driving::Brake::start",
+      "targetId": "UseCases::Driving::Brake::pressBrake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::applyBrake": {
+      "id": "UseCases::Driving::Brake::applyBrake",
+      "kind": "action",
+      "name": "applyBrake",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::succ2": {
+      "id": "UseCases::Driving::Brake::succ2",
+      "kind": "succession",
+      "name": "succ2",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": "UseCases::Driving::Brake::pressBrake",
+      "targetId": "UseCases::Driving::Brake::applyBrake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::applyBrakeLights": {
+      "id": "UseCases::Driving::Brake::applyBrakeLights",
+      "kind": "action",
+      "name": "applyBrakeLights",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::succ3": {
+      "id": "UseCases::Driving::Brake::succ3",
+      "kind": "succession",
+      "name": "succ3",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": "UseCases::Driving::Brake::applyBrake",
+      "targetId": "UseCases::Driving::Brake::applyBrakeLights",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::done": {
+      "id": "UseCases::Driving::Brake::done",
+      "kind": "action",
+      "name": "done",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": "done",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_cases/use_cases.sysml"
+    },
+    "UseCases::Driving::Brake::succ4": {
+      "id": "UseCases::Driving::Brake::succ4",
+      "kind": "succession",
+      "name": "succ4",
+      "parentId": "UseCases::Driving::Brake",
+      "typeRef": null,
+      "sourceId": "UseCases::Driving::Brake::applyBrakeLights",
+      "targetId": "UseCases::Driving::Brake::done",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
       "documentation": null,
       "shortId": null,
       "children": [],
@@ -24325,20 +24514,20 @@
         "UseCases::Managing::Charge::objective_21",
         "UseCases::Managing::Charge::start",
         "UseCases::Managing::Charge::connectCharger",
-        "UseCases::Managing::Charge::succ1",
-        "UseCases::Managing::Charge::negotiateSession",
-        "UseCases::Managing::Charge::succ2",
-        "UseCases::Managing::Charge::transferEnergy",
-        "UseCases::Managing::Charge::succ3",
-        "UseCases::Managing::Charge::reportCharge",
-        "UseCases::Managing::Charge::succ4",
-        "UseCases::Managing::Charge::pluggedIn",
         "UseCases::Managing::Charge::succ5",
+        "UseCases::Managing::Charge::negotiateSession",
+        "UseCases::Managing::Charge::succ6",
+        "UseCases::Managing::Charge::transferEnergy",
+        "UseCases::Managing::Charge::succ7",
+        "UseCases::Managing::Charge::reportCharge",
+        "UseCases::Managing::Charge::succ8",
+        "UseCases::Managing::Charge::pluggedIn",
+        "UseCases::Managing::Charge::succ9",
         "UseCases::Managing::Charge::if_pluggedIn_yes",
         "UseCases::Managing::Charge::endSession",
         "UseCases::Managing::Charge::if_pluggedIn_else",
         "UseCases::Managing::Charge::done",
-        "UseCases::Managing::Charge::succ6"
+        "UseCases::Managing::Charge::succ10"
       ],
       "fileId": "use_cases/use_cases.sysml"
     },
@@ -24444,10 +24633,10 @@
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
     },
-    "UseCases::Managing::Charge::succ1": {
-      "id": "UseCases::Managing::Charge::succ1",
+    "UseCases::Managing::Charge::succ5": {
+      "id": "UseCases::Managing::Charge::succ5",
       "kind": "succession",
-      "name": "succ1",
+      "name": "succ5",
       "parentId": "UseCases::Managing::Charge",
       "typeRef": null,
       "sourceId": "UseCases::Managing::Charge::start",
@@ -24484,10 +24673,10 @@
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
     },
-    "UseCases::Managing::Charge::succ2": {
-      "id": "UseCases::Managing::Charge::succ2",
+    "UseCases::Managing::Charge::succ6": {
+      "id": "UseCases::Managing::Charge::succ6",
       "kind": "succession",
-      "name": "succ2",
+      "name": "succ6",
       "parentId": "UseCases::Managing::Charge",
       "typeRef": null,
       "sourceId": "UseCases::Managing::Charge::connectCharger",
@@ -24524,10 +24713,10 @@
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
     },
-    "UseCases::Managing::Charge::succ3": {
-      "id": "UseCases::Managing::Charge::succ3",
+    "UseCases::Managing::Charge::succ7": {
+      "id": "UseCases::Managing::Charge::succ7",
       "kind": "succession",
-      "name": "succ3",
+      "name": "succ7",
       "parentId": "UseCases::Managing::Charge",
       "typeRef": null,
       "sourceId": "UseCases::Managing::Charge::negotiateSession",
@@ -24564,10 +24753,10 @@
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
     },
-    "UseCases::Managing::Charge::succ4": {
-      "id": "UseCases::Managing::Charge::succ4",
+    "UseCases::Managing::Charge::succ8": {
+      "id": "UseCases::Managing::Charge::succ8",
       "kind": "succession",
-      "name": "succ4",
+      "name": "succ8",
       "parentId": "UseCases::Managing::Charge",
       "typeRef": null,
       "sourceId": "UseCases::Managing::Charge::transferEnergy",
@@ -24604,10 +24793,10 @@
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
     },
-    "UseCases::Managing::Charge::succ5": {
-      "id": "UseCases::Managing::Charge::succ5",
+    "UseCases::Managing::Charge::succ9": {
+      "id": "UseCases::Managing::Charge::succ9",
       "kind": "succession",
-      "name": "succ5",
+      "name": "succ9",
       "parentId": "UseCases::Managing::Charge",
       "typeRef": null,
       "sourceId": "UseCases::Managing::Charge::reportCharge",
@@ -24704,10 +24893,10 @@
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
     },
-    "UseCases::Managing::Charge::succ6": {
-      "id": "UseCases::Managing::Charge::succ6",
+    "UseCases::Managing::Charge::succ10": {
+      "id": "UseCases::Managing::Charge::succ10",
       "kind": "succession",
-      "name": "succ6",
+      "name": "succ10",
       "parentId": "UseCases::Managing::Charge",
       "typeRef": null,
       "sourceId": "UseCases::Managing::Charge::endSession",
@@ -30141,6 +30330,56 @@
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCases::Driving::Brake::start": {
+        "artifactId": "UseCases::Driving::Brake::start",
+        "x": 73480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCases::Driving::Brake::pressBrake": {
+        "artifactId": "UseCases::Driving::Brake::pressBrake",
+        "x": 73680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCases::Driving::Brake::applyBrake": {
+        "artifactId": "UseCases::Driving::Brake::applyBrake",
+        "x": 73680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCases::Driving::Brake::applyBrakeLights": {
+        "artifactId": "UseCases::Driving::Brake::applyBrakeLights",
+        "x": 73880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCases::Driving::Brake::done": {
+        "artifactId": "UseCases::Driving::Brake::done",
+        "x": 74280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
         "side": null,
         "offset": null
       },
@@ -37438,6 +37677,42 @@
           }
         }
       },
+      "UseCases::Driving::Brake::succ1": {
+        "artifactId": "UseCases::Driving::Brake::succ1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Driving::Brake::succ2": {
+        "artifactId": "UseCases::Driving::Brake::succ2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Driving::Brake::succ3": {
+        "artifactId": "UseCases::Driving::Brake::succ3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Driving::Brake::succ4": {
+        "artifactId": "UseCases::Driving::Brake::succ4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
       "UseCases::Driving::Accelerate::objective_7": {
         "artifactId": "UseCases::Driving::Accelerate::objective_7",
         "routing": "direct",
@@ -38122,44 +38397,44 @@
           }
         }
       },
-      "UseCases::Managing::Charge::succ1": {
-        "artifactId": "UseCases::Managing::Charge::succ1",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        }
-      },
-      "UseCases::Managing::Charge::succ2": {
-        "artifactId": "UseCases::Managing::Charge::succ2",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        }
-      },
-      "UseCases::Managing::Charge::succ3": {
-        "artifactId": "UseCases::Managing::Charge::succ3",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        }
-      },
-      "UseCases::Managing::Charge::succ4": {
-        "artifactId": "UseCases::Managing::Charge::succ4",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        }
-      },
       "UseCases::Managing::Charge::succ5": {
         "artifactId": "UseCases::Managing::Charge::succ5",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Managing::Charge::succ6": {
+        "artifactId": "UseCases::Managing::Charge::succ6",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Managing::Charge::succ7": {
+        "artifactId": "UseCases::Managing::Charge::succ7",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Managing::Charge::succ8": {
+        "artifactId": "UseCases::Managing::Charge::succ8",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCases::Managing::Charge::succ9": {
+        "artifactId": "UseCases::Managing::Charge::succ9",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -38185,8 +38460,8 @@
           "y": 0.0
         }
       },
-      "UseCases::Managing::Charge::succ6": {
-        "artifactId": "UseCases::Managing::Charge::succ6",
+      "UseCases::Managing::Charge::succ10": {
+        "artifactId": "UseCases::Managing::Charge::succ10",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
