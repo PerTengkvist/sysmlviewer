@@ -9406,7 +9406,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Engage and release the latches and flash the indicators as confirmation. Allocated to the body controller.",
+      "documentation": "Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller.",
       "shortId": null,
       "children": [
         "Functions::Security::lockControl::perform_securityFlow_unlockDoors"
@@ -9535,7 +9535,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Read the key fob credential and compare it with the keys paired to the car.",
+      "documentation": "Input: the challenge response the key fob sends to the car's antennas. Compared with the keys paired to the car; the outcome is the credentialValid decision.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -9555,7 +9555,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Release the door latches and flash the indicators as confirmation.",
+      "documentation": "When the credential is valid: every door latch is released and the indicators flash once, so the driver sees the car has accepted the key.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -9575,7 +9575,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Bring the cabin systems out of sleep so they are ready when the driver gets in.",
+      "documentation": "After the doors unlock: the cabin bus comes out of sleep, so the display and controls respond by the time the driver is seated.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -9595,7 +9595,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Lift the propulsion inhibit so that the start button can make the car ready.",
+      "documentation": "Once the cabin is awake: the propulsion inhibit is lifted, so the next press on the start button can make the car Ready.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -9615,7 +9615,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Tell the driver that the car is unlocked and can be started.",
+      "documentation": "Last step of a valid unlock: the instrument cluster shows that the car is unlocked and can be started.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -9635,7 +9635,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Ignore an unknown or expired credential and keep the doors locked.",
+      "documentation": "When the credential is unknown or expired: it is discarded, the doors stay locked and the immobilizer stays engaged.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10158,7 +10158,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Detect that a charger plug is inserted and locked in the inlet.",
+      "documentation": "Starts the session: the inlet senses a charger plug and locks it in place. Output: plug present and locked.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10178,7 +10178,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Agree with the charger on the current the battery can accept.",
+      "documentation": "With the plug locked: the car offers the charger the current the battery can accept right now, and both agree on a limit.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10198,7 +10198,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Carry the charger's energy through the inlet into the car.",
+      "documentation": "Within the agreed limit: charging current flows from the charger through the inlet to the battery.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10218,7 +10218,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Store the energy in the battery cells and update the state of charge.",
+      "documentation": "Input: the charging current. The cells take up the energy and the state of charge is updated.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10238,7 +10238,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "End the session when the battery reaches the target state of charge.",
+      "documentation": "When the state of charge reaches the driver's target: the charger is told to stop and the plug is unlocked.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10680,7 +10680,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Turn pedal travel into a torque request bounded by the battery limit.",
+      "documentation": "Input: accelerator and brake pedal positions and the battery's power limit. Output: a torque request, negative while the driver brakes; that sign is the braking decision.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10700,7 +10700,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Take as much of the deceleration as possible as regenerative torque.",
+      "documentation": "While braking: as much of the requested deceleration as the battery can absorb is taken as regenerative torque; the remainder goes on to friction braking.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10720,7 +10720,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Apply hydraulic pressure for the rest of the deceleration, with anti-lock modulation.",
+      "documentation": "Input: the deceleration regeneration could not take. It is applied as hydraulic pressure at the wheels, modulated if a wheel starts to lock.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10740,7 +10740,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Convert electrical power into the requested torque at the wheels.",
+      "documentation": "When not braking: the requested torque is drawn from the battery and delivered to the driven wheels.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11171,7 +11171,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Accept park, reverse, neutral or drive only when it is safe.",
+      "documentation": "Input: the gear selector position and the vehicle speed. Output: the engaged direction of travel; a change that is unsafe at the current speed is refused.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11191,7 +11191,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Turn the steering wheel angle into a wheel angle.",
+      "documentation": "With a direction engaged: the road wheels follow the steering wheel angle, with less assistance as speed rises.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11211,7 +11211,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Keep the tyres on the road over bumps and in corners.",
+      "documentation": "While the car moves: body motion over bumps and in corners is damped so that all four tyres keep contact with the road.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11492,7 +11492,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Let the driver or a passenger choose a title on the cabin display.",
+      "documentation": "Input: a choice on the cabin display by the driver or a passenger. Output: the title to play.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11512,7 +11512,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Play the title on the cabin display and speakers.",
+      "documentation": "The chosen title streams to the display and speakers until it ends or another title is chosen.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11773,7 +11773,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Read the set temperature and fan level from the climate controls.",
+      "documentation": "Input: the set temperature and fan level on the climate controls. Output: the target the cabin is conditioned to.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11793,7 +11793,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Heat, cool or demist with heater, compressor and fans until the cabin holds the setpoint.",
+      "documentation": "The cabin temperature is compared with the target, and heating or cooling runs until they match; the glass is demisted if it fogs.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -11958,7 +11958,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Turn the stalk position into wipe speed and washer pulses. Allocated to the body controller.",
+      "documentation": "Own the driver's wipe and wash request and decide how fast the blades run and when to wash. Allocated to the body controller.",
       "shortId": null,
       "children": [
         "Functions::WindshieldCleaning::wipeControl::perform_windshieldCleaningFlow_readStalk"
@@ -12102,7 +12102,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Turn the stalk position into a wipe speed and washer pulses.",
+      "documentation": "Input: the stalk position (off, intermittent, slow, fast or wash). Output: the requested wipe speed and any washer pulse.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -12122,7 +12122,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Sweep the blades over the glass at the requested speed.",
+      "documentation": "At the requested speed: the blades cross the glass, with washer fluid sprayed on a wash pulse.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -12142,7 +12142,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Return the blades to their rest position when wiping stops.",
+      "documentation": "When the stalk returns to off: the current sweep is finished and the blades stop in their rest position below the windshield.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -12493,7 +12493,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Choose low or high beam from the light switch.",
+      "documentation": "Input: the light switch and the high-beam stalk. Output: which headlamps should be lit.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -12513,7 +12513,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Flash the direction indicators, brake lamps or hazard lights as requested.",
+      "documentation": "Input: the indicator stalk, the hazard switch and the brake pedal. Output: which direction indicators flash and whether the brake lamps are lit.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -12533,7 +12533,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Drive the lamp units that were selected.",
+      "documentation": "The lamp units chosen in the two previous steps are powered; all others are switched off.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"

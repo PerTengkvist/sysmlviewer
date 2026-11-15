@@ -1,6 +1,6 @@
 # lockControl
 
-Engage and release the latches and flash the indicators as confirmation. Allocated to the body controller.
+Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller.
 
 Part of `Security`.
 

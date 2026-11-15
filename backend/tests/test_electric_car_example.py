@@ -729,3 +729,22 @@ def test_branching_flows_have_the_intended_successions():
         ("applyFriction", "done", False),
         ("driveWheels", "done", False),
     }
+
+
+def test_step_docs_describe_the_flow_not_the_entity():
+    """A step says what happens in the flow; its performer's doc says what it owns."""
+    from difflib import SequenceMatcher
+
+    from domain.perform import resolve_performers
+
+    elements = _load().elements
+    performers = resolve_performers(elements)
+    too_close = []
+    for step_id, parts in performers.items():
+        step_doc = elements[step_id].documentation or ""
+        for part_id in parts:
+            part_doc = elements[part_id].documentation or ""
+            ratio = SequenceMatcher(None, step_doc.lower(), part_doc.lower()).ratio()
+            if ratio >= 0.6:
+                too_close.append((elements[step_id].name, elements[part_id].name, round(ratio, 2)))
+    assert too_close == []

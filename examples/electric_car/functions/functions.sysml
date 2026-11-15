@@ -22,7 +22,7 @@ package Functions {
       perform securityFlow.wakeCabin;
     }
     part lockControl : FunctionNode {
-      doc /* Engage and release the latches and flash the indicators as confirmation. Allocated to the body controller. */
+      doc /* Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller. */
       perform securityFlow.unlockDoors;
     }
     part driverInformation : FunctionNode {
@@ -32,22 +32,22 @@ package Functions {
     action securityFlow {
       doc /* From a key fob credential to a car that is ready to start. A valid key unlocks the doors, wakes the cabin, releases the immobilizer and tells the driver; any other key is rejected and the car stays locked. */
       action checkCredential {
-        doc /* Read the key fob credential and compare it with the keys paired to the car. */
+        doc /* Input: the challenge response the key fob sends to the car's antennas. Compared with the keys paired to the car; the outcome is the credentialValid decision. */
       }
       action unlockDoors {
-        doc /* Release the door latches and flash the indicators as confirmation. */
+        doc /* When the credential is valid: every door latch is released and the indicators flash once, so the driver sees the car has accepted the key. */
       }
       action wakeCabin {
-        doc /* Bring the cabin systems out of sleep so they are ready when the driver gets in. */
+        doc /* After the doors unlock: the cabin bus comes out of sleep, so the display and controls respond by the time the driver is seated. */
       }
       action releaseImmobilizer {
-        doc /* Lift the propulsion inhibit so that the start button can make the car ready. */
+        doc /* Once the cabin is awake: the propulsion inhibit is lifted, so the next press on the start button can make the car Ready. */
       }
       action showReady {
-        doc /* Tell the driver that the car is unlocked and can be started. */
+        doc /* Last step of a valid unlock: the instrument cluster shows that the car is unlocked and can be started. */
       }
       action rejectKey {
-        doc /* Ignore an unknown or expired credential and keep the doors locked. */
+        doc /* When the credential is unknown or expired: it is discarded, the doors stay locked and the immobilizer stays engaged. */
       }
       first start;
       then checkCredential;
@@ -79,19 +79,19 @@ package Functions {
     action chargingFlow {
       doc /* One charging session: from plugging in to stopping at the target state of charge. */
       action detectPlug {
-        doc /* Detect that a charger plug is inserted and locked in the inlet. */
+        doc /* Starts the session: the inlet senses a charger plug and locks it in place. Output: plug present and locked. */
       }
       action negotiateCurrent {
-        doc /* Agree with the charger on the current the battery can accept. */
+        doc /* With the plug locked: the car offers the charger the current the battery can accept right now, and both agree on a limit. */
       }
       action transferEnergy {
-        doc /* Carry the charger's energy through the inlet into the car. */
+        doc /* Within the agreed limit: charging current flows from the charger through the inlet to the battery. */
       }
       action storeEnergy {
-        doc /* Store the energy in the battery cells and update the state of charge. */
+        doc /* Input: the charging current. The cells take up the energy and the state of charge is updated. */
       }
       action stopAtTarget {
-        doc /* End the session when the battery reaches the target state of charge. */
+        doc /* When the state of charge reaches the driver's target: the charger is told to stop and the plug is unlocked. */
       }
       first start;
       then detectPlug;
@@ -124,16 +124,16 @@ package Functions {
     action speedControlFlow {
       doc /* From pedal travel to torque at the wheels. When the driver brakes, the deceleration is blended between regeneration and friction; otherwise the traction drive turns the wheels. */
       action arbitrateTorque {
-        doc /* Turn pedal travel into a torque request bounded by the battery limit. */
+        doc /* Input: accelerator and brake pedal positions and the battery's power limit. Output: a torque request, negative while the driver brakes; that sign is the braking decision. */
       }
       action blendRegen {
-        doc /* Take as much of the deceleration as possible as regenerative torque. */
+        doc /* While braking: as much of the requested deceleration as the battery can absorb is taken as regenerative torque; the remainder goes on to friction braking. */
       }
       action applyFriction {
-        doc /* Apply hydraulic pressure for the rest of the deceleration, with anti-lock modulation. */
+        doc /* Input: the deceleration regeneration could not take. It is applied as hydraulic pressure at the wheels, modulated if a wheel starts to lock. */
       }
       action driveWheels {
-        doc /* Convert electrical power into the requested torque at the wheels. */
+        doc /* When not braking: the requested torque is drawn from the battery and delivered to the driven wheels. */
       }
       first start;
       then arbitrateTorque;
@@ -161,13 +161,13 @@ package Functions {
     action maneuvrabilityFlow {
       doc /* Choose the direction of travel, steer, and keep the car on the road. */
       action selectGear {
-        doc /* Accept park, reverse, neutral or drive only when it is safe. */
+        doc /* Input: the gear selector position and the vehicle speed. Output: the engaged direction of travel; a change that is unsafe at the current speed is refused. */
       }
       action steerWheels {
-        doc /* Turn the steering wheel angle into a wheel angle. */
+        doc /* With a direction engaged: the road wheels follow the steering wheel angle, with less assistance as speed rises. */
       }
       action holdRoad {
-        doc /* Keep the tyres on the road over bumps and in corners. */
+        doc /* While the car moves: body motion over bumps and in corners is damped so that all four tyres keep contact with the road. */
       }
       first start;
       then selectGear;
@@ -187,10 +187,10 @@ package Functions {
     action entertainmentFlow {
       doc /* Pick something to play and play it in the cabin. */
       action selectTitle {
-        doc /* Let the driver or a passenger choose a title on the cabin display. */
+        doc /* Input: a choice on the cabin display by the driver or a passenger. Output: the title to play. */
       }
       action playMedia {
-        doc /* Play the title on the cabin display and speakers. */
+        doc /* The chosen title streams to the display and speakers until it ends or another title is chosen. */
       }
       first start;
       then selectTitle;
@@ -209,10 +209,10 @@ package Functions {
     action climateFlow {
       doc /* Bring the cabin to the temperature the occupants asked for. */
       action readSetpoint {
-        doc /* Read the set temperature and fan level from the climate controls. */
+        doc /* Input: the set temperature and fan level on the climate controls. Output: the target the cabin is conditioned to. */
       }
       action conditionCabin {
-        doc /* Heat, cool or demist with heater, compressor and fans until the cabin holds the setpoint. */
+        doc /* The cabin temperature is compared with the target, and heating or cooling runs until they match; the glass is demisted if it fogs. */
       }
       first start;
       then readSetpoint;
@@ -224,7 +224,7 @@ package Functions {
   part def WindshieldCleaning :> Function {
     doc /* Wipe and wash the windshield so the driver can see. Depends on Charging for the wiper motor and on SpeedControl so the wipe rate can follow vehicle speed. */
     part wipeControl : FunctionNode {
-      doc /* Turn the stalk position into wipe speed and washer pulses. Allocated to the body controller. */
+      doc /* Own the driver's wipe and wash request and decide how fast the blades run and when to wash. Allocated to the body controller. */
       perform windshieldCleaningFlow.readStalk;
     }
     part wipeSweep : FunctionNode {
@@ -235,13 +235,13 @@ package Functions {
     action windshieldCleaningFlow {
       doc /* From the stalk position to a clean windshield and parked blades. */
       action readStalk {
-        doc /* Turn the stalk position into a wipe speed and washer pulses. */
+        doc /* Input: the stalk position (off, intermittent, slow, fast or wash). Output: the requested wipe speed and any washer pulse. */
       }
       action sweepGlass {
-        doc /* Sweep the blades over the glass at the requested speed. */
+        doc /* At the requested speed: the blades cross the glass, with washer fluid sprayed on a wash pulse. */
       }
       action parkBlades {
-        doc /* Return the blades to their rest position when wiping stops. */
+        doc /* When the stalk returns to off: the current sweep is finished and the blades stop in their rest position below the windshield. */
       }
       first start;
       then readStalk;
@@ -268,13 +268,13 @@ package Functions {
     action lightingFlow {
       doc /* From the light switch and indicator stalk to lit lamp units. */
       action selectLamps {
-        doc /* Choose low or high beam from the light switch. */
+        doc /* Input: the light switch and the high-beam stalk. Output: which headlamps should be lit. */
       }
       action flashIndicators {
-        doc /* Flash the direction indicators, brake lamps or hazard lights as requested. */
+        doc /* Input: the indicator stalk, the hazard switch and the brake pedal. Output: which direction indicators flash and whether the brake lamps are lit. */
       }
       action lightLamps {
-        doc /* Drive the lamp units that were selected. */
+        doc /* The lamp units chosen in the two previous steps are powered; all others are switched off. */
       }
       first start;
       then selectLamps;
