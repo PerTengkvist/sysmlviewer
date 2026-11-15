@@ -9159,6 +9159,7 @@
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml",
+      "isDefinition": true,
       "isAbstract": true
     },
     "Functions::FunctionNode": {
@@ -9180,6 +9181,7 @@
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml",
+      "isDefinition": true,
       "isAbstract": true
     },
     "Functions::Security": {
@@ -9207,7 +9209,8 @@
         "Functions::Security::driverInformation",
         "Functions::Security::securityFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::Security_specializes_Function": {
       "id": "Functions::Security_specializes_Function",
@@ -9900,7 +9903,8 @@
         "Functions::Charging::energyStorage",
         "Functions::Charging::chargingFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::Charging_specializes_Function": {
       "id": "Functions::Charging_specializes_Function",
@@ -10423,7 +10427,8 @@
         "Functions::SpeedControl::frictionBraking",
         "Functions::SpeedControl::speedControlFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::SpeedControl_specializes_Function": {
       "id": "Functions::SpeedControl_specializes_Function",
@@ -10963,7 +10968,8 @@
         "Functions::Maneuvrability::roadHolding",
         "Functions::Maneuvrability::maneuvrabilityFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::Maneuvrability_specializes_Function": {
       "id": "Functions::Maneuvrability_specializes_Function",
@@ -11351,7 +11357,8 @@
         "Functions::Entertainment::mediaPlayback",
         "Functions::Entertainment::entertainmentFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::Entertainment_specializes_Function": {
       "id": "Functions::Entertainment_specializes_Function",
@@ -11631,7 +11638,8 @@
         "Functions::Climate::cabinTemperature",
         "Functions::Climate::climateFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::Climate_specializes_Function": {
       "id": "Functions::Climate_specializes_Function",
@@ -11912,7 +11920,8 @@
         "Functions::WindshieldCleaning::wipeSweep",
         "Functions::WindshieldCleaning::windshieldCleaningFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::WindshieldCleaning_specializes_Function": {
       "id": "Functions::WindshieldCleaning_specializes_Function",
@@ -12281,7 +12290,8 @@
         "Functions::Lighting::lampDrive",
         "Functions::Lighting::lightingFlow"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "isDefinition": true
     },
     "Functions::Lighting_specializes_Function": {
       "id": "Functions::Lighting_specializes_Function",
@@ -14100,7 +14110,8 @@
         "LogicalArchitecture::Car::charge",
         "LogicalArchitecture::Car::clear"
       ],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::Car::keyFob": {
       "id": "LogicalArchitecture::Car::keyFob",
@@ -18277,7 +18288,8 @@
         "PhysicalArchitecture::VehiclePhysical::charge",
         "PhysicalArchitecture::VehiclePhysical::clear"
       ],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::VehiclePhysical::vehicleEcu": {
       "id": "PhysicalArchitecture::VehiclePhysical::vehicleEcu",
@@ -25132,7 +25144,8 @@
       "documentation": "The battery-electric passenger car that is the subject of these use cases.",
       "shortId": null,
       "children": [],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::vehicle": {
       "id": "UseCases::vehicle",

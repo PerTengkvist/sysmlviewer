@@ -52,7 +52,10 @@ export interface SemanticElement {
   multiplicity?: string | null
   /** True for `ref part` (non-composite reference feature). */
   isReference?: boolean | null
-  /** True for a `view def`, which defines a kind of view and is not a diagram itself. */
+  /**
+   * True for a definition: a `view def` (a kind of view, not a diagram itself)
+   * or a `part def`. Absent for usages.
+   */
   isDefinition?: boolean
   /** True for an `abstract` declaration, e.g. `abstract part def FunctionNode`. Absent when false. */
   isAbstract?: boolean

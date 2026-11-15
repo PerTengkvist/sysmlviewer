@@ -947,6 +947,7 @@ class SubsetSysmlParser:
                     multiplicity=multiplicity,
                     is_reference=is_ref_part,
                     is_abstract=pending_abstract,
+                    is_definition=is_def,
                     metadata_keywords=list(pending_metadata_keywords),
                     file_id=file_id,
                 )

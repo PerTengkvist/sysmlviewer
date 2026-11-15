@@ -103,7 +103,7 @@ Supported textual constructs:
 - `interaction def` / `lifeline` / `message … from … to …` / `then message …`
 - `state def` / nested `state` / `transition … from … to …`
 - `action def` / nested `action` / `succession … first … then …` / `first start; then a; then if g then b else c; then done;`
-- `abstract part def …` / `abstract action def …` (`isAbstract`, written only when true)
+- `abstract part def …` / `abstract action def …` (`isAbstract`, written only when true). `part def` sets `isDefinition` (also only when true), so an abstract definition shows «abstract part def» and an abstract usage «abstract part»; concrete parts keep «part».
 - `perform [action] ref;` where `ref` is `name`, `flow.step` or `Pkg::Fn::flow.step`. In an action or case it is a flow step (id `<owner>::<last segment>`); in a part it says the part performs that action (id `<part>::perform_<ref>`, so two performs never merge). The first segment is looked up through the owners and then the imports of the file, the rest by child name; the result is stored as `performTargetId`. A perform whose path does not resolve and whose last segment names no element is a warning with its line.
 - `#Keyword dependency … from … to …` (prefix metadata on dependencies; shown as `«Keyword»`)
 - `#Keyword part def …` / `#Keyword part …` / `#Keyword ref part …` (replaces `«part»` with `«Keyword»`)

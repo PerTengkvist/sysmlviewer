@@ -196,8 +196,10 @@ export type PartNodeData = {
   multiplicity?: string | null
   /** `ref part` — non-composite reference feature */
   isReference?: boolean
-  /** `abstract part def` — name in italics, keyword «abstract part def» */
+  /** `abstract part [def]` — name in italics, keyword «abstract part [def]» */
   isAbstract?: boolean
+  /** Declared with `part def` (a definition), not as a part usage */
+  isDefinition?: boolean
   /** Prefix metadata keywords from `#mystereotype part …` */
   metadataKeywords?: string[] | null
   ports: PartPort[]
@@ -300,6 +302,7 @@ export function partStereotypeKeyword(d: {
   kind: string
   metadataKeywords?: string[] | null
   isAbstract?: boolean
+  isDefinition?: boolean
 }): string {
   const keywords = d.metadataKeywords || []
   if (keywords.length > 0) {
@@ -307,7 +310,9 @@ export function partStereotypeKeyword(d: {
     return d.isAbstract ? `abstract ${joined}` : joined
   }
   if (d.kind === 'package') return 'package'
-  return d.isAbstract ? 'abstract part def' : 'part'
+  // Concrete parts keep «part» whether definition or usage, as before.
+  if (!d.isAbstract) return 'part'
+  return d.isDefinition ? 'abstract part def' : 'abstract part'
 }
 
 function typeShortTag(typeRef: string): string {

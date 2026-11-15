@@ -176,3 +176,33 @@ def test_abstract_on_supported_declarations(decl, element_id):
     assert result.elements[element_id].is_abstract is True
     assert result.elements["P::Y"].is_abstract is False
     assert not any("abstract" in w for w in result.warnings), result.warnings
+
+
+def test_part_def_is_a_definition_and_part_is_a_usage():
+    result = _parse(
+        """
+        package P {
+          part def X;
+          abstract part def A;
+          part def S :> X {
+            part inner;
+          }
+          part x : X;
+          abstract part y : X;
+          ref part r : X;
+          #Kw part def K;
+        }
+        """
+    )
+    el = result.elements
+    assert el["P::X"].is_definition is True
+    assert el["P::A"].is_definition is True
+    assert el["P::S"].is_definition is True
+    assert el["P::K"].is_definition is True
+    assert el["P::S::inner"].is_definition is False
+    assert el["P::x"].is_definition is False
+    assert el["P::y"].is_definition is False and el["P::y"].is_abstract is True
+    assert el["P::r"].is_definition is False
+    assert el["P::X"].to_dict()["isDefinition"] is True
+    assert "isDefinition" not in el["P::x"].to_dict()
+    assert result.warnings == []
