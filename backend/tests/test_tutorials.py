@@ -39,6 +39,11 @@ TUTORIALS = {
         "LogicalArchitecture/",
         "Dynamics/",
         "PhysicalArchitecture/",
+        "Modelling for traceability",
+        "Functional requirement refinement",
+        "Logical and physical architecture with dynamics",
+        "Traceability",
+        "When to use satisfy",
     ],
 }
 
