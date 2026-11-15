@@ -1003,6 +1003,69 @@ def test_no_satisfy_repeats_the_function_chain():
     assert redundant == []
 
 
+# Every (requirement, logical part) pair the model traced with satisfy before
+# the function chain existed. Each must still be traced, by the chain or by a
+# satisfy, so no satisfy is dropped that the chain does not replace.
+SATISFY_BASELINE = {
+    ("VehicleLength", "body"),
+    ("VehicleWidth", "body"),
+    ("VehicleHeight", "body"),
+    ("PassengerCapacity", "body"),
+    ("CargoVolume", "body"),
+    ("Range", "battery"),
+    ("Acceleration", "engine"),
+    ("TopSpeed", "engine"),
+    ("ChargeTime", "battery"),
+    ("ChargeTime", "chargeInlet"),
+    ("PropulsionModes", "gearStick"),
+    ("CrashProtection", "body"),
+    ("PedestrianProtection", "body"),
+    ("OccupantRestraint", "body"),
+    ("BrakingDistance", "brakePedal"),
+    ("BrakingDistance", "frictionBrakes"),
+    ("BrakingDistance", "driveController"),
+    ("DirectionalControl", "steeringWheel"),
+    ("ForwardVisibility", "windshield"),
+    ("ForwardVisibility", "wipers"),
+    ("AccessControl", "locks"),
+    ("Immobilizer", "vehicleController"),
+    ("LockIndication", "bodyController"),
+    ("PowerModes", "vehicleController"),
+    ("PowerModes", "startButton"),
+    ("NightVisibility", "lamps"),
+    ("CabinAccess", "doors"),
+    ("CabinAccess", "windowLifts"),
+    ("CabinClimate", "climateSystem"),
+    ("CabinMedia", "entertainmentSystem"),
+}
+
+
+def test_every_baseline_satisfy_pair_is_still_traced():
+    elements = _load().elements
+    satisfied = {
+        (s.target_id, s.source_id)
+        for s in elements.values()
+        if s.kind == ArtifactKind.SATISFY
+    }
+    traced = _chain_pairs(elements) | satisfied
+    lost = sorted(
+        (req, part)
+        for req, part in SATISFY_BASELINE
+        if (f"Requirements::{req}", f"{CAR}::{part}") not in traced
+    )
+    assert lost == []
+    # Exactly the baseline pairs the chain does not reach remain as satisfy.
+    remaining = {
+        (elements[r].name, elements[p].name) for r, p in satisfied
+    }
+    chained = {
+        (req, part)
+        for req, part in SATISFY_BASELINE
+        if (f"Requirements::{req}", f"{CAR}::{part}") in _chain_pairs(elements)
+    }
+    assert remaining == SATISFY_BASELINE - chained
+
+
 def test_every_leaf_requirement_is_traced_to_a_logical_part():
     """A leaf requirement (one that refines a group) is reached by the chain or a satisfy."""
     elements = _load().elements
