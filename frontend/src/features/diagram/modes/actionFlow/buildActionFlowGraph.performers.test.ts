@@ -142,3 +142,49 @@ describe('buildActionFlowGraph performers', () => {
     expect(y('::unlockDoors')).toBeLessThan(y('::rejectKey'))
   })
 })
+
+describe('buildActionFlowGraph saved direction', () => {
+  function withPositions(axis: 'x' | 'y'): ViewPayload {
+    const view = fixture()
+    const order = [
+      'start',
+      'checkCredential',
+      'credentialValid',
+      'unlockDoors',
+      'rejectKey',
+      'done',
+    ]
+    order.forEach((name, i) => {
+      const id = `${root}::${name}`
+      const along = i * 120
+      const across = name === 'rejectKey' ? 200 : 0
+      view.visualization.nodes[id] = {
+        artifactId: id,
+        x: axis === 'x' ? along : across,
+        y: axis === 'y' ? along : across,
+        width: 150,
+        height: 56,
+        symbolRef: 'default-part',
+      } as ViewPayload['visualization']['nodes'][string]
+    })
+    return view
+  }
+
+  it('reads a saved top-down layout as TD even when asked for LR', () => {
+    const { nodes, edges } = buildActionFlowGraph(withPositions('y'), 'light', 'LR')
+    const succ1 = edges.find((e) => e.id.endsWith('::succ1'))
+    expect(succ1?.sourceHandle).toBe('bottom')
+    expect(succ1?.targetHandle).toBe('top')
+    expect(nodes.every((n) => (n.data as { flowDir?: string }).flowDir === 'TD')).toBe(true)
+  })
+
+  it('keeps LR for a saved left-right layout', () => {
+    const { edges } = buildActionFlowGraph(withPositions('x'), 'light', 'TD')
+    expect(edges.find((e) => e.id.endsWith('::succ1'))?.sourceHandle).toBe('out')
+  })
+
+  it('uses the requested direction without saved positions', () => {
+    const { edges } = buildActionFlowGraph(fixture(), 'light', 'TD')
+    expect(edges.find((e) => e.id.endsWith('::succ1'))?.sourceHandle).toBe('bottom')
+  })
+})

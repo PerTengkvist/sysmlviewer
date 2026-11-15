@@ -67,6 +67,35 @@ function branchRank(succ: SemanticElement): number {
   return label === 'YES' ? 0 : label === 'NO' ? 2 : 1
 }
 
+/**
+ * Direction of a saved layout: TD when the successions mostly run down, LR
+ * when they mostly run right. The direction is not stored with the view, so
+ * a top-down layout would otherwise reopen with left/right edge handles.
+ * Null when some action has no position.
+ */
+function savedFlowDir(
+  actions: SemanticElement[],
+  successions: SemanticElement[],
+  nodes: ViewPayload['visualization']['nodes'],
+): RedrawDirection | null {
+  if (!actions.length || actions.some((a) => !nodes[a.id])) return null
+  const center = (id: string) => {
+    const n = nodes[id]
+    return { x: n.x + (n.width || 0) / 2, y: n.y + (n.height || 0) / 2 }
+  }
+  let dx = 0
+  let dy = 0
+  for (const s of successions) {
+    if (!s.sourceId || !s.targetId || !nodes[s.sourceId] || !nodes[s.targetId]) continue
+    const a = center(s.sourceId)
+    const b = center(s.targetId)
+    dx += Math.abs(b.x - a.x)
+    dy += Math.abs(b.y - a.y)
+  }
+  if (dx === 0 && dy === 0) return null
+  return dy > dx ? 'TD' : 'LR'
+}
+
 export function buildActionFlowGraph(
   view: ViewPayload,
   viewMode: ViewMode,
@@ -91,6 +120,8 @@ export function buildActionFlowGraph(
   const successions = Object.values(semantic)
     .filter((e) => e.kind === 'succession' && e.parentId === rootId)
     .sort((a, b) => a.id.localeCompare(b.id))
+
+  flowDir = savedFlowDir(actions, successions, visualization.nodes) ?? flowDir
 
   const outs = new Map<string, SemanticElement[]>()
   for (const s of successions) {
