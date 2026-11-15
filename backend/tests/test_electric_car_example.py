@@ -965,3 +965,48 @@ def test_every_leaf_requirement_is_traced_to_a_logical_part():
         s.target_id for s in elements.values() if s.kind == ArtifactKind.SATISFY
     }
     assert sorted(elements[r].name for r in leaves - traced) == []
+
+
+# --- Traceability: physical «implements» reaches the logical architecture ----
+
+COUNTERPARTS = "PhysicalArchitecture::LogicalCounterparts"
+
+
+def test_every_implements_target_reaches_the_logical_car():
+    """An «implements» target is a logical part itself, or a LogicalCounterparts
+    copy that subsets one (the whole car: typed by the logical Car)."""
+    from domain.type_resolution import part_def_resolver
+
+    elements = _load().elements
+    resolve = part_def_resolver(elements)
+    subsets = {
+        e.source_id: e.target_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.SUBSETTING
+    }
+
+    def logical(part_id: str | None) -> bool:
+        return part_id == CAR or (
+            part_id in elements and elements[part_id].parent_id == CAR
+        )
+
+    targets = {
+        e.target_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "implements" in (e.metadata_keywords or [])
+        and (e.file_id or "").startswith("physical_architecture/")
+    }
+    assert len(targets) == 28
+    unreached = []
+    for target in sorted(targets):
+        if logical(target):
+            continue
+        el = elements[target]
+        typed = resolve(el.type_ref)
+        if el.parent_id == COUNTERPARTS and (
+            logical(subsets.get(target)) or (typed is not None and typed.id == CAR)
+        ):
+            continue
+        unreached.append(target)
+    assert unreached == []

@@ -1,5 +1,5 @@
 package PhysicalArchitecture {
-  doc /* Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Logical counterparts live in LogicalCounterparts so the physical whitebox stays clean. */
+  doc /* Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Logical counterparts live in LogicalCounterparts so the physical whitebox stays clean; each subsets the logical part it stands for, so the trace runs on into the logical architecture. */
 
   interface def DirectionCommand {
     doc /* Steering command, same contract as the logical architecture. Steering wheel to drive computer, drive computer to wheels. */
@@ -57,90 +57,90 @@ package PhysicalArchitecture {
   }
 
   package LogicalCounterparts {
-    doc /* Logical architecture counterparts referenced by «implements» from VehiclePhysical. Kept outside the physical whitebox so PhysicalView stays mechanical/software only. */
+    doc /* Logical architecture counterparts referenced by «implements» from VehiclePhysical. Kept outside the physical whitebox so PhysicalView stays mechanical/software only. Each counterpart subsets its part in LogicalArchitecture::Car, and car refers to the logical Car itself, so an «implements» leads on to the logical part, its allocated functions and their use cases. */
 
-    #Logical ref part car {
-      doc /* Logical Car. The whole physical car implements this assembly. */
+    #Logical ref part car :> LogicalArchitecture::Car {
+      doc /* Logical Car. The whole physical car implements this assembly. It refers to the logical Car definition with :> rather than typing it, because a typed usage would bring the definition's 27 nested parts into LogicalCounterparts and into PhysicalDependenciesView. */
     }
-    #Logical ref part keyFob {
+    #Logical ref part keyFob :> LogicalArchitecture::Car::keyFob {
       doc /* Logical key fob, from the logical architecture. */
     }
-    #Logical ref part startButton {
+    #Logical ref part startButton :> LogicalArchitecture::Car::startButton {
       doc /* Logical start button, from the logical architecture. */
     }
-    #Logical ref part steeringWheel {
+    #Logical ref part steeringWheel :> LogicalArchitecture::Car::steeringWheel {
       doc /* Logical steering wheel, from the logical architecture. */
     }
-    #Logical ref part gearStick {
+    #Logical ref part gearStick :> LogicalArchitecture::Car::gearStick {
       doc /* Logical gear stick, from the logical architecture. */
     }
-    #Logical ref part acceleratorPedal {
+    #Logical ref part acceleratorPedal :> LogicalArchitecture::Car::acceleratorPedal {
       doc /* Logical accelerator pedal, from the logical architecture. */
     }
-    #Logical ref part brakePedal {
+    #Logical ref part brakePedal :> LogicalArchitecture::Car::brakePedal {
       doc /* Logical brake pedal, from the logical architecture. */
     }
-    #Logical ref part vehicleController {
+    #Logical ref part vehicleController :> LogicalArchitecture::Car::vehicleController {
       doc /* Logical vehicle controller, from the logical architecture. */
     }
-    #Logical ref part driveController {
+    #Logical ref part driveController :> LogicalArchitecture::Car::driveController {
       doc /* Logical drive controller, from the logical architecture. */
     }
-    #Logical ref part bodyController {
+    #Logical ref part bodyController :> LogicalArchitecture::Car::bodyController {
       doc /* Logical body controller, from the logical architecture. */
     }
-    #Logical ref part instrumentCluster {
+    #Logical ref part instrumentCluster :> LogicalArchitecture::Car::instrumentCluster {
       doc /* Logical instrument cluster, from the logical architecture. */
     }
-    #Logical ref part climateSystem {
+    #Logical ref part climateSystem :> LogicalArchitecture::Car::climateSystem {
       doc /* Logical climate system, from the logical architecture. */
     }
-    #Logical ref part entertainmentSystem {
+    #Logical ref part entertainmentSystem :> LogicalArchitecture::Car::entertainmentSystem {
       doc /* Logical entertainment system, from the logical architecture. */
     }
-    #Logical ref part engine {
+    #Logical ref part engine :> LogicalArchitecture::Car::engine {
       doc /* Logical engine (traction motor), from the logical architecture. */
     }
-    #Logical ref part battery {
+    #Logical ref part battery :> LogicalArchitecture::Car::battery {
       doc /* Logical battery, from the logical architecture. */
     }
-    #Logical ref part chassis {
+    #Logical ref part chassis :> LogicalArchitecture::Car::chassis {
       doc /* Logical chassis, from the logical architecture. */
     }
-    #Logical ref part wheels {
+    #Logical ref part wheels :> LogicalArchitecture::Car::wheels {
       doc /* Logical wheels, from the logical architecture. */
     }
-    #Logical ref part frictionBrakes {
+    #Logical ref part frictionBrakes :> LogicalArchitecture::Car::frictionBrakes {
       doc /* Logical friction brakes, from the logical architecture. */
     }
-    #Logical ref part suspension {
+    #Logical ref part suspension :> LogicalArchitecture::Car::suspension {
       doc /* Logical suspension, from the logical architecture. */
     }
-    #Logical ref part doors {
+    #Logical ref part doors :> LogicalArchitecture::Car::doors {
       doc /* Logical doors, from the logical architecture. */
     }
-    #Logical ref part windows {
+    #Logical ref part windows :> LogicalArchitecture::Car::windows {
       doc /* Logical windows, from the logical architecture. */
     }
-    #Logical ref part windowLifts {
+    #Logical ref part windowLifts :> LogicalArchitecture::Car::windowLifts {
       doc /* Logical window lifts, from the logical architecture. */
     }
-    #Logical ref part body {
+    #Logical ref part body :> LogicalArchitecture::Car::body {
       doc /* Logical body shell (kaross), from the logical architecture. */
     }
-    #Logical ref part windshield {
+    #Logical ref part windshield :> LogicalArchitecture::Car::windshield {
       doc /* Logical windshield, from the logical architecture. */
     }
-    #Logical ref part wipers {
+    #Logical ref part wipers :> LogicalArchitecture::Car::wipers {
       doc /* Logical wipers, from the logical architecture. */
     }
-    #Logical ref part locks {
+    #Logical ref part locks :> LogicalArchitecture::Car::locks {
       doc /* Logical locks, from the logical architecture. */
     }
-    #Logical ref part lamps {
+    #Logical ref part lamps :> LogicalArchitecture::Car::lamps {
       doc /* Logical lamps, from the logical architecture. */
     }
-    #Logical ref part chargeInlet {
+    #Logical ref part chargeInlet :> LogicalArchitecture::Car::chargeInlet {
       doc /* Logical charge inlet, from the logical architecture. */
     }
   }
