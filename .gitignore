@@ -36,3 +36,4 @@ frontend/e2e/*
 !frontend/e2e/autolayout_edge_kinds.spec.ts
 !frontend/e2e/redraw_relations.spec.ts
 !frontend/e2e/dependency_tree.spec.ts
+!frontend/e2e/function_flows.spec.ts

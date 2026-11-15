@@ -78,6 +78,8 @@ def _emit_element(
         mult = f" [{el.multiplicity}]" if el.multiplicity else ""
         meta = "".join(f"#{kw} " for kw in el.metadata_keywords)
         ref = "ref " if el.is_reference else ""
+        # `abstract` comes before prefix metadata (`abstract #kw part def X`).
+        meta = _abstract_prefix(el) + meta
         if el.type_ref:
             if nested:
                 lines.append(f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref} {{")
@@ -268,9 +270,11 @@ def _emit_element(
             for cid in el.children
         ):
             keyword = "action def" if not parent or parent.kind == ArtifactKind.PACKAGE else "action"
-            lines.append(f"{pad}{keyword} {el.name}{type_bit} {{")
+            lines.append(f"{pad}{_abstract_prefix(el)}{keyword} {el.name}{type_bit} {{")
             _emit_children(semantic, el, lines, indent + 1)
             lines.append(f"{pad}}}")
+        elif el.is_abstract:
+            lines.append(f"{pad}abstract action def {el.name}{type_bit};")
         else:
             lines.append(f"{pad}action {el.name}{type_bit};")
         return
@@ -282,6 +286,10 @@ def _emit_element(
         tgt_n = tgt.name if tgt else (el.target_id or "?").split("::")[-1]
         lines.append(f"{pad}succession {el.name} first {src_n} then {tgt_n};")
         return
+
+
+def _abstract_prefix(el: SemanticElement) -> str:
+    return "abstract " if el.is_abstract else ""
 
 
 def _structural_children(

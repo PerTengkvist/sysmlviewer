@@ -60,3 +60,19 @@ describe('ActionNode handles', () => {
     expect(ids[4]).toBe('in-right:target:right')
   })
 })
+
+describe('ActionNode performer', () => {
+  it('shows who performs the action under its name', () => {
+    const html = render({ label: 'Check Credential', performedBy: ['authenticate'] })
+    expect(html).toMatch(/<span class="action-performer"[^>]*>⟨authenticate⟩<\/span>/)
+  })
+
+  it('joins several performers', () => {
+    const html = render({ label: 'Step', performedBy: ['a', 'b'] })
+    expect(html).toContain('⟨a, b⟩')
+  })
+
+  it('has no performer row without performers', () => {
+    expect(render({ label: 'Step' })).not.toContain('action-performer')
+  })
+})

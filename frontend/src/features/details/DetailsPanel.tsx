@@ -1009,6 +1009,12 @@ export function DetailsPanel({
         </dd>
         <dt>Id</dt>
         <dd className="mono">{el.id}</dd>
+        {el.isAbstract && (
+          <>
+            <dt>Abstract</dt>
+            <dd>yes</dd>
+          </>
+        )}
         {!relationEnds && (
           <>
             <dt>Edit</dt>

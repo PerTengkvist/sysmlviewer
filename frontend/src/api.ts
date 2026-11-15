@@ -52,8 +52,15 @@ export interface SemanticElement {
   multiplicity?: string | null
   /** True for `ref part` (non-composite reference feature). */
   isReference?: boolean | null
-  /** True for a `view def`, which defines a kind of view and is not a diagram itself. */
+  /**
+   * True for a definition: a `view def` (a kind of view, not a diagram itself)
+   * or a `part def`. Absent for usages.
+   */
   isDefinition?: boolean
+  /** True for an `abstract` declaration, e.g. `abstract part def FunctionNode`. Absent when false. */
+  isAbstract?: boolean
+  /** For `perform <ref>;`: the element the reference resolves to. Absent when unresolved. */
+  performTargetId?: string
   /** Prefix metadata keywords from `#Mount dependency …`. */
   metadataKeywords?: string[] | null
   /** Documentation body from SysML `doc` block comment. */
@@ -347,6 +354,16 @@ export interface ViewPayload {
   /** AutoLayout "Place by" choice saved for this view; null when never set. */
   autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
   modeError?: string | null
+  /**
+   * actionFlow only: the parts that perform each step (`perform flow.step;`
+   * in a part), by action id. The parts are in `semantic` for their names.
+   */
+  performers?: Record<string, string[]>
+  /**
+   * actionFlow only: true when the positions come from the view's own layout
+   * (views/<name>.json), false when they are project defaults.
+   */
+  hasViewLayout?: boolean
   semantic: Record<string, SemanticElement>
   visualization: {
     nodes: Record<string, VisualizationNode>

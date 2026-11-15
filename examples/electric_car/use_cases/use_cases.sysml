@@ -44,6 +44,12 @@ package UseCases {
       actor Driver;
       objective Requirements::BrakingDistance;
       doc /* The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit. */
+    
+      first start;
+      then action pressBrake;
+      then action applyBrake;
+      then action applyBrakeLights;
+      then done;
     }
 
     use case def Accelerate {

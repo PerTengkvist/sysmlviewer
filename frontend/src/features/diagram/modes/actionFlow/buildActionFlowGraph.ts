@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
-import type { SemanticElement, ViewPayload } from '../../../api'
-import type { ViewMode } from '../../../settings'
+import type { SemanticElement, ViewPayload } from '../../../../api'
+import type { ViewMode } from '../../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
 import type { RedrawDirection } from '../../layout/dependencyLayout'
 import { orientEdgeHandles } from '../../layout/dependencyLayout'
@@ -48,12 +48,53 @@ function isDecisionEl(
   return outgoingCount >= 2
 }
 
+/** Extra node height for the ⟨performer⟩ row, so a two-line name still fits. */
+const PERFORMER_ROW_H = 34
+
 function edgeLabel(succ: SemanticElement): string {
   const n = succ.name.toLowerCase()
-  if (n === 'yes') return 'YES'
-  if (n === 'no') return 'NO'
-  if (/^s\d+$/i.test(succ.name)) return ''
+  // `then if g then a else b;` is parsed into `if_g_yes` / `if_g_else`.
+  if (n === 'yes' || n.endsWith('_yes')) return 'YES'
+  if (n === 'no' || n.endsWith('_no') || n.endsWith('_else')) return 'NO'
+  // Generated succession names (`s1`, `succ1`) carry no meaning.
+  if (/^(s|succ)\d+$/i.test(succ.name)) return ''
   return succ.name
+}
+
+/** 0 = YES branch, 2 = NO branch, 1 = anything else. */
+function branchRank(succ: SemanticElement): number {
+  const label = edgeLabel(succ)
+  return label === 'YES' ? 0 : label === 'NO' ? 2 : 1
+}
+
+/**
+ * Direction of a saved layout: TD when the successions mostly run down, LR
+ * when they mostly run right. The direction is not stored with the view, so
+ * a top-down layout would otherwise reopen with left/right edge handles.
+ * Null when some action has no position. Only for the view's own layout: the
+ * backend also sends project default positions for a view without one.
+ */
+function savedFlowDir(
+  actions: SemanticElement[],
+  successions: SemanticElement[],
+  nodes: ViewPayload['visualization']['nodes'],
+): RedrawDirection | null {
+  if (!actions.length || actions.some((a) => !nodes[a.id])) return null
+  const center = (id: string) => {
+    const n = nodes[id]
+    return { x: n.x + (n.width || 0) / 2, y: n.y + (n.height || 0) / 2 }
+  }
+  let dx = 0
+  let dy = 0
+  for (const s of successions) {
+    if (!s.sourceId || !s.targetId || !nodes[s.sourceId] || !nodes[s.targetId]) continue
+    const a = center(s.sourceId)
+    const b = center(s.targetId)
+    dx += Math.abs(b.x - a.x)
+    dy += Math.abs(b.y - a.y)
+  }
+  if (dx === 0 && dy === 0) return null
+  return dy > dx ? 'TD' : 'LR'
 }
 
 export function buildActionFlowGraph(
@@ -67,6 +108,11 @@ export function buildActionFlowGraph(
     highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
+  const performerNames = (actionId: string): string[] | undefined => {
+    const parts = view.performers?.[actionId]
+    if (!parts?.length) return undefined
+    return parts.map((pid) => semantic[pid]?.name ?? pid.split('::').pop() ?? pid)
+  }
 
   const actions = Object.values(semantic).filter(
     (e) => e.kind === 'action' && e.parentId === rootId,
@@ -75,6 +121,10 @@ export function buildActionFlowGraph(
   const successions = Object.values(semantic)
     .filter((e) => e.kind === 'succession' && e.parentId === rootId)
     .sort((a, b) => a.id.localeCompare(b.id))
+
+  if (view.hasViewLayout) {
+    flowDir = savedFlowDir(actions, successions, visualization.nodes) ?? flowDir
+  }
 
   const outs = new Map<string, SemanticElement[]>()
   for (const s of successions) {
@@ -111,17 +161,14 @@ export function buildActionFlowGraph(
           if (s.targetId) queue.push({ id: s.targetId, col: cur.col + 1, row: cur.row })
         }
       } else {
-        const ordered = [...nexts].sort((a, b) => {
-          const ra = a.name.toLowerCase() === 'yes' ? 0 : a.name.toLowerCase() === 'no' ? 2 : 1
-          const rb = b.name.toLowerCase() === 'yes' ? 0 : b.name.toLowerCase() === 'no' ? 2 : 1
-          return ra - rb
-        })
+        const ordered = [...nexts].sort((a, b) => branchRank(a) - branchRank(b))
         ordered.forEach((s, i) => {
           if (!s.targetId) return
+          const rank = branchRank(s)
           const row =
-            s.name.toLowerCase() === 'yes'
+            rank === 0
               ? cur.row - 1
-              : s.name.toLowerCase() === 'no'
+              : rank === 2
                 ? cur.row + 1
                 : cur.row + (i === 0 ? -1 : 1)
           queue.push({ id: s.targetId, col: cur.col + 1, row })
@@ -143,6 +190,8 @@ export function buildActionFlowGraph(
     const outCount = (outs.get(act.id) || []).length
     const decisionNode = !startNode && !doneNode && isDecisionEl(act, outCount)
     const p = pos.get(act.id) || { col: 0, row: 0 }
+    const performedBy =
+      startNode || doneNode || decisionNode ? undefined : performerNames(act.id)
     const data: ActionNodeData = {
       label: prettyLabel(act.name, decisionNode),
       artifactId: act.id,
@@ -152,9 +201,15 @@ export function buildActionFlowGraph(
       flowDir,
       formatStyle: viz?.style,
       viewMode,
+      ...(performedBy ? { performedBy } : {}),
     }
     const defaultW = startNode || doneNode ? 28 : decisionNode ? 120 : 150
-    const defaultH = startNode || doneNode ? 28 : decisionNode ? 80 : 56
+    const defaultH =
+      startNode || doneNode
+        ? 28
+        : decisionNode
+          ? 80
+          : 56 + (performedBy ? PERFORMER_ROW_H : 0)
     // Prefer mode-appropriate size for pseudo/decision nodes even if old viz exists
     const useDefaultSize = startNode || doneNode || decisionNode
     return {
@@ -173,7 +228,10 @@ export function buildActionFlowGraph(
         height: useDefaultSize
           ? defaultH
           : viz?.height && viz.height >= 20
-            ? viz.height
+            ? // A saved height from before the performer row still fits it.
+              performedBy
+              ? Math.max(viz.height, defaultH)
+              : viz.height
             : defaultH,
       },
       data,

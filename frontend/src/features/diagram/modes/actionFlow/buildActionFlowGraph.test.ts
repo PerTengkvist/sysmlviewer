@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildActionFlowGraph } from './buildActionFlowGraph'
-import type { ViewPayload } from '../../../api'
+import type { ViewPayload } from '../../../../api'
 
 function fixture(): ViewPayload {
   const root = 'P::BootFlow'
