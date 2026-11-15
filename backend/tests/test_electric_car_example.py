@@ -513,10 +513,13 @@ def test_use_case_view_exposes_both_packages():
 
 
 def _functions_and_entities(elements):
+    # Abstract `Function` / `FunctionNode` are the bases, not functions.
     functions = {
         e.id: e
         for e in elements.values()
-        if e.kind == ArtifactKind.PART and e.parent_id == "Functions"
+        if e.kind == ArtifactKind.PART
+        and e.parent_id == "Functions"
+        and not e.is_abstract
     }
     entities = [
         e
@@ -574,3 +577,122 @@ def test_function_views_render():
     allocs = [e for e in allocation["semantic"].values() if e["kind"] == "allocation"]
     assert len(allocs) >= 20
     assert any(e["name"] == "driveController" for e in allocation["semantic"].values())
+
+
+# --- Functions: FunctionNode, one action flow and one view per function -----
+
+DECISION_TYPES = {"decide", "decision", "condition"}
+
+
+def _flow_id(function_id: str) -> str:
+    name = function_id.split("::")[-1]
+    return f"{function_id}::{name[0].lower()}{name[1:]}Flow"
+
+
+def _flow_steps(elements, flow_id):
+    flow = elements[flow_id]
+    actions = [
+        elements[c]
+        for c in flow.children
+        if c in elements and elements[c].kind == ArtifactKind.ACTION
+    ]
+    successions = [
+        elements[c]
+        for c in flow.children
+        if c in elements and elements[c].kind == ArtifactKind.SUCCESSION
+    ]
+    return actions, successions
+
+
+def _is_pseudo(action) -> bool:
+    return (action.type_ref or "").lower() in {"start", "done"} | DECISION_TYPES
+
+
+def test_function_and_function_node_are_abstract_defs():
+    elements = _load().elements
+    for name in ("Function", "FunctionNode"):
+        el = elements[f"Functions::{name}"]
+        assert el.kind == ArtifactKind.PART
+        assert el.parent_id == "Functions"
+        assert el.is_abstract is True
+        assert el.type_ref is None
+        assert el.documentation
+
+
+def test_functional_entities_are_function_nodes():
+    _, entities = _functions_and_entities(_load().elements)
+    assert len(entities) == 22
+    assert sorted(e.name for e in entities if e.type_ref != "FunctionNode") == []
+
+
+def test_every_function_has_a_connected_flow():
+    elements = _load().elements
+    functions, _ = _functions_and_entities(elements)
+    for fid in functions:
+        flow_id = _flow_id(fid)
+        assert flow_id in elements, flow_id
+        assert elements[flow_id].kind == ArtifactKind.ACTION
+        assert elements[flow_id].documentation, flow_id
+        actions, successions = _flow_steps(elements, flow_id)
+        by_type = {(a.type_ref or "").lower(): a.id for a in actions}
+        assert "start" in by_type and "done" in by_type, flow_id
+        outs: dict[str, set[str]] = {}
+        for s in successions:
+            assert s.source_id in elements and s.target_id in elements, s.id
+            outs.setdefault(s.source_id, set()).add(s.target_id)
+        reached = {by_type["start"]}
+        todo = [by_type["start"]]
+        while todo:
+            for nxt in outs.get(todo.pop(), ()):
+                if nxt not in reached:
+                    reached.add(nxt)
+                    todo.append(nxt)
+        assert by_type["done"] in reached, flow_id
+        assert sorted(a.name for a in actions if a.id not in reached) == [], flow_id
+        steps = [a for a in actions if not _is_pseudo(a)]
+        assert len(steps) >= 2, flow_id
+        assert all(a.documentation for a in steps), flow_id
+
+
+def test_every_flow_step_is_performed_by_one_entity_of_its_function():
+    from domain.perform import resolve_performers
+
+    elements = _load().elements
+    functions, entities = _functions_and_entities(elements)
+    performers = resolve_performers(elements)
+    performing: set[str] = set()
+    for fid in functions:
+        actions, _ = _flow_steps(elements, _flow_id(fid))
+        for step in actions:
+            if _is_pseudo(step):
+                assert step.id not in performers, step.id
+                continue
+            parts = performers.get(step.id, [])
+            assert len(parts) == 1, (step.id, parts)
+            assert elements[parts[0]].parent_id == fid, (step.id, parts)
+            performing.add(parts[0])
+    assert sorted(e.name for e in entities if e.id not in performing) == []
+
+
+def test_every_function_has_a_flow_view():
+    elements = _load().elements
+    functions, _ = _functions_and_entities(elements)
+    repo = WorkspaceProjectRepository(ROOT)
+    project = repo.get_open()
+    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+    for fid in functions:
+        name = fid.split("::")[-1]
+        view_id = f"Functions::{name}FlowView"
+        view_el = elements.get(view_id)
+        assert view_el is not None, view_id
+        assert view_el.type_ref == "ActionFlowView"
+        assert view_el.expose_refs == [_flow_id(fid)]
+        assert (ROOT / "views" / f"{name}FlowView.json").is_file(), view_id
+
+        view = service.get_view(project.id, view_id)
+        assert view["diagramMode"] == "actionFlow", view_id
+        assert "modeError" not in view, view_id
+        actions, _ = _flow_steps(elements, _flow_id(fid))
+        assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
+        steps = {a.id for a in actions if not _is_pseudo(a)}
+        assert set(view["performers"]) == steps, view_id

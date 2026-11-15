@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::ChargingFlowView",
+  "name": "ChargingFlowView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::Charging::chargingFlow::start": {
+      "x": 104.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::Charging::chargingFlow::detectPlug": {
+      "x": 48.0,
+      "y": 166.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Charging::chargingFlow::negotiateCurrent": {
+      "x": 48.0,
+      "y": 346.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Charging::chargingFlow::transferEnergy": {
+      "x": 48.0,
+      "y": 526.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Charging::chargingFlow::storeEnergy": {
+      "x": 48.0,
+      "y": 706.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Charging::chargingFlow::stopAtTarget": {
+      "x": 48.0,
+      "y": 886.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Charging::chargingFlow::done": {
+      "x": 104.0,
+      "y": 1066.0,
+      "width": 28.0,
+      "height": 28.0
+    }
+  },
+  "edges": {}
+}

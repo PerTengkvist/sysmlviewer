@@ -51,6 +51,18 @@
       "y": 2172.3817739388714,
       "width": 200.0,
       "height": 120.0
+    },
+    "Functions::Function": {
+      "x": 52.47490363554661,
+      "y": 1700.0,
+      "width": 120.0,
+      "height": 72.0
+    },
+    "Functions::FunctionNode": {
+      "x": 212.4749036355466,
+      "y": 1700.0,
+      "width": 120.0,
+      "height": 72.0
     }
   },
   "edges": {

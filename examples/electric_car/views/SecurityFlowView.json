@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::SecurityFlowView",
+  "name": "SecurityFlowView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::Security::securityFlow::start": {
+      "x": 104.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::Security::securityFlow::checkCredential": {
+      "x": 48.0,
+      "y": 126.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::securityFlow::credentialValid": {
+      "x": 58.0,
+      "y": 266.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::securityFlow::unlockDoors": {
+      "x": 48.0,
+      "y": 396.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::securityFlow::wakeCabin": {
+      "x": 48.0,
+      "y": 536.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::securityFlow::releaseImmobilizer": {
+      "x": 48.0,
+      "y": 676.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::securityFlow::showReady": {
+      "x": 48.0,
+      "y": 816.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::securityFlow::rejectKey": {
+      "x": 328.0,
+      "y": 816.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::securityFlow::done": {
+      "x": 104.0,
+      "y": 956.0,
+      "width": 28.0,
+      "height": 28.0
+    }
+  },
+  "edges": {}
+}
