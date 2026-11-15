@@ -1,4 +1,4 @@
-import type { Edge, Node } from '@xyflow/react'
+import type { Edge } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import type { ViewPayload } from '../../../../api'
 import { buildUseCaseGraph } from './buildUseCaseGraph'
@@ -135,7 +135,7 @@ type EdgeData = {
   relationKind?: string
 }
 
-function corruptRelations(nodes: Node[], edges: Edge[]): Edge[] {
+function corruptRelations(edges: Edge[]): Edge[] {
   return edges.map((e) => {
     if (e.id === 'P::inc1' || e.id === 'P::ext1') {
       return {
@@ -175,7 +175,7 @@ function corruptRelations(nodes: Node[], edges: Edge[]): Edge[] {
 describe('redrawUseCaseRelations', () => {
   it('full redraw resets include facing sides and clears waypoints; nodes stay put', () => {
     const { nodes, edges: built } = buildUseCaseGraph(fixture(), 'light')
-    const edges = corruptRelations(nodes, built)
+    const edges = corruptRelations(built)
     const loginBefore = nodes.find((n) => n.id === 'P::Login')!.position
     const authBefore = nodes.find((n) => n.id === 'P::Auth')!.position
 
@@ -209,7 +209,7 @@ describe('redrawUseCaseRelations', () => {
 
   it('full redraw moves actor use line off hard-coded out; sourceHandle is rel id', () => {
     const { nodes, edges: built } = buildUseCaseGraph(fixture(), 'light')
-    const edges = corruptRelations(nodes, built)
+    const edges = corruptRelations(built)
 
     const { edges: next, edgePatch, nodes: nextNodes } = redrawUseCaseRelations(
       nodes,
@@ -241,7 +241,7 @@ describe('redrawUseCaseRelations', () => {
 
   it('onlyId redraws that relation and leaves others alone', () => {
     const { nodes, edges: built } = buildUseCaseGraph(fixture(), 'light')
-    const edges = corruptRelations(nodes, built)
+    const edges = corruptRelations(built)
 
     const { edges: next, edgePatch } = redrawUseCaseRelations(nodes, edges, {
       onlyId: 'P::inc1',
@@ -261,7 +261,7 @@ describe('redrawUseCaseRelations', () => {
 
   it('unknown onlyId returns same edges and empty patch', () => {
     const { nodes, edges: built } = buildUseCaseGraph(fixture(), 'light')
-    const edges = corruptRelations(nodes, built)
+    const edges = corruptRelations(built)
 
     const { edges: next, edgePatch, nodePatch } = redrawUseCaseRelations(
       nodes,
@@ -289,7 +289,7 @@ describe('redrawUseCaseRelations', () => {
         waypoints: [{ x: 9, y: 9 }],
       },
     }
-    const edges = [...corruptRelations(nodes, built), noise]
+    const edges = [...corruptRelations(built), noise]
 
     const { edges: next, edgePatch } = redrawUseCaseRelations(nodes, edges)
 

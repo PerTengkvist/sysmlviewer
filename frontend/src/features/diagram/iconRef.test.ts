@@ -15,6 +15,8 @@ function el(
     typeRef: null,
     sourceId: null,
     targetId: null,
+    children: [],
+    fileId: null,
     ...partial,
   }
 }

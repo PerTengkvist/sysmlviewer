@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildSequenceGraph } from './buildSequenceGraph'
-import type { ViewPayload } from '../../../api'
+import type { ViewPayload } from '../../../../api'
 
 function seqFixture(): ViewPayload {
   return {

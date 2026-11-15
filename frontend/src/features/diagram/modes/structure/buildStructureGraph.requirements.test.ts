@@ -115,6 +115,9 @@ function fixture(): ViewPayload {
           y: 20,
           width: 220,
           height: 140,
+          symbolRef: 'default-part',
+          side: null,
+          offset: null,
           style: {
             light: { backgroundColor: '#ffeeee' },
           },

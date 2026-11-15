@@ -63,8 +63,8 @@ describe('mergeStylePatch', () => {
 describe('sharedNumericField', () => {
   it('returns the shared rounded value or null when mixed', () => {
     const nodes = {
-      a: { artifactId: 'a', x: 0, y: 0, width: 180, height: 100, symbolRef: 'p' },
-      b: { artifactId: 'b', x: 0, y: 0, width: 180, height: 120, symbolRef: 'p' },
+      a: { artifactId: 'a', x: 0, y: 0, width: 180, height: 100, symbolRef: 'p', side: null, offset: null },
+      b: { artifactId: 'b', x: 0, y: 0, width: 180, height: 120, symbolRef: 'p', side: null, offset: null },
     }
     expect(sharedNumericField(['a', 'b'], nodes, 'width')).toBe(180)
     expect(sharedNumericField(['a', 'b'], nodes, 'height')).toBeNull()

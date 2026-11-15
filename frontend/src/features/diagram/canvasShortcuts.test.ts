@@ -53,7 +53,10 @@ describe('handleCanvasShortcut', () => {
         keyEvent({
           key: 'z',
           ctrlKey: true,
-          target: { tagName: 'INPUT', isContentEditable: false } as EventTarget,
+          target: Object.assign(new EventTarget(), {
+            tagName: 'INPUT',
+            isContentEditable: false,
+          }),
         }),
         handlers,
       ),

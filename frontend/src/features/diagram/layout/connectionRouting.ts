@@ -171,7 +171,6 @@ function gapCorridorPaths(
   bounds: Rect,
 ): Pt[][] {
   const out: Pt[][] = []
-  const m = 4
   const minGap = CELL * 2
   for (let i = 0; i < inflated.length; i++) {
     for (let j = 0; j < inflated.length; j++) {
