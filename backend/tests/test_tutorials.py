@@ -45,6 +45,19 @@ TUTORIALS = {
         "Traceability",
         "When to use satisfy",
     ],
+    "sysmlviewer.md": [
+        "# Using SysML Viewer",
+        "Starting the viewer",
+        "The left sidebar",
+        "The canvas",
+        "The diagram toolbar",
+        "The right sidebar",
+        "Selecting several objects",
+        "Moving things",
+        "Connection handles",
+        "What happens when you save",
+        "The examples",
+    ],
 }
 
 

@@ -14,6 +14,16 @@ def test_list_and_get_tutorials():
     assert "cheatsheet" in ids
     assert "use-cases-and-scenarios" in ids
     assert "mbse" in ids
+    assert "sysmlviewer" in ids
+    assert items[0] == {
+        "id": "sysmlviewer",
+        "title": "Using SysML Viewer",
+        "filename": "sysmlviewer.md",
+    }
+
+    viewer = client.get("/tutorials/sysmlviewer")
+    assert viewer.status_code == 200
+    assert "# Using SysML Viewer" in viewer.json()["content"]
 
     one = client.get("/tutorials/use-cases-and-scenarios")
     assert one.status_code == 200
