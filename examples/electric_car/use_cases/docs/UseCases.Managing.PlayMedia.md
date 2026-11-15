@@ -4,5 +4,6 @@ The driver or a passenger plays audio or video on the cabin system.
 
 ## Relations
 
+- Refined by `Entertainment`.
 - Pursues requirement `CabinMedia`.
 - Refines `EnjoyTheCabin`.

@@ -1,0 +1,3 @@
+# FunctionTraceability
+
+Traceability from the functions to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). The dependencies live outside Functions so that FunctionsView keeps showing only the dependencies between functions.

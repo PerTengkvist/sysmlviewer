@@ -1,5 +1,5 @@
 package Functions {
-  doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function also has an action flow, and every step of it is performed by one of its functional entities; a FlowView per function shows the flow with the performer on each step. */
+  doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Each function also «refine»s the use cases it carries out; those dependencies are collected in the FunctionTraceability package. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function also has an action flow, and every step of it is performed by one of its functional entities; a FlowView per function shows the flow with the performer on each step. */
   abstract part def Function {
     doc /* Base of the functions the car performs. A function is decomposed into FunctionNode entities and has one action flow that those entities perform. */
   }
@@ -297,6 +297,7 @@ package Functions {
   #Energy dependency from Lighting to Charging;
   #Indicate dependency from Lighting to Maneuvrability;
 
+
   allocate Security::authenticate to LogicalArchitecture::Car::vehicleController;
   allocate Security::immobilizer to LogicalArchitecture::Car::vehicleController;
   allocate Security::wakeUp to LogicalArchitecture::Car::vehicleController;
@@ -371,4 +372,30 @@ package Functions {
     doc /* Lighting flow: lamp selection, indicators and lamp drive. Each step shows the functional entity that performs it. */
     expose Lighting::lightingFlow;
   }
+}
+
+package FunctionTraceability {
+  doc /* Traceability from the functions to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). The dependencies live outside Functions so that FunctionsView keeps showing only the dependencies between functions. */
+  #refine dependency from Functions::Security to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security to UseCases::Managing::Lock;
+  #refine dependency from Functions::Security to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Security to UseCases::Managing::OpenWindow;
+  #refine dependency from Functions::Security to UseCases::Managing::CloseWindow;
+  #refine dependency from Functions::Charging to UseCases::Managing::Charge;
+  #refine dependency from Functions::SpeedControl to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::SpeedControl to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::Maneuvrability to UseCases::Driving::ChangeGear;
+  #refine dependency from Functions::Maneuvrability to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Maneuvrability to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::Lighting to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Lighting to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting to UseCases::Driving::Brake;
+  #refine dependency from Functions::WindshieldCleaning to UseCases::Driving::CleanWindshield;
+  #refine dependency from Functions::Climate to UseCases::Managing::AdjustClimate;
+  #refine dependency from Functions::Entertainment to UseCases::Managing::PlayMedia;
 }

@@ -9,6 +9,9 @@ Part of `Functions`.
 - Depends on `Security` («Authorize»).
 - Depends on `SpeedControl` («Stability»).
 - `Lighting` depends on this («Indicate»).
+- Refines `ChangeGear`.
+- Refines `TurnLeft`.
+- Refines `TurnRight`.
 
 ## Diagrams
 

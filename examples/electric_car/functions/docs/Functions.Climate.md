@@ -7,6 +7,7 @@ Part of `Functions`.
 ## Relations
 
 - Depends on `Charging` («Energy»).
+- Refines `AdjustClimate`.
 
 ## Diagrams
 

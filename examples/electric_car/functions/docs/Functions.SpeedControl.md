@@ -10,6 +10,9 @@ Part of `Functions`.
 - Depends on `Charging` («Energy»).
 - `Maneuvrability` depends on this («Stability»).
 - `WindshieldCleaning` depends on this («Speed»).
+- Refines `Accelerate`.
+- Refines `Brake`.
+- Refines `EmergencyStop`.
 
 ## Diagrams
 

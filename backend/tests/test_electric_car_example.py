@@ -38,6 +38,7 @@ def test_electric_car_parses_without_warnings():
     assert names == {
         "Requirements",
         "Functions",
+        "FunctionTraceability",
         "UseCases",
         "LogicalArchitecture",
         "Dynamics",
@@ -748,3 +749,70 @@ def test_step_docs_describe_the_flow_not_the_entity():
             if ratio >= 0.6:
                 too_close.append((elements[step_id].name, elements[part_id].name, round(ratio, 2)))
     assert too_close == []
+
+
+# --- Traceability: function → use case (#refine) -----------------------------
+
+FUNCTION_REFINES = {
+    "Security": {
+        "StartVehicle",
+        "StopVehicle",
+        "Unlock",
+        "Lock",
+        "OpenDoor",
+        "CloseDoor",
+        "OpenWindow",
+        "CloseWindow",
+    },
+    "Charging": {"Charge"},
+    "SpeedControl": {"Accelerate", "Brake", "EmergencyStop"},
+    "Maneuvrability": {"ChangeGear", "TurnLeft", "TurnRight"},
+    "Lighting": {"ToggleHeadlights", "TurnLeft", "TurnRight", "Brake"},
+    "WindshieldCleaning": {"CleanWindshield"},
+    "Climate": {"AdjustClimate"},
+    "Entertainment": {"PlayMedia"},
+}
+
+
+def _function_refines(elements) -> dict[str, set[str]]:
+    """Function id → ids of the use cases it refines with `#refine`."""
+    functions, _ = _functions_and_entities(elements)
+    refines: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and e.source_id in functions
+            and e.target_id in elements
+            and elements[e.target_id].kind == ArtifactKind.USE_CASE
+        ):
+            refines.setdefault(e.source_id, set()).add(e.target_id)
+    return refines
+
+
+def test_every_function_refines_a_use_case():
+    elements = _load().elements
+    functions, _ = _functions_and_entities(elements)
+    refines = _function_refines(elements)
+    assert sorted(elements[f].name for f in functions if f not in refines) == []
+    by_name = {
+        elements[f].name: {elements[u].name for u in ucs} for f, ucs in refines.items()
+    }
+    assert by_name == FUNCTION_REFINES
+
+
+def test_every_leaf_use_case_is_refined_by_a_function():
+    """Drive and Park are composites; they are reached through include."""
+    elements = _load().elements
+    refined = set().union(*_function_refines(elements).values())
+    leaves = [uc for uc in _use_cases(elements) if uc.name not in COMPOSITE_USE_CASES]
+    assert sorted(uc.name for uc in leaves if uc.id not in refined) == []
+    includes = {
+        (e.source_id, e.target_id)
+        for e in elements.values()
+        if e.kind == ArtifactKind.INCLUDE
+    }
+    for uc in _use_cases(elements):
+        if uc.name in COMPOSITE_USE_CASES:
+            included = {t for s, t in includes if s == uc.id}
+            assert included and included <= refined, uc.name

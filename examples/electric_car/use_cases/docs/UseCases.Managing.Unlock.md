@@ -4,5 +4,6 @@ The driver presses unlock on the key fob. The car authenticates the credential, 
 
 ## Relations
 
+- Refined by `Security`.
 - Pursues requirement `AccessControl`.
 - Refines `ParkAndLeave`.

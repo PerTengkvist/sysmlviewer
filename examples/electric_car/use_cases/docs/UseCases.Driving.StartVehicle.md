@@ -4,6 +4,7 @@ The driver presses the start button with the brake held. The car authenticates t
 
 ## Relations
 
+- Refined by `Security`.
 - Pursues requirement `PowerModes`.
 - Included by `Drive`.
 - Refines `DriveToDestination`.

@@ -10,6 +10,14 @@ Part of `Functions`.
 - `Maneuvrability` depends on this («Authorize»).
 - `Entertainment` depends on this («Authorize»).
 - `Lighting` depends on this («Authorize»).
+- Refines `StartVehicle`.
+- Refines `StopVehicle`.
+- Refines `Unlock`.
+- Refines `Lock`.
+- Refines `OpenDoor`.
+- Refines `CloseDoor`.
+- Refines `OpenWindow`.
+- Refines `CloseWindow`.
 
 ## Diagrams
 

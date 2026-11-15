@@ -4,6 +4,7 @@ The driver connects a home or fast charger. The car and the charger negotiate a 
 
 ## Relations
 
+- Refined by `Charging`.
 - Pursues requirement `ChargeTime`.
 - Refines `ChargeAtHome`.
 - Refines `ChargeAway`.

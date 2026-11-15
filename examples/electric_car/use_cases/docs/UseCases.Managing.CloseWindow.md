@@ -4,5 +4,6 @@ An occupant presses the window switch up and the window rises, stopping if it pi
 
 ## Relations
 
+- Refined by `Security`.
 - Pursues requirement `CabinAccess`.
 - Refines `EnterAndExit`.
