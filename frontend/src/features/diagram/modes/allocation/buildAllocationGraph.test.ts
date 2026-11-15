@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ViewPayload } from '../../../api'
+import type { ViewPayload } from '../../../../api'
 import { buildAllocationGraph } from './buildAllocationGraph'
 
 describe('buildAllocationGraph', () => {

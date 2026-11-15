@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo, type CSSProperties } from 'react'
-import type { ElementStyle } from '../../../api'
-import type { ViewMode } from '../../../settings'
+import type { ElementStyle } from '../../../../api'
+import type { ViewMode } from '../../../../settings'
 import { kindBackground, nodeInlineStyle } from '../../elementStyle'
 import { camelCaseSegments } from './camelWrap'
 
