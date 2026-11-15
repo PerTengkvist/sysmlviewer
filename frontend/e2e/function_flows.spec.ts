@@ -75,7 +75,17 @@ test('SecurityCabinAccessFlowView shows the door and window steps with their per
   }
   // Saved top-down: the door path runs down the first column.
   const ys: number[] = []
-  for (const id of ['start', 'doorRequested', 'readDoorHandle', 'checkUnlocked', 'carUnlocked', 'releaseDoor', 'showDoorState', 'done']) {
+  const doorPath = [
+    'start',
+    'doorRequested',
+    'readDoorHandle',
+    'checkUnlocked',
+    'carUnlocked',
+    'releaseDoor',
+    'showDoorState',
+    'done',
+  ]
+  for (const id of doorPath) {
     ys.push((await page.locator(nodeSel(`${flow}::${id}`)).boundingBox())!.y)
   }
   expect([...ys].sort((a, b) => a - b)).toEqual(ys)
