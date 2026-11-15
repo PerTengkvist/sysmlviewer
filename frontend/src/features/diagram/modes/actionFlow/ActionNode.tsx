@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo, type CSSProperties } from 'react'
-import type { ElementStyle } from '../../../api'
-import type { ViewMode } from '../../../settings'
+import type { ElementStyle } from '../../../../api'
+import type { ViewMode } from '../../../../settings'
 import { kindBackground, nodeInlineStyle } from '../../elementStyle'
 import type { RedrawDirection } from '../../layout/dependencyLayout'
 
@@ -14,6 +14,8 @@ export type ActionNodeData = {
   flowDir?: RedrawDirection
   formatStyle?: ElementStyle | null
   viewMode: ViewMode
+  /** Names of the parts that perform this action (`perform flow.step;`). */
+  performedBy?: string[]
 }
 
 const centerHandle: CSSProperties = {
@@ -138,6 +140,11 @@ function ActionNodeInner({ data, selected }: NodeProps) {
     >
       <span className="stereotype">«action»</span>
       <strong>{d.label}</strong>
+      {d.performedBy?.length ? (
+        <span className="action-performer" title="Performed by">
+          ⟨{d.performedBy.join(', ')}⟩
+        </span>
+      ) : null}
       <Handle type="source" position={Position.Right} id="out" />
       <Handle type="target" position={Position.Left} id="in" />
       <Handle type="source" position={Position.Bottom} id="bottom" />

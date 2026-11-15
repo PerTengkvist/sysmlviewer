@@ -349,6 +349,11 @@ export interface ViewPayload {
   /** AutoLayout "Place by" choice saved for this view; null when never set. */
   autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
   modeError?: string | null
+  /**
+   * actionFlow only: the parts that perform each step (`perform flow.step;`
+   * in a part), by action id. The parts are in `semantic` for their names.
+   */
+  performers?: Record<string, string[]>
   semantic: Record<string, SemanticElement>
   visualization: {
     nodes: Record<string, VisualizationNode>
