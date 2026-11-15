@@ -225,8 +225,9 @@ class SubsetSysmlParser:
         link_state.imports = all_imports
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
-        self._warn_unresolved_type_refs(link_state)
+        self._warn_unresolved_type_refs(link_state, check_performs=False)
         self._warn_unresolved_endpoints(link_state)
+        self._warn_unresolved_performs(link_state)
         warnings.extend(link_state.warnings)
         # Attach link warnings to first file for visibility
         if link_state.warnings and files:
@@ -2320,8 +2321,14 @@ class SubsetSysmlParser:
                 f"line {imp.line}: import '{imp.path}' — symbol not found"
             )
 
-    def _warn_unresolved_type_refs(self, state: _ParserState) -> None:
-        """Flag type references that do not match any element name in the graph."""
+    def _warn_unresolved_type_refs(
+        self, state: _ParserState, *, check_performs: bool = True
+    ) -> None:
+        """Flag type references that do not match any element name in the graph.
+
+        With ``check_performs=False`` perform references are left to
+        `_warn_unresolved_performs`, which follows the whole path.
+        """
         known_library = {
             "GeneralView",
             "SequenceView",
@@ -2344,12 +2351,9 @@ class SubsetSysmlParser:
             if not el.type_ref or el.type_ref in names:
                 continue
             # `perform flow.step` names a feature by path; check its last segment.
-            if (
-                el.kind == ArtifactKind.ACTION
-                and "perform" in el.metadata_keywords
-                and _ref_leaf(el.type_ref) in names
-            ):
-                continue
+            if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
+                if not check_performs or _ref_leaf(el.type_ref) in names:
+                    continue
             state.warnings.append(
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
                 f"in the semantic graph."
@@ -2378,6 +2382,15 @@ class SubsetSysmlParser:
                     state.warnings.append(
                         f"{label} {role} not found: {endpoint} (in '{el.id}')"
                     )
+
+    def _warn_unresolved_performs(self, state: _ParserState) -> None:
+        """Flag `perform <ref>;` whose reference names no element (parse_project)."""
+        from domain.perform import unresolved_performs
+
+        for el in unresolved_performs(state.elements):
+            state.warnings.append(
+                f"perform target not found: {el.type_ref} (in '{el.parent_id}')"
+            )
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:
         """Copy ports, attributes, nested parts, and relations from defs onto usages."""
