@@ -151,12 +151,16 @@ Connections, interfaces, bindings, flows, successions, transitions and
 messages are not in the tree. A relation ending at a port counts for the
 part that owns it.
 
-- **Up:** one chain, picked per level by priority: 1. satisfy, refine /
-  derive / objective dependencies and any dependency whose target is a
-  requirement; 2. owner; 3. specialization family and typing; 4. allocate
-  and include (perform goes here once it exists); 5. other dependencies
+- **Up:** one chain, picked per level by priority: 1. trace: satisfy,
+  refine / derive / objective / implements dependencies (a function's
+  `#refine` to a use case included) and any dependency whose target is a
+  requirement; 2. allocate; 3. owner; 4. specialization family and typing;
+  5. include (perform goes here once it exists); 6. other dependencies
   (`#Command`, `#Mount`, `#extend`, …). Within a priority, model order
-  wins. Candidates already in the chain are skipped; the chain ends when
+  wins. So a physical part climbs through `#implements` to its logical
+  counterpart, a logical part through the functional entity allocated to it
+  to that entity's function, the use case it refines and the requirement
+  that use case pursues, unless the part satisfies a requirement directly. Candidates already in the chain are skipped; the chain ends when
   none is left. The others at a level are counted as `alternatives`.
 - **Down:** every edge where the element is upper, breadth first; each
   element is expanded once, later occurrences are `repeated`. At most 8

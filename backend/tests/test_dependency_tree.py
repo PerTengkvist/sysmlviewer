@@ -169,9 +169,13 @@ def test_allocate_and_include():
     assert _children(ent)["P::Logic::ctrl"]["label"] == "allocate"
 
     ctrl_up = build_dependency_tree(semantic, "P::Logic::ctrl")["up"]
-    # Owner beats allocation.
-    assert [n["id"] for n in ctrl_up] == ["P::Logic"]
-    assert ctrl_up[0]["alternatives"] == 1
+    # Allocation beats the owner: a logical part climbs through the entity
+    # allocated to it, then to that entity's function.
+    assert [(n["id"], n["label"]) for n in ctrl_up] == [
+        ("P::Fn", "owned by"),
+        ("P::Fn::ent", "allocate"),
+    ]
+    assert ctrl_up[1]["alternatives"] == 1
 
     brake_up = build_dependency_tree(semantic, "P::Brake")["up"]
     assert [(n["id"], n["label"]) for n in brake_up] == [("P::Drive", "include")]
@@ -233,7 +237,7 @@ def test_priority_refine_beats_owner():
     assert up[0]["alternatives"] == 1
 
 
-def test_priority_typing_beats_allocate_and_include():
+def test_priority_allocate_beats_typing_and_typing_beats_include():
     model = """
     package P {
       part def Controller;
@@ -251,12 +255,71 @@ def test_priority_typing_beats_allocate_and_include():
     """
     semantic = _semantic(model)
     ctrl_up = build_dependency_tree(semantic, "P::ctrl")["up"]
-    assert [(n["id"], n["label"]) for n in ctrl_up] == [("P::Controller", "typed by")]
-    assert ctrl_up[0]["alternatives"] == 1
+    # Reversed on purpose: the allocated entity, not the type, is the trace.
+    assert [(n["id"], n["label"]) for n in ctrl_up] == [
+        ("P::Fn", "owned by"),
+        ("P::Fn::ent", "allocate"),
+    ]
+    assert ctrl_up[1]["alternatives"] == 1
 
     b_up = build_dependency_tree(semantic, "P::b")["up"]
     assert [(n["id"], n["label"]) for n in b_up] == [("P::Brake", "typed by")]
     assert b_up[0]["alternatives"] == 1
+
+
+def test_priority_implements_is_a_trace_and_beats_owner():
+    model = """
+    package P {
+      part def Logical {
+        part ctrl;
+      }
+      part def Physical {
+        part ecu;
+      }
+      #implements dependency from Physical::ecu to Logical::ctrl;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Physical::ecu")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [
+        ("P::Logical", "owned by"),
+        ("P::Logical::ctrl", "implements"),
+    ]
+    assert up[1]["alternatives"] == 1
+
+
+def test_priority_trace_beats_allocate():
+    model = """
+    package P {
+      requirement def R;
+      part def Fn {
+        part ent;
+      }
+      part def Logic {
+        part ctrl;
+      }
+      allocate Fn::ent to Logic::ctrl;
+      satisfy R by Logic::ctrl;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Logic::ctrl")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [("P::R", "satisfy")]
+    assert up[0]["alternatives"] == 2
+
+
+def test_priority_owner_beats_include():
+    model = """
+    package P {
+      use case def Drive {
+        use case def Brake;
+      }
+      use case def Trip {
+        include use case Drive::Brake;
+      }
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Drive::Brake")["up"]
+    assert [(n["id"], n["label"]) for n in up][0] == ("P::Drive", "owned by")
+    assert up[-1]["alternatives"] == 1
 
 
 def test_priority_satisfy_beats_other_keyword_dependency():
