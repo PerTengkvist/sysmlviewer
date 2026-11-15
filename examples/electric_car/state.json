@@ -9202,7 +9202,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved.",
+      "documentation": "Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved and, for a door, is latched again.",
       "shortId": null,
       "children": [
         "Functions::Security::authenticate",
@@ -9417,7 +9417,8 @@
       "children": [
         "Functions::Security::lockControl::perform_securityFlow_unlockDoors",
         "Functions::Security::lockControl::perform_cabinAccessFlow_checkUnlocked",
-        "Functions::Security::lockControl::perform_cabinAccessFlow_stayLatched"
+        "Functions::Security::lockControl::perform_cabinAccessFlow_stayLatched",
+        "Functions::Security::lockControl::perform_cabinAccessFlow_relatch"
       ],
       "fileId": "functions/functions.sysml"
     },
@@ -9490,6 +9491,29 @@
       "fileId": "functions/functions.sysml",
       "performTargetId": "Functions::Security::cabinAccessFlow::stayLatched"
     },
+    "Functions::Security::lockControl::perform_cabinAccessFlow_relatch": {
+      "id": "Functions::Security::lockControl::perform_cabinAccessFlow_relatch",
+      "kind": "action",
+      "name": "relatch",
+      "parentId": "Functions::Security::lockControl",
+      "typeRef": "cabinAccessFlow.relatch",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::cabinAccessFlow::relatch"
+    },
     "Functions::Security::doorControl": {
       "id": "Functions::Security::doorControl",
       "kind": "part",
@@ -9509,7 +9533,8 @@
       "shortId": null,
       "children": [
         "Functions::Security::doorControl::perform_cabinAccessFlow_readDoorHandle",
-        "Functions::Security::doorControl::perform_cabinAccessFlow_releaseDoor"
+        "Functions::Security::doorControl::perform_cabinAccessFlow_releaseDoor",
+        "Functions::Security::doorControl::perform_cabinAccessFlow_closeDoor"
       ],
       "fileId": "functions/functions.sysml"
     },
@@ -9558,6 +9583,29 @@
       "children": [],
       "fileId": "functions/functions.sysml",
       "performTargetId": "Functions::Security::cabinAccessFlow::releaseDoor"
+    },
+    "Functions::Security::doorControl::perform_cabinAccessFlow_closeDoor": {
+      "id": "Functions::Security::doorControl::perform_cabinAccessFlow_closeDoor",
+      "kind": "action",
+      "name": "closeDoor",
+      "parentId": "Functions::Security::doorControl",
+      "typeRef": "cabinAccessFlow.closeDoor",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::cabinAccessFlow::closeDoor"
     },
     "Functions::Security::windowControl": {
       "id": "Functions::Security::windowControl",
@@ -10087,13 +10135,15 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "From a door handle or a window switch to a door or window that has moved. A door opens only on an unlocked car; a locked car keeps it latched. A window follows its switch, and the driver sees which doors are open.",
+      "documentation": "From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A closed door is latched again, a window follows its switch, and the driver sees which doors are open.",
       "shortId": null,
       "children": [
         "Functions::Security::cabinAccessFlow::readDoorHandle",
         "Functions::Security::cabinAccessFlow::checkUnlocked",
         "Functions::Security::cabinAccessFlow::releaseDoor",
         "Functions::Security::cabinAccessFlow::stayLatched",
+        "Functions::Security::cabinAccessFlow::closeDoor",
+        "Functions::Security::cabinAccessFlow::relatch",
         "Functions::Security::cabinAccessFlow::showDoorState",
         "Functions::Security::cabinAccessFlow::runWindowLift",
         "Functions::Security::cabinAccessFlow::start",
@@ -10101,16 +10151,21 @@
         "Functions::Security::cabinAccessFlow::succ1",
         "Functions::Security::cabinAccessFlow::if_doorRequested_yes",
         "Functions::Security::cabinAccessFlow::if_doorRequested_else",
+        "Functions::Security::cabinAccessFlow::outsideHandle",
         "Functions::Security::cabinAccessFlow::succ2",
+        "Functions::Security::cabinAccessFlow::if_outsideHandle_yes",
+        "Functions::Security::cabinAccessFlow::if_outsideHandle_else",
         "Functions::Security::cabinAccessFlow::carUnlocked",
         "Functions::Security::cabinAccessFlow::succ3",
         "Functions::Security::cabinAccessFlow::if_carUnlocked_yes",
         "Functions::Security::cabinAccessFlow::if_carUnlocked_else",
         "Functions::Security::cabinAccessFlow::succ4",
-        "Functions::Security::cabinAccessFlow::done",
         "Functions::Security::cabinAccessFlow::succ5",
         "Functions::Security::cabinAccessFlow::succ6",
-        "Functions::Security::cabinAccessFlow::succ7"
+        "Functions::Security::cabinAccessFlow::done",
+        "Functions::Security::cabinAccessFlow::succ7",
+        "Functions::Security::cabinAccessFlow::succ8",
+        "Functions::Security::cabinAccessFlow::succ9"
       ],
       "fileId": "functions/functions.sysml"
     },
@@ -10129,7 +10184,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "When the request comes from a door: the pull on its inside or outside handle is read. Output: the door the occupant wants to open.",
+      "documentation": "When the request comes from a door: the pull on a handle is read. Output: the door to open and whether the handle was outside or inside, the outsideHandle decision.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10149,7 +10204,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Before that door may open: the state of the latches is read; the outcome is the carUnlocked decision.",
+      "documentation": "For an outside handle only: the state of the latches is read; the outcome is the carUnlocked decision.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10169,7 +10224,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "On an unlocked car: the latch of the requested door lets go and the door swings open.",
+      "documentation": "From inside always, from outside on an unlocked car: the latch of the requested door lets go and the door swings open.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10189,7 +10244,47 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "On a locked car: the pull is ignored and the door stays latched, so the car cannot be entered without the key.",
+      "documentation": "Outside handle on a locked car: the pull is ignored and the door stays latched, so the car cannot be entered without the key.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::cabinAccessFlow::closeDoor": {
+      "id": "Functions::Security::cabinAccessFlow::closeDoor",
+      "kind": "action",
+      "name": "closeDoor",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "The occupant swings the open door shut; its position sensor reports it closed.",
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::cabinAccessFlow::relatch": {
+      "id": "Functions::Security::cabinAccessFlow::relatch",
+      "kind": "action",
+      "name": "relatch",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Once the door is shut: its latch catches and holds it, so the car can be locked again.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10209,7 +10304,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "After the door has moved: the door-ajar warning is shown while it is open and cleared once it is closed and latched again.",
+      "documentation": "After the door has opened and closed: the door-ajar warning is shown while it stands open and cleared once it is latched again.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -10334,6 +10429,26 @@
       "children": [],
       "fileId": "functions/functions.sysml"
     },
+    "Functions::Security::cabinAccessFlow::outsideHandle": {
+      "id": "Functions::Security::cabinAccessFlow::outsideHandle",
+      "kind": "action",
+      "name": "outsideHandle",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": "decide",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
     "Functions::Security::cabinAccessFlow::succ2": {
       "id": "Functions::Security::cabinAccessFlow::succ2",
       "kind": "succession",
@@ -10341,7 +10456,47 @@
       "parentId": "Functions::Security::cabinAccessFlow",
       "typeRef": null,
       "sourceId": "Functions::Security::cabinAccessFlow::readDoorHandle",
+      "targetId": "Functions::Security::cabinAccessFlow::outsideHandle",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::cabinAccessFlow::if_outsideHandle_yes": {
+      "id": "Functions::Security::cabinAccessFlow::if_outsideHandle_yes",
+      "kind": "succession",
+      "name": "if_outsideHandle_yes",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": null,
+      "sourceId": "Functions::Security::cabinAccessFlow::outsideHandle",
       "targetId": "Functions::Security::cabinAccessFlow::checkUnlocked",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::cabinAccessFlow::if_outsideHandle_else": {
+      "id": "Functions::Security::cabinAccessFlow::if_outsideHandle_else",
+      "kind": "succession",
+      "name": "if_outsideHandle_else",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": null,
+      "sourceId": "Functions::Security::cabinAccessFlow::outsideHandle",
+      "targetId": "Functions::Security::cabinAccessFlow::releaseDoor",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -10441,6 +10596,46 @@
       "parentId": "Functions::Security::cabinAccessFlow",
       "typeRef": null,
       "sourceId": "Functions::Security::cabinAccessFlow::releaseDoor",
+      "targetId": "Functions::Security::cabinAccessFlow::closeDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::cabinAccessFlow::succ5": {
+      "id": "Functions::Security::cabinAccessFlow::succ5",
+      "kind": "succession",
+      "name": "succ5",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": null,
+      "sourceId": "Functions::Security::cabinAccessFlow::closeDoor",
+      "targetId": "Functions::Security::cabinAccessFlow::relatch",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "Functions::Security::cabinAccessFlow::succ6": {
+      "id": "Functions::Security::cabinAccessFlow::succ6",
+      "kind": "succession",
+      "name": "succ6",
+      "parentId": "Functions::Security::cabinAccessFlow",
+      "typeRef": null,
+      "sourceId": "Functions::Security::cabinAccessFlow::relatch",
       "targetId": "Functions::Security::cabinAccessFlow::showDoorState",
       "exposeRef": null,
       "exposeRefs": [],
@@ -10474,10 +10669,10 @@
       "children": [],
       "fileId": "functions/functions.sysml"
     },
-    "Functions::Security::cabinAccessFlow::succ5": {
-      "id": "Functions::Security::cabinAccessFlow::succ5",
+    "Functions::Security::cabinAccessFlow::succ7": {
+      "id": "Functions::Security::cabinAccessFlow::succ7",
       "kind": "succession",
-      "name": "succ5",
+      "name": "succ7",
       "parentId": "Functions::Security::cabinAccessFlow",
       "typeRef": null,
       "sourceId": "Functions::Security::cabinAccessFlow::showDoorState",
@@ -10494,10 +10689,10 @@
       "children": [],
       "fileId": "functions/functions.sysml"
     },
-    "Functions::Security::cabinAccessFlow::succ6": {
-      "id": "Functions::Security::cabinAccessFlow::succ6",
+    "Functions::Security::cabinAccessFlow::succ8": {
+      "id": "Functions::Security::cabinAccessFlow::succ8",
       "kind": "succession",
-      "name": "succ6",
+      "name": "succ8",
       "parentId": "Functions::Security::cabinAccessFlow",
       "typeRef": null,
       "sourceId": "Functions::Security::cabinAccessFlow::stayLatched",
@@ -10514,10 +10709,10 @@
       "children": [],
       "fileId": "functions/functions.sysml"
     },
-    "Functions::Security::cabinAccessFlow::succ7": {
-      "id": "Functions::Security::cabinAccessFlow::succ7",
+    "Functions::Security::cabinAccessFlow::succ9": {
+      "id": "Functions::Security::cabinAccessFlow::succ9",
       "kind": "succession",
-      "name": "succ7",
+      "name": "succ9",
       "parentId": "Functions::Security::cabinAccessFlow",
       "typeRef": null,
       "sourceId": "Functions::Security::cabinAccessFlow::runWindowLift",
@@ -14155,7 +14350,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Security cabin access flow: a door handle is read, checked against the latches and the door released or kept latched, or a window is moved on its switch. Each step shows the functional entity that performs it.",
+      "documentation": "Security cabin access flow: a door handle is read; an inside handle opens the door at once, an outside handle only on an unlocked car; the door is closed and latched again; or a window is moved on its switch. Each step shows the functional entity that performs it.",
       "shortId": null,
       "children": [],
       "fileId": "functions/functions.sysml"
@@ -14329,7 +14524,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Traceability from the functions to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). The dependencies live outside Functions so that FunctionsView keeps showing only the dependencies between functions.",
+      "documentation": "Traceability from the functions and their functional entities to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). Each functional entity also «refine»s the use cases it serves; together they cover exactly the use cases of their function, and a logical part climbs through the entity allocated to it to the use cases that entity serves.",
       "shortId": null,
       "children": [
         "FunctionTraceability::dep13",
@@ -14353,7 +14548,51 @@
         "FunctionTraceability::dep31",
         "FunctionTraceability::dep32",
         "FunctionTraceability::dep33",
-        "FunctionTraceability::dep34"
+        "FunctionTraceability::dep34",
+        "FunctionTraceability::dep35",
+        "FunctionTraceability::dep36",
+        "FunctionTraceability::dep37",
+        "FunctionTraceability::dep38",
+        "FunctionTraceability::dep39",
+        "FunctionTraceability::dep40",
+        "FunctionTraceability::dep41",
+        "FunctionTraceability::dep42",
+        "FunctionTraceability::dep43",
+        "FunctionTraceability::dep44",
+        "FunctionTraceability::dep45",
+        "FunctionTraceability::dep46",
+        "FunctionTraceability::dep47",
+        "FunctionTraceability::dep48",
+        "FunctionTraceability::dep49",
+        "FunctionTraceability::dep50",
+        "FunctionTraceability::dep51",
+        "FunctionTraceability::dep52",
+        "FunctionTraceability::dep53",
+        "FunctionTraceability::dep54",
+        "FunctionTraceability::dep55",
+        "FunctionTraceability::dep56",
+        "FunctionTraceability::dep57",
+        "FunctionTraceability::dep58",
+        "FunctionTraceability::dep59",
+        "FunctionTraceability::dep60",
+        "FunctionTraceability::dep61",
+        "FunctionTraceability::dep62",
+        "FunctionTraceability::dep63",
+        "FunctionTraceability::dep64",
+        "FunctionTraceability::dep65",
+        "FunctionTraceability::dep66",
+        "FunctionTraceability::dep67",
+        "FunctionTraceability::dep68",
+        "FunctionTraceability::dep69",
+        "FunctionTraceability::dep70",
+        "FunctionTraceability::dep71",
+        "FunctionTraceability::dep72",
+        "FunctionTraceability::dep73",
+        "FunctionTraceability::dep74",
+        "FunctionTraceability::dep75",
+        "FunctionTraceability::dep76",
+        "FunctionTraceability::dep77",
+        "FunctionTraceability::dep78"
       ],
       "fileId": "functions/functions.sysml"
     },
@@ -14826,6 +15065,974 @@
       "parentId": "FunctionTraceability",
       "typeRef": null,
       "sourceId": "Functions::Entertainment",
+      "targetId": "UseCases::Managing::PlayMedia",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep35": {
+      "id": "FunctionTraceability::dep35",
+      "kind": "dependency",
+      "name": "dep35",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::authenticate",
+      "targetId": "UseCases::Driving::StartVehicle",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep36": {
+      "id": "FunctionTraceability::dep36",
+      "kind": "dependency",
+      "name": "dep36",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::authenticate",
+      "targetId": "UseCases::Managing::Unlock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep37": {
+      "id": "FunctionTraceability::dep37",
+      "kind": "dependency",
+      "name": "dep37",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::authenticate",
+      "targetId": "UseCases::Managing::Lock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep38": {
+      "id": "FunctionTraceability::dep38",
+      "kind": "dependency",
+      "name": "dep38",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::immobilizer",
+      "targetId": "UseCases::Driving::StartVehicle",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep39": {
+      "id": "FunctionTraceability::dep39",
+      "kind": "dependency",
+      "name": "dep39",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::immobilizer",
+      "targetId": "UseCases::Driving::StopVehicle",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep40": {
+      "id": "FunctionTraceability::dep40",
+      "kind": "dependency",
+      "name": "dep40",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::wakeUp",
+      "targetId": "UseCases::Managing::Unlock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep41": {
+      "id": "FunctionTraceability::dep41",
+      "kind": "dependency",
+      "name": "dep41",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::lockControl",
+      "targetId": "UseCases::Managing::Lock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep42": {
+      "id": "FunctionTraceability::dep42",
+      "kind": "dependency",
+      "name": "dep42",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::lockControl",
+      "targetId": "UseCases::Managing::Unlock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep43": {
+      "id": "FunctionTraceability::dep43",
+      "kind": "dependency",
+      "name": "dep43",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::lockControl",
+      "targetId": "UseCases::Managing::OpenDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep44": {
+      "id": "FunctionTraceability::dep44",
+      "kind": "dependency",
+      "name": "dep44",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::lockControl",
+      "targetId": "UseCases::Managing::CloseDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep45": {
+      "id": "FunctionTraceability::dep45",
+      "kind": "dependency",
+      "name": "dep45",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::doorControl",
+      "targetId": "UseCases::Managing::OpenDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep46": {
+      "id": "FunctionTraceability::dep46",
+      "kind": "dependency",
+      "name": "dep46",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::doorControl",
+      "targetId": "UseCases::Managing::CloseDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep47": {
+      "id": "FunctionTraceability::dep47",
+      "kind": "dependency",
+      "name": "dep47",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::windowControl",
+      "targetId": "UseCases::Managing::OpenWindow",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep48": {
+      "id": "FunctionTraceability::dep48",
+      "kind": "dependency",
+      "name": "dep48",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::windowControl",
+      "targetId": "UseCases::Managing::CloseWindow",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep49": {
+      "id": "FunctionTraceability::dep49",
+      "kind": "dependency",
+      "name": "dep49",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::driverInformation",
+      "targetId": "UseCases::Driving::StartVehicle",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep50": {
+      "id": "FunctionTraceability::dep50",
+      "kind": "dependency",
+      "name": "dep50",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::driverInformation",
+      "targetId": "UseCases::Driving::StopVehicle",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep51": {
+      "id": "FunctionTraceability::dep51",
+      "kind": "dependency",
+      "name": "dep51",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::driverInformation",
+      "targetId": "UseCases::Managing::OpenDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep52": {
+      "id": "FunctionTraceability::dep52",
+      "kind": "dependency",
+      "name": "dep52",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Security::driverInformation",
+      "targetId": "UseCases::Managing::CloseDoor",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep53": {
+      "id": "FunctionTraceability::dep53",
+      "kind": "dependency",
+      "name": "dep53",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Charging::chargeConnection",
+      "targetId": "UseCases::Managing::Charge",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep54": {
+      "id": "FunctionTraceability::dep54",
+      "kind": "dependency",
+      "name": "dep54",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Charging::chargeSession",
+      "targetId": "UseCases::Managing::Charge",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep55": {
+      "id": "FunctionTraceability::dep55",
+      "kind": "dependency",
+      "name": "dep55",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Charging::energyStorage",
+      "targetId": "UseCases::Managing::Charge",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep56": {
+      "id": "FunctionTraceability::dep56",
+      "kind": "dependency",
+      "name": "dep56",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::torqueArbitration",
+      "targetId": "UseCases::Driving::Accelerate",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep57": {
+      "id": "FunctionTraceability::dep57",
+      "kind": "dependency",
+      "name": "dep57",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::torqueArbitration",
+      "targetId": "UseCases::Driving::Brake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep58": {
+      "id": "FunctionTraceability::dep58",
+      "kind": "dependency",
+      "name": "dep58",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::regenBlending",
+      "targetId": "UseCases::Driving::Brake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep59": {
+      "id": "FunctionTraceability::dep59",
+      "kind": "dependency",
+      "name": "dep59",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::tractionDrive",
+      "targetId": "UseCases::Driving::Accelerate",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep60": {
+      "id": "FunctionTraceability::dep60",
+      "kind": "dependency",
+      "name": "dep60",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::frictionBraking",
+      "targetId": "UseCases::Driving::Brake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep61": {
+      "id": "FunctionTraceability::dep61",
+      "kind": "dependency",
+      "name": "dep61",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::SpeedControl::frictionBraking",
+      "targetId": "UseCases::Driving::EmergencyStop",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep62": {
+      "id": "FunctionTraceability::dep62",
+      "kind": "dependency",
+      "name": "dep62",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::steeringControl",
+      "targetId": "UseCases::Driving::TurnLeft",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep63": {
+      "id": "FunctionTraceability::dep63",
+      "kind": "dependency",
+      "name": "dep63",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::steeringControl",
+      "targetId": "UseCases::Driving::TurnRight",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep64": {
+      "id": "FunctionTraceability::dep64",
+      "kind": "dependency",
+      "name": "dep64",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::gearSelection",
+      "targetId": "UseCases::Driving::ChangeGear",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep65": {
+      "id": "FunctionTraceability::dep65",
+      "kind": "dependency",
+      "name": "dep65",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::roadHolding",
+      "targetId": "UseCases::Driving::TurnLeft",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep66": {
+      "id": "FunctionTraceability::dep66",
+      "kind": "dependency",
+      "name": "dep66",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Maneuvrability::roadHolding",
+      "targetId": "UseCases::Driving::TurnRight",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep67": {
+      "id": "FunctionTraceability::dep67",
+      "kind": "dependency",
+      "name": "dep67",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::headlampControl",
+      "targetId": "UseCases::Driving::ToggleHeadlights",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep68": {
+      "id": "FunctionTraceability::dep68",
+      "kind": "dependency",
+      "name": "dep68",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::indicatorControl",
+      "targetId": "UseCases::Driving::TurnLeft",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep69": {
+      "id": "FunctionTraceability::dep69",
+      "kind": "dependency",
+      "name": "dep69",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::indicatorControl",
+      "targetId": "UseCases::Driving::TurnRight",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep70": {
+      "id": "FunctionTraceability::dep70",
+      "kind": "dependency",
+      "name": "dep70",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::indicatorControl",
+      "targetId": "UseCases::Driving::Brake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep71": {
+      "id": "FunctionTraceability::dep71",
+      "kind": "dependency",
+      "name": "dep71",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::lampDrive",
+      "targetId": "UseCases::Driving::ToggleHeadlights",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep72": {
+      "id": "FunctionTraceability::dep72",
+      "kind": "dependency",
+      "name": "dep72",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::lampDrive",
+      "targetId": "UseCases::Driving::TurnLeft",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep73": {
+      "id": "FunctionTraceability::dep73",
+      "kind": "dependency",
+      "name": "dep73",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::lampDrive",
+      "targetId": "UseCases::Driving::TurnRight",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep74": {
+      "id": "FunctionTraceability::dep74",
+      "kind": "dependency",
+      "name": "dep74",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Lighting::lampDrive",
+      "targetId": "UseCases::Driving::Brake",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep75": {
+      "id": "FunctionTraceability::dep75",
+      "kind": "dependency",
+      "name": "dep75",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::WindshieldCleaning::wipeControl",
+      "targetId": "UseCases::Driving::CleanWindshield",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep76": {
+      "id": "FunctionTraceability::dep76",
+      "kind": "dependency",
+      "name": "dep76",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::WindshieldCleaning::wipeSweep",
+      "targetId": "UseCases::Driving::CleanWindshield",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep77": {
+      "id": "FunctionTraceability::dep77",
+      "kind": "dependency",
+      "name": "dep77",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Climate::cabinTemperature",
+      "targetId": "UseCases::Managing::AdjustClimate",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "functions/functions.sysml"
+    },
+    "FunctionTraceability::dep78": {
+      "id": "FunctionTraceability::dep78",
+      "kind": "dependency",
+      "name": "dep78",
+      "parentId": "FunctionTraceability",
+      "typeRef": null,
+      "sourceId": "Functions::Entertainment::mediaPlayback",
       "targetId": "UseCases::Managing::PlayMedia",
       "exposeRef": null,
       "exposeRefs": [],
@@ -18342,7 +19549,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Logical counterparts live in LogicalCounterparts so the physical whitebox stays clean; each subsets the logical part it stands for, so the trace runs on into the logical architecture.",
+      "documentation": "Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Each «implements» points straight at the part of the logical Car it realizes, and VehiclePhysical as a whole implements the logical Car definition.",
       "shortId": null,
       "children": [
         "PhysicalArchitecture::DirectionCommand",
@@ -18363,7 +19570,6 @@
         "PhysicalArchitecture::EnergySupply",
         "PhysicalArchitecture::ChargeFeed",
         "PhysicalArchitecture::WindshieldClear",
-        "PhysicalArchitecture::LogicalCounterparts",
         "PhysicalArchitecture::VehiclePhysical",
         "PhysicalArchitecture::PhysicalView",
         "PhysicalArchitecture::PhysicalDependenciesView",
@@ -18727,1259 +19933,6 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "Wiping action, same contract as the logical architecture. The wiper assembly provides it and the windshield consumes it.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts": {
-      "id": "PhysicalArchitecture::LogicalCounterparts",
-      "kind": "package",
-      "name": "LogicalCounterparts",
-      "parentId": "PhysicalArchitecture",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": "Logical architecture counterparts referenced by «implements» from VehiclePhysical. Kept outside the physical whitebox so PhysicalView stays mechanical/software only. Each counterpart subsets its part in LogicalArchitecture::Car, and car refers to the logical Car itself, so an «implements» leads on to the logical part, its allocated functions and their use cases.",
-      "shortId": null,
-      "children": [
-        "PhysicalArchitecture::LogicalCounterparts::car",
-        "PhysicalArchitecture::LogicalCounterparts::car_subsets_LogicalArchitecture_Car",
-        "PhysicalArchitecture::LogicalCounterparts::keyFob",
-        "PhysicalArchitecture::LogicalCounterparts::keyFob_subsets_LogicalArchitecture_Car_keyFob",
-        "PhysicalArchitecture::LogicalCounterparts::startButton",
-        "PhysicalArchitecture::LogicalCounterparts::startButton_subsets_LogicalArchitecture_Car_startButton",
-        "PhysicalArchitecture::LogicalCounterparts::steeringWheel",
-        "PhysicalArchitecture::LogicalCounterparts::steeringWheel_subsets_LogicalArchitecture_Car_steeringWheel",
-        "PhysicalArchitecture::LogicalCounterparts::gearStick",
-        "PhysicalArchitecture::LogicalCounterparts::gearStick_subsets_LogicalArchitecture_Car_gearStick",
-        "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal",
-        "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal_subsets_LogicalArchitecture_Car_acceleratorPedal",
-        "PhysicalArchitecture::LogicalCounterparts::brakePedal",
-        "PhysicalArchitecture::LogicalCounterparts::brakePedal_subsets_LogicalArchitecture_Car_brakePedal",
-        "PhysicalArchitecture::LogicalCounterparts::vehicleController",
-        "PhysicalArchitecture::LogicalCounterparts::vehicleController_subsets_LogicalArchitecture_Car_vehicleController",
-        "PhysicalArchitecture::LogicalCounterparts::driveController",
-        "PhysicalArchitecture::LogicalCounterparts::driveController_subsets_LogicalArchitecture_Car_driveController",
-        "PhysicalArchitecture::LogicalCounterparts::bodyController",
-        "PhysicalArchitecture::LogicalCounterparts::bodyController_subsets_LogicalArchitecture_Car_bodyController",
-        "PhysicalArchitecture::LogicalCounterparts::instrumentCluster",
-        "PhysicalArchitecture::LogicalCounterparts::instrumentCluster_subsets_LogicalArchitecture_Car_instrumentCluster",
-        "PhysicalArchitecture::LogicalCounterparts::climateSystem",
-        "PhysicalArchitecture::LogicalCounterparts::climateSystem_subsets_LogicalArchitecture_Car_climateSystem",
-        "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
-        "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem_subsets_LogicalArchitecture_Car_entertainmentSystem",
-        "PhysicalArchitecture::LogicalCounterparts::engine",
-        "PhysicalArchitecture::LogicalCounterparts::engine_subsets_LogicalArchitecture_Car_engine",
-        "PhysicalArchitecture::LogicalCounterparts::battery",
-        "PhysicalArchitecture::LogicalCounterparts::battery_subsets_LogicalArchitecture_Car_battery",
-        "PhysicalArchitecture::LogicalCounterparts::chassis",
-        "PhysicalArchitecture::LogicalCounterparts::chassis_subsets_LogicalArchitecture_Car_chassis",
-        "PhysicalArchitecture::LogicalCounterparts::wheels",
-        "PhysicalArchitecture::LogicalCounterparts::wheels_subsets_LogicalArchitecture_Car_wheels",
-        "PhysicalArchitecture::LogicalCounterparts::frictionBrakes",
-        "PhysicalArchitecture::LogicalCounterparts::frictionBrakes_subsets_LogicalArchitecture_Car_frictionBrakes",
-        "PhysicalArchitecture::LogicalCounterparts::suspension",
-        "PhysicalArchitecture::LogicalCounterparts::suspension_subsets_LogicalArchitecture_Car_suspension",
-        "PhysicalArchitecture::LogicalCounterparts::doors",
-        "PhysicalArchitecture::LogicalCounterparts::doors_subsets_LogicalArchitecture_Car_doors",
-        "PhysicalArchitecture::LogicalCounterparts::windows",
-        "PhysicalArchitecture::LogicalCounterparts::windows_subsets_LogicalArchitecture_Car_windows",
-        "PhysicalArchitecture::LogicalCounterparts::windowLifts",
-        "PhysicalArchitecture::LogicalCounterparts::windowLifts_subsets_LogicalArchitecture_Car_windowLifts",
-        "PhysicalArchitecture::LogicalCounterparts::body",
-        "PhysicalArchitecture::LogicalCounterparts::body_subsets_LogicalArchitecture_Car_body",
-        "PhysicalArchitecture::LogicalCounterparts::windshield",
-        "PhysicalArchitecture::LogicalCounterparts::windshield_subsets_LogicalArchitecture_Car_windshield",
-        "PhysicalArchitecture::LogicalCounterparts::wipers",
-        "PhysicalArchitecture::LogicalCounterparts::wipers_subsets_LogicalArchitecture_Car_wipers",
-        "PhysicalArchitecture::LogicalCounterparts::locks",
-        "PhysicalArchitecture::LogicalCounterparts::locks_subsets_LogicalArchitecture_Car_locks",
-        "PhysicalArchitecture::LogicalCounterparts::lamps",
-        "PhysicalArchitecture::LogicalCounterparts::lamps_subsets_LogicalArchitecture_Car_lamps",
-        "PhysicalArchitecture::LogicalCounterparts::chargeInlet",
-        "PhysicalArchitecture::LogicalCounterparts::chargeInlet_subsets_LogicalArchitecture_Car_chargeInlet"
-      ],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::car": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::car",
-      "kind": "part",
-      "name": "car",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical Car. The whole physical car implements this assembly. It refers to the logical Car definition with :> rather than typing it, because a typed usage would bring the definition's 27 nested parts into LogicalCounterparts and into PhysicalDependenciesView.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::car_subsets_LogicalArchitecture_Car": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::car_subsets_LogicalArchitecture_Car",
-      "kind": "subsetting",
-      "name": "car_subsets_LogicalArchitecture_Car",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::car",
-      "targetId": "LogicalArchitecture::Car",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::keyFob": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::keyFob",
-      "kind": "part",
-      "name": "keyFob",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical key fob, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::keyFob_subsets_LogicalArchitecture_Car_keyFob": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::keyFob_subsets_LogicalArchitecture_Car_keyFob",
-      "kind": "subsetting",
-      "name": "keyFob_subsets_LogicalArchitecture_Car_keyFob",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::keyFob",
-      "targetId": "LogicalArchitecture::Car::keyFob",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::startButton": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::startButton",
-      "kind": "part",
-      "name": "startButton",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical start button, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::startButton_subsets_LogicalArchitecture_Car_startButton": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::startButton_subsets_LogicalArchitecture_Car_startButton",
-      "kind": "subsetting",
-      "name": "startButton_subsets_LogicalArchitecture_Car_startButton",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::startButton",
-      "targetId": "LogicalArchitecture::Car::startButton",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::steeringWheel": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::steeringWheel",
-      "kind": "part",
-      "name": "steeringWheel",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical steering wheel, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::steeringWheel_subsets_LogicalArchitecture_Car_steeringWheel": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::steeringWheel_subsets_LogicalArchitecture_Car_steeringWheel",
-      "kind": "subsetting",
-      "name": "steeringWheel_subsets_LogicalArchitecture_Car_steeringWheel",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::steeringWheel",
-      "targetId": "LogicalArchitecture::Car::steeringWheel",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::gearStick": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::gearStick",
-      "kind": "part",
-      "name": "gearStick",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical gear stick, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::gearStick_subsets_LogicalArchitecture_Car_gearStick": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::gearStick_subsets_LogicalArchitecture_Car_gearStick",
-      "kind": "subsetting",
-      "name": "gearStick_subsets_LogicalArchitecture_Car_gearStick",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::gearStick",
-      "targetId": "LogicalArchitecture::Car::gearStick",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal",
-      "kind": "part",
-      "name": "acceleratorPedal",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical accelerator pedal, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal_subsets_LogicalArchitecture_Car_acceleratorPedal": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal_subsets_LogicalArchitecture_Car_acceleratorPedal",
-      "kind": "subsetting",
-      "name": "acceleratorPedal_subsets_LogicalArchitecture_Car_acceleratorPedal",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal",
-      "targetId": "LogicalArchitecture::Car::acceleratorPedal",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::brakePedal": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::brakePedal",
-      "kind": "part",
-      "name": "brakePedal",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical brake pedal, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::brakePedal_subsets_LogicalArchitecture_Car_brakePedal": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::brakePedal_subsets_LogicalArchitecture_Car_brakePedal",
-      "kind": "subsetting",
-      "name": "brakePedal_subsets_LogicalArchitecture_Car_brakePedal",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::brakePedal",
-      "targetId": "LogicalArchitecture::Car::brakePedal",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::vehicleController": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::vehicleController",
-      "kind": "part",
-      "name": "vehicleController",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical vehicle controller, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::vehicleController_subsets_LogicalArchitecture_Car_vehicleController": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::vehicleController_subsets_LogicalArchitecture_Car_vehicleController",
-      "kind": "subsetting",
-      "name": "vehicleController_subsets_LogicalArchitecture_Car_vehicleController",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::vehicleController",
-      "targetId": "LogicalArchitecture::Car::vehicleController",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::driveController": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::driveController",
-      "kind": "part",
-      "name": "driveController",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical drive controller, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::driveController_subsets_LogicalArchitecture_Car_driveController": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::driveController_subsets_LogicalArchitecture_Car_driveController",
-      "kind": "subsetting",
-      "name": "driveController_subsets_LogicalArchitecture_Car_driveController",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::driveController",
-      "targetId": "LogicalArchitecture::Car::driveController",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::bodyController": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::bodyController",
-      "kind": "part",
-      "name": "bodyController",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical body controller, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::bodyController_subsets_LogicalArchitecture_Car_bodyController": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::bodyController_subsets_LogicalArchitecture_Car_bodyController",
-      "kind": "subsetting",
-      "name": "bodyController_subsets_LogicalArchitecture_Car_bodyController",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::bodyController",
-      "targetId": "LogicalArchitecture::Car::bodyController",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::instrumentCluster": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::instrumentCluster",
-      "kind": "part",
-      "name": "instrumentCluster",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical instrument cluster, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::instrumentCluster_subsets_LogicalArchitecture_Car_instrumentCluster": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::instrumentCluster_subsets_LogicalArchitecture_Car_instrumentCluster",
-      "kind": "subsetting",
-      "name": "instrumentCluster_subsets_LogicalArchitecture_Car_instrumentCluster",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::instrumentCluster",
-      "targetId": "LogicalArchitecture::Car::instrumentCluster",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::climateSystem": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::climateSystem",
-      "kind": "part",
-      "name": "climateSystem",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical climate system, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::climateSystem_subsets_LogicalArchitecture_Car_climateSystem": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::climateSystem_subsets_LogicalArchitecture_Car_climateSystem",
-      "kind": "subsetting",
-      "name": "climateSystem_subsets_LogicalArchitecture_Car_climateSystem",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::climateSystem",
-      "targetId": "LogicalArchitecture::Car::climateSystem",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
-      "kind": "part",
-      "name": "entertainmentSystem",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical entertainment system, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem_subsets_LogicalArchitecture_Car_entertainmentSystem": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem_subsets_LogicalArchitecture_Car_entertainmentSystem",
-      "kind": "subsetting",
-      "name": "entertainmentSystem_subsets_LogicalArchitecture_Car_entertainmentSystem",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
-      "targetId": "LogicalArchitecture::Car::entertainmentSystem",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::engine": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::engine",
-      "kind": "part",
-      "name": "engine",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical engine (traction motor), from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::engine_subsets_LogicalArchitecture_Car_engine": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::engine_subsets_LogicalArchitecture_Car_engine",
-      "kind": "subsetting",
-      "name": "engine_subsets_LogicalArchitecture_Car_engine",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::engine",
-      "targetId": "LogicalArchitecture::Car::engine",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::battery": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::battery",
-      "kind": "part",
-      "name": "battery",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical battery, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::battery_subsets_LogicalArchitecture_Car_battery": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::battery_subsets_LogicalArchitecture_Car_battery",
-      "kind": "subsetting",
-      "name": "battery_subsets_LogicalArchitecture_Car_battery",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::battery",
-      "targetId": "LogicalArchitecture::Car::battery",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chassis": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::chassis",
-      "kind": "part",
-      "name": "chassis",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical chassis, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chassis_subsets_LogicalArchitecture_Car_chassis": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::chassis_subsets_LogicalArchitecture_Car_chassis",
-      "kind": "subsetting",
-      "name": "chassis_subsets_LogicalArchitecture_Car_chassis",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::chassis",
-      "targetId": "LogicalArchitecture::Car::chassis",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::wheels": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::wheels",
-      "kind": "part",
-      "name": "wheels",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical wheels, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::wheels_subsets_LogicalArchitecture_Car_wheels": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::wheels_subsets_LogicalArchitecture_Car_wheels",
-      "kind": "subsetting",
-      "name": "wheels_subsets_LogicalArchitecture_Car_wheels",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::wheels",
-      "targetId": "LogicalArchitecture::Car::wheels",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::frictionBrakes": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::frictionBrakes",
-      "kind": "part",
-      "name": "frictionBrakes",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical friction brakes, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::frictionBrakes_subsets_LogicalArchitecture_Car_frictionBrakes": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::frictionBrakes_subsets_LogicalArchitecture_Car_frictionBrakes",
-      "kind": "subsetting",
-      "name": "frictionBrakes_subsets_LogicalArchitecture_Car_frictionBrakes",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::frictionBrakes",
-      "targetId": "LogicalArchitecture::Car::frictionBrakes",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::suspension": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::suspension",
-      "kind": "part",
-      "name": "suspension",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical suspension, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::suspension_subsets_LogicalArchitecture_Car_suspension": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::suspension_subsets_LogicalArchitecture_Car_suspension",
-      "kind": "subsetting",
-      "name": "suspension_subsets_LogicalArchitecture_Car_suspension",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::suspension",
-      "targetId": "LogicalArchitecture::Car::suspension",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::doors": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::doors",
-      "kind": "part",
-      "name": "doors",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical doors, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::doors_subsets_LogicalArchitecture_Car_doors": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::doors_subsets_LogicalArchitecture_Car_doors",
-      "kind": "subsetting",
-      "name": "doors_subsets_LogicalArchitecture_Car_doors",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::doors",
-      "targetId": "LogicalArchitecture::Car::doors",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windows": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::windows",
-      "kind": "part",
-      "name": "windows",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical windows, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windows_subsets_LogicalArchitecture_Car_windows": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::windows_subsets_LogicalArchitecture_Car_windows",
-      "kind": "subsetting",
-      "name": "windows_subsets_LogicalArchitecture_Car_windows",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::windows",
-      "targetId": "LogicalArchitecture::Car::windows",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windowLifts": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::windowLifts",
-      "kind": "part",
-      "name": "windowLifts",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical window lifts, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windowLifts_subsets_LogicalArchitecture_Car_windowLifts": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::windowLifts_subsets_LogicalArchitecture_Car_windowLifts",
-      "kind": "subsetting",
-      "name": "windowLifts_subsets_LogicalArchitecture_Car_windowLifts",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::windowLifts",
-      "targetId": "LogicalArchitecture::Car::windowLifts",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::body": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::body",
-      "kind": "part",
-      "name": "body",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical body shell (kaross), from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::body_subsets_LogicalArchitecture_Car_body": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::body_subsets_LogicalArchitecture_Car_body",
-      "kind": "subsetting",
-      "name": "body_subsets_LogicalArchitecture_Car_body",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::body",
-      "targetId": "LogicalArchitecture::Car::body",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windshield": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::windshield",
-      "kind": "part",
-      "name": "windshield",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical windshield, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::windshield_subsets_LogicalArchitecture_Car_windshield": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::windshield_subsets_LogicalArchitecture_Car_windshield",
-      "kind": "subsetting",
-      "name": "windshield_subsets_LogicalArchitecture_Car_windshield",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::windshield",
-      "targetId": "LogicalArchitecture::Car::windshield",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::wipers": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::wipers",
-      "kind": "part",
-      "name": "wipers",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical wipers, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::wipers_subsets_LogicalArchitecture_Car_wipers": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::wipers_subsets_LogicalArchitecture_Car_wipers",
-      "kind": "subsetting",
-      "name": "wipers_subsets_LogicalArchitecture_Car_wipers",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::wipers",
-      "targetId": "LogicalArchitecture::Car::wipers",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::locks": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::locks",
-      "kind": "part",
-      "name": "locks",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical locks, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::locks_subsets_LogicalArchitecture_Car_locks": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::locks_subsets_LogicalArchitecture_Car_locks",
-      "kind": "subsetting",
-      "name": "locks_subsets_LogicalArchitecture_Car_locks",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::locks",
-      "targetId": "LogicalArchitecture::Car::locks",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::lamps": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::lamps",
-      "kind": "part",
-      "name": "lamps",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical lamps, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::lamps_subsets_LogicalArchitecture_Car_lamps": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::lamps_subsets_LogicalArchitecture_Car_lamps",
-      "kind": "subsetting",
-      "name": "lamps_subsets_LogicalArchitecture_Car_lamps",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::lamps",
-      "targetId": "LogicalArchitecture::Car::lamps",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chargeInlet": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::chargeInlet",
-      "kind": "part",
-      "name": "chargeInlet",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": true,
-      "metadataKeywords": [
-        "Logical"
-      ],
-      "documentation": "Logical charge inlet, from the logical architecture.",
-      "shortId": null,
-      "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chargeInlet_subsets_LogicalArchitecture_Car_chargeInlet": {
-      "id": "PhysicalArchitecture::LogicalCounterparts::chargeInlet_subsets_LogicalArchitecture_Car_chargeInlet",
-      "kind": "subsetting",
-      "name": "chargeInlet_subsets_LogicalArchitecture_Car_chargeInlet",
-      "parentId": "PhysicalArchitecture::LogicalCounterparts",
-      "typeRef": null,
-      "sourceId": "PhysicalArchitecture::LogicalCounterparts::chargeInlet",
-      "targetId": "LogicalArchitecture::Car::chargeInlet",
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
       "shortId": null,
       "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
@@ -22398,7 +22351,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::car",
+      "targetId": "LogicalArchitecture::Car",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22420,7 +22373,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::vehicleEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::vehicleController",
+      "targetId": "LogicalArchitecture::Car::vehicleController",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22442,7 +22395,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::vehicleEcu::vehicleControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::vehicleController",
+      "targetId": "LogicalArchitecture::Car::vehicleController",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22464,7 +22417,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::driveEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::driveController",
+      "targetId": "LogicalArchitecture::Car::driveController",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22486,7 +22439,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::driveEcu::driveControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::driveController",
+      "targetId": "LogicalArchitecture::Car::driveController",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22508,7 +22461,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::bodyEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::bodyController",
+      "targetId": "LogicalArchitecture::Car::bodyController",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22530,7 +22483,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::bodyEcu::bodyControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::bodyController",
+      "targetId": "LogicalArchitecture::Car::bodyController",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22552,7 +22505,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::infotainmentEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
+      "targetId": "LogicalArchitecture::Car::entertainmentSystem",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22574,7 +22527,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::infotainmentEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::climateSystem",
+      "targetId": "LogicalArchitecture::Car::climateSystem",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22596,7 +22549,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::entertainmentSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
+      "targetId": "LogicalArchitecture::Car::entertainmentSystem",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22618,7 +22571,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::infotainmentEcu::climateControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::climateSystem",
+      "targetId": "LogicalArchitecture::Car::climateSystem",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22640,7 +22593,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::engineEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::engine",
+      "targetId": "LogicalArchitecture::Car::engine",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22662,7 +22615,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::engineEcu::engineControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::engine",
+      "targetId": "LogicalArchitecture::Car::engine",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22684,7 +22637,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::battery",
+      "targetId": "LogicalArchitecture::Car::battery",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22706,7 +22659,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::battery",
+      "targetId": "LogicalArchitecture::Car::battery",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22728,7 +22681,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryEcu::batteryControlSw",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::chargeInlet",
+      "targetId": "LogicalArchitecture::Car::chargeInlet",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22750,7 +22703,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::keyFobUnit",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::keyFob",
+      "targetId": "LogicalArchitecture::Car::keyFob",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22772,7 +22725,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::startButtonMech",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::startButton",
+      "targetId": "LogicalArchitecture::Car::startButton",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22794,7 +22747,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::steeringWheelMech",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::steeringWheel",
+      "targetId": "LogicalArchitecture::Car::steeringWheel",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22816,7 +22769,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::gearStickMech",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::gearStick",
+      "targetId": "LogicalArchitecture::Car::gearStick",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22838,7 +22791,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::acceleratorPedalMech",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal",
+      "targetId": "LogicalArchitecture::Car::acceleratorPedal",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22860,7 +22813,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::brakePedalMech",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::brakePedal",
+      "targetId": "LogicalArchitecture::Car::brakePedal",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22882,7 +22835,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::instrumentClusterUnit",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::instrumentCluster",
+      "targetId": "LogicalArchitecture::Car::instrumentCluster",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22904,7 +22857,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::hvacAssembly",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::climateSystem",
+      "targetId": "LogicalArchitecture::Car::climateSystem",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22926,7 +22879,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::displayAndSpeakers",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
+      "targetId": "LogicalArchitecture::Car::entertainmentSystem",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22948,7 +22901,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::electricMotor",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::engine",
+      "targetId": "LogicalArchitecture::Car::engine",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22970,7 +22923,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryPack",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::battery",
+      "targetId": "LogicalArchitecture::Car::battery",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -22992,7 +22945,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::chassisFrame",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::chassis",
+      "targetId": "LogicalArchitecture::Car::chassis",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23014,7 +22967,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::wheelSet",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::wheels",
+      "targetId": "LogicalArchitecture::Car::wheels",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23036,7 +22989,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::brakeCaliperAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::frictionBrakes",
+      "targetId": "LogicalArchitecture::Car::frictionBrakes",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23058,7 +23011,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::suspensionAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::suspension",
+      "targetId": "LogicalArchitecture::Car::suspension",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23080,7 +23033,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::doorAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::doors",
+      "targetId": "LogicalArchitecture::Car::doors",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23102,7 +23055,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::windowAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::windows",
+      "targetId": "LogicalArchitecture::Car::windows",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23124,7 +23077,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::windowLiftAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::windowLifts",
+      "targetId": "LogicalArchitecture::Car::windowLifts",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23146,7 +23099,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::bodyShell",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::body",
+      "targetId": "LogicalArchitecture::Car::body",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23168,7 +23121,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::windshieldGlass",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::windshield",
+      "targetId": "LogicalArchitecture::Car::windshield",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23190,7 +23143,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::wiperAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::wipers",
+      "targetId": "LogicalArchitecture::Car::wipers",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23212,7 +23165,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::doorLockAsm",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::locks",
+      "targetId": "LogicalArchitecture::Car::locks",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23234,7 +23187,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::lampUnits",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::lamps",
+      "targetId": "LogicalArchitecture::Car::lamps",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -23256,7 +23209,7 @@
       "parentId": "PhysicalArchitecture::VehiclePhysical",
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::chargeInletMech",
-      "targetId": "PhysicalArchitecture::LogicalCounterparts::chargeInlet",
+      "targetId": "LogicalArchitecture::Car::chargeInlet",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -24233,8 +24186,7 @@
       "targetId": null,
       "exposeRef": "PhysicalArchitecture::VehiclePhysical",
       "exposeRefs": [
-        "PhysicalArchitecture::VehiclePhysical",
-        "PhysicalArchitecture::LogicalCounterparts"
+        "PhysicalArchitecture::VehiclePhysical"
       ],
       "viewFilters": [
         {
@@ -24249,7 +24201,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Physical parts and their «implements» dependencies to LogicalCounterparts (connections filtered out).",
+      "documentation": "Physical parts and their «implements» dependencies to the logical parts they realize (connections filtered out). The logical parts show as plain nodes at the ends of the dependencies.",
       "shortId": null,
       "children": [],
       "fileId": "physical_architecture/vehicle_physical.sysml"
@@ -24291,7 +24243,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Stakeholder requirements and user stories for a compact battery-electric passenger car. Size, performance, safety, security and comfort are the requirement groups. Driving, charging and parking are told as user stories. Leaf requirements refine a group. A leaf is traced to the logical parts along the function chain: a use case pursues it as objective, a function refines that use case, and the function's entities are allocated to logical parts. A logical part satisfies a leaf directly only where that chain does not reach it, such as the body for size and crash requirements or the brake pedal for braking distance.",
+      "documentation": "Stakeholder requirements and user stories for a compact battery-electric passenger car. Size, performance, safety, security and comfort are the requirement groups. Driving, charging and parking are told as user stories. Leaf requirements refine a group. A leaf is traced to the logical parts along the function chain: a use case pursues it as objective, a functional entity refines that use case, and the entity is allocated to a logical part. A satisfy from a logical part to a leaf is kept only where the chain does not reach that part, such as the body for the size and crash requirements, or the brake pedal for braking distance, which the chain already traces to the drive controller and the friction brakes.",
       "shortId": null,
       "children": [
         "Requirements::Size",
@@ -31685,6 +31637,16 @@
         "side": null,
         "offset": null
       },
+      "Functions::Security::lockControl::perform_cabinAccessFlow_relatch": {
+        "artifactId": "Functions::Security::lockControl::perform_cabinAccessFlow_relatch",
+        "x": 39680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
       "Functions::Security::doorControl": {
         "artifactId": "Functions::Security::doorControl",
         "x": 80.0,
@@ -31708,6 +31670,16 @@
       "Functions::Security::doorControl::perform_cabinAccessFlow_releaseDoor": {
         "artifactId": "Functions::Security::doorControl::perform_cabinAccessFlow_releaseDoor",
         "x": 40080.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::doorControl::perform_cabinAccessFlow_closeDoor": {
+        "artifactId": "Functions::Security::doorControl::perform_cabinAccessFlow_closeDoor",
+        "x": 40480.0,
         "y": 120.0,
         "width": 140.0,
         "height": 56.0,
@@ -31915,6 +31887,26 @@
         "side": null,
         "offset": null
       },
+      "Functions::Security::cabinAccessFlow::closeDoor": {
+        "artifactId": "Functions::Security::cabinAccessFlow::closeDoor",
+        "x": 44680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::cabinAccessFlow::relatch": {
+        "artifactId": "Functions::Security::cabinAccessFlow::relatch",
+        "x": 44880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
       "Functions::Security::cabinAccessFlow::showDoorState": {
         "artifactId": "Functions::Security::cabinAccessFlow::showDoorState",
         "x": 44280.0,
@@ -31948,6 +31940,16 @@
       "Functions::Security::cabinAccessFlow::doorRequested": {
         "artifactId": "Functions::Security::cabinAccessFlow::doorRequested",
         "x": 44880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "Functions::Security::cabinAccessFlow::outsideHandle": {
+        "artifactId": "Functions::Security::cabinAccessFlow::outsideHandle",
+        "x": 45880.0,
         "y": 120.0,
         "width": 140.0,
         "height": 56.0,
@@ -33979,296 +33981,6 @@
         "artifactId": "PhysicalArchitecture::WindshieldClear",
         "x": 80.0,
         "y": 11600.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts",
-        "x": 80.0,
-        "y": 9800.0,
-        "width": 320.0,
-        "height": 220.0,
-        "symbolRef": "default-package",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::car": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::car",
-        "x": 360.0,
-        "y": 9800.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::keyFob": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::keyFob",
-        "x": 360.0,
-        "y": 6380.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::startButton": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::startButton",
-        "x": 640.0,
-        "y": 6380.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::steeringWheel": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::steeringWheel",
-        "x": 640.0,
-        "y": 9800.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::gearStick": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::gearStick",
-        "x": 80.0,
-        "y": 9980.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal",
-        "x": 360.0,
-        "y": 9980.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::brakePedal": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::brakePedal",
-        "x": 640.0,
-        "y": 9980.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::vehicleController": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::vehicleController",
-        "x": 360.0,
-        "y": 6740.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::driveController": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::driveController",
-        "x": 640.0,
-        "y": 6740.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::bodyController": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::bodyController",
-        "x": 80.0,
-        "y": 6920.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::instrumentCluster": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::instrumentCluster",
-        "x": 360.0,
-        "y": 6920.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::climateSystem": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::climateSystem",
-        "x": 80.0,
-        "y": 10160.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem",
-        "x": 360.0,
-        "y": 10160.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::engine": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::engine",
-        "x": 640.0,
-        "y": 10160.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::battery": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::battery",
-        "x": 80.0,
-        "y": 10340.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::chassis": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::chassis",
-        "x": 360.0,
-        "y": 10340.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::wheels": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::wheels",
-        "x": 640.0,
-        "y": 10340.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::frictionBrakes": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::frictionBrakes",
-        "x": 640.0,
-        "y": 7280.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::suspension": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::suspension",
-        "x": 80.0,
-        "y": 10520.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::doors": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::doors",
-        "x": 360.0,
-        "y": 7460.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::windows": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::windows",
-        "x": 360.0,
-        "y": 10520.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::windowLifts": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::windowLifts",
-        "x": 80.0,
-        "y": 7640.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::body": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::body",
-        "x": 640.0,
-        "y": 10520.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::windshield": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::windshield",
-        "x": 80.0,
-        "y": 10700.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::wipers": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::wipers",
-        "x": 360.0,
-        "y": 10700.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::locks": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::locks",
-        "x": 640.0,
-        "y": 10700.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::lamps": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::lamps",
-        "x": 80.0,
-        "y": 10880.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
-      },
-      "PhysicalArchitecture::LogicalCounterparts::chargeInlet": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::chargeInlet",
-        "x": 360.0,
-        "y": 10880.0,
         "width": 200.0,
         "height": 120.0,
         "symbolRef": "default-part",
@@ -38469,6 +38181,24 @@
           "y": 0.0
         }
       },
+      "Functions::Security::cabinAccessFlow::if_outsideHandle_yes": {
+        "artifactId": "Functions::Security::cabinAccessFlow::if_outsideHandle_yes",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Functions::Security::cabinAccessFlow::if_outsideHandle_else": {
+        "artifactId": "Functions::Security::cabinAccessFlow::if_outsideHandle_else",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
       "Functions::Security::cabinAccessFlow::succ3": {
         "artifactId": "Functions::Security::cabinAccessFlow::succ3",
         "routing": "direct",
@@ -38525,6 +38255,24 @@
       },
       "Functions::Security::cabinAccessFlow::succ7": {
         "artifactId": "Functions::Security::cabinAccessFlow::succ7",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Functions::Security::cabinAccessFlow::succ8": {
+        "artifactId": "Functions::Security::cabinAccessFlow::succ8",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "Functions::Security::cabinAccessFlow::succ9": {
+        "artifactId": "Functions::Security::cabinAccessFlow::succ9",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
@@ -40046,6 +39794,842 @@
           }
         }
       },
+      "FunctionTraceability::dep35": {
+        "artifactId": "FunctionTraceability::dep35",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep36": {
+        "artifactId": "FunctionTraceability::dep36",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep37": {
+        "artifactId": "FunctionTraceability::dep37",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep38": {
+        "artifactId": "FunctionTraceability::dep38",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep39": {
+        "artifactId": "FunctionTraceability::dep39",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep40": {
+        "artifactId": "FunctionTraceability::dep40",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep41": {
+        "artifactId": "FunctionTraceability::dep41",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep42": {
+        "artifactId": "FunctionTraceability::dep42",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep43": {
+        "artifactId": "FunctionTraceability::dep43",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep44": {
+        "artifactId": "FunctionTraceability::dep44",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep45": {
+        "artifactId": "FunctionTraceability::dep45",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep46": {
+        "artifactId": "FunctionTraceability::dep46",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep47": {
+        "artifactId": "FunctionTraceability::dep47",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep48": {
+        "artifactId": "FunctionTraceability::dep48",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep49": {
+        "artifactId": "FunctionTraceability::dep49",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep50": {
+        "artifactId": "FunctionTraceability::dep50",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep51": {
+        "artifactId": "FunctionTraceability::dep51",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep52": {
+        "artifactId": "FunctionTraceability::dep52",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep53": {
+        "artifactId": "FunctionTraceability::dep53",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep54": {
+        "artifactId": "FunctionTraceability::dep54",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep55": {
+        "artifactId": "FunctionTraceability::dep55",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep56": {
+        "artifactId": "FunctionTraceability::dep56",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep57": {
+        "artifactId": "FunctionTraceability::dep57",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep58": {
+        "artifactId": "FunctionTraceability::dep58",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep59": {
+        "artifactId": "FunctionTraceability::dep59",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep60": {
+        "artifactId": "FunctionTraceability::dep60",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep61": {
+        "artifactId": "FunctionTraceability::dep61",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep62": {
+        "artifactId": "FunctionTraceability::dep62",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep63": {
+        "artifactId": "FunctionTraceability::dep63",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep64": {
+        "artifactId": "FunctionTraceability::dep64",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep65": {
+        "artifactId": "FunctionTraceability::dep65",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep66": {
+        "artifactId": "FunctionTraceability::dep66",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep67": {
+        "artifactId": "FunctionTraceability::dep67",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep68": {
+        "artifactId": "FunctionTraceability::dep68",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep69": {
+        "artifactId": "FunctionTraceability::dep69",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep70": {
+        "artifactId": "FunctionTraceability::dep70",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep71": {
+        "artifactId": "FunctionTraceability::dep71",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep72": {
+        "artifactId": "FunctionTraceability::dep72",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep73": {
+        "artifactId": "FunctionTraceability::dep73",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep74": {
+        "artifactId": "FunctionTraceability::dep74",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep75": {
+        "artifactId": "FunctionTraceability::dep75",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep76": {
+        "artifactId": "FunctionTraceability::dep76",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep77": {
+        "artifactId": "FunctionTraceability::dep77",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "FunctionTraceability::dep78": {
+        "artifactId": "FunctionTraceability::dep78",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
       "LogicalArchitecture::Car::dep1": {
         "artifactId": "LogicalArchitecture::Car::dep1",
         "routing": "direct",
@@ -41192,538 +41776,6 @@
           },
           "dark": {
             "lineStyle": "solid"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::car_subsets_LogicalArchitecture_Car": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::car_subsets_LogicalArchitecture_Car",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::keyFob_subsets_LogicalArchitecture_Car_keyFob": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::keyFob_subsets_LogicalArchitecture_Car_keyFob",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::startButton_subsets_LogicalArchitecture_Car_startButton": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::startButton_subsets_LogicalArchitecture_Car_startButton",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::steeringWheel_subsets_LogicalArchitecture_Car_steeringWheel": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::steeringWheel_subsets_LogicalArchitecture_Car_steeringWheel",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::gearStick_subsets_LogicalArchitecture_Car_gearStick": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::gearStick_subsets_LogicalArchitecture_Car_gearStick",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal_subsets_LogicalArchitecture_Car_acceleratorPedal": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal_subsets_LogicalArchitecture_Car_acceleratorPedal",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::brakePedal_subsets_LogicalArchitecture_Car_brakePedal": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::brakePedal_subsets_LogicalArchitecture_Car_brakePedal",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::vehicleController_subsets_LogicalArchitecture_Car_vehicleController": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::vehicleController_subsets_LogicalArchitecture_Car_vehicleController",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::driveController_subsets_LogicalArchitecture_Car_driveController": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::driveController_subsets_LogicalArchitecture_Car_driveController",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::bodyController_subsets_LogicalArchitecture_Car_bodyController": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::bodyController_subsets_LogicalArchitecture_Car_bodyController",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::instrumentCluster_subsets_LogicalArchitecture_Car_instrumentCluster": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::instrumentCluster_subsets_LogicalArchitecture_Car_instrumentCluster",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::climateSystem_subsets_LogicalArchitecture_Car_climateSystem": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::climateSystem_subsets_LogicalArchitecture_Car_climateSystem",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem_subsets_LogicalArchitecture_Car_entertainmentSystem": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem_subsets_LogicalArchitecture_Car_entertainmentSystem",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::engine_subsets_LogicalArchitecture_Car_engine": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::engine_subsets_LogicalArchitecture_Car_engine",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::battery_subsets_LogicalArchitecture_Car_battery": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::battery_subsets_LogicalArchitecture_Car_battery",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::chassis_subsets_LogicalArchitecture_Car_chassis": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::chassis_subsets_LogicalArchitecture_Car_chassis",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::wheels_subsets_LogicalArchitecture_Car_wheels": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::wheels_subsets_LogicalArchitecture_Car_wheels",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::frictionBrakes_subsets_LogicalArchitecture_Car_frictionBrakes": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::frictionBrakes_subsets_LogicalArchitecture_Car_frictionBrakes",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::suspension_subsets_LogicalArchitecture_Car_suspension": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::suspension_subsets_LogicalArchitecture_Car_suspension",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::doors_subsets_LogicalArchitecture_Car_doors": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::doors_subsets_LogicalArchitecture_Car_doors",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::windows_subsets_LogicalArchitecture_Car_windows": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::windows_subsets_LogicalArchitecture_Car_windows",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::windowLifts_subsets_LogicalArchitecture_Car_windowLifts": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::windowLifts_subsets_LogicalArchitecture_Car_windowLifts",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::body_subsets_LogicalArchitecture_Car_body": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::body_subsets_LogicalArchitecture_Car_body",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::windshield_subsets_LogicalArchitecture_Car_windshield": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::windshield_subsets_LogicalArchitecture_Car_windshield",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::wipers_subsets_LogicalArchitecture_Car_wipers": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::wipers_subsets_LogicalArchitecture_Car_wipers",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::locks_subsets_LogicalArchitecture_Car_locks": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::locks_subsets_LogicalArchitecture_Car_locks",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::lamps_subsets_LogicalArchitecture_Car_lamps": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::lamps_subsets_LogicalArchitecture_Car_lamps",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          }
-        }
-      },
-      "PhysicalArchitecture::LogicalCounterparts::chargeInlet_subsets_LogicalArchitecture_Car_chargeInlet": {
-        "artifactId": "PhysicalArchitecture::LogicalCounterparts::chargeInlet_subsets_LogicalArchitecture_Car_chargeInlet",
-        "routing": "direct",
-        "waypoints": [],
-        "labelOffset": {
-          "x": 0.0,
-          "y": 0.0
-        },
-        "style": {
-          "light": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
-          },
-          "dark": {
-            "lineStyle": "dashed",
-            "markerEnd": "hollowTriangle"
           }
         }
       },
