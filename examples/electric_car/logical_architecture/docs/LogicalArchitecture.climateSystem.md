@@ -8,7 +8,6 @@ Part of `Car`.
 
 - Comprises `cabinTemperature`.
 - Depends on `battery` («Energy»).
-- Satisfies `CabinClimate`.
 
 ## Diagrams
 

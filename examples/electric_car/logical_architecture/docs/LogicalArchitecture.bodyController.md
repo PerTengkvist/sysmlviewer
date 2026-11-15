@@ -17,7 +17,6 @@ Part of `Car`.
 - Depends on `windowLifts` («Command»).
 - Depends on `lamps` («Command»).
 - Depends on `wipers` («Command»).
-- Satisfies `LockIndication`.
 
 ## Diagrams
 

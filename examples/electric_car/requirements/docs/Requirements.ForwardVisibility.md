@@ -8,7 +8,6 @@ The driver shall be able to clear the windshield while driving.
 
 - Refines `Safety`.
 - Satisfied by logical `windshield`.
-- Satisfied by logical `wipers`.
 - Objective of use case `CleanWindshield`.
 
 ## Diagrams

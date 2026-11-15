@@ -13,8 +13,6 @@ Part of `Car`.
 - `startButton` depends on this («Command»).
 - Depends on `driveController` («Enable»).
 - Depends on `instrumentCluster` («Inform»).
-- Satisfies `Immobilizer`.
-- Satisfies `PowerModes`.
 
 ## Diagrams
 

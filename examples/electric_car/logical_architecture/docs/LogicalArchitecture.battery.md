@@ -16,7 +16,6 @@ Part of `Car`.
 - `chargeInlet` depends on this («Energy»).
 - Depends on `chassis` («Mount»).
 - Satisfies `Range`.
-- Satisfies `ChargeTime`.
 
 ## Diagrams
 

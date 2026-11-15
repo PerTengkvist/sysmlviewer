@@ -8,7 +8,6 @@ Part of `Car`.
 
 - Comprises `mediaPlayback`.
 - Depends on `battery` («Energy»).
-- Satisfies `CabinMedia`.
 
 ## Diagrams
 

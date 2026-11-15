@@ -38,11 +38,15 @@ test('a requirement shows its group above and what satisfies and pursues it belo
   await expect(dlg.locator('.dependency-tree-root')).toContainText('BrakingDistance')
 
   const down = dlg.locator('.dependency-tree-down > .dependency-tree-children')
-  for (const part of ['brakePedal', 'frictionBrakes', 'driveController']) {
-    const row = down.locator(':scope > li > .dependency-tree-row', {
-      has: page.locator(`[data-related-id="LogicalArchitecture::Car::${part}"]`),
+  const directRow = (id: string) =>
+    down.locator(':scope > li > .dependency-tree-row', {
+      has: page.locator(`[data-related-id="${id}"]`),
     })
-    await expect(row).toContainText('«satisfy»')
+  // Only the brake pedal satisfies it directly; the drive controller and the
+  // friction brakes are reached through Brake and SpeedControl instead.
+  await expect(directRow('LogicalArchitecture::Car::brakePedal')).toContainText('«satisfy»')
+  for (const part of ['frictionBrakes', 'driveController']) {
+    await expect(directRow(`LogicalArchitecture::Car::${part}`)).toHaveCount(0)
   }
   const brake = down.locator(':scope > li > .dependency-tree-row', {
     has: page.locator(`[data-related-id="${BRAKE}"]`),
@@ -81,16 +85,16 @@ test('the use case dialog opens the tree of its use case', async ({ page }) => {
 test('a satisfying part climbs to its requirement, not along #Command', async ({ page }) => {
   const dlg = await openRequirementTree(page)
   await dlg
-    .locator('.dependency-tree-down [data-related-id="LogicalArchitecture::Car::driveController"]')
+    .locator('.dependency-tree-down [data-related-id="LogicalArchitecture::Car::brakePedal"]')
     .first()
     .click()
-  const details = page.getByRole('dialog', { name: 'part driveController' })
+  const details = page.getByRole('dialog', { name: 'part brakePedal' })
   await expect(details).toBeVisible()
   // The button also sits in the double-click dialog's Details heading.
   await details.getByRole('button', { name: 'dependency tree' }).click()
   await expect(details).toBeHidden()
 
-  const tree = page.getByRole('dialog', { name: 'Dependency tree driveController' })
+  const tree = page.getByRole('dialog', { name: 'Dependency tree brakePedal' })
   await expect(tree).toBeVisible()
   const up = tree.locator('.dependency-tree-up [data-related-id]')
   await expect(up).toHaveCount(2)

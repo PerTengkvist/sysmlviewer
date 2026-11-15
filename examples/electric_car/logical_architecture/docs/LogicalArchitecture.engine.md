@@ -11,8 +11,6 @@ Part of `Car`.
 - Depends on `battery` («Energy»).
 - Depends on `chassis` («Mount»).
 - Depends on `wheels` («Actuate»).
-- Satisfies `Acceleration`.
-- Satisfies `TopSpeed`.
 
 ## Diagrams
 

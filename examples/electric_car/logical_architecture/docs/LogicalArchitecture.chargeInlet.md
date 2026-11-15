@@ -8,7 +8,6 @@ Part of `Car`.
 
 - Comprises `chargeConnection`.
 - Depends on `battery` («Energy»).
-- Satisfies `ChargeTime`.
 
 ## Diagrams
 

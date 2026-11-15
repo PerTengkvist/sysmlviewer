@@ -893,3 +893,75 @@ def test_every_leaf_use_case_is_refined_by_a_function():
         if uc.name in COMPOSITE_USE_CASES:
             included = {t for s, t in includes if s == uc.id}
             assert included and included <= refined, uc.name
+
+
+# --- Traceability: satisfy only where the function chain does not reach ------
+#
+#   requirement ←objective— use case ←#refine— function ⊃ entity —allocate→ logical part
+#
+# A `satisfy R by L` is redundant when that chain already leads from R to L.
+
+
+def _chain_pairs(elements) -> set[tuple[str, str]]:
+    """(requirement id, logical part id) pairs the function chain connects."""
+    objectives: dict[str, set[str]] = {}
+    for e in elements.values():
+        if e.kind == ArtifactKind.DEPENDENCY and "objective" in (e.metadata_keywords or []):
+            objectives.setdefault(e.source_id, set()).add(e.target_id)
+    allocated: dict[str, set[str]] = {}
+    for a in elements.values():
+        if a.kind == ArtifactKind.ALLOCATION and a.source_id in elements:
+            allocated.setdefault(elements[a.source_id].parent_id, set()).add(a.target_id)
+    pairs: set[tuple[str, str]] = set()
+    for function_id, use_cases in _function_refines(elements).items():
+        for uc in use_cases:
+            for req in objectives.get(uc, ()):
+                for part in allocated.get(function_id, ()):
+                    pairs.add((req, part))
+    return pairs
+
+
+def test_no_satisfy_repeats_the_function_chain():
+    elements = _load().elements
+    pairs = _chain_pairs(elements)
+    redundant = sorted(
+        f"satisfy {elements[s.target_id].name} by {elements[s.source_id].name}"
+        for s in elements.values()
+        if s.kind == ArtifactKind.SATISFY and (s.target_id, s.source_id) in pairs
+    )
+    assert redundant == []
+
+
+def test_every_leaf_requirement_is_traced_to_a_logical_part():
+    """A leaf requirement (one that refines a group) is reached by the chain or a satisfy."""
+    elements = _load().elements
+    groups = {
+        e.id
+        for e in elements.values()
+        if e.kind == ArtifactKind.REQUIREMENT
+        and any(
+            elements[c].kind == ArtifactKind.ATTRIBUTE
+            and elements[c].name == "Type"
+            and elements[c].default_value != '"UserStory"'
+            for c in e.children
+            if c in elements
+        )
+    }
+    stories = {
+        e.id
+        for e in elements.values()
+        if e.kind == ArtifactKind.REQUIREMENT and (e.short_id or "").startswith("US-")
+    }
+    leaves = {
+        e.source_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "refine" in (e.metadata_keywords or [])
+        and e.target_id in groups
+        and e.source_id not in stories
+    }
+    assert len(leaves) == 24
+    traced = {r for r, _ in _chain_pairs(elements)} | {
+        s.target_id for s in elements.values() if s.kind == ArtifactKind.SATISFY
+    }
+    assert sorted(elements[r].name for r in leaves - traced) == []

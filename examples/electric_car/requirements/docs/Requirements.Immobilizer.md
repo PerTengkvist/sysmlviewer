@@ -8,7 +8,6 @@ Propulsion shall stay inhibited until the driver has been authenticated.
 
 - Refines `Security`.
 - Refined by `ParkAndLeave`.
-- Satisfied by logical `vehicleController`.
 - Objective of use case `StartVehicle`.
 
 ## Diagrams
