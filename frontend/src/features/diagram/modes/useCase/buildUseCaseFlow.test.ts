@@ -13,6 +13,7 @@ function el(
     targetId: null,
     children: [],
     metadataKeywords: [],
+    fileId: null,
     ...partial,
   }
 }

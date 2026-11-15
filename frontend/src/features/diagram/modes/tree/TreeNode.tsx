@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo } from 'react'
-import type { ElementStyle } from '../../../api'
-import type { ViewMode } from '../../../settings'
+import type { ElementStyle } from '../../../../api'
+import type { ViewMode } from '../../../../settings'
 import { kindBackground, nodeInlineStyle } from '../../elementStyle'
 
 export type TreeNodeData = {

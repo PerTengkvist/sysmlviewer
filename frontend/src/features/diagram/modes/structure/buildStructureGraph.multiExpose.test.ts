@@ -83,12 +83,22 @@ function fixture(): ViewPayload {
   }
 }
 
+function build(view: ViewPayload) {
+  return buildStructureGraph({
+    view,
+    onOpenView: () => {},
+    onPortMoved: () => {},
+    portMoveMode: false,
+    showAttributes: false,
+    viewMode: 'light',
+    onWaypointsChange: () => {},
+    onLabelOffsetChange: () => {},
+  })
+}
+
 describe('buildStructureGraph with a second exposed root', () => {
   it('draws orphaned parts as top-level nodes and keeps their allocation edges', () => {
-    const { nodes, edges } = buildStructureGraph({
-      view: fixture(),
-      viewMode: 'light',
-    })
+    const { nodes, edges } = build(fixture())
     const ids = nodes.map((n) => n.id)
     expect(ids).toContain('F::Fn')
     expect(ids).toContain('F::Fn::entity')
@@ -136,7 +146,7 @@ describe('buildStructureGraph with a second exposed root', () => {
       fileId: 'f',
       metadataKeywords: ['implements'],
     }
-    const { nodes, edges } = buildStructureGraph({ view: f, viewMode: 'light' })
+    const { nodes, edges } = build(f)
     const pkg = nodes.find((n) => n.id === 'L::Counterparts')
     const part = nodes.find((n) => n.id === 'L::Counterparts::controller')
     expect(pkg).toBeDefined()
