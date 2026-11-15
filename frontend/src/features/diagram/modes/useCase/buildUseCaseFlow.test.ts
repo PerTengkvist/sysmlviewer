@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../../../api'
 import { buildUseCaseFlow } from './buildUseCaseFlow'
+import { DECISION_NODE_SIZE, PSEUDO_NODE_SIZE } from '../actionFlow/actionNodeSize'
 
 function el(
   partial: Partial<SemanticElement> &
@@ -178,6 +179,29 @@ describe('buildUseCaseFlow', () => {
     expect(nodes.some((n) => (n.data as { label: string }).label.includes('doA'))).toBe(
       true,
     )
+  })
+
+  it('draws start and done as the small circles of the action flow', () => {
+    const { nodes } = buildUseCaseFlow('P::Pay', semantic)
+    for (const kind of ['start', 'done']) {
+      const n = nodes.find((x) => (x.data as { kind: string }).kind === kind)!
+      expect(n.style).toMatchObject({ width: PSEUDO_NODE_SIZE, height: PSEUDO_NODE_SIZE })
+    }
+    const decision = nodes.find((x) => (x.data as { kind: string }).kind === 'decide')!
+    expect(decision.style).toMatchObject(DECISION_NODE_SIZE)
+  })
+
+  it('centres every step on one column, top to bottom without overlap', () => {
+    const { nodes } = buildUseCaseFlow('P::Pay', semantic)
+    const boxes = nodes.map((n) => ({
+      cx: n.position.x + Number(n.style?.width) / 2,
+      top: n.position.y,
+      bottom: n.position.y + Number(n.style?.height),
+    }))
+    for (const b of boxes) expect(b.cx).toBe(boxes[0].cx)
+    for (let i = 1; i < boxes.length; i++) {
+      expect(boxes[i].top).toBeGreaterThan(boxes[i - 1].bottom + 20)
+    }
   })
 
   it('links perform-of-action without expanding it', () => {

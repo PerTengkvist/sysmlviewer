@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildActionFlowGraph } from './buildActionFlowGraph'
 import type { ViewPayload } from '../../../../api'
+import { PSEUDO_NODE_SIZE } from './actionNodeSize'
 
 function fixture(): ViewPayload {
   const root = 'P::BootFlow'
@@ -131,5 +132,28 @@ describe('buildActionFlowGraph', () => {
 
     const intoDecisionLr = edges.find((e) => e.target.endsWith('::testSuccessful'))
     expect(intoDecisionLr?.targetHandle).toBe('in-left')
+  })
+
+  it('keeps start and done round when the saved layout has them wide', () => {
+    const view = fixture()
+    view.hasViewLayout = true
+    for (const id of Object.keys(view.semantic)) {
+      if (view.semantic[id].kind !== 'action') continue
+      view.visualization.nodes[id] = {
+        artifactId: id,
+        x: 0,
+        y: 0,
+        width: 160,
+        height: 48,
+        symbolRef: 'action',
+        side: null,
+        offset: null,
+      }
+    }
+    const { nodes } = buildActionFlowGraph(view, 'light')
+    for (const suffix of ['::start', '::stop']) {
+      const n = nodes.find((x) => x.id.endsWith(suffix))!
+      expect(n.style).toMatchObject({ width: PSEUDO_NODE_SIZE, height: PSEUDO_NODE_SIZE })
+    }
   })
 })

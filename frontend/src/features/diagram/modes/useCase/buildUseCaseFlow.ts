@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { SemanticElement } from '../../../../api'
 import { orientEdgeHandles } from '../../layout/dependencyLayout'
+import { fixedActionNodeSize } from '../actionFlow/actionNodeSize'
 import {
   elementDisplayName,
   useCaseRequirementLinks,
@@ -32,8 +33,12 @@ export type UseCaseFlowGraph = {
   actionLinks: string[]
 }
 
-const COL_X = 80
-const ROW_H = 90
+/** Centre of the one column the steps hang on. */
+const COL_CX = 160
+const TOP_Y = 40
+/** Free space between two steps. */
+const ROW_GAP = 42
+const STEP_SIZE = { width: 160, height: 48 }
 
 function childrenOf(
   parentId: string,
@@ -175,22 +180,32 @@ export function buildUseCaseFlow(
     if (!ordered.includes(s)) ordered.push(s)
   }
 
-  const nodes: Node[] = ordered.map((step, i) => ({
-    id: step.id,
-    type: 'action',
-    position: { x: COL_X, y: 40 + i * ROW_H },
-    data: {
-      label: step.label,
-      kind: step.kind,
-      artifactId: step.id.startsWith('exp:') ? step.id.slice(4) : step.id,
+  let y = TOP_Y
+  const nodes: Node[] = ordered.map((step) => {
+    const shape = {
       isStart: step.kind === 'start',
       isDone: step.kind === 'done',
       isDecision: step.kind === 'decide',
-      flowDir: 'TD' as const,
-      viewMode: 'light' as const,
-    },
-    style: { width: 160, height: 48 },
-  }))
+    }
+    // The same circles and diamond as the action flow view.
+    const size = fixedActionNodeSize(shape) ?? STEP_SIZE
+    const node: Node = {
+      id: step.id,
+      type: 'action',
+      position: { x: COL_CX - size.width / 2, y },
+      data: {
+        label: step.label,
+        kind: step.kind,
+        artifactId: step.id.startsWith('exp:') ? step.id.slice(4) : step.id,
+        ...shape,
+        flowDir: 'TD' as const,
+        viewMode: 'light' as const,
+      },
+      style: { width: size.width, height: size.height },
+    }
+    y += size.height + ROW_GAP
+    return node
+  })
 
   const nodeIds = new Set(nodes.map((n) => n.id))
   const edges: Edge[] = []
