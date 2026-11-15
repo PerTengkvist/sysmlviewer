@@ -48,6 +48,8 @@ test('a requirement shows its group above and what satisfies and pursues it belo
     has: page.locator(`[data-related-id="${BRAKE}"]`),
   })
   await expect(brake).toContainText('«objective»')
+  // Connections are not part of the tree.
+  await expect(dlg).not.toContainText('«connection»')
 })
 
 test('clicking a branch opens that element', async ({ page }) => {
@@ -74,4 +76,26 @@ test('the use case dialog opens the tree of its use case', async ({ page }) => {
   ).toBeVisible()
   // Only one dialog at a time.
   await expect(page.getByRole('dialog')).toHaveCount(1)
+})
+
+test('a satisfying part climbs to its requirement, not along #Command', async ({ page }) => {
+  const dlg = await openRequirementTree(page)
+  await dlg
+    .locator('.dependency-tree-down [data-related-id="LogicalArchitecture::Car::driveController"]')
+    .first()
+    .click()
+  const details = page.getByRole('dialog', { name: 'part driveController' })
+  await expect(details).toBeVisible()
+  // The button also sits in the double-click dialog's Details heading.
+  await details.getByRole('button', { name: 'dependency tree' }).click()
+  await expect(details).toBeHidden()
+
+  const tree = page.getByRole('dialog', { name: 'Dependency tree driveController' })
+  await expect(tree).toBeVisible()
+  const up = tree.locator('.dependency-tree-up [data-related-id]')
+  await expect(up).toHaveCount(2)
+  await expect(up.nth(0)).toHaveAttribute('data-related-id', 'Requirements::Safety')
+  await expect(up.nth(1)).toHaveAttribute('data-related-id', REQ)
+  await expect(tree.locator('.dependency-tree-up')).toContainText('«satisfy»')
+  await expect(tree).not.toContainText('«connection»')
 })

@@ -25,7 +25,9 @@ export function DependencyTreeDialog({
   onClose,
   onOpenElement,
 }: Props) {
-  const [tree, setTree] = useState<DependencyTree | null>(null)
+  // Keyed by element, so a refetch after a reload keeps the old tree on
+  // screen until the new one arrives, while another element shows Loading.
+  const [loaded, setLoaded] = useState<{ id: string; tree: DependencyTree } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [size, setSize] = useState<ElementDialogSize>(DEFAULT_ELEMENT_DIALOG_SIZE)
   const name = elementDisplayName(semantic[elementId], elementId)
@@ -38,14 +40,15 @@ export function DependencyTreeDialog({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // `semantic` is replaced whenever App reloads the project, so this also
+  // refetches when the model changes while the dialog is open.
   useEffect(() => {
     let cancelled = false
-    setTree(null)
     setError(null)
     void api
       .getDependencyTree(projectId, elementId)
       .then((t) => {
-        if (!cancelled) setTree(t)
+        if (!cancelled) setLoaded({ id: elementId, tree: t })
       })
       .catch(() => {
         if (!cancelled) setError(`Could not load the dependency tree of ${name}`)
@@ -53,7 +56,9 @@ export function DependencyTreeDialog({
     return () => {
       cancelled = true
     }
-  }, [projectId, elementId, name])
+  }, [projectId, elementId, name, semantic])
+
+  const tree = loaded?.id === elementId ? loaded.tree : null
 
   const open = (id: string) => {
     onClose()
