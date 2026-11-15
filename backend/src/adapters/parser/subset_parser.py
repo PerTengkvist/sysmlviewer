@@ -281,6 +281,10 @@ class SubsetSysmlParser:
         self, content: str, file_id: str, *, defer_link: bool
     ) -> _ParserState:
         state = _ParserState(file_id=file_id, defer_link=defer_link)
+        # `abstract part def X`: the prefix applies to the declaration whose
+        # keyword starts at token index `abstract_decl_at`.
+        pending_abstract = False
+        abstract_decl_at = -1
         tokens = _tokenize(content)
         i = 0
         n = len(tokens)
@@ -383,7 +387,8 @@ class SubsetSysmlParser:
 
         def skip_until_semicolon_or_brace() -> None:
             """Skip one statement: either through ';' or a matched '{...}' block."""
-            nonlocal i
+            nonlocal i, pending_abstract
+            pending_abstract = False
             depth = 0
             seen_brace = False
             while i < n:
@@ -763,24 +768,69 @@ class SubsetSysmlParser:
                 )
 
         pending_metadata_keywords: list[str] = []
-        # `abstract part def X` — the prefix applies to the next declaration.
-        pending_abstract = False
-        abstract_targets = {"part", "ref", "action", "requirement", "use", "case", "#"}
+
+        def abstract_declaration_start() -> int | None:
+            """Token index of the declaration `abstract` (at i) applies to.
+
+            Supported: `[#Kw…] part [def] name`, `[#Kw…] ref part name`, and
+            without prefix metadata `action [def] name`, `requirement [def] …`,
+            `use case [def] …` and `case [def] …`. None for anything else.
+            """
+            j = i + 1
+            has_metadata = False
+            while j + 1 < n and tokens[j].value == "#" and tokens[j + 1].kind == "ident":
+                has_metadata = True
+                j += 2
+            start = j
+
+            def value(k: int) -> str | None:
+                return tokens[k].value if k < n else None
+
+            if value(j) == "ref" and value(j + 1) == "part":
+                j += 2
+            elif value(j) == "part":
+                j += 1
+            elif has_metadata:
+                return None
+            elif value(j) in {"action", "requirement", "case"}:
+                j += 1
+            elif value(j) == "use" and value(j + 1) == "case":
+                j += 2
+            else:
+                return None
+            if value(j) == "def":
+                j += 1
+            if value(j) == "<":  # short name `<'R-1'>`
+                while j < n and tokens[j].value != ">":
+                    j += 1
+                j += 1
+            if j < n and tokens[j].kind in {"ident", "string"}:
+                return start
+            return None
 
         while i < n:
             tok = peek()
             if not tok:
                 break
 
-            if tok.kind == "ident" and tok.value == "abstract":
-                take()
-                pending_abstract = True
-                continue
-            if pending_abstract and tok.value not in abstract_targets:
-                state.warnings.append(
-                    f"line {tok.line}: 'abstract' ignored before '{tok.value}'"
-                )
+            # The declaration `abstract` applied to has been parsed (or skipped).
+            if pending_abstract and i > abstract_decl_at:
                 pending_abstract = False
+
+            if tok.kind == "ident" and tok.value == "abstract":
+                decl_at = abstract_declaration_start()
+                take()
+                if decl_at is None:
+                    nxt = peek()
+                    state.warnings.append(
+                        f"line {tok.line}: 'abstract' ignored before "
+                        f"'{nxt.value if nxt else 'end of file'}'"
+                    )
+                    pending_abstract = False
+                else:
+                    pending_abstract = True
+                    abstract_decl_at = decl_at
+                continue
 
             if tok.value == "{":
                 take()

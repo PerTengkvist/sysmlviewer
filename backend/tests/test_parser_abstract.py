@@ -119,3 +119,60 @@ def test_serializer_round_trips_abstract():
     assert again.elements["P::FunctionNode"].is_abstract is True
     assert again.elements["P::F"].is_abstract is True
     assert again.warnings == []
+
+
+# --- `abstract` before something it does not apply to ------------------------
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "abstract #Foo dependency a to b;",
+        "abstract ref port p;",
+        "abstract ref attribute z;",
+        "abstract use x;",
+        "abstract part ;",
+        "abstract #Foo item z;",
+        "abstract #Foo action x;",
+        "abstract port p;",
+    ],
+)
+def test_abstract_before_unsupported_statement_warns_and_does_not_leak(statement):
+    result = _parse(
+        f"""
+        package P {{
+          part a;
+          part b;
+          {statement}
+          part def Y;
+        }}
+        """
+    )
+    assert result.elements["P::Y"].is_abstract is False
+    assert any("'abstract' ignored" in w for w in result.warnings), result.warnings
+
+
+@pytest.mark.parametrize(
+    "decl, element_id",
+    [
+        ("abstract #Foo part def X;", "P::X"),
+        ("abstract ref part x;", "P::x"),
+        ("abstract use case def U;", "P::U"),
+        ("abstract requirement def <'R-1'> R;", "P::R"),
+        ("abstract case def C;", "P::C"),
+    ],
+)
+def test_abstract_on_supported_declarations(decl, element_id):
+    result = _parse(
+        f"""
+        package P {{
+          {decl}
+          part def Y;
+        }}
+        """
+    )
+    assert result.elements[element_id].is_abstract is True
+    assert result.elements["P::Y"].is_abstract is False
+    assert not any("abstract" in w for w in result.warnings), result.warnings
