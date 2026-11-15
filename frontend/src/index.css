@@ -236,6 +236,109 @@ input {
   min-width: 0;
 }
 
+.details-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dependency-tree-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.dependency-tree-button:hover,
+.dependency-tree-button:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.dependency-tree-body {
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem 1rem;
+}
+
+.dependency-tree {
+  font-size: 0.85rem;
+}
+
+.dependency-tree ol,
+.dependency-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dependency-tree-row {
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.1rem 0;
+}
+
+.dependency-tree-edge {
+  padding: 0.1rem 0 0.1rem 1rem;
+  color: var(--muted);
+}
+
+.dependency-tree-alternatives {
+  color: var(--muted);
+  font-size: 0.75rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 0 0.35rem;
+}
+
+.dependency-tree-root.is-root {
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.dependency-tree-children {
+  padding-left: 1.1rem !important;
+  border-left: 1px dotted var(--panel-border);
+  margin-left: 0.4rem !important;
+}
+
+.dependency-tree-toggle {
+  flex: 0 0 1rem;
+  width: 1rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.dependency-tree-toggle.is-leaf {
+  cursor: default;
+}
+
+.dependency-tree-node.is-repeated > .dependency-tree-row .link-button {
+  font-style: italic;
+}
+
+.dependency-tree-repeated,
+.dependency-tree-truncated {
+  color: var(--muted);
+}
+
+.dependency-tree-note {
+  margin-top: 0.75rem;
+}
+
 .open-target-menu {
   position: fixed;
   z-index: 1000;

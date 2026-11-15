@@ -24,6 +24,7 @@ import {
 import { findPortDefId } from './portLocate'
 import { nestedPortsOf } from './nestedPorts'
 import { elementDisplayName, elementRelations } from './elementRelations'
+import { DependencyTreeButton } from '../dependencyTree/DependencyTreeButton'
 import { sizeFieldChange } from '../diagram/partSizeLimits'
 import {
   mergeStylePatch,
@@ -88,6 +89,8 @@ type Props = {
   onLocateInModelView?: (artifactId: string) => void
   /** Open the details of the element at the far end of a relation. */
   onOpenRelated?: (artifactId: string) => void
+  /** Open the dependency tree of an element (not offered for relations). */
+  onOpenDependencyTree?: (artifactId: string) => void
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -603,6 +606,7 @@ export function DetailsPanel({
   onSizeChange,
   onLocateInModelView,
   onOpenRelated,
+  onOpenDependencyTree,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const unlocked = elementUnlocked(viewVisualization, selectedId)
@@ -893,9 +897,17 @@ export function DetailsPanel({
     el.kind === 'transition' ||
     el.kind === 'succession'
 
+  const canOpenDependencyTree =
+    !!onOpenDependencyTree && !isRelationElement(el) && !isEdgeKind
+
   return (
     <div className="details-panel">
-      <h2>Details</h2>
+      <h2 className="details-heading">
+        Details
+        {canOpenDependencyTree && (
+          <DependencyTreeButton onClick={() => onOpenDependencyTree?.(el.id)} />
+        )}
+      </h2>
       {hierarchyBlock}
       <dl className="detail-list">
         <dt>Name</dt>

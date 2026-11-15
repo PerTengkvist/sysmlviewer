@@ -10,6 +10,7 @@ import { buildUseCaseFlow } from './buildUseCaseFlow'
 import { ActionNode } from '../actionFlow/ActionNode'
 import { UseCaseFlowParamsPanel } from './UseCaseFlowParamsPanel'
 import { DIAGRAM_MAX_ZOOM, DIAGRAM_MIN_ZOOM, diagramFitOptions } from '../../diagramZoom'
+import { DependencyTreeButton } from '../../../dependencyTree/DependencyTreeButton'
 
 const nodeTypes = { action: ActionNode }
 
@@ -20,6 +21,8 @@ type Props = {
   onOpenAction?: (actionId: string) => void
   /** Open the details of a traced requirement. */
   onOpenElement?: (artifactId: string) => void
+  /** Open the dependency tree of this use case. */
+  onOpenDependencyTree?: (artifactId: string) => void
 }
 
 export function UseCaseFlowDialog({
@@ -28,6 +31,7 @@ export function UseCaseFlowDialog({
   onClose,
   onOpenAction,
   onOpenElement,
+  onOpenDependencyTree,
 }: Props) {
   const flow = useMemo(
     () => buildUseCaseFlow(useCaseId, semantic),
@@ -44,9 +48,14 @@ export function UseCaseFlowDialog({
       >
         <header className="modal-header">
           <h2>{flow.params.title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close">
-            ×
-          </button>
+          <span className="element-dialog-actions">
+            {onOpenDependencyTree && (
+              <DependencyTreeButton onClick={() => onOpenDependencyTree(useCaseId)} />
+            )}
+            <button type="button" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </span>
         </header>
         <div className="usecase-flow-body">
           <UseCaseFlowParamsPanel

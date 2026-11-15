@@ -69,6 +69,7 @@ import {
   viewWindowUrl,
 } from './features/diagram/openTarget'
 import { UseCaseFlowDialog } from './features/diagram/modes/useCase/UseCaseFlowDialog'
+import { DependencyTreeDialog } from './features/dependencyTree/DependencyTreeDialog'
 import { CanvasTabBar } from './features/tabs/CanvasTabBar'
 import { packageDiagramId } from './features/files/viewTreeRole'
 import {
@@ -126,6 +127,14 @@ export default function App() {
     saveElementDialogSize(next)
   }, [])
   const closeElementDialog = useCallback(() => setElementDialogId(null), [])
+  const [dependencyTreeId, setDependencyTreeId] = useState<string | null>(null)
+  /** One dialog at a time: the tree replaces the element / use case dialog. */
+  const openDependencyTree = useCallback((artifactId: string) => {
+    setElementDialogId(null)
+    setUseCaseDialogId(null)
+    setDependencyTreeId(artifactId)
+  }, [])
+  const closeDependencyTree = useCallback(() => setDependencyTreeId(null), [])
   const [markdownDialogPath, setMarkdownDialogPath] = useState<string | null>(
     null,
   )
@@ -1483,6 +1492,7 @@ export default function App() {
       )
     },
     onOpenRelated: openRelatedDetails,
+    onOpenDependencyTree: openDependencyTree,
     onLocateInModelView: (artifactId) => {
       setLeftTab('views')
       setSelectedId(artifactId)
@@ -1698,10 +1708,21 @@ export default function App() {
           semantic={project.semantic}
           onClose={() => setUseCaseDialogId(null)}
           onOpenElement={openRelatedDetails}
+          onOpenDependencyTree={openDependencyTree}
           onOpenAction={(actionId) => {
             setUseCaseDialogId(null)
             void loadView(project.id, `artifact::${actionId}`, { newTab: true })
           }}
+        />
+      )}
+
+      {dependencyTreeId && project && project.semantic[dependencyTreeId] && (
+        <DependencyTreeDialog
+          projectId={project.id}
+          elementId={dependencyTreeId}
+          semantic={project.semantic}
+          onClose={closeDependencyTree}
+          onOpenElement={openRelatedDetails}
         />
       )}
 
