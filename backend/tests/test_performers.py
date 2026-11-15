@@ -162,3 +162,103 @@ def test_action_flow_view_payload_has_performers(tmp_path):
     # Performer parts are in the payload so their names can be shown.
     assert view["semantic"]["Functions::Security::authenticate"]["name"] == "authenticate"
     assert view["semantic"]["Functions::Security::lockControl"]["name"] == "lockControl"
+
+
+# --- Imports, fallback, line numbers ----------------------------------------
+
+LIB = """
+package Lib {
+  action payStep;
+}
+"""
+
+
+def test_perform_through_a_wildcard_import_in_a_use_case_does_not_warn():
+    app = """
+    package App {
+      private import Lib::*;
+      use case def Buy {
+        first start;
+        then perform payStep;
+        then done;
+      }
+    }
+    """
+    result = _parse_project(LIB, app)
+    assert result.warnings == []
+    assert result.elements["App::Buy::payStep"].perform_target_id == "Lib::payStep"
+
+
+def test_perform_through_an_import_in_a_part_has_a_performer():
+    app = """
+    package App {
+      private import Lib::*;
+      part def Shop {
+        part clerk { perform payStep; }
+      }
+    }
+    """
+    result = _parse_project(LIB, app)
+    assert result.warnings == []
+    assert resolve_performers(result.elements) == {"Lib::payStep": ["App::Shop::clerk"]}
+
+
+def test_perform_through_a_member_import():
+    app = """
+    package App {
+      import Lib::payStep;
+      part def Shop {
+        part clerk { perform payStep; }
+      }
+    }
+    """
+    result = _parse_project(LIB, app)
+    assert result.warnings == []
+    assert resolve_performers(result.elements) == {"Lib::payStep": ["App::Shop::clerk"]}
+
+
+def test_perform_falls_back_to_the_name_check_before_warning():
+    # `elsewhere.step` does not resolve as a path, but `step` names an action.
+    model = """
+    package P {
+      action flow { action step; }
+      part def F {
+        part a { perform elsewhere.step; }
+      }
+    }
+    """
+    result = _parse_project(model)
+    assert result.warnings == []
+    assert resolve_performers(result.elements) == {}
+
+
+def test_unresolved_perform_warning_has_a_line_number():
+    model = """package P {
+  part def F {
+    action flow { action step; }
+    part a {
+      perform flow.missing;
+    }
+  }
+}
+"""
+    result = _parse_project(model)
+    assert result.warnings == [
+        "line 5: perform target not found: flow.missing (in 'P::F::a')"
+    ]
+    single = SubsetSysmlParser().parse(model, file_id="f0.sysml")
+    assert single.warnings == [
+        "line 5: perform target not found: flow.missing (in 'P::F::a')"
+    ]
+
+
+def test_perform_target_id_is_written_only_when_set():
+    result = _parse_project(MODEL)
+    perform = result.elements["Functions::Security::authenticate::perform_securityFlow_checkCredential"]
+    assert perform.to_dict()["performTargetId"] == f"{FLOW}::checkCredential"
+    assert "performTargetId" not in result.elements[f"{FLOW}::checkCredential"].to_dict()
+    from domain.models import SemanticElement
+
+    assert SemanticElement.from_dict(perform.to_dict()).perform_target_id == (
+        f"{FLOW}::checkCredential"
+    )

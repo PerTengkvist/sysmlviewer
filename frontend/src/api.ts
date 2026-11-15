@@ -56,6 +56,8 @@ export interface SemanticElement {
   isDefinition?: boolean
   /** True for an `abstract` declaration, e.g. `abstract part def FunctionNode`. Absent when false. */
   isAbstract?: boolean
+  /** For `perform <ref>;`: the element the reference resolves to. Absent when unresolved. */
+  performTargetId?: string
   /** Prefix metadata keywords from `#Mount dependency …`. */
   metadataKeywords?: string[] | null
   /** Documentation body from SysML `doc` block comment. */

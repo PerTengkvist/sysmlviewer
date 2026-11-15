@@ -9272,7 +9272,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::securityFlow::checkCredential"
     },
     "Functions::Security::authenticate::perform_securityFlow_rejectKey": {
       "id": "Functions::Security::authenticate::perform_securityFlow_rejectKey",
@@ -9294,7 +9295,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::securityFlow::rejectKey"
     },
     "Functions::Security::immobilizer": {
       "id": "Functions::Security::immobilizer",
@@ -9338,7 +9340,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::securityFlow::releaseImmobilizer"
     },
     "Functions::Security::wakeUp": {
       "id": "Functions::Security::wakeUp",
@@ -9382,7 +9385,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::securityFlow::wakeCabin"
     },
     "Functions::Security::lockControl": {
       "id": "Functions::Security::lockControl",
@@ -9426,7 +9430,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::securityFlow::unlockDoors"
     },
     "Functions::Security::driverInformation": {
       "id": "Functions::Security::driverInformation",
@@ -9470,7 +9475,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Security::securityFlow::showReady"
     },
     "Functions::Security::securityFlow": {
       "id": "Functions::Security::securityFlow",
@@ -9959,7 +9965,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Charging::chargingFlow::detectPlug"
     },
     "Functions::Charging::chargeConnection::perform_chargingFlow_transferEnergy": {
       "id": "Functions::Charging::chargeConnection::perform_chargingFlow_transferEnergy",
@@ -9981,7 +9988,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Charging::chargingFlow::transferEnergy"
     },
     "Functions::Charging::chargeSession": {
       "id": "Functions::Charging::chargeSession",
@@ -10026,7 +10034,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Charging::chargingFlow::negotiateCurrent"
     },
     "Functions::Charging::chargeSession::perform_chargingFlow_stopAtTarget": {
       "id": "Functions::Charging::chargeSession::perform_chargingFlow_stopAtTarget",
@@ -10048,7 +10057,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Charging::chargingFlow::stopAtTarget"
     },
     "Functions::Charging::energyStorage": {
       "id": "Functions::Charging::energyStorage",
@@ -10092,7 +10102,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Charging::chargingFlow::storeEnergy"
     },
     "Functions::Charging::chargingFlow": {
       "id": "Functions::Charging::chargingFlow",
@@ -10476,7 +10487,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::SpeedControl::speedControlFlow::arbitrateTorque"
     },
     "Functions::SpeedControl::regenBlending": {
       "id": "Functions::SpeedControl::regenBlending",
@@ -10520,7 +10532,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::SpeedControl::speedControlFlow::blendRegen"
     },
     "Functions::SpeedControl::tractionDrive": {
       "id": "Functions::SpeedControl::tractionDrive",
@@ -10564,7 +10577,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::SpeedControl::speedControlFlow::driveWheels"
     },
     "Functions::SpeedControl::frictionBraking": {
       "id": "Functions::SpeedControl::frictionBraking",
@@ -10608,7 +10622,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::SpeedControl::speedControlFlow::applyFriction"
     },
     "Functions::SpeedControl::speedControlFlow": {
       "id": "Functions::SpeedControl::speedControlFlow",
@@ -11012,7 +11027,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Maneuvrability::maneuvrabilityFlow::steerWheels"
     },
     "Functions::Maneuvrability::gearSelection": {
       "id": "Functions::Maneuvrability::gearSelection",
@@ -11056,7 +11072,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Maneuvrability::maneuvrabilityFlow::selectGear"
     },
     "Functions::Maneuvrability::roadHolding": {
       "id": "Functions::Maneuvrability::roadHolding",
@@ -11100,7 +11117,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Maneuvrability::maneuvrabilityFlow::holdRoad"
     },
     "Functions::Maneuvrability::maneuvrabilityFlow": {
       "id": "Functions::Maneuvrability::maneuvrabilityFlow",
@@ -11398,7 +11416,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Entertainment::entertainmentFlow::selectTitle"
     },
     "Functions::Entertainment::mediaPlayback::perform_entertainmentFlow_playMedia": {
       "id": "Functions::Entertainment::mediaPlayback::perform_entertainmentFlow_playMedia",
@@ -11420,7 +11439,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Entertainment::entertainmentFlow::playMedia"
     },
     "Functions::Entertainment::entertainmentFlow": {
       "id": "Functions::Entertainment::entertainmentFlow",
@@ -11676,7 +11696,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Climate::climateFlow::readSetpoint"
     },
     "Functions::Climate::cabinTemperature::perform_climateFlow_conditionCabin": {
       "id": "Functions::Climate::cabinTemperature::perform_climateFlow_conditionCabin",
@@ -11698,7 +11719,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Climate::climateFlow::conditionCabin"
     },
     "Functions::Climate::climateFlow": {
       "id": "Functions::Climate::climateFlow",
@@ -11954,7 +11976,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::WindshieldCleaning::windshieldCleaningFlow::readStalk"
     },
     "Functions::WindshieldCleaning::wipeSweep": {
       "id": "Functions::WindshieldCleaning::wipeSweep",
@@ -11999,7 +12022,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::WindshieldCleaning::windshieldCleaningFlow::sweepGlass"
     },
     "Functions::WindshieldCleaning::wipeSweep::perform_windshieldCleaningFlow_parkBlades": {
       "id": "Functions::WindshieldCleaning::wipeSweep::perform_windshieldCleaningFlow_parkBlades",
@@ -12021,7 +12045,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::WindshieldCleaning::windshieldCleaningFlow::parkBlades"
     },
     "Functions::WindshieldCleaning::windshieldCleaningFlow": {
       "id": "Functions::WindshieldCleaning::windshieldCleaningFlow",
@@ -12320,7 +12345,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Lighting::lightingFlow::selectLamps"
     },
     "Functions::Lighting::indicatorControl": {
       "id": "Functions::Lighting::indicatorControl",
@@ -12364,7 +12390,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Lighting::lightingFlow::flashIndicators"
     },
     "Functions::Lighting::lampDrive": {
       "id": "Functions::Lighting::lampDrive",
@@ -12408,7 +12435,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "performTargetId": "Functions::Lighting::lightingFlow::lightLamps"
     },
     "Functions::Lighting::lightingFlow": {
       "id": "Functions::Lighting::lightingFlow",

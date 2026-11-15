@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.perform import ref_leaf, resolve_perform_target
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
 from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
@@ -128,6 +129,8 @@ class _ParserState:
     pending_exposes: list[tuple[str, str, str, str | None]] = field(
         default_factory=list
     )
+    # Source line of each `perform` element, for warnings after linking.
+    perform_lines: dict[str, int] = field(default_factory=dict)
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -159,11 +162,6 @@ def _tokenize(content: str) -> list[_Token]:
         tokens.append(_Token(kind=kind, value=value, line=line))
         line += value.count("\n")
     return tokens
-
-
-def _ref_leaf(ref: str) -> str:
-    """Last segment of ``flow.step`` / ``Pkg::flow.step``."""
-    return ref.replace("::", ".").split(".")[-1]
 
 
 def _strip_quotes(name: str) -> str:
@@ -204,6 +202,7 @@ class SubsetSysmlParser:
         merged: dict[str, SemanticElement] = {}
         all_imports: list[_ImportDecl] = []
         pending_exposes: list[tuple[str, str, str, str | None]] = []
+        perform_lines: dict[str, int] = {}
         file_warnings: dict[str, list[str]] = {}
         warnings: list[str] = []
 
@@ -216,6 +215,7 @@ class SubsetSysmlParser:
             warnings.extend(state.warnings)
             all_imports.extend(state.imports)
             pending_exposes.extend(state.pending_exposes)
+            perform_lines.update(state.perform_lines)
             for eid, element in state.elements.items():
                 merged[eid] = element
 
@@ -223,11 +223,12 @@ class SubsetSysmlParser:
 
         link_state = _ParserState(elements=merged, file_id="")
         link_state.imports = all_imports
+        link_state.perform_lines = perform_lines
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
-        self._warn_unresolved_type_refs(link_state, check_performs=False)
+        self._warn_unresolved_type_refs(link_state)
         self._warn_unresolved_endpoints(link_state)
-        self._warn_unresolved_performs(link_state)
+        self._link_performs(link_state)
         warnings.extend(link_state.warnings)
         # Attach link warnings to first file for visibility
         if link_state.warnings and files:
@@ -1587,7 +1588,7 @@ class SubsetSysmlParser:
                     if peek() and peek().value == "action":
                         take()
                     perform_ref = expect_feature_ref()
-                    target = _ref_leaf(perform_ref) if perform_ref else None
+                    target = ref_leaf(perform_ref) if perform_ref else None
                 else:
                     if peek() and peek().value == "action":
                         take()
@@ -1610,11 +1611,13 @@ class SubsetSysmlParser:
                     type_ref = "done"
                 elif target.lower() == "start":
                     type_ref = "start"
-                ensure_flow_action(
+                step_id = ensure_flow_action(
                     target,
                     type_ref=type_ref,
                     metadata_keywords=meta or None,
                 )
+                if is_perform:
+                    state.perform_lines.setdefault(step_id, line)
                 _ = is_action_kw
                 link_from_previous(target)
                 continue
@@ -1629,7 +1632,7 @@ class SubsetSysmlParser:
                 if not perform_ref:
                     skip_until_semicolon_or_brace()
                     continue
-                target = _ref_leaf(perform_ref)
+                target = ref_leaf(perform_ref)
                 if peek() and peek().value == "{":
                     skip_until_semicolon_or_brace()
                 elif peek() and peek().value == ";":
@@ -1654,10 +1657,12 @@ class SubsetSysmlParser:
                         )
                         state.add_child(el.parent_id, perform_id)
                         state.elements[perform_id] = el
+                        state.perform_lines[perform_id] = tok.line
                     continue
-                ensure_flow_action(
+                step_id = ensure_flow_action(
                     target, type_ref=perform_ref, metadata_keywords=["perform"]
                 )
+                state.perform_lines.setdefault(step_id, tok.line)
                 link_from_previous(target)
                 continue
 
@@ -2351,6 +2356,7 @@ class SubsetSysmlParser:
         if not state.defer_link:
             self._inherit_features_onto_usages(state)
             self._warn_unresolved_type_refs(state)
+            self._link_performs(state)
         return state
 
     def _apply_import_visibility(self, state: _ParserState) -> None:
@@ -2390,13 +2396,10 @@ class SubsetSysmlParser:
                 f"line {imp.line}: import '{imp.path}' — symbol not found"
             )
 
-    def _warn_unresolved_type_refs(
-        self, state: _ParserState, *, check_performs: bool = True
-    ) -> None:
+    def _warn_unresolved_type_refs(self, state: _ParserState) -> None:
         """Flag type references that do not match any element name in the graph.
 
-        With ``check_performs=False`` perform references are left to
-        `_warn_unresolved_performs`, which follows the whole path.
+        Perform references are paths, checked by `_link_performs`.
         """
         known_library = {
             "GeneralView",
@@ -2419,10 +2422,8 @@ class SubsetSysmlParser:
         for el in state.elements.values():
             if not el.type_ref or el.type_ref in names:
                 continue
-            # `perform flow.step` names a feature by path; check its last segment.
             if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
-                if not check_performs or _ref_leaf(el.type_ref) in names:
-                    continue
+                continue
             state.warnings.append(
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
                 f"in the semantic graph."
@@ -2452,13 +2453,37 @@ class SubsetSysmlParser:
                         f"{label} {role} not found: {endpoint} (in '{el.id}')"
                     )
 
-    def _warn_unresolved_performs(self, state: _ParserState) -> None:
-        """Flag `perform <ref>;` whose reference names no element (parse_project)."""
-        from domain.perform import unresolved_performs
+    def _link_performs(self, state: _ParserState) -> None:
+        """Resolve each `perform <ref>;` and store its target, or warn.
 
-        for el in unresolved_performs(state.elements):
+        The reference is looked up through the owners and then the imports of
+        its file. When the path does not resolve but its last segment names
+        some element, it is left unresolved without a warning (the name check
+        used before paths were followed).
+        """
+        from domain.perform import is_perform
+
+        imports: dict[str | None, list[str]] = {}
+        for imp in state.imports:
+            imports.setdefault(imp.file_id, []).append(imp.path)
+        names = {
+            el.name
+            for el in state.elements.values()
+            if not (el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords)
+        }
+        for el in sorted(state.elements.values(), key=lambda e: e.id):
+            if not is_perform(el):
+                continue
+            target = resolve_perform_target(
+                state.elements, el, imports.get(el.file_id, [])
+            )
+            el.perform_target_id = target
+            if target is not None or ref_leaf(el.type_ref or "") in names:
+                continue
+            line = state.perform_lines.get(el.id)
+            prefix = f"line {line}: " if line is not None else ""
             state.warnings.append(
-                f"perform target not found: {el.type_ref} (in '{el.parent_id}')"
+                f"{prefix}perform target not found: {el.type_ref} (in '{el.parent_id}')"
             )
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:

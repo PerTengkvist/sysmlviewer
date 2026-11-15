@@ -201,6 +201,9 @@ class SemanticElement:
     is_reference: bool = False
     # True when declared with the `abstract` prefix (`abstract part def X`)
     is_abstract: bool = False
+    # For `perform <ref>;`: the id the reference resolves to (set by the parser,
+    # which knows the imports)
+    perform_target_id: str | None = None
     # Prefix metadata keywords from `#Mount dependency …` (not resolved defs)
     metadata_keywords: list[str] = field(default_factory=list)
     # Documentation body from `doc /* … */`
@@ -216,6 +219,8 @@ class SemanticElement:
             out["isDefinition"] = True
         if self.is_abstract:
             out["isAbstract"] = True
+        if self.perform_target_id:
+            out["performTargetId"] = self.perform_target_id
         return out
 
     def _to_dict(self) -> dict[str, Any]:
@@ -263,6 +268,7 @@ class SemanticElement:
             multiplicity=data.get("multiplicity"),
             is_reference=bool(data.get("isReference", False)),
             is_abstract=bool(data.get("isAbstract", False)),
+            perform_target_id=data.get("performTargetId"),
             metadata_keywords=list(data.get("metadataKeywords") or []),
             documentation=data.get("documentation"),
             short_id=data.get("shortId"),
