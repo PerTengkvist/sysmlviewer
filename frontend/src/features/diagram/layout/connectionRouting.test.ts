@@ -15,6 +15,7 @@ import {
   syncInternalEdgeBounds,
   type Rect,
   type RoutedConnection,
+  type SkippedRoute,
 } from './connectionRouting'
 import { resolveRoutePoints, type Pt } from '../edgeRouting'
 import { closestParallelGap } from './connectionSeparation'
@@ -790,7 +791,7 @@ describe('redrawStructureConnections', () => {
         targetHandle: 'target:b::in',
       },
     ]
-    const skipped: { id: string; reason: string }[] = []
+    const skipped: SkippedRoute[] = []
     // Viewport only covers the left part — b's port is outside.
     const routed = redrawStructureConnections(
       [parent, a, b],

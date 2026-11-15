@@ -40,11 +40,6 @@ function edge(id: string): VisualizationEdge {
 describe('applyViewFilters', () => {
   const engine = el({ id: 'Car::engine', kind: 'part', name: 'engine' })
   const wheel = el({ id: 'Car::wheel', kind: 'part', name: 'wheel' })
-  const engineBlock = el({
-    id: 'Car::engineBlock',
-    kind: 'part',
-    name: 'engineBlock',
-  })
   const dep = el({
     id: 'Car::dep1',
     kind: 'dependency',

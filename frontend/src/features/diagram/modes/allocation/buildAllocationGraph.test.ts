@@ -5,7 +5,13 @@ import { buildAllocationGraph } from './buildAllocationGraph'
 describe('buildAllocationGraph', () => {
   it('provides menuItems on part nodes', () => {
     const view: ViewPayload = {
-      view: { id: 'v', name: 'Alloc', rootArtifactId: 'Site', typeRef: 'AllocationView' },
+      view: {
+        id: 'v',
+        name: 'Alloc',
+        rootArtifactId: 'Site',
+        parentViewId: null,
+        typeRef: 'AllocationView',
+      },
       diagramMode: 'allocation',
       hierarchicalLevels: 2,
       semantic: {
