@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from adapters.api.app import create_app
@@ -66,3 +67,24 @@ def test_dependency_tree_unknown_project_is_404(tmp_path: Path):
     client = TestClient(create_app(data_dir=tmp_path))
     res = client.get(api_url("/projects/nope/dependency-tree/A::B"))
     assert res.status_code == 404
+
+
+def test_a_key_error_while_loading_the_project_is_not_a_404(tmp_path: Path, monkeypatch):
+    """Only a missing element is a 404; other KeyErrors are real errors."""
+    from application.project_service import ProjectService
+
+    client, project_id = _client(tmp_path)
+
+    def broken(self, project_id):
+        raise KeyError("broken reparse")
+
+    monkeypatch.setattr(ProjectService, "get_project", broken)
+    with pytest.raises(KeyError):
+        client.get(api_url(f"/projects/{project_id}/dependency-tree/Requirements::Stop"))
+
+
+def test_missing_element_has_its_own_error_type():
+    from application.project_service import ElementNotFoundError
+
+    # Not a KeyError, so the route never mistakes another KeyError for it.
+    assert not issubclass(ElementNotFoundError, KeyError)

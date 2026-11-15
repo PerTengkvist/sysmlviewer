@@ -127,6 +127,38 @@ Unknown constructs emit warnings and are skipped when possible.
 | POST | `/projects/{id}/views/{viewId}/export` | Export open view layout JSON (Save As or `{ path }`) |
 | GET | `/projects/{id}/dependency-tree/{elementId}` | `{root, up, down, truncated}`: one chain up to the more abstract element, a labelled tree down (`domain/dependency_tree.py`) |
 
+### Dependency tree
+
+`GET /projects/{id}/dependency-tree/{elementId}` (404 for an unknown project
+or element). Every edge runs from an upper, more abstract element to a lower
+one:
+
+| Relation | Upper | Lower | Label |
+|---|---|---|---|
+| satisfy | requirement (target) | source | `satisfy` |
+| dependency | target | source | keyword, else `dependency` |
+| specialization / subsetting / redefinition | target | source | kind |
+| typing `: T` | definition | usage | `typed by` |
+| include | including use case | included | `include` |
+| allocation | source | target | `allocate` |
+| ownership (owner not a package) | owner | part, requirement, use case, actor, action | `owned by` / `owns` |
+
+Connections, interfaces, bindings, flows, successions, transitions and
+messages are not in the tree. A relation ending at a port counts for the
+part that owns it.
+
+- **Up:** one chain, picked per level by priority: 1. satisfy, refine /
+  derive / objective dependencies and any dependency whose target is a
+  requirement; 2. owner; 3. specialization family and typing; 4. allocate
+  and include (perform goes here once it exists); 5. other dependencies
+  (`#Command`, `#Mount`, `#extend`, …). Within a priority, model order
+  wins. Candidates already in the chain are skipped; the chain ends when
+  none is left. The others at a level are counted as `alternatives`.
+- **Down:** every edge where the element is upper, breadth first; each
+  element is expanded once, later occurrences are `repeated`. At most 8
+  levels and 400 nodes; a node is `truncated` only if something not yet
+  shown was cut off.
+
 ## Frontend layout
 
 - Left sidebar: Views | Files tabs

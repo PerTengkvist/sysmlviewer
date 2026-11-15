@@ -116,28 +116,33 @@ package P {
 """
 
 
-def test_connection_is_a_branch_both_ways_without_recursion():
+def test_connection_gives_no_branch():
     semantic = _semantic(CONNECTED)
 
-    from_a = build_dependency_tree(semantic, "P::Sys::a")["down"]
-    b = _children(from_a)["P::Sys::b"]
-    assert b["label"] == "connection"
-    assert b["relationId"] == "P::Sys::c"
-    # Back to the root: marked, not expanded again.
-    back = _children(b)["P::Sys::a"]
-    assert back["repeated"] is True
-    assert back["children"] == []
+    for end, other in (("P::Sys::a", "P::Sys::b"), ("P::Sys::b", "P::Sys::a")):
+        tree = build_dependency_tree(semantic, end)
+        assert tree["down"]["children"] == []
+        assert other not in {n["id"] for n in tree["up"]}
 
-    from_b = build_dependency_tree(semantic, "P::Sys::b")["down"]
-    assert _children(from_b)["P::Sys::a"]["label"] == "connection"
-
-    # From the owner, a and b are expanded once; the connection between them
-    # shows the other end as repeated.
+    # From the owner: a and b once each, nothing between them.
     sys_tree = build_dependency_tree(semantic, "P::Sys")["down"]
     kids = _children(sys_tree)
     assert set(kids) == {"P::Sys::a", "P::Sys::b"}
-    assert kids["P::Sys::a"]["repeated"] is False
-    assert _children(kids["P::Sys::a"])["P::Sys::b"]["repeated"] is True
+    assert all(k["children"] == [] for k in kids.values())
+
+
+def test_a_relation_to_a_port_is_lifted_to_its_part():
+    model = """
+    package P {
+      requirement def R;
+      part def Car {
+        port p;
+      }
+      satisfy R by Car::p;
+    }
+    """
+    tree = build_dependency_tree(_semantic(model), "P::R")
+    assert {c["id"]: c["label"] for c in tree["down"]["children"]} == {"P::Car": "satisfy"}
 
 
 ALLOCATE_INCLUDE = """
@@ -191,6 +196,126 @@ def test_cycle_stops_chain_and_marks_repeated():
     assert b["children"] == []
 
 
+def test_chain_skips_a_seen_candidate_and_takes_the_next():
+    model = """
+    package P {
+      part def Sys {
+        part p1;
+        part p2;
+      }
+      #refine dependency from Sys::p1 to Sys::p2;
+      #refine dependency from Sys::p2 to Sys::p1;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Sys::p1")["up"]
+    # From p2 the refine back to p1 is seen, so the owner is followed.
+    assert [(n["id"], n["label"]) for n in up] == [
+        ("P::Sys", "owned by"),
+        ("P::Sys::p2", "refine"),
+    ]
+
+
+# --- Priority of the upward chain -------------------------------------------
+
+
+def test_priority_refine_beats_owner():
+    model = """
+    package P {
+      requirement def Group {
+        requirement def Leaf;
+      }
+      requirement def Other;
+      #refine dependency from Group::Leaf to Other;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Group::Leaf")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [("P::Other", "refine")]
+    assert up[0]["alternatives"] == 1
+
+
+def test_priority_typing_beats_allocate_and_include():
+    model = """
+    package P {
+      part def Controller;
+      part def Fn {
+        part ent;
+      }
+      part ctrl : Controller;
+      allocate Fn::ent to ctrl;
+      use case def Brake;
+      use case b : Brake;
+      use case def Drive {
+        include use case b;
+      }
+    }
+    """
+    semantic = _semantic(model)
+    ctrl_up = build_dependency_tree(semantic, "P::ctrl")["up"]
+    assert [(n["id"], n["label"]) for n in ctrl_up] == [("P::Controller", "typed by")]
+    assert ctrl_up[0]["alternatives"] == 1
+
+    b_up = build_dependency_tree(semantic, "P::b")["up"]
+    assert [(n["id"], n["label"]) for n in b_up] == [("P::Brake", "typed by")]
+    assert b_up[0]["alternatives"] == 1
+
+
+def test_priority_satisfy_beats_other_keyword_dependency():
+    model = """
+    package P {
+      requirement def R;
+      part a;
+      part b;
+      #Command dependency from a to b;
+      satisfy R by a;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::a")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [("P::R", "satisfy")]
+    # The #Command dependency is still a candidate.
+    assert up[0]["alternatives"] == 1
+
+
+def test_priority_owner_beats_other_keyword_dependency():
+    model = """
+    package P {
+      part def Sys {
+        part a;
+      }
+      part b;
+      #Command dependency from Sys::a to b;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Sys::a")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [("P::Sys", "owned by")]
+    assert up[0]["alternatives"] == 1
+
+
+def test_any_dependency_to_a_requirement_is_a_trace():
+    model = """
+    package P {
+      requirement def R;
+      part def Sys {
+        part a;
+      }
+      #Verify dependency from Sys::a to R;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::Sys::a")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [("P::R", "Verify")]
+
+
+def test_other_keyword_dependency_is_followed_when_nothing_else():
+    model = """
+    package P {
+      part a;
+      part b;
+      #Command dependency from a to b;
+    }
+    """
+    up = build_dependency_tree(_semantic(model), "P::a")["up"]
+    assert [(n["id"], n["label"]) for n in up] == [("P::b", "Command")]
+
+
 def test_node_limit_truncates():
     parts = "\n".join(f"  part p{i};\n  satisfy R by p{i};" for i in range(10))
     model = f"package P {{\n  requirement def R;\n{parts}\n}}\n"
@@ -223,3 +348,23 @@ def test_depth_limit_truncates():
 def test_unknown_root_raises_key_error():
     with pytest.raises(KeyError):
         build_dependency_tree(_semantic(REQUIREMENTS), "P::Nope")
+
+
+def test_depth_limit_not_truncated_when_only_seen_elements_remain():
+    model = """
+    package P {
+      requirement def R0;
+      requirement def R1;
+      requirement def R2;
+      #refine dependency from R1 to R0;
+      #refine dependency from R2 to R1;
+      #refine dependency from R1 to R2;
+    }
+    """
+    tree = build_dependency_tree(_semantic(model), "P::R0", max_depth=2)
+    r1 = _children(tree["down"])["P::R1"]
+    r2 = _children(r1)["P::R2"]
+    # Below R2 there is only R1, already shown.
+    assert r2["children"] == []
+    assert r2["truncated"] is False
+    assert tree["truncated"] is False

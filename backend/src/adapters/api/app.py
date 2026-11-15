@@ -13,7 +13,7 @@ from adapters.api.static_paths import resolve_static_dir
 from adapters.parser.subset_parser import SubsetSysmlParser
 from adapters.persistence.event_log import JsonlEventLog, configure_event_logging
 from adapters.persistence.workspace_repo import WorkspaceProjectRepository
-from application.project_service import ProjectService
+from application.project_service import ElementNotFoundError, ProjectService
 from domain.models import Project
 
 
@@ -706,7 +706,7 @@ def create_api_app(
     def get_dependency_tree(project_id: str, artifact_id: str) -> dict:
         try:
             tree = _service().get_dependency_tree(project_id, artifact_id)
-        except KeyError:
+        except ElementNotFoundError:
             raise HTTPException(status_code=404, detail="Element not found") from None
         if tree is None:
             raise HTTPException(status_code=404, detail="Project not found")

@@ -11,15 +11,15 @@ Every edge runs from an upper (more abstract) element to a lower one:
 | include                                    | source           | target | include            |
 | allocation                                 | source           | target | allocate           |
 | ownership (owner is not a package)         | owner            | child  | owned by / owns    |
-| connection / interface / binding / flow    | symmetric, only shown downwards from both ends   |
 
-Ports are lifted to the part that owns them. Successions, transitions and
-messages are not relation elements and are left out.
+Connections, interfaces, bindings and flows are not part of the tree, nor
+are successions, transitions and messages. A relation that ends at a port
+counts for the part that owns the port.
 
 Upwards there is one chain, picked by priority (see `_PRIORITY_*`); the
 other candidates at a level are counted as `alternatives`. Downwards every
-edge where the element is the upper end, plus the symmetric edges, form a
-tree in which each element is expanded once.
+edge where the element is the upper end forms a tree in which each element
+is expanded once.
 """
 
 from __future__ import annotations
@@ -34,23 +34,17 @@ from domain.relationships import is_relation_element
 from domain.type_resolution import part_def_resolver
 
 # Upward chain priority (lower wins).
-_PRIORITY_TRACE = 1  # satisfy, dependency family
+_PRIORITY_TRACE = 1  # satisfy; refine / derive / objective; any dependency to a requirement
 _PRIORITY_OWNER = 2
 _PRIORITY_TYPE = 3  # specialization family, typing
 _PRIORITY_USAGE = 4  # allocate, include — and perform (see `_collect_edges`)
-_PRIORITY_SYMMETRIC = 5  # never used upwards
+_PRIORITY_OTHER_DEPENDENCY = 5  # other dependencies (#Command, #Mount, #extend, …)
 
-_TRACE_KINDS = {ArtifactKind.DEPENDENCY, ArtifactKind.SATISFY}
+_TRACE_KEYWORDS = {"refine", "derive", "objective"}
 _SPECIALIZATION_KINDS = {
     ArtifactKind.SPECIALIZATION,
     ArtifactKind.SUBSETTING,
     ArtifactKind.REDEFINITION,
-}
-_SYMMETRIC_KINDS = {
-    ArtifactKind.CONNECTION,
-    ArtifactKind.INTERFACE,
-    ArtifactKind.BINDING,
-    ArtifactKind.FLOW,
 }
 _OWNED_KINDS = {
     ArtifactKind.PART,
@@ -72,7 +66,6 @@ class _Edge:
     relation_id: str | None
     label: str
     priority: int
-    symmetric: bool = False
     # Label read from the lower end (ownership: "owned by" vs "owns").
     up_label: str | None = None
 
@@ -95,15 +88,8 @@ def build_dependency_tree(
     ups: dict[str, list[_Edge]] = {}
     downs: dict[str, list[_Edge]] = {}
     for edge in edges:
-        if edge.symmetric:
-            downs.setdefault(edge.upper, []).append(edge)
-            downs.setdefault(edge.lower, []).append(
-                _Edge(edge.lower, edge.upper, edge.relation_id, edge.label,
-                      edge.priority, True)
-            )
-        else:
-            ups.setdefault(edge.lower, []).append(edge)
-            downs.setdefault(edge.upper, []).append(edge)
+        ups.setdefault(edge.lower, []).append(edge)
+        downs.setdefault(edge.upper, []).append(edge)
 
     up = _up_chain(semantic, root_id, ups)
     visited = {root_id, *(n["id"] for n in up)}
@@ -155,11 +141,9 @@ def _up_chain(
     current = root_id
     while True:
         candidates = _sorted(ups.get(current, []))
-        if not candidates:
-            break
-        best = candidates[0]
-        if best.upper in seen:
-            break  # cycle
+        best = next((e for e in candidates if e.upper not in seen), None)
+        if best is None:
+            break  # nothing left, or only elements already in the chain
         others = {e.upper for e in candidates if e.upper != best.upper}
         node = _node(semantic[best.upper], best.relation_id, best.up_label or best.label)
         node["alternatives"] = len(others)
@@ -188,8 +172,10 @@ def _expand_down(
         if not edges:
             continue
         if depth >= max_depth:
-            node["truncated"] = True
-            truncated = True
+            # Cut off only if something new would have been shown.
+            if any(e.lower not in visited for e in edges):
+                node["truncated"] = True
+                truncated = True
             continue
         for edge in edges:
             if count >= max_nodes:
@@ -228,6 +214,17 @@ def _relation_label(rel: SemanticElement) -> str:
     if rel.kind == ArtifactKind.ALLOCATION:
         return "allocate"
     return rel.kind.value
+
+
+def _dependency_priority(
+    semantic: Mapping[str, SemanticElement], rel: SemanticElement, upper: str
+) -> int:
+    """Trace (refine, derive, objective, or towards a requirement) or other."""
+    if _TRACE_KEYWORDS.intersection(rel.metadata_keywords or []):
+        return _PRIORITY_TRACE
+    if semantic[upper].kind == ArtifactKind.REQUIREMENT:
+        return _PRIORITY_TRACE
+    return _PRIORITY_OTHER_DEPENDENCY
 
 
 def _resolve_type(
@@ -271,15 +268,15 @@ def _collect_edges(
         if not src or not tgt:
             continue
         label = _relation_label(rel)
-        if rel.kind in _TRACE_KINDS:
+        if rel.kind == ArtifactKind.SATISFY:
             add(_Edge(tgt, src, rel.id, label, _PRIORITY_TRACE))
+        elif rel.kind == ArtifactKind.DEPENDENCY:
+            add(_Edge(tgt, src, rel.id, label, _dependency_priority(semantic, rel, tgt)))
         elif rel.kind in _SPECIALIZATION_KINDS:
             specialized.add((tgt, src))
             add(_Edge(tgt, src, rel.id, label, _PRIORITY_TYPE))
         elif rel.kind in (ArtifactKind.INCLUDE, ArtifactKind.ALLOCATION):
             add(_Edge(src, tgt, rel.id, label, _PRIORITY_USAGE))
-        elif rel.kind in _SYMMETRIC_KINDS:
-            add(_Edge(src, tgt, rel.id, label, _PRIORITY_SYMMETRIC, symmetric=True))
 
     # perform (PR A): the performing part is upper, the action lower, label
     # "perform", priority `_PRIORITY_USAGE`. Add the edges here from

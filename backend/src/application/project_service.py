@@ -12,6 +12,7 @@ from domain.interface_naming import (
     suggest_connection_name,
     suggest_port_name_for_type,
 )
+from domain.dependency_tree import build_dependency_tree
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -48,6 +49,10 @@ from domain.view_verification import (
     snapshot_from_view_payload,
 )
 from ports import EventLog, NullEventLog, ProjectRepository, SysmlParser
+
+
+class ElementNotFoundError(LookupError):
+    """The project has no semantic element with this id."""
 
 
 def _remap_stale_relation_layouts(before: dict, project: Project) -> bool:
@@ -599,13 +604,14 @@ class ProjectService:
     def get_dependency_tree(self, project_id: str, artifact_id: str) -> dict | None:
         """Dependency tree of one element over the whole project's semantics.
 
-        None when the project is missing; KeyError when the element is.
+        None when the project is missing; ElementNotFoundError when the
+        element is.
         """
-        from domain.dependency_tree import build_dependency_tree
-
         project = self.get_project(project_id)
         if not project:
             return None
+        if artifact_id not in project.semantic:
+            raise ElementNotFoundError(artifact_id)
         return build_dependency_tree(project.semantic, artifact_id)
 
     def list_documentation(self, project_id: str) -> list[str] | None:
