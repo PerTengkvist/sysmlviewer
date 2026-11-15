@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 test('a UseCaseView shows the requirements its use cases trace to', async ({ page }) => {
   await openView(page, 'UseCases::UseCaseTraceabilityView')
   await expect(page.locator('.react-flow__node-useCase')).toHaveCount(12)
-  await expect(page.locator('.react-flow__node-requirement')).toHaveCount(14)
+  await expect(page.locator('.react-flow__node-requirement')).toHaveCount(16)
   await expect(
     page.locator('.react-flow__edge-textwrapper, .react-flow__edgelabel-renderer *', {
       hasText: '«objective»',

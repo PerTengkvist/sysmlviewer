@@ -474,6 +474,27 @@ def test_every_use_case_has_an_objective():
     assert missing == []
 
 
+def _objectives(elements) -> dict[str, set[str]]:
+    """Use case name → names of the requirements it pursues with `objective`."""
+    out: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "objective" in (e.metadata_keywords or [])
+            and e.source_id in elements
+            and e.target_id in elements
+        ):
+            out.setdefault(elements[e.source_id].name, set()).add(elements[e.target_id].name)
+    return out
+
+
+def test_functional_requirements_are_use_case_objectives():
+    """Immobilizer and TopSpeed are pursued by the use cases that exercise them."""
+    objectives = _objectives(_load().elements)
+    assert objectives["StartVehicle"] == {"PowerModes", "Immobilizer"}
+    assert objectives["Accelerate"] == {"Acceleration", "TopSpeed"}
+
+
 def test_every_use_case_refines_a_user_story():
     elements = _load().elements
     refines = [

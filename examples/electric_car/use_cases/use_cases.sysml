@@ -13,7 +13,8 @@ package UseCases {
     use case def StartVehicle {
       actor Driver;
       objective Requirements::PowerModes;
-      doc /* The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. */
+      objective Requirements::Immobilizer;
+      doc /* The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. Starting is where the immobilizer requirement is met: the car becomes Ready only once the key has been approved. */
     }
 
     use case def StopVehicle {
@@ -55,7 +56,8 @@ package UseCases {
     use case def Accelerate {
       actor Driver;
       objective Requirements::Acceleration;
-      doc /* The driver presses the accelerator and the motor delivers torque within the battery's limit. */
+      objective Requirements::TopSpeed;
+      doc /* The driver presses the accelerator and the motor delivers torque within the battery's limit. The same use case carries the car up to its top speed, so it pursues both the acceleration and the top-speed requirement. */
     }
 
     use case def EmergencyStop {
@@ -207,10 +209,12 @@ package UseCases {
     doc /* Requirement traceability of the driving use cases. Each case points with «objective» to the requirement it must fulfil (right) and with «refine» to the user story it refines (left). One expose names the driving use cases; one expose per requirement (in another file) adds exactly the requirements they trace to. The filter keeps use cases, requirements and dependencies, so actors and «include» are left out. */
     expose Driving;
     expose Requirements::PowerModes;
+    expose Requirements::Immobilizer;
     expose Requirements::DriveToDestination;
     expose Requirements::PropulsionModes;
     expose Requirements::Range;
     expose Requirements::Acceleration;
+    expose Requirements::TopSpeed;
     expose Requirements::ControlSpeed;
     expose Requirements::BrakingDistance;
     expose Requirements::ParkAndLeave;
