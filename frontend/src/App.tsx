@@ -1556,6 +1556,8 @@ export default function App() {
     },
   }
 
+  const activeCanvasTab = activeTab(canvasTabs)
+
   return (
     <div className={`app-shell${printPages ? ' printing' : ''}`}>
       <header className="app-header no-print">
@@ -1914,19 +1916,19 @@ export default function App() {
               }}
             />
             {canvasMode.type === 'tutorial' ||
-            activeTab(canvasTabs)?.kind === 'tutorial' ? (
+            activeCanvasTab?.kind === 'tutorial' ? (
               <TutorialMarkdown
                 tutorialId={
                   canvasMode.type === 'tutorial'
                     ? canvasMode.tutorialId
-                    : activeTab(canvasTabs)?.kind === 'tutorial'
-                      ? activeTab(canvasTabs)!.tutorialId
+                    : activeCanvasTab?.kind === 'tutorial'
+                      ? activeCanvasTab.tutorialId
                       : ''
                 }
                 title={
                   canvasMode.type === 'tutorial'
                     ? canvasMode.title
-                    : activeTab(canvasTabs)?.title
+                    : activeCanvasTab?.title
                 }
               />
             ) : canvasMode.type === 'text' && textFile ? (
@@ -1950,14 +1952,14 @@ export default function App() {
                 )}
               </div>
             ) : canvasMode.type === 'markdown' ||
-              activeTab(canvasTabs)?.kind === 'markdown' ? (
+              activeCanvasTab?.kind === 'markdown' ? (
               <MarkdownCanvas
                 projectId={project?.id}
                 docPath={
                   canvasMode.type === 'markdown'
                     ? canvasMode.docPath
-                    : activeTab(canvasTabs)?.kind === 'markdown'
-                      ? activeTab(canvasTabs)!.docPath
+                    : activeCanvasTab?.kind === 'markdown'
+                      ? activeCanvasTab.docPath
                       : ''
                 }
                 onBack={() => setCanvasMode({ type: 'diagram' })}
