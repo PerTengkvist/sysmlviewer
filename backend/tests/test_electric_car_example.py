@@ -895,29 +895,100 @@ def test_every_leaf_use_case_is_refined_by_a_function():
             assert included and included <= refined, uc.name
 
 
+def _entity_refines(elements) -> dict[str, set[str]]:
+    """Functional entity id → ids of the use cases it refines with `#refine`."""
+    _, entities = _functions_and_entities(elements)
+    entity_ids = {e.id for e in entities}
+    refines: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and e.source_id in entity_ids
+            and e.target_id in elements
+            and elements[e.target_id].kind == ArtifactKind.USE_CASE
+        ):
+            refines.setdefault(e.source_id, set()).add(e.target_id)
+    return refines
+
+
+def test_every_entity_refines_a_use_case():
+    elements = _load().elements
+    _, entities = _functions_and_entities(elements)
+    refines = _entity_refines(elements)
+    assert sorted(e.name for e in entities if e.id not in refines) == []
+
+
+def test_an_entity_refines_only_use_cases_of_its_function():
+    elements = _load().elements
+    by_function = _function_refines(elements)
+    outside = sorted(
+        (elements[eid].name, elements[u].name)
+        for eid, ucs in _entity_refines(elements).items()
+        for u in ucs - by_function.get(elements[eid].parent_id, set())
+    )
+    assert outside == []
+
+
+def test_a_functions_entities_together_refine_its_use_cases():
+    elements = _load().elements
+    union: dict[str, set[str]] = {}
+    for eid, ucs in _entity_refines(elements).items():
+        union.setdefault(elements[eid].parent_id, set()).update(ucs)
+    assert union == _function_refines(elements)
+
+
+def _up_ids(elements, root_id: str) -> list[str]:
+    from domain.dependency_tree import build_dependency_tree
+
+    return [n["id"] for n in build_dependency_tree(elements, root_id)["up"]]
+
+
+def test_logical_parts_climb_to_the_requirement_their_entity_serves():
+    """The entity allocated to a part decides its chain, not the first use case
+    its function happens to refine. The body controller confirms locking with
+    the indicators, so it climbs to LockIndication (AccessControl is about
+    authenticating before unlock, which the vehicle controller does)."""
+    elements = _load().elements
+    assert _up_ids(elements, f"{CAR}::frictionBrakes") == [
+        "Requirements::Safety",
+        "Requirements::BrakingDistance",
+        "UseCases::Driving::Brake",
+        "Functions::SpeedControl::frictionBraking",
+    ]
+    assert _up_ids(elements, f"{CAR}::bodyController") == [
+        "Requirements::Security",
+        "Requirements::LockIndication",
+        "UseCases::Managing::Lock",
+        "Functions::Security::lockControl",
+    ]
+
+
 # --- Traceability: satisfy only where the function chain does not reach ------
 #
-#   requirement ←objective— use case ←#refine— function ⊃ entity —allocate→ logical part
+#   requirement ←objective— use case ←#refine— entity —allocate→ logical part
 #
 # A `satisfy R by L` is redundant when that chain already leads from R to L.
+# The rule is taken at entity level: the entity that refines the use case is
+# the one allocated to the part, not just any entity of the same function.
 
 
 def _chain_pairs(elements) -> set[tuple[str, str]]:
-    """(requirement id, logical part id) pairs the function chain connects."""
+    """(requirement id, logical part id) pairs the entity chain connects."""
     objectives: dict[str, set[str]] = {}
     for e in elements.values():
         if e.kind == ArtifactKind.DEPENDENCY and "objective" in (e.metadata_keywords or []):
             objectives.setdefault(e.source_id, set()).add(e.target_id)
-    allocated: dict[str, set[str]] = {}
-    for a in elements.values():
-        if a.kind == ArtifactKind.ALLOCATION and a.source_id in elements:
-            allocated.setdefault(elements[a.source_id].parent_id, set()).add(a.target_id)
+    allocated = {
+        a.source_id: a.target_id
+        for a in elements.values()
+        if a.kind == ArtifactKind.ALLOCATION
+    }
     pairs: set[tuple[str, str]] = set()
-    for function_id, use_cases in _function_refines(elements).items():
+    for entity_id, use_cases in _entity_refines(elements).items():
         for uc in use_cases:
             for req in objectives.get(uc, ()):
-                for part in allocated.get(function_id, ()):
-                    pairs.add((req, part))
+                pairs.add((req, allocated[entity_id]))
     return pairs
 
 

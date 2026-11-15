@@ -53,29 +53,24 @@ test('a requirement shows its group above and what satisfies and pursues it belo
   })
   await expect(brake).toContainText('«objective»')
 
-  // Below Brake: the functions that refine it, with their functional
-  // entities and the logical parts those are allocated to.
+  // Below Brake: the functions and the functional entities that refine it,
+  // and the logical parts those entities are allocated to.
   /** Row of the child `id` directly below `parent` (an `li`); `..` is its `li`. */
   const childRow = (parent: Locator, id: string) =>
     parent.locator(':scope > .dependency-tree-children > li > .dependency-tree-row', {
       has: page.locator(`[data-related-id="${id}"]`),
     })
   const brakeItem = brake.locator('xpath=..')
-  const speedControl = childRow(brakeItem, 'Functions::SpeedControl')
-  const lighting = childRow(brakeItem, 'Functions::Lighting')
-  await expect(speedControl).toContainText('«refine»')
-  await expect(lighting).toContainText('«refine»')
-  const friction = childRow(
-    speedControl.locator('xpath=..'),
-    'Functions::SpeedControl::frictionBraking',
-  )
-  await expect(friction).toContainText('«owns»')
+  await expect(childRow(brakeItem, 'Functions::SpeedControl')).toContainText('«refine»')
+  await expect(childRow(brakeItem, 'Functions::Lighting')).toContainText('«refine»')
+  const friction = childRow(brakeItem, 'Functions::SpeedControl::frictionBraking')
+  await expect(friction).toContainText('«refine»')
   await expect(
     childRow(friction.locator('xpath=..'), 'LogicalArchitecture::Car::frictionBrakes'),
   ).toContainText('«allocate»')
-  await expect(
-    childRow(lighting.locator('xpath=..'), 'Functions::Lighting::indicatorControl'),
-  ).toContainText('«owns»')
+  await expect(childRow(brakeItem, 'Functions::Lighting::indicatorControl')).toContainText(
+    '«refine»',
+  )
   // Connections are not part of the tree.
   await expect(dlg).not.toContainText('«connection»')
 })
@@ -128,7 +123,7 @@ test('a satisfying part climbs to its requirement, not along #Command', async ({
   await expect(tree).not.toContainText('«connection»')
 })
 
-test('a logical part climbs through its allocated entity to a use case and requirement', async ({
+test('a logical part climbs through its allocated entity to the use case it serves', async ({
   page,
 }) => {
   const dlg = await openRequirementTree(page)
@@ -143,21 +138,21 @@ test('a logical part climbs through its allocated entity to a use case and requi
 
   const tree = page.getByRole('dialog', { name: 'Dependency tree driveController' })
   await expect(tree).toBeVisible()
-  // Top first: requirement group, objective, use case, function, entity.
+  // Top first: requirement group, objective, the use case the entity
+  // refines, and the entity allocated to the part.
   const up = tree.locator('.dependency-tree-up [data-related-id]')
-  await expect(up).toHaveCount(5)
+  await expect(up).toHaveCount(4)
   const ids = [
     'Requirements::Performance',
     'Requirements::Acceleration',
     'UseCases::Driving::Accelerate',
-    'Functions::SpeedControl',
     'Functions::SpeedControl::torqueArbitration',
   ]
   for (const [i, id] of ids.entries()) {
     await expect(up.nth(i)).toHaveAttribute('data-related-id', id)
   }
   const chain = tree.locator('.dependency-tree-up')
-  for (const label of ['«allocate»', '«owned by»', '«refine»', '«objective»']) {
+  for (const label of ['«allocate»', '«refine»', '«objective»']) {
     await expect(chain).toContainText(label)
   }
   // Not the owner Car, not along #Command.

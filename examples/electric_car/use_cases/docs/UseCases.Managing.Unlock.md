@@ -5,5 +5,8 @@ The driver presses unlock on the key fob. The car authenticates the credential, 
 ## Relations
 
 - Refined by `Security`.
+- Refined by `authenticate`.
+- Refined by `wakeUp`.
+- Refined by `lockControl`.
 - Pursues requirement `AccessControl`.
 - Refines `ParkAndLeave`.

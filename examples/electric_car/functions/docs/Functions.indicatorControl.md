@@ -7,6 +7,9 @@ Part of `Lighting`.
 ## Relations
 
 - Allocated to `bodyController`.
+- Refines `TurnLeft`.
+- Refines `TurnRight`.
+- Refines `Brake`.
 
 ## Diagrams
 

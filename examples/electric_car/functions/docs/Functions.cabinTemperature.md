@@ -7,6 +7,7 @@ Part of `Climate`.
 ## Relations
 
 - Allocated to `climateSystem`.
+- Refines `AdjustClimate`.
 
 ## Diagrams
 

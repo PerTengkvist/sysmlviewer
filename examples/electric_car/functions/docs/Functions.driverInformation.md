@@ -7,6 +7,10 @@ Part of `Security`.
 ## Relations
 
 - Allocated to `instrumentCluster`.
+- Refines `StartVehicle`.
+- Refines `StopVehicle`.
+- Refines `OpenDoor`.
+- Refines `CloseDoor`.
 
 ## Diagrams
 

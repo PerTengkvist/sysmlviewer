@@ -7,6 +7,8 @@ Part of `SpeedControl`.
 ## Relations
 
 - Allocated to `frictionBrakes`.
+- Refines `Brake`.
+- Refines `EmergencyStop`.
 
 ## Diagrams
 

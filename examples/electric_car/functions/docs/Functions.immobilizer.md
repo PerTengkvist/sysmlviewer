@@ -7,6 +7,8 @@ Part of `Security`.
 ## Relations
 
 - Allocated to `vehicleController`.
+- Refines `StartVehicle`.
+- Refines `StopVehicle`.
 
 ## Diagrams
 

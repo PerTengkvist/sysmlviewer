@@ -423,7 +423,11 @@ package Functions {
 }
 
 package FunctionTraceability {
-  doc /* Traceability from the functions to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). The dependencies live outside Functions so that FunctionsView keeps showing only the dependencies between functions. */
+  doc /* Traceability from the functions and their functional entities to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). Each functional entity also «refine»s the use cases it serves; together they cover exactly the use cases of their function, and a logical part climbs through the entity allocated to it to the use cases that entity serves. */
+  // Kept outside Functions: FunctionsView exposes Functions with a filter that
+  // pulls in dependency endpoints, and it should show only the dependencies
+  // between functions.
+  // Function level.
   #refine dependency from Functions::Security to UseCases::Driving::StartVehicle;
   #refine dependency from Functions::Security to UseCases::Driving::StopVehicle;
   #refine dependency from Functions::Security to UseCases::Managing::Unlock;
@@ -446,4 +450,50 @@ package FunctionTraceability {
   #refine dependency from Functions::WindshieldCleaning to UseCases::Driving::CleanWindshield;
   #refine dependency from Functions::Climate to UseCases::Managing::AdjustClimate;
   #refine dependency from Functions::Entertainment to UseCases::Managing::PlayMedia;
+
+  // Entity level: each functional entity refines the use cases it serves.
+  #refine dependency from Functions::Security::authenticate to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::authenticate to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security::authenticate to UseCases::Managing::Lock;
+  #refine dependency from Functions::Security::immobilizer to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::immobilizer to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security::wakeUp to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::Lock;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Security::doorControl to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security::doorControl to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Security::windowControl to UseCases::Managing::OpenWindow;
+  #refine dependency from Functions::Security::windowControl to UseCases::Managing::CloseWindow;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Charging::chargeConnection to UseCases::Managing::Charge;
+  #refine dependency from Functions::Charging::chargeSession to UseCases::Managing::Charge;
+  #refine dependency from Functions::Charging::energyStorage to UseCases::Managing::Charge;
+  #refine dependency from Functions::SpeedControl::torqueArbitration to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::SpeedControl::torqueArbitration to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl::regenBlending to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl::tractionDrive to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::SpeedControl::frictionBraking to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl::frictionBraking to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::Maneuvrability::steeringControl to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Maneuvrability::steeringControl to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Maneuvrability::gearSelection to UseCases::Driving::ChangeGear;
+  #refine dependency from Functions::Maneuvrability::roadHolding to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Maneuvrability::roadHolding to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting::headlampControl to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::Brake;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::Brake;
+  #refine dependency from Functions::WindshieldCleaning::wipeControl to UseCases::Driving::CleanWindshield;
+  #refine dependency from Functions::WindshieldCleaning::wipeSweep to UseCases::Driving::CleanWindshield;
+  #refine dependency from Functions::Climate::cabinTemperature to UseCases::Managing::AdjustClimate;
+  #refine dependency from Functions::Entertainment::mediaPlayback to UseCases::Managing::PlayMedia;
 }

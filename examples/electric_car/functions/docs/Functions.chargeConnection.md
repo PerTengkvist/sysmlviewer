@@ -7,6 +7,7 @@ Part of `Charging`.
 ## Relations
 
 - Allocated to `chargeInlet`.
+- Refines `Charge`.
 
 ## Diagrams
 

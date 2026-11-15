@@ -7,6 +7,7 @@ Part of `WindshieldCleaning`.
 ## Relations
 
 - Allocated to `wipers`.
+- Refines `CleanWindshield`.
 
 ## Diagrams
 

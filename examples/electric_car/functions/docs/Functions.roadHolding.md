@@ -7,6 +7,8 @@ Part of `Maneuvrability`.
 ## Relations
 
 - Allocated to `suspension`.
+- Refines `TurnLeft`.
+- Refines `TurnRight`.
 
 ## Diagrams
 

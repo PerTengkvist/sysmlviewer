@@ -7,6 +7,10 @@ Part of `Lighting`.
 ## Relations
 
 - Allocated to `lamps`.
+- Refines `ToggleHeadlights`.
+- Refines `TurnLeft`.
+- Refines `TurnRight`.
+- Refines `Brake`.
 
 ## Diagrams
 
