@@ -71,7 +71,8 @@ function branchRank(succ: SemanticElement): number {
  * Direction of a saved layout: TD when the successions mostly run down, LR
  * when they mostly run right. The direction is not stored with the view, so
  * a top-down layout would otherwise reopen with left/right edge handles.
- * Null when some action has no position.
+ * Null when some action has no position. Only for the view's own layout: the
+ * backend also sends project default positions for a view without one.
  */
 function savedFlowDir(
   actions: SemanticElement[],
@@ -121,7 +122,9 @@ export function buildActionFlowGraph(
     .filter((e) => e.kind === 'succession' && e.parentId === rootId)
     .sort((a, b) => a.id.localeCompare(b.id))
 
-  flowDir = savedFlowDir(actions, successions, visualization.nodes) ?? flowDir
+  if (view.hasViewLayout) {
+    flowDir = savedFlowDir(actions, successions, visualization.nodes) ?? flowDir
+  }
 
   const outs = new Map<string, SemanticElement[]>()
   for (const s of successions) {

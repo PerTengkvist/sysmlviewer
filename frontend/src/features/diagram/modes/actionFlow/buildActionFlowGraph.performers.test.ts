@@ -146,8 +146,8 @@ describe('buildActionFlowGraph performers', () => {
 })
 
 describe('buildActionFlowGraph saved direction', () => {
-  function withPositions(axis: 'x' | 'y'): ViewPayload {
-    const view = fixture()
+  function withPositions(axis: 'x' | 'y', hasViewLayout = true): ViewPayload {
+    const view = { ...fixture(), hasViewLayout }
     const order = [
       'start',
       'checkCredential',
@@ -185,8 +185,11 @@ describe('buildActionFlowGraph saved direction', () => {
     expect(edges.find((e) => e.id.endsWith('::succ1'))?.sourceHandle).toBe('out')
   })
 
-  it('uses the requested direction without saved positions', () => {
-    const { edges } = buildActionFlowGraph(fixture(), 'light', 'TD')
-    expect(edges.find((e) => e.id.endsWith('::succ1'))?.sourceHandle).toBe('bottom')
+  it('uses the requested direction when the positions are not the view\'s own', () => {
+    // The backend always sends positions (project defaults for a new view).
+    const lr = buildActionFlowGraph(withPositions('y', false), 'light', 'LR')
+    expect(lr.edges.find((e) => e.id.endsWith('::succ1'))?.sourceHandle).toBe('out')
+    const td = buildActionFlowGraph(withPositions('x', false), 'light', 'TD')
+    expect(td.edges.find((e) => e.id.endsWith('::succ1'))?.sourceHandle).toBe('bottom')
   })
 })

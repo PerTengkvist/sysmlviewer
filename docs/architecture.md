@@ -66,7 +66,7 @@ Logical service/control interfaces follow an S_entity / U_entity naming policy (
 
 Frontend `DiagramCanvas` dispatches to mode-specific React Flow builders under `features/diagram/modes/`.
 
-An `actionFlow` payload also has `performers: {actionId: [partId]}`: the parts that perform each step through `perform flow.step;` (`domain/perform.py`). Those parts are in `semantic` for their names but are not drawn.
+An `actionFlow` payload also has `performers: {actionId: [partId]}`: the parts that perform each step through `perform flow.step;` (`domain/perform.py`). Those parts are in `semantic` for their names but are not drawn. It also has `hasViewLayout`: true when the positions come from the view's own `views/<name>.json`, false when they are project defaults; the flow direction (TD/LR) is read from the positions only in the first case.
 
 ### VisualizationObject (node)
 

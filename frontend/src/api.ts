@@ -356,6 +356,11 @@ export interface ViewPayload {
    * in a part), by action id. The parts are in `semantic` for their names.
    */
   performers?: Record<string, string[]>
+  /**
+   * actionFlow only: true when the positions come from the view's own layout
+   * (views/<name>.json), false when they are project defaults.
+   */
+  hasViewLayout?: boolean
   semantic: Record<string, SemanticElement>
   visualization: {
     nodes: Record<string, VisualizationNode>

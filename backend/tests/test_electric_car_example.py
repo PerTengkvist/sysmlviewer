@@ -696,3 +696,4 @@ def test_every_function_has_a_flow_view():
         assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
         steps = {a.id for a in actions if not _is_pseudo(a)}
         assert set(view["performers"]) == steps, view_id
+        assert view["hasViewLayout"] is True, view_id

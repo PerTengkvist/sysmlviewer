@@ -2250,6 +2250,9 @@ class ProjectService:
         }
         if performers is not None:
             result["performers"] = performers
+            # Whether the positions are the view's own (views/<name>.json) or
+            # project defaults; the flow direction is read only from the former.
+            result["hasViewLayout"] = has_local_geometry
         if mode_error:
             result["modeError"] = mode_error
         return result

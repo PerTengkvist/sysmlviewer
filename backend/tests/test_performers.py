@@ -162,6 +162,8 @@ def test_action_flow_view_payload_has_performers(tmp_path):
     # Performer parts are in the payload so their names can be shown.
     assert view["semantic"]["Functions::Security::authenticate"]["name"] == "authenticate"
     assert view["semantic"]["Functions::Security::lockControl"]["name"] == "lockControl"
+    # A new view has no layout of its own; positions come from the project.
+    assert view["hasViewLayout"] is False
 
 
 # --- Imports, fallback, line numbers ----------------------------------------
