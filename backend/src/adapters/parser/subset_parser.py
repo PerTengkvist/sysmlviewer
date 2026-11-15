@@ -161,6 +161,11 @@ def _tokenize(content: str) -> list[_Token]:
     return tokens
 
 
+def _ref_leaf(ref: str) -> str:
+    """Last segment of ``flow.step`` / ``Pkg::flow.step``."""
+    return ref.replace("::", ".").split(".")[-1]
+
+
 def _strip_quotes(name: str) -> str:
     if len(name) >= 2 and name[0] in "'\"" and name[-1] == name[0]:
         return name[1:-1]
@@ -316,6 +321,21 @@ class SubsetSysmlParser:
                     break
                 parts.append(nxt)
             return "::".join(parts)
+
+        def expect_feature_ref() -> str | None:
+            """Read ``name``, ``flow.step`` or ``Pkg::Fn::flow.step`` as written."""
+            name = expect_ident()
+            if not name:
+                return None
+            ref = name
+            while peek() and peek().value in {"::", "."}:
+                sep = peek().value
+                nxt = peek(1)
+                if not nxt or nxt.kind not in {"ident", "string"}:
+                    break
+                take()
+                ref += sep + (expect_ident() or "")
+            return ref
 
         def read_multiplicity() -> str | None:
             if not (peek() and peek().value == "["):
@@ -1506,16 +1526,22 @@ class SubsetSysmlParser:
                         scope.branch_ends = ends
                     continue
 
-                # then perform name; | then action name; | then name;
+                # then perform [action] ref; | then action name; | then name;
                 is_perform = False
                 is_action_kw = False
+                perform_ref: str | None = None
                 if peek() and peek().value == "perform":
                     take()
                     is_perform = True
-                elif peek() and peek().value == "action":
-                    take()
-                    is_action_kw = True
-                target = expect_ident()
+                    if peek() and peek().value == "action":
+                        take()
+                    perform_ref = expect_feature_ref()
+                    target = _ref_leaf(perform_ref) if perform_ref else None
+                else:
+                    if peek() and peek().value == "action":
+                        take()
+                        is_action_kw = True
+                    target = expect_ident()
                 if not target:
                     skip_until_semicolon_or_brace()
                     continue
@@ -1528,7 +1554,7 @@ class SubsetSysmlParser:
                 meta: list[str] = []
                 if is_perform:
                     meta = ["perform"]
-                    type_ref = target  # reference name; usage name may equal target
+                    type_ref = perform_ref  # reference as written
                 elif target.lower() == "done":
                     type_ref = "done"
                 elif target.lower() == "start":
@@ -1543,20 +1569,26 @@ class SubsetSysmlParser:
                 continue
 
             if tok.kind == "ident" and tok.value == "perform":
-                # Standalone perform (without then) — still record as flow step
+                # Standalone `perform [action] ref;`. In an action or case it is
+                # also a flow step; in a part it says the part performs `ref`.
                 take()
-                target = expect_ident()
-                if not target:
+                if peek() and peek().value == "action":
+                    take()
+                perform_ref = expect_feature_ref()
+                if not perform_ref:
                     skip_until_semicolon_or_brace()
                     continue
+                target = _ref_leaf(perform_ref)
                 if peek() and peek().value == "{":
                     skip_until_semicolon_or_brace()
                 elif peek() and peek().value == ";":
                     take()
                 ensure_flow_action(
-                    target, type_ref=target, metadata_keywords=["perform"]
+                    target, type_ref=perform_ref, metadata_keywords=["perform"]
                 )
-                link_from_previous(target)
+                scope = current_scope()
+                if not (scope and scope.kind == ArtifactKind.PART):
+                    link_from_previous(target)
                 continue
 
             if tok.kind == "ident" and tok.value == "case":
@@ -2310,6 +2342,13 @@ class SubsetSysmlParser:
         names = {el.name for el in state.elements.values()} | known_library
         for el in state.elements.values():
             if not el.type_ref or el.type_ref in names:
+                continue
+            # `perform flow.step` names a feature by path; check its last segment.
+            if (
+                el.kind == ArtifactKind.ACTION
+                and "perform" in el.metadata_keywords
+                and _ref_leaf(el.type_ref) in names
+            ):
                 continue
             state.warnings.append(
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
