@@ -764,6 +764,16 @@ def test_security_owns_doors_and_windows_on_the_body_controller():
         assert allocated[entity.id] == f"{CAR}::bodyController", name
 
 
+def test_the_inside_handle_always_opens_the_door():
+    """Nobody can be shut in: only the outside handle is checked against the lock."""
+    elements = _load().elements
+    flow = "Functions::Security::cabinAccessFlow"
+    _, successions = _flow_steps(elements, flow)
+    by_name = {s.name: elements[s.target_id].name for s in successions}
+    assert by_name["if_outsideHandle_yes"] == "checkUnlocked"
+    assert by_name["if_outsideHandle_else"] == "releaseDoor"
+
+
 def _succession_pairs(elements, flow_id):
     _, successions = _flow_steps(elements, flow_id)
     return {
@@ -798,11 +808,15 @@ def test_branching_flows_have_the_intended_successions():
         ("start", "doorRequested", False),
         ("doorRequested", "readDoorHandle", True),
         ("doorRequested", "runWindowLift", True),
-        ("readDoorHandle", "checkUnlocked", False),
+        ("readDoorHandle", "outsideHandle", False),
+        ("outsideHandle", "checkUnlocked", True),
+        ("outsideHandle", "releaseDoor", True),
         ("checkUnlocked", "carUnlocked", False),
         ("carUnlocked", "releaseDoor", True),
         ("carUnlocked", "stayLatched", True),
-        ("releaseDoor", "showDoorState", False),
+        ("releaseDoor", "closeDoor", False),
+        ("closeDoor", "relatch", False),
+        ("relatch", "showDoorState", False),
         ("showDoorState", "done", False),
         ("stayLatched", "done", False),
         ("runWindowLift", "done", False),

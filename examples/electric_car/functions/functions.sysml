@@ -7,7 +7,7 @@ package Functions {
     doc /* A functional entity: a part of a function that performs steps of the function's flows. Every FunctionNode is allocated to exactly one logical part. */
   }
   part def Security :> Function {
-    doc /* Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved. */
+    doc /* Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved and, for a door, is latched again. */
     part authenticate : FunctionNode {
       doc /* Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller. */
       perform securityFlow.checkCredential;
@@ -26,11 +26,13 @@ package Functions {
       perform securityFlow.unlockDoors;
       perform cabinAccessFlow.checkUnlocked;
       perform cabinAccessFlow.stayLatched;
+      perform cabinAccessFlow.relatch;
     }
     part doorControl : FunctionNode {
       doc /* Own the doors: read the inside and outside handles, open a door once its latch is free, and report each door open or closed. Allocated to the body controller. */
       perform cabinAccessFlow.readDoorHandle;
       perform cabinAccessFlow.releaseDoor;
+      perform cabinAccessFlow.closeDoor;
     }
     part windowControl : FunctionNode {
       doc /* Own the side windows: run each window lift on its switch and reverse a window that pinches. Allocated to the body controller. */
@@ -71,30 +73,40 @@ package Functions {
       first rejectKey then done;
     }
     action cabinAccessFlow {
-      doc /* From a door handle or a window switch to a door or window that has moved. A door opens only on an unlocked car; a locked car keeps it latched. A window follows its switch, and the driver sees which doors are open. */
+      doc /* From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A closed door is latched again, a window follows its switch, and the driver sees which doors are open. */
       action readDoorHandle {
-        doc /* When the request comes from a door: the pull on its inside or outside handle is read. Output: the door the occupant wants to open. */
+        doc /* When the request comes from a door: the pull on a handle is read. Output: the door to open and whether the handle was outside or inside, the outsideHandle decision. */
       }
       action checkUnlocked {
-        doc /* Before that door may open: the state of the latches is read; the outcome is the carUnlocked decision. */
+        doc /* For an outside handle only: the state of the latches is read; the outcome is the carUnlocked decision. */
       }
       action releaseDoor {
-        doc /* On an unlocked car: the latch of the requested door lets go and the door swings open. */
+        doc /* From inside always, from outside on an unlocked car: the latch of the requested door lets go and the door swings open. */
       }
       action stayLatched {
-        doc /* On a locked car: the pull is ignored and the door stays latched, so the car cannot be entered without the key. */
+        doc /* Outside handle on a locked car: the pull is ignored and the door stays latched, so the car cannot be entered without the key. */
+      }
+      action closeDoor {
+        doc /* The occupant swings the open door shut; its position sensor reports it closed. */
+      }
+      action relatch {
+        doc /* Once the door is shut: its latch catches and holds it, so the car can be locked again. */
       }
       action showDoorState {
-        doc /* After the door has moved: the door-ajar warning is shown while it is open and cleared once it is closed and latched again. */
+        doc /* After the door has opened and closed: the door-ajar warning is shown while it stands open and cleared once it is latched again. */
       }
       action runWindowLift {
         doc /* When the request comes from a window switch: the window lowers or rises while the switch is held, and backs off if it meets an obstacle on the way up. */
       }
       first start;
       then if doorRequested then readDoorHandle else runWindowLift;
-      first readDoorHandle then checkUnlocked;
+      first readDoorHandle;
+      then if outsideHandle then checkUnlocked else releaseDoor;
+      first checkUnlocked;
       then if carUnlocked then releaseDoor else stayLatched;
-      first releaseDoor then showDoorState;
+      first releaseDoor then closeDoor;
+      first closeDoor then relatch;
+      first relatch then showDoorState;
       first showDoorState then done;
       first stayLatched then done;
       first runWindowLift then done;
@@ -382,7 +394,7 @@ package Functions {
   }
 
   view SecurityCabinAccessFlowView : ActionFlowView {
-    doc /* Security cabin access flow: a door handle is read, checked against the latches and the door released or kept latched, or a window is moved on its switch. Each step shows the functional entity that performs it. */
+    doc /* Security cabin access flow: a door handle is read; an inside handle opens the door at once, an outside handle only on an unlocked car; the door is closed and latched again; or a window is moved on its switch. Each step shows the functional entity that performs it. */
     expose Security::cabinAccessFlow;
   }
 
