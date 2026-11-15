@@ -1,6 +1,6 @@
 # Lock
 
-The driver presses lock on the key fob. The car checks that all doors are closed, engages the latches and flashes the indicators as confirmation.
+The driver presses lock on the key fob. The car checks that all doors are closed, engages the latches and flashes the indicators as confirmation. With a door open the car stays unlocked and gives no confirmation.
 
 ## Relations
 

@@ -1,6 +1,6 @@
 # CloseDoor
 
-An occupant closes a door; the latch engages and the door-ajar warning clears.
+An occupant closes a door; the latch engages and the door-ajar warning clears. A door that is not pushed fully shut keeps the warning on.
 
 ## Relations
 
