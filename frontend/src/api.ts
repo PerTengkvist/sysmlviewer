@@ -426,6 +426,34 @@ export interface ClientEvent {
   viewName?: string | null
 }
 
+/** One element in a dependency tree (`GET …/dependency-tree/{id}`). */
+export interface DependencyTreeNode {
+  id: string
+  name: string
+  kind: ArtifactKind
+  shortId?: string | null
+  /** The relation element of the branch; null for ownership and typing. */
+  relationId: string | null
+  /** «refine», «satisfy», «owns», «typed by», … ; null on the root. */
+  label: string | null
+  /** Up chain only: other candidates at this level that were not followed. */
+  alternatives: number
+  /** Already shown elsewhere in the tree; not expanded again. */
+  repeated: boolean
+  /** Children cut off by the depth or node limit. */
+  truncated: boolean
+  children: DependencyTreeNode[]
+}
+
+export interface DependencyTree {
+  root: { id: string; name: string; kind: ArtifactKind; shortId?: string | null }
+  /** Most abstract first; each entry's label is the edge to the one below. */
+  up: DependencyTreeNode[]
+  /** The root with its branches. */
+  down: DependencyTreeNode
+  truncated: boolean
+}
+
 const BASE = '/api'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -706,6 +734,10 @@ export const api = {
     ),
   listDocumentation: (projectId: string) =>
     request<{ paths: string[] }>(`/projects/${projectId}/documentation`),
+  getDependencyTree: (projectId: string, artifactId: string) =>
+    request<DependencyTree>(
+      `/projects/${projectId}/dependency-tree/${encodeURIComponent(artifactId)}`,
+    ),
   fetchDocumentation: (projectId: string, docPath: string) =>
     request<{ path: string; content: string }>(
       `/projects/${projectId}/documentation/${docPath.split('/').map(encodeURIComponent).join('/')}`,
