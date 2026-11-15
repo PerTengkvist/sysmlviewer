@@ -12,6 +12,7 @@ from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
 from domain.expose import RECURSIVE as EXPOSE_RECURSIVE
 from domain.expose import kind_of as kind_of_expose
 from domain.expose import set_kind as set_expose_kind
+from domain.type_resolution import part_def_resolver
 from domain.view_filter import (
     MetaclassAnyFilter,
     MetaclassFilter,
@@ -2319,31 +2320,7 @@ class SubsetSysmlParser:
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:
         """Copy ports, attributes, nested parts, and relations from defs onto usages."""
-        defs_by_name: dict[str, SemanticElement] = {}
-        for el in state.elements.values():
-            if el.kind == ArtifactKind.PART and el.type_ref is None:
-                defs_by_name[el.name] = el
-        # `part def X :> Base` keeps type_ref but remains a type definition.
-        specialized_def_ids = {
-            el.source_id
-            for el in state.elements.values()
-            if el.kind == ArtifactKind.SPECIALIZATION and el.source_id
-        }
-
-        def resolve_type_def(type_ref: str | None) -> SemanticElement | None:
-            if not type_ref:
-                return None
-            for el in state.elements.values():
-                if el.kind == ArtifactKind.PART and el.name == type_ref and el.type_ref is None:
-                    return el
-            for el in state.elements.values():
-                if (
-                    el.kind == ArtifactKind.PART
-                    and el.name == type_ref
-                    and el.id in specialized_def_ids
-                ):
-                    return el
-            return defs_by_name.get(type_ref)
+        resolve_type_def = part_def_resolver(state.elements)
 
         def resolve_port_def(type_ref: str | None) -> SemanticElement | None:
             """Resolve a port definition by type ref (package-level `port def` preferred)."""
