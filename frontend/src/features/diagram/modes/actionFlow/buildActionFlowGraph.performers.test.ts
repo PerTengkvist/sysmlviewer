@@ -108,6 +108,8 @@ describe('buildActionFlowGraph performers', () => {
     )
     expect(plain?.data.performedBy).toBeUndefined()
     expect(Number(check?.style?.height)).toBeGreaterThan(Number(plain?.style?.height))
+    // Room for a name that wraps to two lines plus the performer row.
+    expect(Number(check?.style?.height)).toBeGreaterThanOrEqual(90)
   })
 
   it('grows a saved height that is too small for the performer row', () => {
@@ -123,7 +125,7 @@ describe('buildActionFlowGraph performers', () => {
     const check = buildActionFlowGraph(view, 'light', 'TD').nodes.find((n) =>
       n.id.endsWith('::checkCredential'),
     )
-    expect(Number(check?.style?.height)).toBeGreaterThan(56)
+    expect(Number(check?.style?.height)).toBeGreaterThanOrEqual(90)
   })
 
   it('hides succN names and labels if/else branches YES and NO', () => {

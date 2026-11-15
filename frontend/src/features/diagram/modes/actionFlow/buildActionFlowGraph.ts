@@ -48,8 +48,8 @@ function isDecisionEl(
   return outgoingCount >= 2
 }
 
-/** Extra node height for the ⟨performer⟩ row under the action name. */
-const PERFORMER_ROW_H = 18
+/** Extra node height for the ⟨performer⟩ row, so a two-line name still fits. */
+const PERFORMER_ROW_H = 34
 
 function edgeLabel(succ: SemanticElement): string {
   const n = succ.name.toLowerCase()
