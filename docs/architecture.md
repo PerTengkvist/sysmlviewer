@@ -66,6 +66,8 @@ Logical service/control interfaces follow an S_entity / U_entity naming policy (
 
 Frontend `DiagramCanvas` dispatches to mode-specific React Flow builders under `features/diagram/modes/`.
 
+An `actionFlow` payload also has `performers: {actionId: [partId]}`: the parts that perform each step through `perform flow.step;` (`domain/perform.py`). Those parts are in `semantic` for their names but are not drawn. It also has `hasViewLayout`: true when the positions come from the view's own `views/<name>.json`, false when they are project defaults; the flow direction (TD/LR) is read from the positions only in the first case.
+
 ### VisualizationObject (node)
 
 - `artifactId`
@@ -100,7 +102,9 @@ Supported textual constructs:
 - `view name : GeneralView|SequenceView|StateTransitionView|ActionFlowView|TreeView { expose … }` is a diagram; `view def Name :> GeneralView { … }` defines a kind of view, and a usage typed by it takes its diagram type, `expose` and filters (`domain/view_usage.py`). A `view def` that no usage refers to is still shown as a diagram, with a warning.
 - `interaction def` / `lifeline` / `message … from … to …` / `then message …`
 - `state def` / nested `state` / `transition … from … to …`
-- `action def` / nested `action` / `succession … first … then …`
+- `action def` / nested `action` / `succession … first … then …` / `first start; then a; then if g then b else c; then done;`
+- `abstract part def …` / `abstract action def …` (`isAbstract`, written only when true). `part def` sets `isDefinition` (also only when true), so an abstract definition shows «abstract part def» and an abstract usage «abstract part»; concrete parts keep «part».
+- `perform [action] ref;` where `ref` is `name`, `flow.step` or `Pkg::Fn::flow.step`. In an action or case it is a flow step (id `<owner>::<last segment>`); in a part it says the part performs that action (id `<part>::perform_<ref>`, so two performs never merge). The first segment is looked up through the owners and then the imports of the file, the rest by child name; the result is stored as `performTargetId`. A perform whose path does not resolve and whose last segment names no element is a warning with its line.
 - `#Keyword dependency … from … to …` (prefix metadata on dependencies; shown as `«Keyword»`)
 - `#Keyword part def …` / `#Keyword part …` / `#Keyword ref part …` (replaces `«part»` with `«Keyword»`)
 

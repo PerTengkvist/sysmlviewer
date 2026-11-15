@@ -2019,6 +2019,21 @@ class ProjectService:
             for aid in artifact_ids
             if aid in project.semantic
         }
+        performers: dict[str, list[str]] | None = None
+        if diagram_mode == "actionFlow":
+            # Who performs each step (`perform flow.step;` in a part). The
+            # parts go into `semantic` for their names, not into the diagram.
+            from domain.perform import resolve_performers
+
+            performers = {
+                aid: parts
+                for aid, parts in resolve_performers(project.semantic).items()
+                if aid in artifact_ids
+            }
+            for parts in performers.values():
+                for part_id in parts:
+                    if part_id not in semantic and part_id in project.semantic:
+                        semantic[part_id] = project.semantic[part_id].to_dict()
         nodes = {}
         from domain.merge import DEFAULT_TREE_HEIGHT, DEFAULT_TREE_WIDTH
         from domain.view_layouts import (
@@ -2233,6 +2248,11 @@ class ProjectService:
             "subdiagrams": subdiagrams,
             "menus": menus,
         }
+        if performers is not None:
+            result["performers"] = performers
+            # Whether the positions are the view's own (views/<name>.json) or
+            # project defaults; the flow direction is read only from the former.
+            result["hasViewLayout"] = has_local_geometry
         if mode_error:
             result["modeError"] = mode_error
         return result

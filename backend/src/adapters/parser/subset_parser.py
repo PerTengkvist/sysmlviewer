@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.perform import ref_leaf, resolve_perform_target
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
 from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
@@ -128,6 +129,8 @@ class _ParserState:
     pending_exposes: list[tuple[str, str, str, str | None]] = field(
         default_factory=list
     )
+    # Source line of each `perform` element, for warnings after linking.
+    perform_lines: dict[str, int] = field(default_factory=dict)
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -199,6 +202,7 @@ class SubsetSysmlParser:
         merged: dict[str, SemanticElement] = {}
         all_imports: list[_ImportDecl] = []
         pending_exposes: list[tuple[str, str, str, str | None]] = []
+        perform_lines: dict[str, int] = {}
         file_warnings: dict[str, list[str]] = {}
         warnings: list[str] = []
 
@@ -211,6 +215,7 @@ class SubsetSysmlParser:
             warnings.extend(state.warnings)
             all_imports.extend(state.imports)
             pending_exposes.extend(state.pending_exposes)
+            perform_lines.update(state.perform_lines)
             for eid, element in state.elements.items():
                 merged[eid] = element
 
@@ -218,10 +223,12 @@ class SubsetSysmlParser:
 
         link_state = _ParserState(elements=merged, file_id="")
         link_state.imports = all_imports
+        link_state.perform_lines = perform_lines
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
         self._warn_unresolved_type_refs(link_state)
         self._warn_unresolved_endpoints(link_state)
+        self._link_performs(link_state)
         warnings.extend(link_state.warnings)
         # Attach link warnings to first file for visibility
         if link_state.warnings and files:
@@ -275,6 +282,10 @@ class SubsetSysmlParser:
         self, content: str, file_id: str, *, defer_link: bool
     ) -> _ParserState:
         state = _ParserState(file_id=file_id, defer_link=defer_link)
+        # `abstract part def X`: the prefix applies to the declaration whose
+        # keyword starts at token index `abstract_decl_at`.
+        pending_abstract = False
+        abstract_decl_at = -1
         tokens = _tokenize(content)
         i = 0
         n = len(tokens)
@@ -316,6 +327,21 @@ class SubsetSysmlParser:
                     break
                 parts.append(nxt)
             return "::".join(parts)
+
+        def expect_feature_ref() -> str | None:
+            """Read ``name``, ``flow.step`` or ``Pkg::Fn::flow.step`` as written."""
+            name = expect_ident()
+            if not name:
+                return None
+            ref = name
+            while peek() and peek().value in {"::", "."}:
+                sep = peek().value
+                nxt = peek(1)
+                if not nxt or nxt.kind not in {"ident", "string"}:
+                    break
+                take()
+                ref += sep + (expect_ident() or "")
+            return ref
 
         def read_multiplicity() -> str | None:
             if not (peek() and peek().value == "["):
@@ -362,7 +388,8 @@ class SubsetSysmlParser:
 
         def skip_until_semicolon_or_brace() -> None:
             """Skip one statement: either through ';' or a matched '{...}' block."""
-            nonlocal i
+            nonlocal i, pending_abstract
+            pending_abstract = False
             depth = 0
             seen_brace = False
             while i < n:
@@ -743,10 +770,68 @@ class SubsetSysmlParser:
 
         pending_metadata_keywords: list[str] = []
 
+        def abstract_declaration_start() -> int | None:
+            """Token index of the declaration `abstract` (at i) applies to.
+
+            Supported: `[#Kw…] part [def] name`, `[#Kw…] ref part name`, and
+            without prefix metadata `action [def] name`, `requirement [def] …`,
+            `use case [def] …` and `case [def] …`. None for anything else.
+            """
+            j = i + 1
+            has_metadata = False
+            while j + 1 < n and tokens[j].value == "#" and tokens[j + 1].kind == "ident":
+                has_metadata = True
+                j += 2
+            start = j
+
+            def value(k: int) -> str | None:
+                return tokens[k].value if k < n else None
+
+            if value(j) == "ref" and value(j + 1) == "part":
+                j += 2
+            elif value(j) == "part":
+                j += 1
+            elif has_metadata:
+                return None
+            elif value(j) in {"action", "requirement", "case"}:
+                j += 1
+            elif value(j) == "use" and value(j + 1) == "case":
+                j += 2
+            else:
+                return None
+            if value(j) == "def":
+                j += 1
+            if value(j) == "<":  # short name `<'R-1'>`
+                while j < n and tokens[j].value != ">":
+                    j += 1
+                j += 1
+            if j < n and tokens[j].kind in {"ident", "string"}:
+                return start
+            return None
+
         while i < n:
             tok = peek()
             if not tok:
                 break
+
+            # The declaration `abstract` applied to has been parsed (or skipped).
+            if pending_abstract and i > abstract_decl_at:
+                pending_abstract = False
+
+            if tok.kind == "ident" and tok.value == "abstract":
+                decl_at = abstract_declaration_start()
+                take()
+                if decl_at is None:
+                    nxt = peek()
+                    state.warnings.append(
+                        f"line {tok.line}: 'abstract' ignored before "
+                        f"'{nxt.value if nxt else 'end of file'}'"
+                    )
+                    pending_abstract = False
+                else:
+                    pending_abstract = True
+                    abstract_decl_at = decl_at
+                continue
 
             if tok.value == "{":
                 take()
@@ -861,10 +946,13 @@ class SubsetSysmlParser:
                     type_ref=type_ref,
                     multiplicity=multiplicity,
                     is_reference=is_ref_part,
+                    is_abstract=pending_abstract,
+                    is_definition=is_def,
                     metadata_keywords=list(pending_metadata_keywords),
                     file_id=file_id,
                 )
                 pending_metadata_keywords = []
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if is_def and is_specialization and type_ref:
@@ -1342,8 +1430,10 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
+                    is_abstract=pending_abstract,
                     file_id=file_id,
                 )
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if peek() and peek().value == "{":
@@ -1489,16 +1579,22 @@ class SubsetSysmlParser:
                         scope.branch_ends = ends
                     continue
 
-                # then perform name; | then action name; | then name;
+                # then perform [action] ref; | then action name; | then name;
                 is_perform = False
                 is_action_kw = False
+                perform_ref: str | None = None
                 if peek() and peek().value == "perform":
                     take()
                     is_perform = True
-                elif peek() and peek().value == "action":
-                    take()
-                    is_action_kw = True
-                target = expect_ident()
+                    if peek() and peek().value == "action":
+                        take()
+                    perform_ref = expect_feature_ref()
+                    target = ref_leaf(perform_ref) if perform_ref else None
+                else:
+                    if peek() and peek().value == "action":
+                        take()
+                        is_action_kw = True
+                    target = expect_ident()
                 if not target:
                     skip_until_semicolon_or_brace()
                     continue
@@ -1511,34 +1607,63 @@ class SubsetSysmlParser:
                 meta: list[str] = []
                 if is_perform:
                     meta = ["perform"]
-                    type_ref = target  # reference name; usage name may equal target
+                    type_ref = perform_ref  # reference as written
                 elif target.lower() == "done":
                     type_ref = "done"
                 elif target.lower() == "start":
                     type_ref = "start"
-                ensure_flow_action(
+                step_id = ensure_flow_action(
                     target,
                     type_ref=type_ref,
                     metadata_keywords=meta or None,
                 )
+                if is_perform:
+                    state.perform_lines.setdefault(step_id, line)
                 _ = is_action_kw
                 link_from_previous(target)
                 continue
 
             if tok.kind == "ident" and tok.value == "perform":
-                # Standalone perform (without then) — still record as flow step
+                # Standalone `perform [action] ref;`. In an action or case it is
+                # also a flow step; in a part it says the part performs `ref`.
                 take()
-                target = expect_ident()
-                if not target:
+                if peek() and peek().value == "action":
+                    take()
+                perform_ref = expect_feature_ref()
+                if not perform_ref:
                     skip_until_semicolon_or_brace()
                     continue
+                target = ref_leaf(perform_ref)
                 if peek() and peek().value == "{":
                     skip_until_semicolon_or_brace()
                 elif peek() and peek().value == ";":
                     take()
-                ensure_flow_action(
-                    target, type_ref=target, metadata_keywords=["perform"]
+                scope = current_scope()
+                if scope and scope.kind == ArtifactKind.PART:
+                    # The part performs `perform_ref`. Not a flow step: its id
+                    # comes from the whole reference, so `perform a.stop;` and
+                    # `perform b.stop;` (or a child named `stop`) stay apart.
+                    perform_id = state.qualify(
+                        "perform_" + perform_ref.replace("::", ".").replace(".", "_")
+                    )
+                    if perform_id not in state.elements:
+                        el = SemanticElement(
+                            id=perform_id,
+                            kind=ArtifactKind.ACTION,
+                            name=target,
+                            parent_id=state.current_parent(),
+                            type_ref=perform_ref,
+                            file_id=file_id,
+                            metadata_keywords=["perform"],
+                        )
+                        state.add_child(el.parent_id, perform_id)
+                        state.elements[perform_id] = el
+                        state.perform_lines[perform_id] = tok.line
+                    continue
+                step_id = ensure_flow_action(
+                    target, type_ref=perform_ref, metadata_keywords=["perform"]
                 )
+                state.perform_lines.setdefault(step_id, tok.line)
                 link_from_previous(target)
                 continue
 
@@ -1566,8 +1691,10 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     short_id=short_id,
+                    is_abstract=pending_abstract,
                     file_id=file_id,
                 )
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 brace = peek()
@@ -1801,8 +1928,10 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     short_id=short_id,
+                    is_abstract=pending_abstract,
                     file_id=file_id,
                 )
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 nxt = peek()
@@ -1869,8 +1998,10 @@ class SubsetSysmlParser:
                         parent_id=state.current_parent(),
                         type_ref=type_ref,
                         short_id=short_id,
+                        is_abstract=pending_abstract,
                         file_id=file_id,
                     )
+                    pending_abstract = False
                     state.add_child(el.parent_id, element_id)
                     state.elements[element_id] = el
                     brace = peek()
@@ -2226,6 +2357,7 @@ class SubsetSysmlParser:
         if not state.defer_link:
             self._inherit_features_onto_usages(state)
             self._warn_unresolved_type_refs(state)
+            self._link_performs(state)
         return state
 
     def _apply_import_visibility(self, state: _ParserState) -> None:
@@ -2266,7 +2398,10 @@ class SubsetSysmlParser:
             )
 
     def _warn_unresolved_type_refs(self, state: _ParserState) -> None:
-        """Flag type references that do not match any element name in the graph."""
+        """Flag type references that do not match any element name in the graph.
+
+        Perform references are paths, checked by `_link_performs`.
+        """
         known_library = {
             "GeneralView",
             "SequenceView",
@@ -2287,6 +2422,8 @@ class SubsetSysmlParser:
         names = {el.name for el in state.elements.values()} | known_library
         for el in state.elements.values():
             if not el.type_ref or el.type_ref in names:
+                continue
+            if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
                 continue
             state.warnings.append(
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
@@ -2316,6 +2453,39 @@ class SubsetSysmlParser:
                     state.warnings.append(
                         f"{label} {role} not found: {endpoint} (in '{el.id}')"
                     )
+
+    def _link_performs(self, state: _ParserState) -> None:
+        """Resolve each `perform <ref>;` and store its target, or warn.
+
+        The reference is looked up through the owners and then the imports of
+        its file. When the path does not resolve but its last segment names
+        some element, it is left unresolved without a warning (the name check
+        used before paths were followed).
+        """
+        from domain.perform import is_perform
+
+        imports: dict[str | None, list[str]] = {}
+        for imp in state.imports:
+            imports.setdefault(imp.file_id, []).append(imp.path)
+        names = {
+            el.name
+            for el in state.elements.values()
+            if not (el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords)
+        }
+        for el in sorted(state.elements.values(), key=lambda e: e.id):
+            if not is_perform(el):
+                continue
+            target = resolve_perform_target(
+                state.elements, el, imports.get(el.file_id, [])
+            )
+            el.perform_target_id = target
+            if target is not None or ref_leaf(el.type_ref or "") in names:
+                continue
+            line = state.perform_lines.get(el.id)
+            prefix = f"line {line}: " if line is not None else ""
+            state.warnings.append(
+                f"{prefix}perform target not found: {el.type_ref} (in '{el.parent_id}')"
+            )
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:
         """Copy ports, attributes, nested parts, and relations from defs onto usages."""
