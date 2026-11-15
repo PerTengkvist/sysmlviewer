@@ -9,6 +9,7 @@ Part of `Car`.
 - Comprises `roadHolding`.
 - Depends on `chassis` («Mount»).
 - `wheels` depends on this («Support»).
+- Implemented by `suspensionAsm`.
 
 ## Diagrams
 

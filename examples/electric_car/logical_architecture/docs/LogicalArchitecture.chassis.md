@@ -10,6 +10,7 @@ Part of `Car`.
 - `battery` depends on this («Mount»).
 - `suspension` depends on this («Mount»).
 - `body` depends on this («Mount»).
+- Implemented by `chassisFrame`.
 
 ## Diagrams
 

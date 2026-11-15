@@ -9,6 +9,7 @@ Part of `Car`.
 - `bodyController` depends on this («Command»).
 - Depends on `battery` («Energy»).
 - Depends on `body` («Mount»).
+- Implemented by `windowLiftAsm`.
 - Satisfies `CabinAccess`.
 
 ## Diagrams

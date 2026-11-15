@@ -8,6 +8,9 @@ Part of `Car`.
 
 - Comprises `cabinTemperature`.
 - Depends on `battery` («Energy»).
+- Implemented by `infotainmentEcu`.
+- Implemented by `climateControlSw`.
+- Implemented by `hvacAssembly`.
 
 ## Diagrams
 

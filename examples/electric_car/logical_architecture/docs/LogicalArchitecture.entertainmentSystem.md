@@ -8,6 +8,9 @@ Part of `Car`.
 
 - Comprises `mediaPlayback`.
 - Depends on `battery` («Energy»).
+- Implemented by `infotainmentEcu`.
+- Implemented by `entertainmentSw`.
+- Implemented by `displayAndSpeakers`.
 
 ## Diagrams
 

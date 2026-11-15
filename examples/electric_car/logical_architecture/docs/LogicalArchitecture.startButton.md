@@ -8,6 +8,7 @@ Part of `Car`.
 
 - Depends on `vehicleController` («Command»).
 - Depends on `body` («Mount»).
+- Implemented by `startButtonMech`.
 - Satisfies `PowerModes`.
 
 ## Diagrams

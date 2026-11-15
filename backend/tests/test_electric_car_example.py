@@ -44,7 +44,8 @@ def test_electric_car_parses_without_warnings():
         "Dynamics",
         "PhysicalArchitecture",
     }
-    assert "PhysicalArchitecture::LogicalCounterparts" in result.elements
+    # «implements» points straight at the logical parts; no copies of them.
+    assert "PhysicalArchitecture::LogicalCounterparts" not in result.elements
 
 
 def test_physical_parts_implement_logical_parts():
@@ -61,8 +62,6 @@ def test_physical_parts_implement_logical_parts():
 
     def check(part_id: str) -> None:
         part = elements[part_id]
-        if "Logical" in (part.metadata_keywords or []):
-            return
         assert part_id in sources, part_id
         for child_id in part.children:
             child = elements.get(child_id)
@@ -266,14 +265,13 @@ def test_shipped_views_render_requested_diagrams():
     assert physical["diagramMode"] == "whitebox"
     assert physical["hierarchicalLevels"] == 3
     assert any(e["name"] == "entertainmentSw" for e in physical["semantic"].values())
-    # Logical counterparts live outside VehiclePhysical; implements filtered out of whitebox
+    # implements is filtered out of the whitebox, and no logical part shows.
     assert not any(
         e["kind"] == "dependency" and "implements" in (e.get("metadataKeywords") or [])
         for e in physical["semantic"].values()
     )
     assert not any(
-        "Logical" in (e.get("metadataKeywords") or [])
-        for e in physical["semantic"].values()
+        e["id"].startswith("LogicalArchitecture::") for e in physical["semantic"].values()
     )
 
     physical_deps = service.get_view(
@@ -291,9 +289,17 @@ def test_shipped_views_render_requested_diagrams():
         )
         == 40
     )
-    assert any(
-        e["id"] == "PhysicalArchitecture::LogicalCounterparts::car"
+    # The logical ends of «implements» show as plain nodes, not the logical
+    # architecture with its ports and connections.
+    logical_ends = {
+        e["id"]
         for e in physical_deps["semantic"].values()
+        if e["id"].startswith("LogicalArchitecture::")
+    }
+    assert "LogicalArchitecture::Car" in logical_ends
+    assert len(logical_ends) == 28  # Car and its 27 parts
+    assert all(
+        physical_deps["semantic"][i]["kind"] == "part" for i in logical_ends
     )
 
     unlock = service.get_view(project.id, "Dynamics::UnlockSequenceView")
@@ -381,12 +387,6 @@ def test_every_satisfy_source_exists():
 def test_every_logical_part_is_implemented():
     """Converse of test_physical_parts_implement_logical_parts."""
     elements = _load().elements
-    counterparts = {
-        e.name: e.id
-        for e in elements.values()
-        if e.kind == ArtifactKind.PART
-        and e.parent_id == "PhysicalArchitecture::LogicalCounterparts"
-    }
     implemented = {
         e.target_id
         for e in elements.values()
@@ -395,8 +395,8 @@ def test_every_logical_part_is_implemented():
     }
     not_implemented = sorted(
         name
-        for name in _parts_under(elements, CAR)
-        if counterparts.get(name) not in implemented
+        for name, part in _parts_under(elements, CAR).items()
+        if part.id not in implemented
     )
     assert not_implemented == []
 
@@ -1103,27 +1103,10 @@ def test_every_leaf_requirement_is_traced_to_a_logical_part():
 
 # --- Traceability: physical «implements» reaches the logical architecture ----
 
-COUNTERPARTS = "PhysicalArchitecture::LogicalCounterparts"
-
-
-def test_every_implements_target_reaches_the_logical_car():
-    """An «implements» target is a logical part itself, or a LogicalCounterparts
-    copy that subsets one (the whole car: typed by the logical Car)."""
-    from domain.type_resolution import part_def_resolver
-
+def test_every_implements_target_is_a_logical_part():
+    """«implements» points straight at a part of LogicalArchitecture::Car, or at
+    the logical Car definition itself for the whole physical car."""
     elements = _load().elements
-    resolve = part_def_resolver(elements)
-    subsets = {
-        e.source_id: e.target_id
-        for e in elements.values()
-        if e.kind == ArtifactKind.SUBSETTING
-    }
-
-    def logical(part_id: str | None) -> bool:
-        return part_id == CAR or (
-            part_id in elements and elements[part_id].parent_id == CAR
-        )
-
     targets = {
         e.target_id
         for e in elements.values()
@@ -1132,15 +1115,18 @@ def test_every_implements_target_reaches_the_logical_car():
         and (e.file_id or "").startswith("physical_architecture/")
     }
     assert len(targets) == 28
-    unreached = []
-    for target in sorted(targets):
-        if logical(target):
-            continue
-        el = elements[target]
-        typed = resolve(el.type_ref)
-        if el.parent_id == COUNTERPARTS and (
-            logical(subsets.get(target)) or (typed is not None and typed.id == CAR)
-        ):
-            continue
-        unreached.append(target)
-    assert unreached == []
+    assert CAR in targets
+    assert sorted(
+        t for t in targets if t != CAR and elements[t].parent_id != CAR
+    ) == []
+
+
+def test_a_physical_part_climbs_through_implements_to_the_logical_part():
+    elements = _load().elements
+    assert _up_ids(elements, "PhysicalArchitecture::VehiclePhysical::vehicleEcu") == [
+        "Requirements::Performance",
+        "Requirements::PowerModes",
+        "UseCases::Driving::StartVehicle",
+        "Functions::Security::authenticate",
+        f"{CAR}::vehicleController",
+    ]

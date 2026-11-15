@@ -10,6 +10,7 @@ Part of `Car`.
 - `bodyController` depends on this («Command»).
 - Depends on `body` («Mount»).
 - Depends on `windshield` («Clear»).
+- Implemented by `wiperAsm`.
 
 ## Diagrams
 

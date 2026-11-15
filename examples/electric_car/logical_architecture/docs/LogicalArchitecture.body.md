@@ -16,6 +16,7 @@ Part of `Car`.
 - `lamps` depends on this («Mount»).
 - `instrumentCluster` depends on this («Mount»).
 - `startButton` depends on this («Mount»).
+- Implemented by `bodyShell`.
 - Satisfies `VehicleLength`.
 - Satisfies `VehicleWidth`.
 - Satisfies `VehicleHeight`.

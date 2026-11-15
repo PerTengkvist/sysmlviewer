@@ -7,6 +7,7 @@ Part of `Car`.
 ## Relations
 
 - Depends on `body` («Mount»).
+- Implemented by `windowAsm`.
 
 ## Diagrams
 

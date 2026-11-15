@@ -11,6 +11,9 @@ Part of `Car`.
 - Depends on `battery` («Energy»).
 - Depends on `chassis` («Mount»).
 - Depends on `wheels` («Actuate»).
+- Implemented by `engineEcu`.
+- Implemented by `engineControlSw`.
+- Implemented by `electricMotor`.
 
 ## Diagrams
 

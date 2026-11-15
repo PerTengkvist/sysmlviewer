@@ -10,6 +10,7 @@ Part of `Car`.
 - `bodyController` depends on this («Command»).
 - Depends on `battery` («Energy»).
 - Depends on `body` («Mount»).
+- Implemented by `lampUnits`.
 
 ## Diagrams
 

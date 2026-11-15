@@ -8,6 +8,7 @@ Part of `Car`.
 
 - Depends on `body` («Mount»).
 - `wipers` depends on this («Clear»).
+- Implemented by `windshieldGlass`.
 - Satisfies `ForwardVisibility`.
 
 ## Diagrams

@@ -8,6 +8,7 @@ Part of `Car`.
 
 - `bodyController` depends on this («Command»).
 - Depends on `body` («Mount»).
+- Implemented by `doorLockAsm`.
 - Satisfies `AccessControl`.
 
 ## Diagrams

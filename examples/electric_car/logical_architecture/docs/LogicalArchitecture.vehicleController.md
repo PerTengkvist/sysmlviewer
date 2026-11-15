@@ -13,6 +13,8 @@ Part of `Car`.
 - `startButton` depends on this («Command»).
 - Depends on `driveController` («Enable»).
 - Depends on `instrumentCluster` («Inform»).
+- Implemented by `vehicleEcu`.
+- Implemented by `vehicleControlSw`.
 
 ## Diagrams
 

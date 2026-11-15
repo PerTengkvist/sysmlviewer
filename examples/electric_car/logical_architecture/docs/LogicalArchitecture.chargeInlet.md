@@ -8,6 +8,8 @@ Part of `Car`.
 
 - Comprises `chargeConnection`.
 - Depends on `battery` («Energy»).
+- Implemented by `batteryControlSw`.
+- Implemented by `chargeInletMech`.
 
 ## Diagrams
 

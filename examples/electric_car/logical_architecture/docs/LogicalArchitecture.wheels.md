@@ -10,6 +10,7 @@ Part of `Car`.
 - Depends on `suspension` («Support»).
 - `engine` depends on this («Actuate»).
 - `frictionBrakes` depends on this («Actuate»).
+- Implemented by `wheelSet`.
 
 ## Diagrams
 

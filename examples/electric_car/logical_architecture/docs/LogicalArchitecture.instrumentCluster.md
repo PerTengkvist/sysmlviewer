@@ -9,6 +9,7 @@ Part of `Car`.
 - Comprises `driverInformation`.
 - `vehicleController` depends on this («Inform»).
 - Depends on `body` («Mount»).
+- Implemented by `instrumentClusterUnit`.
 
 ## Diagrams
 

@@ -49,11 +49,12 @@ test('Force grid shrinks a part that has grown too big, and stays put on a secon
   expect(await sizes(page)).toEqual(first)
 })
 
-test('a second root stays beside the whitebox root, which does not grow', async ({ page }) => {
+test('a second top-level container stays beside the whitebox root, which does not grow', async ({ page }) => {
   await openProject(page, exampleProjectFile('electric_car'))
   await openView(page, 'PhysicalArchitecture::PhysicalDependenciesView')
   const root = 'PhysicalArchitecture::VehiclePhysical'
-  const other = 'PhysicalArchitecture::LogicalCounterparts'
+  // The logical Car, at the far end of the «implements» dependencies.
+  const other = 'LogicalArchitecture::Car'
 
   await runAutoLayout(page, { mode: 'simple', algorithm: 'favour-grid' })
   const a = await screenBox(page, root)
