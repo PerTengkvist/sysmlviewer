@@ -580,14 +580,35 @@ def test_function_views_render():
     assert any(e["name"] == "driveController" for e in allocation["semantic"].values())
 
 
-# --- Functions: FunctionNode, one action flow and one view per function -----
+# --- Functions: FunctionNode, action flows and one view per flow ------------
 
 DECISION_TYPES = {"decide", "decision", "condition"}
 
 
 def _flow_id(function_id: str) -> str:
+    """The function's main flow, `<function>Flow`."""
     name = function_id.split("::")[-1]
     return f"{function_id}::{name[0].lower()}{name[1:]}Flow"
+
+
+def _flow_ids(elements, function_id: str) -> list[str]:
+    """Every action flow a function owns: its main flow first, then the rest."""
+    flows = [
+        c
+        for c in elements[function_id].children
+        if c in elements and elements[c].kind == ArtifactKind.ACTION
+    ]
+    main = _flow_id(function_id)
+    return sorted(flows, key=lambda f: (f != main, f))
+
+
+def _flow_view_name(function_id: str, flow_id: str) -> str:
+    """`SecurityFlowView` for the main flow, `SecurityCabinAccessFlowView` for another."""
+    name = function_id.split("::")[-1]
+    if flow_id == _flow_id(function_id):
+        return f"{name}FlowView"
+    local = flow_id.split("::")[-1].removesuffix("Flow")
+    return f"{name}{local[0].upper()}{local[1:]}FlowView"
 
 
 def _flow_steps(elements, flow_id):
@@ -622,40 +643,42 @@ def test_function_and_function_node_are_abstract_defs():
 
 def test_functional_entities_are_function_nodes():
     _, entities = _functions_and_entities(_load().elements)
-    assert len(entities) == 22
+    assert len(entities) == 24
     assert sorted(e.name for e in entities if e.type_ref != "FunctionNode") == []
 
 
 def test_every_function_has_a_connected_flow():
+    """At least one flow per function, its main flow among them; each connected."""
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
     for fid in functions:
-        flow_id = _flow_id(fid)
-        assert flow_id in elements, flow_id
-        assert elements[flow_id].kind == ArtifactKind.ACTION
-        assert elements[flow_id].documentation, flow_id
-        actions, successions = _flow_steps(elements, flow_id)
-        by_type = {(a.type_ref or "").lower(): a.id for a in actions}
-        assert "start" in by_type and "done" in by_type, flow_id
-        outs: dict[str, set[str]] = {}
-        for s in successions:
-            assert s.source_id in elements and s.target_id in elements, s.id
-            outs.setdefault(s.source_id, set()).add(s.target_id)
-        reached = {by_type["start"]}
-        todo = [by_type["start"]]
-        while todo:
-            for nxt in outs.get(todo.pop(), ()):
-                if nxt not in reached:
-                    reached.add(nxt)
-                    todo.append(nxt)
-        assert by_type["done"] in reached, flow_id
-        assert sorted(a.name for a in actions if a.id not in reached) == [], flow_id
-        steps = [a for a in actions if not _is_pseudo(a)]
-        assert len(steps) >= 2, flow_id
-        assert all(a.documentation for a in steps), flow_id
+        flow_ids = _flow_ids(elements, fid)
+        assert flow_ids and flow_ids[0] == _flow_id(fid), (fid, flow_ids)
+        for flow_id in flow_ids:
+            assert elements[flow_id].documentation, flow_id
+            actions, successions = _flow_steps(elements, flow_id)
+            by_type = {(a.type_ref or "").lower(): a.id for a in actions}
+            assert "start" in by_type and "done" in by_type, flow_id
+            outs: dict[str, set[str]] = {}
+            for s in successions:
+                assert s.source_id in elements and s.target_id in elements, s.id
+                outs.setdefault(s.source_id, set()).add(s.target_id)
+            reached = {by_type["start"]}
+            todo = [by_type["start"]]
+            while todo:
+                for nxt in outs.get(todo.pop(), ()):
+                    if nxt not in reached:
+                        reached.add(nxt)
+                        todo.append(nxt)
+            assert by_type["done"] in reached, flow_id
+            assert sorted(a.name for a in actions if a.id not in reached) == [], flow_id
+            steps = [a for a in actions if not _is_pseudo(a)]
+            assert len(steps) >= 2, flow_id
+            assert all(a.documentation for a in steps), flow_id
 
 
 def test_every_flow_step_is_performed_by_one_entity_of_its_function():
+    """Every entity performs a step in at least one of its function's flows."""
     from domain.perform import resolve_performers
 
     elements = _load().elements
@@ -663,41 +686,61 @@ def test_every_flow_step_is_performed_by_one_entity_of_its_function():
     performers = resolve_performers(elements)
     performing: set[str] = set()
     for fid in functions:
-        actions, _ = _flow_steps(elements, _flow_id(fid))
-        for step in actions:
-            if _is_pseudo(step):
-                assert step.id not in performers, step.id
-                continue
-            parts = performers.get(step.id, [])
-            assert len(parts) == 1, (step.id, parts)
-            assert elements[parts[0]].parent_id == fid, (step.id, parts)
-            performing.add(parts[0])
+        for flow_id in _flow_ids(elements, fid):
+            actions, _ = _flow_steps(elements, flow_id)
+            for step in actions:
+                if _is_pseudo(step):
+                    assert step.id not in performers, step.id
+                    continue
+                parts = performers.get(step.id, [])
+                assert len(parts) == 1, (step.id, parts)
+                assert elements[parts[0]].parent_id == fid, (step.id, parts)
+                performing.add(parts[0])
     assert sorted(e.name for e in entities if e.id not in performing) == []
 
 
-def test_every_function_has_a_flow_view():
+def test_every_flow_has_a_flow_view():
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
     repo = WorkspaceProjectRepository(ROOT)
     project = repo.get_open()
     service = ProjectService(repo=repo, parser=SubsetSysmlParser())
     for fid in functions:
-        name = fid.split("::")[-1]
-        view_id = f"Functions::{name}FlowView"
-        view_el = elements.get(view_id)
-        assert view_el is not None, view_id
-        assert view_el.type_ref == "ActionFlowView"
-        assert view_el.expose_refs == [_flow_id(fid)]
-        assert (ROOT / "views" / f"{name}FlowView.json").is_file(), view_id
+        for flow_id in _flow_ids(elements, fid):
+            name = _flow_view_name(fid, flow_id)
+            view_id = f"Functions::{name}"
+            view_el = elements.get(view_id)
+            assert view_el is not None, view_id
+            assert view_el.type_ref == "ActionFlowView"
+            assert view_el.expose_refs == [flow_id]
+            assert (ROOT / "views" / f"{name}.json").is_file(), view_id
 
-        view = service.get_view(project.id, view_id)
-        assert view["diagramMode"] == "actionFlow", view_id
-        assert "modeError" not in view, view_id
-        actions, _ = _flow_steps(elements, _flow_id(fid))
-        assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
-        steps = {a.id for a in actions if not _is_pseudo(a)}
-        assert set(view["performers"]) == steps, view_id
-        assert view["hasViewLayout"] is True, view_id
+            view = service.get_view(project.id, view_id)
+            assert view["diagramMode"] == "actionFlow", view_id
+            assert "modeError" not in view, view_id
+            actions, _ = _flow_steps(elements, flow_id)
+            assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
+            steps = {a.id for a in actions if not _is_pseudo(a)}
+            assert set(view["performers"]) == steps, view_id
+            assert view["hasViewLayout"] is True, view_id
+
+
+def test_security_owns_doors_and_windows_on_the_body_controller():
+    elements = _load().elements
+    security = "Functions::Security"
+    assert _flow_ids(elements, security) == [
+        f"{security}::securityFlow",
+        f"{security}::cabinAccessFlow",
+    ]
+    allocated = {
+        a.source_id: a.target_id
+        for a in elements.values()
+        if a.kind == ArtifactKind.ALLOCATION
+    }
+    for name in ("doorControl", "windowControl", "lockControl"):
+        entity = elements[f"{security}::{name}"]
+        assert entity.documentation, name
+        assert allocated[entity.id] == f"{CAR}::bodyController", name
 
 
 def _succession_pairs(elements, flow_id):
@@ -729,6 +772,19 @@ def test_branching_flows_have_the_intended_successions():
         ("blendRegen", "applyFriction", False),
         ("applyFriction", "done", False),
         ("driveWheels", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::Security::cabinAccessFlow") == {
+        ("start", "doorRequested", False),
+        ("doorRequested", "readDoorHandle", True),
+        ("doorRequested", "runWindowLift", True),
+        ("readDoorHandle", "checkUnlocked", False),
+        ("checkUnlocked", "carUnlocked", False),
+        ("carUnlocked", "releaseDoor", True),
+        ("carUnlocked", "stayLatched", True),
+        ("releaseDoor", "showDoorState", False),
+        ("showDoorState", "done", False),
+        ("stayLatched", "done", False),
+        ("runWindowLift", "done", False),
     }
 
 

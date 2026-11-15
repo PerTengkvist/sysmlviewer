@@ -7,6 +7,8 @@ Part of `Car`.
 ## Relations
 
 - Comprises `lockControl`.
+- Comprises `doorControl`.
+- Comprises `windowControl`.
 - Comprises `wipeControl`.
 - Comprises `headlampControl`.
 - Comprises `indicatorControl`.

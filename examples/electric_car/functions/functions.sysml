@@ -1,13 +1,13 @@
 package Functions {
-  doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Each function also «refine»s the use cases it carries out; those dependencies are collected in the FunctionTraceability package. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function also has an action flow, and every step of it is performed by one of its functional entities; a FlowView per function shows the flow with the performer on each step. */
+  doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Each function also «refine»s the use cases it carries out; those dependencies are collected in the FunctionTraceability package. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function has one or more action flows, and every step of a flow is performed by one of the function's functional entities; a FlowView per flow shows it with the performer on each step. */
   abstract part def Function {
-    doc /* Base of the functions the car performs. A function is decomposed into FunctionNode entities and has one action flow that those entities perform. */
+    doc /* Base of the functions the car performs. A function is decomposed into FunctionNode entities and has at least one action flow that those entities perform. */
   }
   abstract part def FunctionNode {
-    doc /* A functional entity: a part of a function that performs steps of the function's flow. Every FunctionNode is allocated to exactly one logical part. */
+    doc /* A functional entity: a part of a function that performs steps of the function's flows. Every FunctionNode is allocated to exactly one logical part. */
   }
   part def Security :> Function {
-    doc /* Authenticate the driver, unlock and lock the doors, and release the immobilizer. Every driving function depends on Security before the car will move. */
+    doc /* Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved. */
     part authenticate : FunctionNode {
       doc /* Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller. */
       perform securityFlow.checkCredential;
@@ -24,10 +24,22 @@ package Functions {
     part lockControl : FunctionNode {
       doc /* Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller. */
       perform securityFlow.unlockDoors;
+      perform cabinAccessFlow.checkUnlocked;
+      perform cabinAccessFlow.stayLatched;
+    }
+    part doorControl : FunctionNode {
+      doc /* Own the doors: read the inside and outside handles, open a door once its latch is free, and report each door open or closed. Allocated to the body controller. */
+      perform cabinAccessFlow.readDoorHandle;
+      perform cabinAccessFlow.releaseDoor;
+    }
+    part windowControl : FunctionNode {
+      doc /* Own the side windows: run each window lift on its switch and reverse a window that pinches. Allocated to the body controller. */
+      perform cabinAccessFlow.runWindowLift;
     }
     part driverInformation : FunctionNode {
       doc /* Tell the driver what state the car is in: ready, gear, speed, charge and warnings. Allocated to the instrument cluster. */
       perform securityFlow.showReady;
+      perform cabinAccessFlow.showDoorState;
     }
     action securityFlow {
       doc /* From a key fob credential to a car that is ready to start. A valid key unlocks the doors, wakes the cabin, releases the immobilizer and tells the driver; any other key is rejected and the car stays locked. */
@@ -57,6 +69,35 @@ package Functions {
       first releaseImmobilizer then showReady;
       first showReady then done;
       first rejectKey then done;
+    }
+    action cabinAccessFlow {
+      doc /* From a door handle or a window switch to a door or window that has moved. A door opens only on an unlocked car; a locked car keeps it latched. A window follows its switch, and the driver sees which doors are open. */
+      action readDoorHandle {
+        doc /* When the request comes from a door: the pull on its inside or outside handle is read. Output: the door the occupant wants to open. */
+      }
+      action checkUnlocked {
+        doc /* Before that door may open: the state of the latches is read; the outcome is the carUnlocked decision. */
+      }
+      action releaseDoor {
+        doc /* On an unlocked car: the latch of the requested door lets go and the door swings open. */
+      }
+      action stayLatched {
+        doc /* On a locked car: the pull is ignored and the door stays latched, so the car cannot be entered without the key. */
+      }
+      action showDoorState {
+        doc /* After the door has moved: the door-ajar warning is shown while it is open and cleared once it is closed and latched again. */
+      }
+      action runWindowLift {
+        doc /* When the request comes from a window switch: the window lowers or rises while the switch is held, and backs off if it meets an obstacle on the way up. */
+      }
+      first start;
+      then if doorRequested then readDoorHandle else runWindowLift;
+      first readDoorHandle then checkUnlocked;
+      then if carUnlocked then releaseDoor else stayLatched;
+      first releaseDoor then showDoorState;
+      first showDoorState then done;
+      first stayLatched then done;
+      first runWindowLift then done;
     }
   }
 
@@ -302,6 +343,8 @@ package Functions {
   allocate Security::immobilizer to LogicalArchitecture::Car::vehicleController;
   allocate Security::wakeUp to LogicalArchitecture::Car::vehicleController;
   allocate Security::lockControl to LogicalArchitecture::Car::bodyController;
+  allocate Security::doorControl to LogicalArchitecture::Car::bodyController;
+  allocate Security::windowControl to LogicalArchitecture::Car::bodyController;
   allocate Security::driverInformation to LogicalArchitecture::Car::instrumentCluster;
   allocate Charging::chargeConnection to LogicalArchitecture::Car::chargeInlet;
   allocate Charging::chargeSession to LogicalArchitecture::Car::battery;
@@ -336,6 +379,11 @@ package Functions {
   view SecurityFlowView : ActionFlowView {
     doc /* Security flow: credential check, then unlock, wake-up, immobilizer release and ready indication, or rejection of the key. Each step shows the functional entity that performs it. */
     expose Security::securityFlow;
+  }
+
+  view SecurityCabinAccessFlowView : ActionFlowView {
+    doc /* Security cabin access flow: a door handle is read, checked against the latches and the door released or kept latched, or a window is moved on its switch. Each step shows the functional entity that performs it. */
+    expose Security::cabinAccessFlow;
   }
 
   view ChargingFlowView : ActionFlowView {

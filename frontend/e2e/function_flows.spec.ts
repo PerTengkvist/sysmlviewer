@@ -49,6 +49,38 @@ test('SecurityFlowView shows every step with its performer', async ({ page }) =>
   )
 })
 
+test('SecurityCabinAccessFlowView shows the door and window steps with their performers', async ({
+  page,
+}) => {
+  const flow = 'Functions::Security::cabinAccessFlow'
+  await openView(page, 'Functions::SecurityCabinAccessFlowView')
+  await fitView(page)
+
+  const steps: Record<string, string> = {
+    readDoorHandle: 'doorControl',
+    checkUnlocked: 'lockControl',
+    releaseDoor: 'doorControl',
+    stayLatched: 'lockControl',
+    showDoorState: 'driverInformation',
+    runWindowLift: 'windowControl',
+  }
+  for (const id of ['start', 'doorRequested', 'carUnlocked', 'done', ...Object.keys(steps)]) {
+    await expect(page.locator(nodeSel(`${flow}::${id}`))).toBeVisible()
+  }
+  await expect(page.locator('.react-flow__node')).toHaveCount(10)
+  for (const [step, performer] of Object.entries(steps)) {
+    await expect(page.locator(`${nodeSel(`${flow}::${step}`)} .action-performer`)).toHaveText(
+      `⟨${performer}⟩`,
+    )
+  }
+  // Saved top-down: the door path runs down the first column.
+  const ys: number[] = []
+  for (const id of ['start', 'doorRequested', 'readDoorHandle', 'checkUnlocked', 'carUnlocked', 'releaseDoor', 'showDoorState', 'done']) {
+    ys.push((await page.locator(nodeSel(`${flow}::${id}`)).boundingBox())!.y)
+  }
+  expect([...ys].sort((a, b) => a - b)).toEqual(ys)
+})
+
 test('SecurityFlowView labels the branches and not the generated successions', async ({
   page,
 }) => {
