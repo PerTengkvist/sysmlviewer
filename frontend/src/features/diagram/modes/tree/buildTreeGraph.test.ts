@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildTreeGraph } from './buildTreeGraph'
-import type { ViewPayload } from '../../../api'
+import type { ViewPayload } from '../../../../api'
 
 function treeFixture(): ViewPayload {
   return {

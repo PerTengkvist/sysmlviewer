@@ -115,9 +115,10 @@ class _ParserState:
     scopes: list[_Scope] = field(default_factory=list)
     file_id: str = ""
     anon_conn: int = 0
-    anon_message: int = 0
-    anon_transition: int = 0
-    anon_succession: int = 0
+    # Anonymous successions, messages and transitions are numbered per owner and
+    # prefix (`<owner>::succN`), so a flow's ids do not shift when another flow in
+    # the same file changes. The ids are artifact ids that view layouts key on.
+    anon_per_owner: dict[tuple[str | None, str], int] = field(default_factory=dict)
     anon_dependency: int = 0
     anon_allocation: int = 0
     anon_binding: int = 0
@@ -138,6 +139,12 @@ class _ParserState:
             if scope.element_id:
                 return scope.element_id
         return None
+
+    def next_anon_name(self, prefix: str) -> str:
+        key = (self.current_parent(), prefix)
+        n = self.anon_per_owner.get(key, 0) + 1
+        self.anon_per_owner[key] = n
+        return f"{prefix}{n}"
 
     def qualify(self, name: str) -> str:
         parent = self.current_parent()
@@ -531,8 +538,7 @@ class SubsetSysmlParser:
                 return resolve_ref(name)
 
             if not succ_name:
-                state.anon_succession += 1
-                succ_name = f"succ{state.anon_succession}"
+                succ_name = state.next_anon_name("succ")
             element_id = state.qualify(succ_name)
             el = SemanticElement(
                 id=element_id,
@@ -670,8 +676,7 @@ class SubsetSysmlParser:
                             return child.id
                 return resolve_ref(name)
 
-            state.anon_message += 1
-            msg_name = f"msg{state.anon_message}"
+            msg_name = state.next_anon_name("msg")
             element_id = state.qualify(msg_name)
             payload = ".".join(p for p in payload_parts if p) or msg_name
             el = SemanticElement(
@@ -1382,8 +1387,7 @@ class SubsetSysmlParser:
                 if peek() and peek().value == ";":
                     take()
                 if not trans_name:
-                    state.anon_transition += 1
-                    trans_name = f"t{state.anon_transition}"
+                    trans_name = state.next_anon_name("t")
                 parent = state.current_parent()
 
                 def resolve_state(name: str | None) -> str | None:
@@ -1472,8 +1476,7 @@ class SubsetSysmlParser:
                 if peek() and peek().value == ";":
                     take()
                 if not succ_name:
-                    state.anon_succession += 1
-                    succ_name = f"succ{state.anon_succession}"
+                    succ_name = state.next_anon_name("succ")
                 parent = state.current_parent()
 
                 def resolve_action(name: str | None) -> str | None:

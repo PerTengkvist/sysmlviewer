@@ -30,6 +30,7 @@ type StateFile = {
   semantic: Record<
     string,
     {
+      id: string
       kind: string
       name: string
       parentId?: string | null
@@ -141,10 +142,6 @@ describe.skipIf(!HAS_FIXTURE)('DataCenterLogical real layout — routes must not
         el.kind === 'connection' && id.startsWith(`${ROOT}::`),
     )
     .map(([id, el]) => {
-      const sourcePart = childIds.find((p) => el.sourceId?.startsWith(`${p}::`))
-        || (el.sourceId?.startsWith(`${ROOT}::`) && !el.sourceId.slice(ROOT.length + 2).includes('::')
-          ? ROOT
-          : null)
       // owner part of port
       const ownerOf = (portId: string | null | undefined): string | null => {
         if (!portId) return null
@@ -166,7 +163,7 @@ describe.skipIf(!HAS_FIXTURE)('DataCenterLogical real layout — routes must not
         targetHandle: `target:${el.targetId || ''}`,
       }
     })
-    .filter((e): e is Edge & { source: string; target: string } =>
+    .filter((e): e is typeof e & { source: string; target: string } =>
       !!e.source && !!e.target,
     )
 

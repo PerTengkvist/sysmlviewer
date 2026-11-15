@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import type { ViewPayload } from '../../../api'
+import type { ViewPayload } from '../../../../api'
 import { buildAllocationGraph } from './buildAllocationGraph'
 
 describe('buildAllocationGraph', () => {
   it('provides menuItems on part nodes', () => {
     const view: ViewPayload = {
-      view: { id: 'v', name: 'Alloc', rootArtifactId: 'Site', typeRef: 'AllocationView' },
+      view: {
+        id: 'v',
+        name: 'Alloc',
+        rootArtifactId: 'Site',
+        parentViewId: null,
+        typeRef: 'AllocationView',
+      },
       diagramMode: 'allocation',
       hierarchicalLevels: 2,
       semantic: {

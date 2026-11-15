@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { SemanticElement, ViewPayload } from '../../../api'
-import type { ViewMode } from '../../../settings'
+import type { SemanticElement, ViewPayload } from '../../../../api'
+import type { ViewMode } from '../../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { isRelationElement } from '../../relationKinds'
 import type { HighlightOpts } from '../sequence/buildSequenceGraph'

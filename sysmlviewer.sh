@@ -242,7 +242,8 @@ cmd_start() {
 
   if [[ "$mode" == "prod" ]]; then
     local server_pid
-    server_pid="$(start_backend "${backend_extra[@]}")"
+    # ${arr[@]+…}: macOS /bin/bash 3.2 treats an empty array as unbound under set -u.
+    server_pid="$(start_backend ${backend_extra[@]+"${backend_extra[@]}"})"
     sleep 1
     if ! pid_alive "$server_pid"; then
       die "server failed to start — see $LOG_DIR/backend.log"
@@ -257,7 +258,7 @@ cmd_start() {
   fi
 
   local backend_pid frontend_pid
-  backend_pid="$(start_backend "${backend_extra[@]}")"
+  backend_pid="$(start_backend ${backend_extra[@]+"${backend_extra[@]}"})"
   (
     cd "$FRONTEND_DIR"
     exec npm run dev -- --host 127.0.0.1 --port "$DEV_PORT"
