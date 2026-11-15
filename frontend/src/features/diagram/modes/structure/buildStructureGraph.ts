@@ -521,6 +521,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
     typeRef: el.typeRef,
     multiplicity: el.multiplicity,
     isReference: !!el.isReference,
+    ...(el.isAbstract ? { isAbstract: true } : {}),
     metadataKeywords: el.metadataKeywords || [],
     ports: buildPorts(el, semantic, visualization, isBoundary).map((p) => ({
       ...p,

@@ -742,11 +742,24 @@ class SubsetSysmlParser:
                 )
 
         pending_metadata_keywords: list[str] = []
+        # `abstract part def X` — the prefix applies to the next declaration.
+        pending_abstract = False
+        abstract_targets = {"part", "ref", "action", "requirement", "use", "case", "#"}
 
         while i < n:
             tok = peek()
             if not tok:
                 break
+
+            if tok.kind == "ident" and tok.value == "abstract":
+                take()
+                pending_abstract = True
+                continue
+            if pending_abstract and tok.value not in abstract_targets:
+                state.warnings.append(
+                    f"line {tok.line}: 'abstract' ignored before '{tok.value}'"
+                )
+                pending_abstract = False
 
             if tok.value == "{":
                 take()
@@ -861,10 +874,12 @@ class SubsetSysmlParser:
                     type_ref=type_ref,
                     multiplicity=multiplicity,
                     is_reference=is_ref_part,
+                    is_abstract=pending_abstract,
                     metadata_keywords=list(pending_metadata_keywords),
                     file_id=file_id,
                 )
                 pending_metadata_keywords = []
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if is_def and is_specialization and type_ref:
@@ -1342,8 +1357,10 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
+                    is_abstract=pending_abstract,
                     file_id=file_id,
                 )
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if peek() and peek().value == "{":
@@ -1566,8 +1583,10 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     short_id=short_id,
+                    is_abstract=pending_abstract,
                     file_id=file_id,
                 )
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 brace = peek()
@@ -1801,8 +1820,10 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     short_id=short_id,
+                    is_abstract=pending_abstract,
                     file_id=file_id,
                 )
+                pending_abstract = False
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 nxt = peek()
@@ -1869,8 +1890,10 @@ class SubsetSysmlParser:
                         parent_id=state.current_parent(),
                         type_ref=type_ref,
                         short_id=short_id,
+                        is_abstract=pending_abstract,
                         file_id=file_id,
                     )
+                    pending_abstract = False
                     state.add_child(el.parent_id, element_id)
                     state.elements[element_id] = el
                     brace = peek()

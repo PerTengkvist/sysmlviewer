@@ -1926,6 +1926,11 @@ button.linkish {
   font-size: 0.85rem;
 }
 
+/* `abstract part def` — SysML/UML convention: abstract names in italics. */
+.part-node-title.is-abstract {
+  font-style: italic;
+}
+
 .part-menu {
   position: relative;
 }

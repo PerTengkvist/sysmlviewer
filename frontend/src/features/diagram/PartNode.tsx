@@ -196,6 +196,8 @@ export type PartNodeData = {
   multiplicity?: string | null
   /** `ref part` — non-composite reference feature */
   isReference?: boolean
+  /** `abstract part def` — name in italics, keyword «abstract part def» */
+  isAbstract?: boolean
   /** Prefix metadata keywords from `#mystereotype part …` */
   metadataKeywords?: string[] | null
   ports: PartPort[]
@@ -297,10 +299,15 @@ function guillemets(text: string): string {
 export function partStereotypeKeyword(d: {
   kind: string
   metadataKeywords?: string[] | null
+  isAbstract?: boolean
 }): string {
   const keywords = d.metadataKeywords || []
-  if (keywords.length > 0) return keywords.join(', ')
-  return d.kind === 'package' ? 'package' : 'part'
+  if (keywords.length > 0) {
+    const joined = keywords.join(', ')
+    return d.isAbstract ? `abstract ${joined}` : joined
+  }
+  if (d.kind === 'package') return 'package'
+  return d.isAbstract ? 'abstract part def' : 'part'
 }
 
 function typeShortTag(typeRef: string): string {
@@ -717,7 +724,7 @@ export function PartNode({ data, selected }: NodeProps) {
           </div>
           <div className="part-node-title-row">
             <PartHeaderIcon iconName={headerIcon} />
-            <span className="part-node-title">
+            <span className={`part-node-title${d.isAbstract ? ' is-abstract' : ''}`}>
               {d.label}
               {d.multiplicity ? ` [${d.multiplicity}]` : ''}
             </span>

@@ -199,6 +199,8 @@ class SemanticElement:
     multiplicity: str | None = None
     # True when declared as `ref part` (non-composite / reference feature)
     is_reference: bool = False
+    # True when declared with the `abstract` prefix (`abstract part def X`)
+    is_abstract: bool = False
     # Prefix metadata keywords from `#Mount dependency …` (not resolved defs)
     metadata_keywords: list[str] = field(default_factory=list)
     # Documentation body from `doc /* … */`
@@ -212,6 +214,8 @@ class SemanticElement:
         out = self._to_dict()
         if self.is_definition:
             out["isDefinition"] = True
+        if self.is_abstract:
+            out["isAbstract"] = True
         return out
 
     def _to_dict(self) -> dict[str, Any]:
@@ -258,6 +262,7 @@ class SemanticElement:
             default_value=data.get("defaultValue"),
             multiplicity=data.get("multiplicity"),
             is_reference=bool(data.get("isReference", False)),
+            is_abstract=bool(data.get("isAbstract", False)),
             metadata_keywords=list(data.get("metadataKeywords") or []),
             documentation=data.get("documentation"),
             short_id=data.get("shortId"),
