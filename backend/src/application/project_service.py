@@ -596,6 +596,18 @@ class ProjectService:
         content = read_fn(rel)
         return self.refresh_file(project_id, file_id, content)
 
+    def get_dependency_tree(self, project_id: str, artifact_id: str) -> dict | None:
+        """Dependency tree of one element over the whole project's semantics.
+
+        None when the project is missing; KeyError when the element is.
+        """
+        from domain.dependency_tree import build_dependency_tree
+
+        project = self.get_project(project_id)
+        if not project:
+            return None
+        return build_dependency_tree(project.semantic, artifact_id)
+
     def list_documentation(self, project_id: str) -> list[str] | None:
         project = self.repo.get(project_id)
         if not project:

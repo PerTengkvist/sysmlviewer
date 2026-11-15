@@ -702,6 +702,16 @@ def create_api_app(
             raise HTTPException(status_code=404, detail="File not found")
         return project.to_dict()
 
+    @app.get("/projects/{project_id}/dependency-tree/{artifact_id:path}")
+    def get_dependency_tree(project_id: str, artifact_id: str) -> dict:
+        try:
+            tree = _service().get_dependency_tree(project_id, artifact_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Element not found") from None
+        if tree is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return tree
+
     @app.get("/projects/{project_id}/documentation")
     def list_documentation(project_id: str) -> dict:
         paths = _service().list_documentation(project_id)

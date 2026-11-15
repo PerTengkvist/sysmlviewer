@@ -125,6 +125,7 @@ Unknown constructs emit warnings and are skipped when possible.
 | PUT/DELETE | `/projects/{id}/sheet/frame` | Drawing frame (A4/A3) |
 | GET | `/projects/{id}/views/{viewId}` | Get view payload |
 | POST | `/projects/{id}/views/{viewId}/export` | Export open view layout JSON (Save As or `{ path }`) |
+| GET | `/projects/{id}/dependency-tree/{elementId}` | `{root, up, down, truncated}`: one chain up to the more abstract element, a labelled tree down (`domain/dependency_tree.py`) |
 
 ## Frontend layout
 
