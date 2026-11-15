@@ -63,7 +63,8 @@ def test_perform_dotted_reference():
         """
     )
     (perf,) = _performs(result, "P::F::a")
-    assert perf.id == "P::F::a::step"
+    # Its own id, so it cannot merge with another child named `step`.
+    assert perf.id == "P::F::a::perform_flow_step"
     assert perf.name == "step"
     assert perf.type_ref == "flow.step"
     assert result.warnings == []
@@ -154,3 +155,55 @@ def test_standalone_perform_in_an_action_still_links_the_flow():
         if e.kind == ArtifactKind.SUCCESSION and e.parent_id == "P::flow"
     }
     assert ("P::flow::start", "P::flow::Sub") in pairs
+
+
+def test_two_performs_with_the_same_last_segment_stay_apart():
+    from domain.perform import resolve_performers
+
+    result = SubsetSysmlParser().parse(
+        """
+        package P {
+          part def F {
+            action flowA { action stop; }
+            action flowB { action stop; }
+            part a {
+              perform flowA.stop;
+              perform flowB.stop;
+            }
+          }
+        }
+        """,
+        file_id="f1",
+    )
+    performs = _performs(result, "P::F::a")
+    assert sorted(p.type_ref for p in performs) == ["flowA.stop", "flowB.stop"]
+    assert len({p.id for p in performs}) == 2
+    assert resolve_performers(result.elements) == {
+        "P::F::flowA::stop": ["P::F::a"],
+        "P::F::flowB::stop": ["P::F::a"],
+    }
+    assert result.warnings == []
+
+
+def test_perform_next_to_a_child_with_the_same_name():
+    from domain.perform import resolve_performers
+
+    result = SubsetSysmlParser().parse(
+        """
+        package P {
+          part def F {
+            action flow { action check; }
+            part a {
+              action check;
+              perform flow.check;
+            }
+          }
+        }
+        """,
+        file_id="f1",
+    )
+    own = result.elements["P::F::a::check"]
+    assert own.metadata_keywords == [] and own.type_ref is None
+    (perf,) = _performs(result, "P::F::a")
+    assert perf.type_ref == "flow.check"
+    assert resolve_performers(result.elements) == {"P::F::flow::check": ["P::F::a"]}

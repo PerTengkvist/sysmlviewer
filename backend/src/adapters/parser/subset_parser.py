@@ -1634,12 +1634,31 @@ class SubsetSysmlParser:
                     skip_until_semicolon_or_brace()
                 elif peek() and peek().value == ";":
                     take()
+                scope = current_scope()
+                if scope and scope.kind == ArtifactKind.PART:
+                    # The part performs `perform_ref`. Not a flow step: its id
+                    # comes from the whole reference, so `perform a.stop;` and
+                    # `perform b.stop;` (or a child named `stop`) stay apart.
+                    perform_id = state.qualify(
+                        "perform_" + perform_ref.replace("::", ".").replace(".", "_")
+                    )
+                    if perform_id not in state.elements:
+                        el = SemanticElement(
+                            id=perform_id,
+                            kind=ArtifactKind.ACTION,
+                            name=target,
+                            parent_id=state.current_parent(),
+                            type_ref=perform_ref,
+                            file_id=file_id,
+                            metadata_keywords=["perform"],
+                        )
+                        state.add_child(el.parent_id, perform_id)
+                        state.elements[perform_id] = el
+                    continue
                 ensure_flow_action(
                     target, type_ref=perform_ref, metadata_keywords=["perform"]
                 )
-                scope = current_scope()
-                if not (scope and scope.kind == ArtifactKind.PART):
-                    link_from_previous(target)
+                link_from_previous(target)
                 continue
 
             if tok.kind == "ident" and tok.value == "case":
