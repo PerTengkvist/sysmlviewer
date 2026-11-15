@@ -38,12 +38,14 @@ def test_electric_car_parses_without_warnings():
     assert names == {
         "Requirements",
         "Functions",
+        "FunctionTraceability",
         "UseCases",
         "LogicalArchitecture",
         "Dynamics",
         "PhysicalArchitecture",
     }
-    assert "PhysicalArchitecture::LogicalCounterparts" in result.elements
+    # «implements» points straight at the logical parts; no copies of them.
+    assert "PhysicalArchitecture::LogicalCounterparts" not in result.elements
 
 
 def test_physical_parts_implement_logical_parts():
@@ -60,8 +62,6 @@ def test_physical_parts_implement_logical_parts():
 
     def check(part_id: str) -> None:
         part = elements[part_id]
-        if "Logical" in (part.metadata_keywords or []):
-            return
         assert part_id in sources, part_id
         for child_id in part.children:
             child = elements.get(child_id)
@@ -265,14 +265,13 @@ def test_shipped_views_render_requested_diagrams():
     assert physical["diagramMode"] == "whitebox"
     assert physical["hierarchicalLevels"] == 3
     assert any(e["name"] == "entertainmentSw" for e in physical["semantic"].values())
-    # Logical counterparts live outside VehiclePhysical; implements filtered out of whitebox
+    # implements is filtered out of the whitebox, and no logical part shows.
     assert not any(
         e["kind"] == "dependency" and "implements" in (e.get("metadataKeywords") or [])
         for e in physical["semantic"].values()
     )
     assert not any(
-        "Logical" in (e.get("metadataKeywords") or [])
-        for e in physical["semantic"].values()
+        e["id"].startswith("LogicalArchitecture::") for e in physical["semantic"].values()
     )
 
     physical_deps = service.get_view(
@@ -290,9 +289,17 @@ def test_shipped_views_render_requested_diagrams():
         )
         == 40
     )
-    assert any(
-        e["id"] == "PhysicalArchitecture::LogicalCounterparts::car"
+    # The logical ends of «implements» show as plain nodes, not the logical
+    # architecture with its ports and connections.
+    logical_ends = {
+        e["id"]
         for e in physical_deps["semantic"].values()
+        if e["id"].startswith("LogicalArchitecture::")
+    }
+    assert "LogicalArchitecture::Car" in logical_ends
+    assert len(logical_ends) == 28  # Car and its 27 parts
+    assert all(
+        physical_deps["semantic"][i]["kind"] == "part" for i in logical_ends
     )
 
     unlock = service.get_view(project.id, "Dynamics::UnlockSequenceView")
@@ -380,12 +387,6 @@ def test_every_satisfy_source_exists():
 def test_every_logical_part_is_implemented():
     """Converse of test_physical_parts_implement_logical_parts."""
     elements = _load().elements
-    counterparts = {
-        e.name: e.id
-        for e in elements.values()
-        if e.kind == ArtifactKind.PART
-        and e.parent_id == "PhysicalArchitecture::LogicalCounterparts"
-    }
     implemented = {
         e.target_id
         for e in elements.values()
@@ -394,8 +395,8 @@ def test_every_logical_part_is_implemented():
     }
     not_implemented = sorted(
         name
-        for name in _parts_under(elements, CAR)
-        if counterparts.get(name) not in implemented
+        for name, part in _parts_under(elements, CAR).items()
+        if part.id not in implemented
     )
     assert not_implemented == []
 
@@ -471,6 +472,27 @@ def test_every_use_case_has_an_objective():
     }
     missing = sorted(uc.name for uc in _use_cases(elements) if uc.id not in objectives)
     assert missing == []
+
+
+def _objectives(elements) -> dict[str, set[str]]:
+    """Use case name → names of the requirements it pursues with `objective`."""
+    out: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "objective" in (e.metadata_keywords or [])
+            and e.source_id in elements
+            and e.target_id in elements
+        ):
+            out.setdefault(elements[e.source_id].name, set()).add(elements[e.target_id].name)
+    return out
+
+
+def test_functional_requirements_are_use_case_objectives():
+    """Immobilizer and TopSpeed are pursued by the use cases that exercise them."""
+    objectives = _objectives(_load().elements)
+    assert objectives["StartVehicle"] == {"PowerModes", "Immobilizer"}
+    assert objectives["Accelerate"] == {"Acceleration", "TopSpeed"}
 
 
 def test_every_use_case_refines_a_user_story():
@@ -579,14 +601,35 @@ def test_function_views_render():
     assert any(e["name"] == "driveController" for e in allocation["semantic"].values())
 
 
-# --- Functions: FunctionNode, one action flow and one view per function -----
+# --- Functions: FunctionNode, action flows and one view per flow ------------
 
 DECISION_TYPES = {"decide", "decision", "condition"}
 
 
 def _flow_id(function_id: str) -> str:
+    """The function's main flow, `<function>Flow`."""
     name = function_id.split("::")[-1]
     return f"{function_id}::{name[0].lower()}{name[1:]}Flow"
+
+
+def _flow_ids(elements, function_id: str) -> list[str]:
+    """Every action flow a function owns: its main flow first, then the rest."""
+    flows = [
+        c
+        for c in elements[function_id].children
+        if c in elements and elements[c].kind == ArtifactKind.ACTION
+    ]
+    main = _flow_id(function_id)
+    return sorted(flows, key=lambda f: (f != main, f))
+
+
+def _flow_view_name(function_id: str, flow_id: str) -> str:
+    """`SecurityFlowView` for the main flow, `SecurityCabinAccessFlowView` for another."""
+    name = function_id.split("::")[-1]
+    if flow_id == _flow_id(function_id):
+        return f"{name}FlowView"
+    local = flow_id.split("::")[-1].removesuffix("Flow")
+    return f"{name}{local[0].upper()}{local[1:]}FlowView"
 
 
 def _flow_steps(elements, flow_id):
@@ -621,40 +664,42 @@ def test_function_and_function_node_are_abstract_defs():
 
 def test_functional_entities_are_function_nodes():
     _, entities = _functions_and_entities(_load().elements)
-    assert len(entities) == 22
+    assert len(entities) == 24
     assert sorted(e.name for e in entities if e.type_ref != "FunctionNode") == []
 
 
 def test_every_function_has_a_connected_flow():
+    """At least one flow per function, its main flow among them; each connected."""
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
     for fid in functions:
-        flow_id = _flow_id(fid)
-        assert flow_id in elements, flow_id
-        assert elements[flow_id].kind == ArtifactKind.ACTION
-        assert elements[flow_id].documentation, flow_id
-        actions, successions = _flow_steps(elements, flow_id)
-        by_type = {(a.type_ref or "").lower(): a.id for a in actions}
-        assert "start" in by_type and "done" in by_type, flow_id
-        outs: dict[str, set[str]] = {}
-        for s in successions:
-            assert s.source_id in elements and s.target_id in elements, s.id
-            outs.setdefault(s.source_id, set()).add(s.target_id)
-        reached = {by_type["start"]}
-        todo = [by_type["start"]]
-        while todo:
-            for nxt in outs.get(todo.pop(), ()):
-                if nxt not in reached:
-                    reached.add(nxt)
-                    todo.append(nxt)
-        assert by_type["done"] in reached, flow_id
-        assert sorted(a.name for a in actions if a.id not in reached) == [], flow_id
-        steps = [a for a in actions if not _is_pseudo(a)]
-        assert len(steps) >= 2, flow_id
-        assert all(a.documentation for a in steps), flow_id
+        flow_ids = _flow_ids(elements, fid)
+        assert flow_ids and flow_ids[0] == _flow_id(fid), (fid, flow_ids)
+        for flow_id in flow_ids:
+            assert elements[flow_id].documentation, flow_id
+            actions, successions = _flow_steps(elements, flow_id)
+            by_type = {(a.type_ref or "").lower(): a.id for a in actions}
+            assert "start" in by_type and "done" in by_type, flow_id
+            outs: dict[str, set[str]] = {}
+            for s in successions:
+                assert s.source_id in elements and s.target_id in elements, s.id
+                outs.setdefault(s.source_id, set()).add(s.target_id)
+            reached = {by_type["start"]}
+            todo = [by_type["start"]]
+            while todo:
+                for nxt in outs.get(todo.pop(), ()):
+                    if nxt not in reached:
+                        reached.add(nxt)
+                        todo.append(nxt)
+            assert by_type["done"] in reached, flow_id
+            assert sorted(a.name for a in actions if a.id not in reached) == [], flow_id
+            steps = [a for a in actions if not _is_pseudo(a)]
+            assert len(steps) >= 2, flow_id
+            assert all(a.documentation for a in steps), flow_id
 
 
 def test_every_flow_step_is_performed_by_one_entity_of_its_function():
+    """Every entity performs a step in at least one of its function's flows."""
     from domain.perform import resolve_performers
 
     elements = _load().elements
@@ -662,41 +707,71 @@ def test_every_flow_step_is_performed_by_one_entity_of_its_function():
     performers = resolve_performers(elements)
     performing: set[str] = set()
     for fid in functions:
-        actions, _ = _flow_steps(elements, _flow_id(fid))
-        for step in actions:
-            if _is_pseudo(step):
-                assert step.id not in performers, step.id
-                continue
-            parts = performers.get(step.id, [])
-            assert len(parts) == 1, (step.id, parts)
-            assert elements[parts[0]].parent_id == fid, (step.id, parts)
-            performing.add(parts[0])
+        for flow_id in _flow_ids(elements, fid):
+            actions, _ = _flow_steps(elements, flow_id)
+            for step in actions:
+                if _is_pseudo(step):
+                    assert step.id not in performers, step.id
+                    continue
+                parts = performers.get(step.id, [])
+                assert len(parts) == 1, (step.id, parts)
+                assert elements[parts[0]].parent_id == fid, (step.id, parts)
+                performing.add(parts[0])
     assert sorted(e.name for e in entities if e.id not in performing) == []
 
 
-def test_every_function_has_a_flow_view():
+def test_every_flow_has_a_flow_view():
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
     repo = WorkspaceProjectRepository(ROOT)
     project = repo.get_open()
     service = ProjectService(repo=repo, parser=SubsetSysmlParser())
     for fid in functions:
-        name = fid.split("::")[-1]
-        view_id = f"Functions::{name}FlowView"
-        view_el = elements.get(view_id)
-        assert view_el is not None, view_id
-        assert view_el.type_ref == "ActionFlowView"
-        assert view_el.expose_refs == [_flow_id(fid)]
-        assert (ROOT / "views" / f"{name}FlowView.json").is_file(), view_id
+        for flow_id in _flow_ids(elements, fid):
+            name = _flow_view_name(fid, flow_id)
+            view_id = f"Functions::{name}"
+            view_el = elements.get(view_id)
+            assert view_el is not None, view_id
+            assert view_el.type_ref == "ActionFlowView"
+            assert view_el.expose_refs == [flow_id]
+            assert (ROOT / "views" / f"{name}.json").is_file(), view_id
 
-        view = service.get_view(project.id, view_id)
-        assert view["diagramMode"] == "actionFlow", view_id
-        assert "modeError" not in view, view_id
-        actions, _ = _flow_steps(elements, _flow_id(fid))
-        assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
-        steps = {a.id for a in actions if not _is_pseudo(a)}
-        assert set(view["performers"]) == steps, view_id
-        assert view["hasViewLayout"] is True, view_id
+            view = service.get_view(project.id, view_id)
+            assert view["diagramMode"] == "actionFlow", view_id
+            assert "modeError" not in view, view_id
+            actions, _ = _flow_steps(elements, flow_id)
+            assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
+            steps = {a.id for a in actions if not _is_pseudo(a)}
+            assert set(view["performers"]) == steps, view_id
+            assert view["hasViewLayout"] is True, view_id
+
+
+def test_security_owns_doors_and_windows_on_the_body_controller():
+    elements = _load().elements
+    security = "Functions::Security"
+    assert _flow_ids(elements, security) == [
+        f"{security}::securityFlow",
+        f"{security}::cabinAccessFlow",
+    ]
+    allocated = {
+        a.source_id: a.target_id
+        for a in elements.values()
+        if a.kind == ArtifactKind.ALLOCATION
+    }
+    for name in ("doorControl", "windowControl", "lockControl"):
+        entity = elements[f"{security}::{name}"]
+        assert entity.documentation, name
+        assert allocated[entity.id] == f"{CAR}::bodyController", name
+
+
+def test_the_inside_handle_always_opens_the_door():
+    """Nobody can be shut in: only the outside handle is checked against the lock."""
+    elements = _load().elements
+    flow = "Functions::Security::cabinAccessFlow"
+    _, successions = _flow_steps(elements, flow)
+    by_name = {s.name: elements[s.target_id].name for s in successions}
+    assert by_name["if_outsideHandle_yes"] == "checkUnlocked"
+    assert by_name["if_outsideHandle_else"] == "releaseDoor"
 
 
 def _succession_pairs(elements, flow_id):
@@ -729,6 +804,23 @@ def test_branching_flows_have_the_intended_successions():
         ("applyFriction", "done", False),
         ("driveWheels", "done", False),
     }
+    assert _succession_pairs(elements, "Functions::Security::cabinAccessFlow") == {
+        ("start", "doorRequested", False),
+        ("doorRequested", "readDoorHandle", True),
+        ("doorRequested", "runWindowLift", True),
+        ("readDoorHandle", "outsideHandle", False),
+        ("outsideHandle", "checkUnlocked", True),
+        ("outsideHandle", "releaseDoor", True),
+        ("checkUnlocked", "carUnlocked", False),
+        ("carUnlocked", "releaseDoor", True),
+        ("carUnlocked", "stayLatched", True),
+        ("releaseDoor", "closeDoor", False),
+        ("closeDoor", "relatch", False),
+        ("relatch", "showDoorState", False),
+        ("showDoorState", "done", False),
+        ("stayLatched", "done", False),
+        ("runWindowLift", "done", False),
+    }
 
 
 def test_step_docs_describe_the_flow_not_the_entity():
@@ -748,3 +840,307 @@ def test_step_docs_describe_the_flow_not_the_entity():
             if ratio >= 0.6:
                 too_close.append((elements[step_id].name, elements[part_id].name, round(ratio, 2)))
     assert too_close == []
+
+
+# --- Traceability: function → use case (#refine) -----------------------------
+
+FUNCTION_REFINES = {
+    "Security": {
+        "StartVehicle",
+        "StopVehicle",
+        "Unlock",
+        "Lock",
+        "OpenDoor",
+        "CloseDoor",
+        "OpenWindow",
+        "CloseWindow",
+    },
+    "Charging": {"Charge"},
+    "SpeedControl": {"Accelerate", "Brake", "EmergencyStop"},
+    "Maneuvrability": {"ChangeGear", "TurnLeft", "TurnRight"},
+    "Lighting": {"ToggleHeadlights", "TurnLeft", "TurnRight", "Brake"},
+    "WindshieldCleaning": {"CleanWindshield"},
+    "Climate": {"AdjustClimate"},
+    "Entertainment": {"PlayMedia"},
+}
+
+
+def _function_refines(elements) -> dict[str, set[str]]:
+    """Function id → ids of the use cases it refines with `#refine`."""
+    functions, _ = _functions_and_entities(elements)
+    refines: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and e.source_id in functions
+            and e.target_id in elements
+            and elements[e.target_id].kind == ArtifactKind.USE_CASE
+        ):
+            refines.setdefault(e.source_id, set()).add(e.target_id)
+    return refines
+
+
+def test_every_function_refines_a_use_case():
+    elements = _load().elements
+    functions, _ = _functions_and_entities(elements)
+    refines = _function_refines(elements)
+    assert sorted(elements[f].name for f in functions if f not in refines) == []
+    by_name = {
+        elements[f].name: {elements[u].name for u in ucs} for f, ucs in refines.items()
+    }
+    assert by_name == FUNCTION_REFINES
+
+
+def test_every_leaf_use_case_is_refined_by_a_function():
+    """Drive and Park are composites; they are reached through include."""
+    elements = _load().elements
+    refined = set().union(*_function_refines(elements).values())
+    leaves = [uc for uc in _use_cases(elements) if uc.name not in COMPOSITE_USE_CASES]
+    assert sorted(uc.name for uc in leaves if uc.id not in refined) == []
+    includes = {
+        (e.source_id, e.target_id)
+        for e in elements.values()
+        if e.kind == ArtifactKind.INCLUDE
+    }
+    for uc in _use_cases(elements):
+        if uc.name in COMPOSITE_USE_CASES:
+            included = {t for s, t in includes if s == uc.id}
+            assert included and included <= refined, uc.name
+
+
+def _entity_refines(elements) -> dict[str, set[str]]:
+    """Functional entity id → ids of the use cases it refines with `#refine`."""
+    _, entities = _functions_and_entities(elements)
+    entity_ids = {e.id for e in entities}
+    refines: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and e.source_id in entity_ids
+            and e.target_id in elements
+            and elements[e.target_id].kind == ArtifactKind.USE_CASE
+        ):
+            refines.setdefault(e.source_id, set()).add(e.target_id)
+    return refines
+
+
+def test_every_entity_refines_a_use_case():
+    elements = _load().elements
+    _, entities = _functions_and_entities(elements)
+    refines = _entity_refines(elements)
+    assert sorted(e.name for e in entities if e.id not in refines) == []
+
+
+def test_an_entity_refines_only_use_cases_of_its_function():
+    elements = _load().elements
+    by_function = _function_refines(elements)
+    outside = sorted(
+        (elements[eid].name, elements[u].name)
+        for eid, ucs in _entity_refines(elements).items()
+        for u in ucs - by_function.get(elements[eid].parent_id, set())
+    )
+    assert outside == []
+
+
+def test_a_functions_entities_together_refine_its_use_cases():
+    elements = _load().elements
+    union: dict[str, set[str]] = {}
+    for eid, ucs in _entity_refines(elements).items():
+        union.setdefault(elements[eid].parent_id, set()).update(ucs)
+    assert union == _function_refines(elements)
+
+
+def _up_ids(elements, root_id: str) -> list[str]:
+    from domain.dependency_tree import build_dependency_tree
+
+    return [n["id"] for n in build_dependency_tree(elements, root_id)["up"]]
+
+
+def test_logical_parts_climb_to_the_requirement_their_entity_serves():
+    """The entity allocated to a part decides its chain, not the first use case
+    its function happens to refine. The body controller confirms locking with
+    the indicators, so it climbs to LockIndication (AccessControl is about
+    authenticating before unlock, which the vehicle controller does)."""
+    elements = _load().elements
+    assert _up_ids(elements, f"{CAR}::frictionBrakes") == [
+        "Requirements::Safety",
+        "Requirements::BrakingDistance",
+        "UseCases::Driving::Brake",
+        "Functions::SpeedControl::frictionBraking",
+    ]
+    assert _up_ids(elements, f"{CAR}::bodyController") == [
+        "Requirements::Security",
+        "Requirements::LockIndication",
+        "UseCases::Managing::Lock",
+        "Functions::Security::lockControl",
+    ]
+
+
+# --- Traceability: satisfy only where the function chain does not reach ------
+#
+#   requirement ←objective— use case ←#refine— entity —allocate→ logical part
+#
+# A `satisfy R by L` is redundant when that chain already leads from R to L.
+# The rule is taken at entity level: the entity that refines the use case is
+# the one allocated to the part, not just any entity of the same function.
+
+
+def _chain_pairs(elements) -> set[tuple[str, str]]:
+    """(requirement id, logical part id) pairs the entity chain connects."""
+    objectives: dict[str, set[str]] = {}
+    for e in elements.values():
+        if e.kind == ArtifactKind.DEPENDENCY and "objective" in (e.metadata_keywords or []):
+            objectives.setdefault(e.source_id, set()).add(e.target_id)
+    allocated = {
+        a.source_id: a.target_id
+        for a in elements.values()
+        if a.kind == ArtifactKind.ALLOCATION
+    }
+    pairs: set[tuple[str, str]] = set()
+    for entity_id, use_cases in _entity_refines(elements).items():
+        for uc in use_cases:
+            for req in objectives.get(uc, ()):
+                pairs.add((req, allocated[entity_id]))
+    return pairs
+
+
+def test_no_satisfy_repeats_the_function_chain():
+    elements = _load().elements
+    pairs = _chain_pairs(elements)
+    redundant = sorted(
+        f"satisfy {elements[s.target_id].name} by {elements[s.source_id].name}"
+        for s in elements.values()
+        if s.kind == ArtifactKind.SATISFY and (s.target_id, s.source_id) in pairs
+    )
+    assert redundant == []
+
+
+# Every (requirement, logical part) pair the model traced with satisfy before
+# the function chain existed. Each must still be traced, by the chain or by a
+# satisfy, so no satisfy is dropped that the chain does not replace.
+SATISFY_BASELINE = {
+    ("VehicleLength", "body"),
+    ("VehicleWidth", "body"),
+    ("VehicleHeight", "body"),
+    ("PassengerCapacity", "body"),
+    ("CargoVolume", "body"),
+    ("Range", "battery"),
+    ("Acceleration", "engine"),
+    ("TopSpeed", "engine"),
+    ("ChargeTime", "battery"),
+    ("ChargeTime", "chargeInlet"),
+    ("PropulsionModes", "gearStick"),
+    ("CrashProtection", "body"),
+    ("PedestrianProtection", "body"),
+    ("OccupantRestraint", "body"),
+    ("BrakingDistance", "brakePedal"),
+    ("BrakingDistance", "frictionBrakes"),
+    ("BrakingDistance", "driveController"),
+    ("DirectionalControl", "steeringWheel"),
+    ("ForwardVisibility", "windshield"),
+    ("ForwardVisibility", "wipers"),
+    ("AccessControl", "locks"),
+    ("Immobilizer", "vehicleController"),
+    ("LockIndication", "bodyController"),
+    ("PowerModes", "vehicleController"),
+    ("PowerModes", "startButton"),
+    ("NightVisibility", "lamps"),
+    ("CabinAccess", "doors"),
+    ("CabinAccess", "windowLifts"),
+    ("CabinClimate", "climateSystem"),
+    ("CabinMedia", "entertainmentSystem"),
+}
+
+
+def test_every_baseline_satisfy_pair_is_still_traced():
+    elements = _load().elements
+    satisfied = {
+        (s.target_id, s.source_id)
+        for s in elements.values()
+        if s.kind == ArtifactKind.SATISFY
+    }
+    traced = _chain_pairs(elements) | satisfied
+    lost = sorted(
+        (req, part)
+        for req, part in SATISFY_BASELINE
+        if (f"Requirements::{req}", f"{CAR}::{part}") not in traced
+    )
+    assert lost == []
+    # Exactly the baseline pairs the chain does not reach remain as satisfy.
+    remaining = {
+        (elements[r].name, elements[p].name) for r, p in satisfied
+    }
+    chained = {
+        (req, part)
+        for req, part in SATISFY_BASELINE
+        if (f"Requirements::{req}", f"{CAR}::{part}") in _chain_pairs(elements)
+    }
+    assert remaining == SATISFY_BASELINE - chained
+
+
+def test_every_leaf_requirement_is_traced_to_a_logical_part():
+    """A leaf requirement (one that refines a group) is reached by the chain or a satisfy."""
+    elements = _load().elements
+    groups = {
+        e.id
+        for e in elements.values()
+        if e.kind == ArtifactKind.REQUIREMENT
+        and any(
+            elements[c].kind == ArtifactKind.ATTRIBUTE
+            and elements[c].name == "Type"
+            and elements[c].default_value != '"UserStory"'
+            for c in e.children
+            if c in elements
+        )
+    }
+    stories = {
+        e.id
+        for e in elements.values()
+        if e.kind == ArtifactKind.REQUIREMENT and (e.short_id or "").startswith("US-")
+    }
+    leaves = {
+        e.source_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "refine" in (e.metadata_keywords or [])
+        and e.target_id in groups
+        and e.source_id not in stories
+    }
+    assert len(leaves) == 24
+    traced = {r for r, _ in _chain_pairs(elements)} | {
+        s.target_id for s in elements.values() if s.kind == ArtifactKind.SATISFY
+    }
+    assert sorted(elements[r].name for r in leaves - traced) == []
+
+
+# --- Traceability: physical «implements» reaches the logical architecture ----
+
+def test_every_implements_target_is_a_logical_part():
+    """«implements» points straight at a part of LogicalArchitecture::Car, or at
+    the logical Car definition itself for the whole physical car."""
+    elements = _load().elements
+    targets = {
+        e.target_id
+        for e in elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "implements" in (e.metadata_keywords or [])
+        and (e.file_id or "").startswith("physical_architecture/")
+    }
+    assert len(targets) == 28
+    assert CAR in targets
+    assert sorted(
+        t for t in targets if t != CAR and elements[t].parent_id != CAR
+    ) == []
+
+
+def test_a_physical_part_climbs_through_implements_to_the_logical_part():
+    elements = _load().elements
+    assert _up_ids(elements, "PhysicalArchitecture::VehiclePhysical::vehicleEcu") == [
+        "Requirements::Performance",
+        "Requirements::PowerModes",
+        "UseCases::Driving::StartVehicle",
+        "Functions::Security::authenticate",
+        f"{CAR}::vehicleController",
+    ]

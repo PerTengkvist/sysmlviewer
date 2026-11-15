@@ -4,6 +4,9 @@ The driver presses lock on the key fob. The car checks that all doors are closed
 
 ## Relations
 
+- Refined by `Security`.
+- Refined by `authenticate`.
+- Refined by `lockControl`.
 - Included by `Park`.
 - Pursues requirement `LockIndication`.
 - Refines `ParkAndLeave`.

@@ -7,6 +7,7 @@ Part of `Car`.
 ## Relations
 
 - Depends on `driveController` («Command»).
+- Implemented by `gearStickMech`.
 - Satisfies `PropulsionModes`.
 
 ## Diagrams

@@ -18,7 +18,8 @@ Part of `Car`.
 - Depends on `engine` («Command»).
 - Depends on `wheels` («Command»).
 - Depends on `frictionBrakes` («Command»).
-- Satisfies `BrakingDistance`.
+- Implemented by `driveEcu`.
+- Implemented by `driveControlSw`.
 
 ## Diagrams
 

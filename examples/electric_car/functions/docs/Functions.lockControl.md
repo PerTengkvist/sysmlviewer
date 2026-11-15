@@ -7,6 +7,10 @@ Part of `Security`.
 ## Relations
 
 - Allocated to `bodyController`.
+- Refines `Lock`.
+- Refines `Unlock`.
+- Refines `OpenDoor`.
+- Refines `CloseDoor`.
 
 ## Diagrams
 

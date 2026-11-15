@@ -6,7 +6,7 @@ Part of `PhysicalArchitecture`.
 
 ## Relations
 
-- Implements `car`.
+- Implements `Car`.
 
 ## Diagrams
 

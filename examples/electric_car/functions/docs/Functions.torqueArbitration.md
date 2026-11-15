@@ -7,6 +7,8 @@ Part of `SpeedControl`.
 ## Relations
 
 - Allocated to `driveController`.
+- Refines `Accelerate`.
+- Refines `Brake`.
 
 ## Diagrams
 

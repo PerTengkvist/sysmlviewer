@@ -4,6 +4,10 @@ Logical electric car: driver controls, three controllers, traction, energy, body
 
 Part of `LogicalArchitecture`.
 
+## Relations
+
+- Implemented by `VehiclePhysical`.
+
 ## Diagrams
 
 - `CarLogicalView`

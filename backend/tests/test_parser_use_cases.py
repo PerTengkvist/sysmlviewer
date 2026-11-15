@@ -112,6 +112,36 @@ def test_objective_points_to_requirement():
     assert objs[0].target_id == "P::R1"
 
 
+def test_a_use_case_can_have_several_objectives():
+    content = """
+    package P {
+      requirement def R1;
+      requirement def R2;
+      use case def Login {
+        objective R1;
+        objective R2;
+      }
+      use case def Logout {
+        objective R2;
+      }
+    }
+    """
+    result = _parse(content)
+    assert result.warnings == []
+    objs = [
+        e
+        for e in result.elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY
+        and "objective" in (e.metadata_keywords or [])
+    ]
+    assert sorted((e.source_id, e.target_id) for e in objs) == [
+        ("P::Login", "P::R1"),
+        ("P::Login", "P::R2"),
+        ("P::Logout", "P::R2"),
+    ]
+    assert len({e.id for e in objs}) == 3
+
+
 def test_case_scenario_perform_and_branch_flow():
     content = """
     package P {

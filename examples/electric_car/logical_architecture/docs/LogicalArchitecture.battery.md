@@ -15,8 +15,10 @@ Part of `Car`.
 - `windowLifts` depends on this («Energy»).
 - `chargeInlet` depends on this («Energy»).
 - Depends on `chassis` («Mount»).
+- Implemented by `batteryEcu`.
+- Implemented by `batteryControlSw`.
+- Implemented by `batteryPack`.
 - Satisfies `Range`.
-- Satisfies `ChargeTime`.
 
 ## Diagrams
 

@@ -76,57 +76,69 @@
       "width": 168,
       "height": 72
     },
-    "Requirements::PowerModes": {
+    "Requirements::Immobilizer": {
       "x": 720,
       "y": 40,
       "width": 200,
       "height": 120
     },
-    "Requirements::PropulsionModes": {
+    "Requirements::PowerModes": {
       "x": 720,
       "y": 190,
       "width": 200,
       "height": 120
     },
-    "Requirements::Range": {
+    "Requirements::PropulsionModes": {
       "x": 720,
       "y": 340,
       "width": 200,
       "height": 120
     },
-    "Requirements::Acceleration": {
+    "Requirements::Range": {
       "x": 720,
       "y": 490,
       "width": 200,
       "height": 120
     },
-    "Requirements::BrakingDistance": {
+    "Requirements::Acceleration": {
       "x": 720,
       "y": 640,
       "width": 200,
       "height": 120
     },
-    "Requirements::DirectionalControl": {
+    "Requirements::TopSpeed": {
       "x": 720,
       "y": 790,
       "width": 200,
       "height": 120
     },
-    "Requirements::ForwardVisibility": {
+    "Requirements::BrakingDistance": {
       "x": 720,
       "y": 940,
       "width": 200,
       "height": 120
     },
-    "Requirements::NightVisibility": {
+    "Requirements::DirectionalControl": {
       "x": 720,
       "y": 1090,
       "width": 200,
       "height": 120
     },
-    "Requirements::LockIndication": {
+    "Requirements::ForwardVisibility": {
       "x": 720,
       "y": 1240,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::NightVisibility": {
+      "x": 720,
+      "y": 1390,
+      "width": 200,
+      "height": 120
+    },
+    "Requirements::LockIndication": {
+      "x": 720,
+      "y": 1540,
       "width": 200,
       "height": 120
     },

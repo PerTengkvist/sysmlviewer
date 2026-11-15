@@ -7,6 +7,7 @@ Part of `Lighting`.
 ## Relations
 
 - Allocated to `bodyController`.
+- Refines `ToggleHeadlights`.
 
 ## Diagrams
 

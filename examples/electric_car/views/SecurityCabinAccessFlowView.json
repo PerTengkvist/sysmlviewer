@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::SecurityCabinAccessFlowView",
+  "name": "SecurityCabinAccessFlowView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::Security::cabinAccessFlow::runWindowLift": {
+      "x": 328.0,
+      "y": 326.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::carUnlocked": {
+      "x": 48.0,
+      "y": 856.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::cabinAccessFlow::readDoorHandle": {
+      "x": 48.0,
+      "y": 326.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::doorRequested": {
+      "x": 48.0,
+      "y": 156.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::cabinAccessFlow::done": {
+      "x": 48.0,
+      "y": 1746.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::Security::cabinAccessFlow::start": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::Security::cabinAccessFlow::releaseDoor": {
+      "x": 48.0,
+      "y": 1026.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::checkUnlocked": {
+      "x": 48.0,
+      "y": 676.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::showDoorState": {
+      "x": 48.0,
+      "y": 1566.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::stayLatched": {
+      "x": 328.0,
+      "y": 1026.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::outsideHandle": {
+      "x": 48.0,
+      "y": 506.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::cabinAccessFlow::closeDoor": {
+      "x": 48.0,
+      "y": 1206.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::relatch": {
+      "x": 48.0,
+      "y": 1386.0,
+      "width": 140.0,
+      "height": 90.0
+    }
+  },
+  "edges": {}
+}

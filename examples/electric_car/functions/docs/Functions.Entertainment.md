@@ -8,6 +8,7 @@ Part of `Functions`.
 
 - Depends on `Security` («Authorize»).
 - Depends on `Charging` («Energy»).
+- Refines `PlayMedia`.
 
 ## Diagrams
 

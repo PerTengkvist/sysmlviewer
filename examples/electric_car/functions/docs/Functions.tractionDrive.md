@@ -7,6 +7,7 @@ Part of `SpeedControl`.
 ## Relations
 
 - Allocated to `engine`.
+- Refines `Accelerate`.
 
 ## Diagrams
 

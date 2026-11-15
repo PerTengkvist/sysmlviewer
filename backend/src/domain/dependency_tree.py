@@ -33,14 +33,18 @@ from domain.models import ArtifactKind, SemanticElement
 from domain.relationships import is_relation_element
 from domain.type_resolution import part_def_resolver
 
-# Upward chain priority (lower wins).
-_PRIORITY_TRACE = 1  # satisfy; refine / derive / objective; any dependency to a requirement
-_PRIORITY_OWNER = 2
-_PRIORITY_TYPE = 3  # specialization family, typing
-_PRIORITY_USAGE = 4  # allocate, include — and perform (see `_collect_edges`)
-_PRIORITY_OTHER_DEPENDENCY = 5  # other dependencies (#Command, #Mount, #extend, …)
+# Upward chain priority (lower wins). The chain follows the trace from a
+# physical part to its logical part, the functional entity allocated to it,
+# that entity's function, the use case the function refines and the
+# requirement the use case pursues, before it falls back on structure.
+_PRIORITY_TRACE = 1  # satisfy; refine / derive / objective / implements; any dependency to a requirement
+_PRIORITY_ALLOCATE = 2  # allocate: a logical part climbs through the entity allocated to it
+_PRIORITY_OWNER = 3
+_PRIORITY_TYPE = 4  # specialization family, typing
+_PRIORITY_USAGE = 5  # include — and perform (see `_collect_edges`)
+_PRIORITY_OTHER_DEPENDENCY = 6  # other dependencies (#Command, #Mount, #extend, …)
 
-_TRACE_KEYWORDS = {"refine", "derive", "objective"}
+_TRACE_KEYWORDS = {"refine", "derive", "objective", "implements"}
 _SPECIALIZATION_KINDS = {
     ArtifactKind.SPECIALIZATION,
     ArtifactKind.SUBSETTING,
@@ -219,7 +223,7 @@ def _relation_label(rel: SemanticElement) -> str:
 def _dependency_priority(
     semantic: Mapping[str, SemanticElement], rel: SemanticElement, upper: str
 ) -> int:
-    """Trace (refine, derive, objective, or towards a requirement) or other."""
+    """Trace (refine, derive, objective, implements, or towards a requirement) or other."""
     if _TRACE_KEYWORDS.intersection(rel.metadata_keywords or []):
         return _PRIORITY_TRACE
     if semantic[upper].kind == ArtifactKind.REQUIREMENT:
@@ -275,7 +279,9 @@ def _collect_edges(
         elif rel.kind in _SPECIALIZATION_KINDS:
             specialized.add((tgt, src))
             add(_Edge(tgt, src, rel.id, label, _PRIORITY_TYPE))
-        elif rel.kind in (ArtifactKind.INCLUDE, ArtifactKind.ALLOCATION):
+        elif rel.kind == ArtifactKind.ALLOCATION:
+            add(_Edge(src, tgt, rel.id, label, _PRIORITY_ALLOCATE))
+        elif rel.kind == ArtifactKind.INCLUDE:
             add(_Edge(src, tgt, rel.id, label, _PRIORITY_USAGE))
 
     # perform (PR A): the performing part is upper, the action lower, label

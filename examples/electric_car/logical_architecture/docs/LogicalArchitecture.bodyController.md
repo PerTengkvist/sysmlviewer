@@ -7,6 +7,8 @@ Part of `Car`.
 ## Relations
 
 - Comprises `lockControl`.
+- Comprises `doorControl`.
+- Comprises `windowControl`.
 - Comprises `wipeControl`.
 - Comprises `headlampControl`.
 - Comprises `indicatorControl`.
@@ -15,7 +17,8 @@ Part of `Car`.
 - Depends on `windowLifts` («Command»).
 - Depends on `lamps` («Command»).
 - Depends on `wipers` («Command»).
-- Satisfies `LockIndication`.
+- Implemented by `bodyEcu`.
+- Implemented by `bodyControlSw`.
 
 ## Diagrams
 

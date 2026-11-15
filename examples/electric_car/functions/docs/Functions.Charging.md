@@ -11,6 +11,7 @@ Part of `Functions`.
 - `Climate` depends on this («Energy»).
 - `WindshieldCleaning` depends on this («Energy»).
 - `Lighting` depends on this («Energy»).
+- Refines `Charge`.
 
 ## Diagrams
 

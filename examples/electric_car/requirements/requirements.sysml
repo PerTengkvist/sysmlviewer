@@ -1,5 +1,5 @@
 package Requirements {
-  doc /* Stakeholder requirements and user stories for a compact battery-electric passenger car. Size, performance, safety, security and comfort are the requirement groups. Driving, charging and parking are told as user stories. Leaf requirements refine a group. Logical parts satisfy the leaves. */
+  doc /* Stakeholder requirements and user stories for a compact battery-electric passenger car. Size, performance, safety, security and comfort are the requirement groups. Driving, charging and parking are told as user stories. Leaf requirements refine a group. A leaf is traced to the logical parts along the function chain: a use case pursues it as objective, a functional entity refines that use case, and the entity is allocated to a logical part. A satisfy from a logical part to a leaf is kept only where the chain does not reach that part, such as the body for the size and crash requirements, or the brake pedal for braking distance, which the chain already traces to the drive controller and the friction brakes. */
 
   requirement def <'REQ-SIZE'> Size {
     attribute Type = "Size";
@@ -206,36 +206,24 @@ package Requirements {
   #refine dependency from DriveAtNight to NightVisibility;
   #refine dependency from EnterAndExit to CabinAccess;
 
+  // Direct satisfy only where the function chain does not reach the part.
   satisfy VehicleLength by LogicalArchitecture::Car::body;
   satisfy VehicleWidth by LogicalArchitecture::Car::body;
   satisfy VehicleHeight by LogicalArchitecture::Car::body;
   satisfy PassengerCapacity by LogicalArchitecture::Car::body;
   satisfy CargoVolume by LogicalArchitecture::Car::body;
   satisfy Range by LogicalArchitecture::Car::battery;
-  satisfy Acceleration by LogicalArchitecture::Car::engine;
-  satisfy TopSpeed by LogicalArchitecture::Car::engine;
-  satisfy ChargeTime by LogicalArchitecture::Car::battery;
-  satisfy ChargeTime by LogicalArchitecture::Car::chargeInlet;
   satisfy PropulsionModes by LogicalArchitecture::Car::gearStick;
   satisfy CrashProtection by LogicalArchitecture::Car::body;
   satisfy PedestrianProtection by LogicalArchitecture::Car::body;
   satisfy OccupantRestraint by LogicalArchitecture::Car::body;
   satisfy BrakingDistance by LogicalArchitecture::Car::brakePedal;
-  satisfy BrakingDistance by LogicalArchitecture::Car::frictionBrakes;
-  satisfy BrakingDistance by LogicalArchitecture::Car::driveController;
   satisfy DirectionalControl by LogicalArchitecture::Car::steeringWheel;
   satisfy ForwardVisibility by LogicalArchitecture::Car::windshield;
-  satisfy ForwardVisibility by LogicalArchitecture::Car::wipers;
   satisfy AccessControl by LogicalArchitecture::Car::locks;
-  satisfy Immobilizer by LogicalArchitecture::Car::vehicleController;
-  satisfy LockIndication by LogicalArchitecture::Car::bodyController;
-  satisfy PowerModes by LogicalArchitecture::Car::vehicleController;
   satisfy PowerModes by LogicalArchitecture::Car::startButton;
-  satisfy NightVisibility by LogicalArchitecture::Car::lamps;
   satisfy CabinAccess by LogicalArchitecture::Car::doors;
   satisfy CabinAccess by LogicalArchitecture::Car::windowLifts;
-  satisfy CabinClimate by LogicalArchitecture::Car::climateSystem;
-  satisfy CabinMedia by LogicalArchitecture::Car::entertainmentSystem;
 
   view RequirementsGraphView : GeneralView {
     doc /* Requirement graph. Group requirements, leaf requirements and user stories, with «refine» dependencies. */

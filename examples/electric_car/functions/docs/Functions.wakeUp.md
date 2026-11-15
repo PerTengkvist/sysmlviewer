@@ -7,6 +7,7 @@ Part of `Security`.
 ## Relations
 
 - Allocated to `vehicleController`.
+- Refines `Unlock`.
 
 ## Diagrams
 

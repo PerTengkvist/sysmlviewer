@@ -232,177 +232,171 @@
       "width": 1610.0,
       "height": 1634.0
     },
-    "PhysicalArchitecture::LogicalCounterparts": {
+    "LogicalArchitecture::Car": {
       "x": 1730.0,
       "y": 0.0,
       "width": 280.0,
-      "height": 1908.0
+      "height": 1842.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::car": {
+    "LogicalArchitecture::Car::keyFob": {
       "x": 30.0,
       "y": 50.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::keyFob": {
+    "LogicalArchitecture::Car::startButton": {
       "x": 30.0,
       "y": 116.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::startButton": {
+    "LogicalArchitecture::Car::steeringWheel": {
       "x": 30.0,
       "y": 182.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::steeringWheel": {
+    "LogicalArchitecture::Car::gearStick": {
       "x": 30.0,
       "y": 248.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::gearStick": {
+    "LogicalArchitecture::Car::acceleratorPedal": {
       "x": 30.0,
       "y": 314.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::acceleratorPedal": {
+    "LogicalArchitecture::Car::brakePedal": {
       "x": 30.0,
       "y": 380.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::brakePedal": {
+    "LogicalArchitecture::Car::vehicleController": {
       "x": 30.0,
       "y": 446.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::vehicleController": {
+    "LogicalArchitecture::Car::driveController": {
       "x": 30.0,
       "y": 512.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::driveController": {
+    "LogicalArchitecture::Car::bodyController": {
       "x": 30.0,
       "y": 578.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::bodyController": {
+    "LogicalArchitecture::Car::instrumentCluster": {
       "x": 30.0,
       "y": 644.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::instrumentCluster": {
+    "LogicalArchitecture::Car::climateSystem": {
       "x": 30.0,
       "y": 710.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::climateSystem": {
+    "LogicalArchitecture::Car::entertainmentSystem": {
       "x": 30.0,
       "y": 776.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::entertainmentSystem": {
+    "LogicalArchitecture::Car::engine": {
       "x": 30.0,
       "y": 842.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::engine": {
+    "LogicalArchitecture::Car::battery": {
       "x": 30.0,
       "y": 908.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::battery": {
+    "LogicalArchitecture::Car::chassis": {
       "x": 30.0,
       "y": 974.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::chassis": {
+    "LogicalArchitecture::Car::wheels": {
       "x": 30.0,
       "y": 1040.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::wheels": {
+    "LogicalArchitecture::Car::frictionBrakes": {
       "x": 30.0,
       "y": 1106.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::frictionBrakes": {
+    "LogicalArchitecture::Car::suspension": {
       "x": 30.0,
       "y": 1172.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::suspension": {
+    "LogicalArchitecture::Car::doors": {
       "x": 30.0,
       "y": 1238.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::doors": {
+    "LogicalArchitecture::Car::windows": {
       "x": 30.0,
       "y": 1304.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::windows": {
+    "LogicalArchitecture::Car::windowLifts": {
       "x": 30.0,
       "y": 1370.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::windowLifts": {
+    "LogicalArchitecture::Car::body": {
       "x": 30.0,
       "y": 1436.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::body": {
+    "LogicalArchitecture::Car::windshield": {
       "x": 30.0,
       "y": 1502.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::windshield": {
+    "LogicalArchitecture::Car::wipers": {
       "x": 30.0,
       "y": 1568.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::wipers": {
+    "LogicalArchitecture::Car::locks": {
       "x": 30.0,
       "y": 1634.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::locks": {
+    "LogicalArchitecture::Car::lamps": {
       "x": 30.0,
       "y": 1700.0,
       "width": 220.0,
       "height": 54.0
     },
-    "PhysicalArchitecture::LogicalCounterparts::lamps": {
+    "LogicalArchitecture::Car::chargeInlet": {
       "x": 30.0,
       "y": 1766.0,
-      "width": 220.0,
-      "height": 54.0
-    },
-    "PhysicalArchitecture::LogicalCounterparts::chargeInlet": {
-      "x": 30.0,
-      "y": 1832.0,
       "width": 220.0,
       "height": 54.0
     }

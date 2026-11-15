@@ -1,9 +1,14 @@
 # StartVehicle
 
-The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready.
+The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. Starting is where the immobilizer requirement is met: the car becomes Ready only once the key has been approved.
 
 ## Relations
 
+- Refined by `Security`.
+- Refined by `authenticate`.
+- Refined by `immobilizer`.
+- Refined by `driverInformation`.
 - Pursues requirement `PowerModes`.
+- Pursues requirement `Immobilizer`.
 - Included by `Drive`.
 - Refines `DriveToDestination`.

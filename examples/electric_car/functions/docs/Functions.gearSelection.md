@@ -7,6 +7,7 @@ Part of `Maneuvrability`.
 ## Relations
 
 - Allocated to `driveController`.
+- Refines `ChangeGear`.
 
 ## Diagrams
 

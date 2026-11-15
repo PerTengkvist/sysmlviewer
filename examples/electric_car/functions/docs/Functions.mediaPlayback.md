@@ -7,6 +7,7 @@ Part of `Entertainment`.
 ## Relations
 
 - Allocated to `entertainmentSystem`.
+- Refines `PlayMedia`.
 
 ## Diagrams
 

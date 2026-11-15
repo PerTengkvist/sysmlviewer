@@ -8,6 +8,7 @@ Part of `Functions`.
 
 - Depends on `Charging` («Energy»).
 - Depends on `SpeedControl` («Speed»).
+- Refines `CleanWindshield`.
 
 ## Diagrams
 

@@ -1,13 +1,13 @@
 package Functions {
-  doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function also has an action flow, and every step of it is performed by one of its functional entities; a FlowView per function shows the flow with the performer on each step. */
+  doc /* Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Each function also «refine»s the use cases it carries out; those dependencies are collected in the FunctionTraceability package. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function has one or more action flows, and every step of a flow is performed by one of the function's functional entities; a FlowView per flow shows it with the performer on each step. */
   abstract part def Function {
-    doc /* Base of the functions the car performs. A function is decomposed into FunctionNode entities and has one action flow that those entities perform. */
+    doc /* Base of the functions the car performs. A function is decomposed into FunctionNode entities and has at least one action flow that those entities perform. */
   }
   abstract part def FunctionNode {
-    doc /* A functional entity: a part of a function that performs steps of the function's flow. Every FunctionNode is allocated to exactly one logical part. */
+    doc /* A functional entity: a part of a function that performs steps of the function's flows. Every FunctionNode is allocated to exactly one logical part. */
   }
   part def Security :> Function {
-    doc /* Authenticate the driver, unlock and lock the doors, and release the immobilizer. Every driving function depends on Security before the car will move. */
+    doc /* Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved and, for a door, is latched again. */
     part authenticate : FunctionNode {
       doc /* Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller. */
       perform securityFlow.checkCredential;
@@ -24,10 +24,24 @@ package Functions {
     part lockControl : FunctionNode {
       doc /* Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller. */
       perform securityFlow.unlockDoors;
+      perform cabinAccessFlow.checkUnlocked;
+      perform cabinAccessFlow.stayLatched;
+      perform cabinAccessFlow.relatch;
+    }
+    part doorControl : FunctionNode {
+      doc /* Own the doors: read the inside and outside handles, open a door once its latch is free, and report each door open or closed. Allocated to the body controller. */
+      perform cabinAccessFlow.readDoorHandle;
+      perform cabinAccessFlow.releaseDoor;
+      perform cabinAccessFlow.closeDoor;
+    }
+    part windowControl : FunctionNode {
+      doc /* Own the side windows: run each window lift on its switch and reverse a window that pinches. Allocated to the body controller. */
+      perform cabinAccessFlow.runWindowLift;
     }
     part driverInformation : FunctionNode {
       doc /* Tell the driver what state the car is in: ready, gear, speed, charge and warnings. Allocated to the instrument cluster. */
       perform securityFlow.showReady;
+      perform cabinAccessFlow.showDoorState;
     }
     action securityFlow {
       doc /* From a key fob credential to a car that is ready to start. A valid key unlocks the doors, wakes the cabin, releases the immobilizer and tells the driver; any other key is rejected and the car stays locked. */
@@ -57,6 +71,45 @@ package Functions {
       first releaseImmobilizer then showReady;
       first showReady then done;
       first rejectKey then done;
+    }
+    action cabinAccessFlow {
+      doc /* From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A closed door is latched again, a window follows its switch, and the driver sees which doors are open. */
+      action readDoorHandle {
+        doc /* When the request comes from a door: the pull on a handle is read. Output: the door to open and whether the handle was outside or inside, the outsideHandle decision. */
+      }
+      action checkUnlocked {
+        doc /* For an outside handle only: the state of the latches is read; the outcome is the carUnlocked decision. */
+      }
+      action releaseDoor {
+        doc /* From inside always, from outside on an unlocked car: the latch of the requested door lets go and the door swings open. */
+      }
+      action stayLatched {
+        doc /* Outside handle on a locked car: the pull is ignored and the door stays latched, so the car cannot be entered without the key. */
+      }
+      action closeDoor {
+        doc /* The occupant swings the open door shut; its position sensor reports it closed. */
+      }
+      action relatch {
+        doc /* Once the door is shut: its latch catches and holds it, so the car can be locked again. */
+      }
+      action showDoorState {
+        doc /* After the door has opened and closed: the door-ajar warning is shown while it stands open and cleared once it is latched again. */
+      }
+      action runWindowLift {
+        doc /* When the request comes from a window switch: the window lowers or rises while the switch is held, and backs off if it meets an obstacle on the way up. */
+      }
+      first start;
+      then if doorRequested then readDoorHandle else runWindowLift;
+      first readDoorHandle;
+      then if outsideHandle then checkUnlocked else releaseDoor;
+      first checkUnlocked;
+      then if carUnlocked then releaseDoor else stayLatched;
+      first releaseDoor then closeDoor;
+      first closeDoor then relatch;
+      first relatch then showDoorState;
+      first showDoorState then done;
+      first stayLatched then done;
+      first runWindowLift then done;
     }
   }
 
@@ -297,10 +350,13 @@ package Functions {
   #Energy dependency from Lighting to Charging;
   #Indicate dependency from Lighting to Maneuvrability;
 
+
   allocate Security::authenticate to LogicalArchitecture::Car::vehicleController;
   allocate Security::immobilizer to LogicalArchitecture::Car::vehicleController;
   allocate Security::wakeUp to LogicalArchitecture::Car::vehicleController;
   allocate Security::lockControl to LogicalArchitecture::Car::bodyController;
+  allocate Security::doorControl to LogicalArchitecture::Car::bodyController;
+  allocate Security::windowControl to LogicalArchitecture::Car::bodyController;
   allocate Security::driverInformation to LogicalArchitecture::Car::instrumentCluster;
   allocate Charging::chargeConnection to LogicalArchitecture::Car::chargeInlet;
   allocate Charging::chargeSession to LogicalArchitecture::Car::battery;
@@ -337,6 +393,11 @@ package Functions {
     expose Security::securityFlow;
   }
 
+  view SecurityCabinAccessFlowView : ActionFlowView {
+    doc /* Security cabin access flow: a door handle is read; an inside handle opens the door at once, an outside handle only on an unlocked car; the door is closed and latched again; or a window is moved on its switch. Each step shows the functional entity that performs it. */
+    expose Security::cabinAccessFlow;
+  }
+
   view ChargingFlowView : ActionFlowView {
     doc /* Charging flow: plug detection, current negotiation, energy transfer and storage, and stop at the target. Each step shows the functional entity that performs it. */
     expose Charging::chargingFlow;
@@ -371,4 +432,80 @@ package Functions {
     doc /* Lighting flow: lamp selection, indicators and lamp drive. Each step shows the functional entity that performs it. */
     expose Lighting::lightingFlow;
   }
+}
+
+package FunctionTraceability {
+  doc /* Traceability from the functions and their functional entities to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). Each functional entity also «refine»s the use cases it serves; together they cover exactly the use cases of their function, and a logical part climbs through the entity allocated to it to the use cases that entity serves. */
+  // Kept outside Functions: FunctionsView exposes Functions with a filter that
+  // pulls in dependency endpoints, and it should show only the dependencies
+  // between functions.
+  // Function level.
+  #refine dependency from Functions::Security to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security to UseCases::Managing::Lock;
+  #refine dependency from Functions::Security to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Security to UseCases::Managing::OpenWindow;
+  #refine dependency from Functions::Security to UseCases::Managing::CloseWindow;
+  #refine dependency from Functions::Charging to UseCases::Managing::Charge;
+  #refine dependency from Functions::SpeedControl to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::SpeedControl to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::Maneuvrability to UseCases::Driving::ChangeGear;
+  #refine dependency from Functions::Maneuvrability to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Maneuvrability to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::Lighting to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Lighting to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting to UseCases::Driving::Brake;
+  #refine dependency from Functions::WindshieldCleaning to UseCases::Driving::CleanWindshield;
+  #refine dependency from Functions::Climate to UseCases::Managing::AdjustClimate;
+  #refine dependency from Functions::Entertainment to UseCases::Managing::PlayMedia;
+
+  // Entity level: each functional entity refines the use cases it serves.
+  #refine dependency from Functions::Security::authenticate to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::authenticate to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security::authenticate to UseCases::Managing::Lock;
+  #refine dependency from Functions::Security::immobilizer to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::immobilizer to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security::wakeUp to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::Lock;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::Unlock;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security::lockControl to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Security::doorControl to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security::doorControl to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Security::windowControl to UseCases::Managing::OpenWindow;
+  #refine dependency from Functions::Security::windowControl to UseCases::Managing::CloseWindow;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::Security::driverInformation to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::Charging::chargeConnection to UseCases::Managing::Charge;
+  #refine dependency from Functions::Charging::chargeSession to UseCases::Managing::Charge;
+  #refine dependency from Functions::Charging::energyStorage to UseCases::Managing::Charge;
+  #refine dependency from Functions::SpeedControl::torqueArbitration to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::SpeedControl::torqueArbitration to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl::regenBlending to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl::tractionDrive to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::SpeedControl::frictionBraking to UseCases::Driving::Brake;
+  #refine dependency from Functions::SpeedControl::frictionBraking to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::Maneuvrability::steeringControl to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Maneuvrability::steeringControl to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Maneuvrability::gearSelection to UseCases::Driving::ChangeGear;
+  #refine dependency from Functions::Maneuvrability::roadHolding to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Maneuvrability::roadHolding to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting::headlampControl to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::Brake;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::TurnLeft;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::TurnRight;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::Brake;
+  #refine dependency from Functions::WindshieldCleaning::wipeControl to UseCases::Driving::CleanWindshield;
+  #refine dependency from Functions::WindshieldCleaning::wipeSweep to UseCases::Driving::CleanWindshield;
+  #refine dependency from Functions::Climate::cabinTemperature to UseCases::Managing::AdjustClimate;
+  #refine dependency from Functions::Entertainment::mediaPlayback to UseCases::Managing::PlayMedia;
 }

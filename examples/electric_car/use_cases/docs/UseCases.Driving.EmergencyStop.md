@@ -4,6 +4,8 @@ The driver brakes hard from speed. Extends Brake with maximum deceleration, anti
 
 ## Relations
 
+- Refined by `SpeedControl`.
+- Refined by `frictionBraking`.
 - Pursues requirement `BrakingDistance`.
 - Extends `Brake`.
 - Refines `ControlSpeed`.

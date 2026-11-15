@@ -1,9 +1,13 @@
 # Accelerate
 
-The driver presses the accelerator and the motor delivers torque within the battery's limit.
+The driver presses the accelerator and the motor delivers torque within the battery's limit. The same use case carries the car up to its top speed, so it pursues both the acceleration and the top-speed requirement.
 
 ## Relations
 
+- Refined by `SpeedControl`.
+- Refined by `torqueArbitration`.
+- Refined by `tractionDrive`.
 - Pursues requirement `Acceleration`.
+- Pursues requirement `TopSpeed`.
 - Included by `Drive`.
 - Refines `ControlSpeed`.

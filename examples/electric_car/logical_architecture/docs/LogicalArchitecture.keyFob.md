@@ -7,6 +7,7 @@ Part of `Car`.
 ## Relations
 
 - Depends on `vehicleController` («Command»).
+- Implemented by `keyFobUnit`.
 
 ## Diagrams
 

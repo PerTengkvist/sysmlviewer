@@ -9,6 +9,10 @@ Part of `Functions`.
 - Depends on `Security` («Authorize»).
 - Depends on `Charging` («Energy»).
 - Depends on `Maneuvrability` («Indicate»).
+- Refines `ToggleHeadlights`.
+- Refines `TurnLeft`.
+- Refines `TurnRight`.
+- Refines `Brake`.
 
 ## Diagrams
 

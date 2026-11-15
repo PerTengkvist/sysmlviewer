@@ -1,5 +1,5 @@
 package PhysicalArchitecture {
-  doc /* Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Logical counterparts live in LogicalCounterparts so the physical whitebox stays clean. */
+  doc /* Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Each «implements» points straight at the part of the logical Car it realizes, and VehiclePhysical as a whole implements the logical Car definition. */
 
   interface def DirectionCommand {
     doc /* Steering command, same contract as the logical architecture. Steering wheel to drive computer, drive computer to wheels. */
@@ -54,95 +54,6 @@ package PhysicalArchitecture {
   }
   interface def WindshieldClear {
     doc /* Wiping action, same contract as the logical architecture. The wiper assembly provides it and the windshield consumes it. */
-  }
-
-  package LogicalCounterparts {
-    doc /* Logical architecture counterparts referenced by «implements» from VehiclePhysical. Kept outside the physical whitebox so PhysicalView stays mechanical/software only. */
-
-    #Logical ref part car {
-      doc /* Logical Car. The whole physical car implements this assembly. */
-    }
-    #Logical ref part keyFob {
-      doc /* Logical key fob, from the logical architecture. */
-    }
-    #Logical ref part startButton {
-      doc /* Logical start button, from the logical architecture. */
-    }
-    #Logical ref part steeringWheel {
-      doc /* Logical steering wheel, from the logical architecture. */
-    }
-    #Logical ref part gearStick {
-      doc /* Logical gear stick, from the logical architecture. */
-    }
-    #Logical ref part acceleratorPedal {
-      doc /* Logical accelerator pedal, from the logical architecture. */
-    }
-    #Logical ref part brakePedal {
-      doc /* Logical brake pedal, from the logical architecture. */
-    }
-    #Logical ref part vehicleController {
-      doc /* Logical vehicle controller, from the logical architecture. */
-    }
-    #Logical ref part driveController {
-      doc /* Logical drive controller, from the logical architecture. */
-    }
-    #Logical ref part bodyController {
-      doc /* Logical body controller, from the logical architecture. */
-    }
-    #Logical ref part instrumentCluster {
-      doc /* Logical instrument cluster, from the logical architecture. */
-    }
-    #Logical ref part climateSystem {
-      doc /* Logical climate system, from the logical architecture. */
-    }
-    #Logical ref part entertainmentSystem {
-      doc /* Logical entertainment system, from the logical architecture. */
-    }
-    #Logical ref part engine {
-      doc /* Logical engine (traction motor), from the logical architecture. */
-    }
-    #Logical ref part battery {
-      doc /* Logical battery, from the logical architecture. */
-    }
-    #Logical ref part chassis {
-      doc /* Logical chassis, from the logical architecture. */
-    }
-    #Logical ref part wheels {
-      doc /* Logical wheels, from the logical architecture. */
-    }
-    #Logical ref part frictionBrakes {
-      doc /* Logical friction brakes, from the logical architecture. */
-    }
-    #Logical ref part suspension {
-      doc /* Logical suspension, from the logical architecture. */
-    }
-    #Logical ref part doors {
-      doc /* Logical doors, from the logical architecture. */
-    }
-    #Logical ref part windows {
-      doc /* Logical windows, from the logical architecture. */
-    }
-    #Logical ref part windowLifts {
-      doc /* Logical window lifts, from the logical architecture. */
-    }
-    #Logical ref part body {
-      doc /* Logical body shell (kaross), from the logical architecture. */
-    }
-    #Logical ref part windshield {
-      doc /* Logical windshield, from the logical architecture. */
-    }
-    #Logical ref part wipers {
-      doc /* Logical wipers, from the logical architecture. */
-    }
-    #Logical ref part locks {
-      doc /* Logical locks, from the logical architecture. */
-    }
-    #Logical ref part lamps {
-      doc /* Logical lamps, from the logical architecture. */
-    }
-    #Logical ref part chargeInlet {
-      doc /* Logical charge inlet, from the logical architecture. */
-    }
   }
 
   part def VehiclePhysical {
@@ -360,44 +271,44 @@ package PhysicalArchitecture {
       port chargeOut : ChargeFeed;
     }
 
-    #implements dependency from VehiclePhysical to LogicalCounterparts::car;
-    #implements dependency from vehicleEcu to LogicalCounterparts::vehicleController;
-    #implements dependency from vehicleEcu.vehicleControlSw to LogicalCounterparts::vehicleController;
-    #implements dependency from driveEcu to LogicalCounterparts::driveController;
-    #implements dependency from driveEcu.driveControlSw to LogicalCounterparts::driveController;
-    #implements dependency from bodyEcu to LogicalCounterparts::bodyController;
-    #implements dependency from bodyEcu.bodyControlSw to LogicalCounterparts::bodyController;
-    #implements dependency from infotainmentEcu to LogicalCounterparts::entertainmentSystem, LogicalCounterparts::climateSystem;
-    #implements dependency from infotainmentEcu.entertainmentSw to LogicalCounterparts::entertainmentSystem;
-    #implements dependency from infotainmentEcu.climateControlSw to LogicalCounterparts::climateSystem;
-    #implements dependency from engineEcu to LogicalCounterparts::engine;
-    #implements dependency from engineEcu.engineControlSw to LogicalCounterparts::engine;
-    #implements dependency from batteryEcu to LogicalCounterparts::battery;
-    #implements dependency from batteryEcu.batteryControlSw to LogicalCounterparts::battery, LogicalCounterparts::chargeInlet;
-    #implements dependency from keyFobUnit to LogicalCounterparts::keyFob;
-    #implements dependency from startButtonMech to LogicalCounterparts::startButton;
-    #implements dependency from steeringWheelMech to LogicalCounterparts::steeringWheel;
-    #implements dependency from gearStickMech to LogicalCounterparts::gearStick;
-    #implements dependency from acceleratorPedalMech to LogicalCounterparts::acceleratorPedal;
-    #implements dependency from brakePedalMech to LogicalCounterparts::brakePedal;
-    #implements dependency from instrumentClusterUnit to LogicalCounterparts::instrumentCluster;
-    #implements dependency from hvacAssembly to LogicalCounterparts::climateSystem;
-    #implements dependency from displayAndSpeakers to LogicalCounterparts::entertainmentSystem;
-    #implements dependency from electricMotor to LogicalCounterparts::engine;
-    #implements dependency from batteryPack to LogicalCounterparts::battery;
-    #implements dependency from chassisFrame to LogicalCounterparts::chassis;
-    #implements dependency from wheelSet to LogicalCounterparts::wheels;
-    #implements dependency from brakeCaliperAsm to LogicalCounterparts::frictionBrakes;
-    #implements dependency from suspensionAsm to LogicalCounterparts::suspension;
-    #implements dependency from doorAsm to LogicalCounterparts::doors;
-    #implements dependency from windowAsm to LogicalCounterparts::windows;
-    #implements dependency from windowLiftAsm to LogicalCounterparts::windowLifts;
-    #implements dependency from bodyShell to LogicalCounterparts::body;
-    #implements dependency from windshieldGlass to LogicalCounterparts::windshield;
-    #implements dependency from wiperAsm to LogicalCounterparts::wipers;
-    #implements dependency from doorLockAsm to LogicalCounterparts::locks;
-    #implements dependency from lampUnits to LogicalCounterparts::lamps;
-    #implements dependency from chargeInletMech to LogicalCounterparts::chargeInlet;
+    #implements dependency from VehiclePhysical to LogicalArchitecture::Car;
+    #implements dependency from vehicleEcu to LogicalArchitecture::Car::vehicleController;
+    #implements dependency from vehicleEcu.vehicleControlSw to LogicalArchitecture::Car::vehicleController;
+    #implements dependency from driveEcu to LogicalArchitecture::Car::driveController;
+    #implements dependency from driveEcu.driveControlSw to LogicalArchitecture::Car::driveController;
+    #implements dependency from bodyEcu to LogicalArchitecture::Car::bodyController;
+    #implements dependency from bodyEcu.bodyControlSw to LogicalArchitecture::Car::bodyController;
+    #implements dependency from infotainmentEcu to LogicalArchitecture::Car::entertainmentSystem, LogicalArchitecture::Car::climateSystem;
+    #implements dependency from infotainmentEcu.entertainmentSw to LogicalArchitecture::Car::entertainmentSystem;
+    #implements dependency from infotainmentEcu.climateControlSw to LogicalArchitecture::Car::climateSystem;
+    #implements dependency from engineEcu to LogicalArchitecture::Car::engine;
+    #implements dependency from engineEcu.engineControlSw to LogicalArchitecture::Car::engine;
+    #implements dependency from batteryEcu to LogicalArchitecture::Car::battery;
+    #implements dependency from batteryEcu.batteryControlSw to LogicalArchitecture::Car::battery, LogicalArchitecture::Car::chargeInlet;
+    #implements dependency from keyFobUnit to LogicalArchitecture::Car::keyFob;
+    #implements dependency from startButtonMech to LogicalArchitecture::Car::startButton;
+    #implements dependency from steeringWheelMech to LogicalArchitecture::Car::steeringWheel;
+    #implements dependency from gearStickMech to LogicalArchitecture::Car::gearStick;
+    #implements dependency from acceleratorPedalMech to LogicalArchitecture::Car::acceleratorPedal;
+    #implements dependency from brakePedalMech to LogicalArchitecture::Car::brakePedal;
+    #implements dependency from instrumentClusterUnit to LogicalArchitecture::Car::instrumentCluster;
+    #implements dependency from hvacAssembly to LogicalArchitecture::Car::climateSystem;
+    #implements dependency from displayAndSpeakers to LogicalArchitecture::Car::entertainmentSystem;
+    #implements dependency from electricMotor to LogicalArchitecture::Car::engine;
+    #implements dependency from batteryPack to LogicalArchitecture::Car::battery;
+    #implements dependency from chassisFrame to LogicalArchitecture::Car::chassis;
+    #implements dependency from wheelSet to LogicalArchitecture::Car::wheels;
+    #implements dependency from brakeCaliperAsm to LogicalArchitecture::Car::frictionBrakes;
+    #implements dependency from suspensionAsm to LogicalArchitecture::Car::suspension;
+    #implements dependency from doorAsm to LogicalArchitecture::Car::doors;
+    #implements dependency from windowAsm to LogicalArchitecture::Car::windows;
+    #implements dependency from windowLiftAsm to LogicalArchitecture::Car::windowLifts;
+    #implements dependency from bodyShell to LogicalArchitecture::Car::body;
+    #implements dependency from windshieldGlass to LogicalArchitecture::Car::windshield;
+    #implements dependency from wiperAsm to LogicalArchitecture::Car::wipers;
+    #implements dependency from doorLockAsm to LogicalArchitecture::Car::locks;
+    #implements dependency from lampUnits to LogicalArchitecture::Car::lamps;
+    #implements dependency from chargeInletMech to LogicalArchitecture::Car::chargeInlet;
 
     // Internal ECU↔SW bindings (proxy faces on the parent).
     bind vehicleEcu.credentialIn = vehicleEcu.vehicleControlSw.credentialIn;
@@ -457,9 +368,8 @@ package PhysicalArchitecture {
   }
 
   view PhysicalDependenciesView : GeneralView {
-    doc /* Physical parts and their «implements» dependencies to LogicalCounterparts (connections filtered out). */
+    doc /* Physical parts and their «implements» dependencies to the logical parts they realize (connections filtered out). The logical parts show as plain nodes at the ends of the dependencies. */
     expose VehiclePhysical;
-    expose LogicalCounterparts;
     filter @PartUsage or @Dependency;
   }
 

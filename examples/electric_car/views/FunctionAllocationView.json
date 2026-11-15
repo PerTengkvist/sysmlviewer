@@ -8,7 +8,7 @@
       "x": 40.0,
       "y": 40.0,
       "width": 240.0,
-      "height": 396.0
+      "height": 532.0
     },
     "Functions::Security::authenticate": {
       "x": 20.0,
@@ -34,9 +34,21 @@
       "width": 200.0,
       "height": 56.0
     },
-    "Functions::Security::driverInformation": {
+    "Functions::Security::doorControl": {
       "x": 20.0,
       "y": 316.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Security::windowControl": {
+      "x": 20.0,
+      "y": 384.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::Security::driverInformation": {
+      "x": 20.0,
+      "y": 452.0,
       "width": 200.0,
       "height": 56.0
     },
@@ -66,7 +78,7 @@
     },
     "Functions::SpeedControl": {
       "x": 40.0,
-      "y": 776.0,
+      "y": 912.0,
       "width": 240.0,
       "height": 328.0
     },
@@ -96,7 +108,7 @@
     },
     "Functions::Maneuvrability": {
       "x": 40.0,
-      "y": 462.0,
+      "y": 598.0,
       "width": 240.0,
       "height": 260.0
     },
@@ -120,7 +132,7 @@
     },
     "Functions::Entertainment": {
       "x": 40.0,
-      "y": 1120.686374478446,
+      "y": 1256.686374478446,
       "width": 240.0,
       "height": 124.0
     },
@@ -276,13 +288,13 @@
     }
   },
   "edges": {
-    "Functions::alloc10": {
+    "Functions::alloc12": {
       "sourceSide": "right",
       "sourceOffset": 0.45190041581781976,
       "targetSide": "left",
       "targetOffset": 0.8552946861414378
     },
-    "Functions::alloc9": {
+    "Functions::alloc11": {
       "sourceSide": "right",
       "sourceOffset": 0.5749716735376508,
       "targetSide": "left",
