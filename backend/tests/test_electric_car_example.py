@@ -697,3 +697,35 @@ def test_every_function_has_a_flow_view():
         steps = {a.id for a in actions if not _is_pseudo(a)}
         assert set(view["performers"]) == steps, view_id
         assert view["hasViewLayout"] is True, view_id
+
+
+def _succession_pairs(elements, flow_id):
+    _, successions = _flow_steps(elements, flow_id)
+    return {
+        (elements[s.source_id].name, elements[s.target_id].name, s.name.startswith("if_"))
+        for s in successions
+    }
+
+
+def test_branching_flows_have_the_intended_successions():
+    elements = _load().elements
+    assert _succession_pairs(elements, "Functions::Security::securityFlow") == {
+        ("start", "checkCredential", False),
+        ("checkCredential", "credentialValid", False),
+        ("credentialValid", "unlockDoors", True),
+        ("credentialValid", "rejectKey", True),
+        ("unlockDoors", "wakeCabin", False),
+        ("wakeCabin", "releaseImmobilizer", False),
+        ("releaseImmobilizer", "showReady", False),
+        ("showReady", "done", False),
+        ("rejectKey", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::SpeedControl::speedControlFlow") == {
+        ("start", "arbitrateTorque", False),
+        ("arbitrateTorque", "braking", False),
+        ("braking", "blendRegen", True),
+        ("braking", "driveWheels", True),
+        ("blendRegen", "applyFriction", False),
+        ("applyFriction", "done", False),
+        ("driveWheels", "done", False),
+    }

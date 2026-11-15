@@ -53,9 +53,9 @@ package Functions {
       then checkCredential;
       then if credentialValid then unlockDoors else rejectKey;
       first unlockDoors then wakeCabin;
-      then releaseImmobilizer;
-      then showReady;
-      then done;
+      first wakeCabin then releaseImmobilizer;
+      first releaseImmobilizer then showReady;
+      first showReady then done;
       first rejectKey then done;
     }
   }
@@ -139,7 +139,7 @@ package Functions {
       then arbitrateTorque;
       then if braking then blendRegen else driveWheels;
       first blendRegen then applyFriction;
-      then done;
+      first applyFriction then done;
       first driveWheels then done;
     }
   }
