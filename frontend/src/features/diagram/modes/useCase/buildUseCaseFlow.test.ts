@@ -191,19 +191,6 @@ describe('buildUseCaseFlow', () => {
     expect(decision.style).toMatchObject(DECISION_NODE_SIZE)
   })
 
-  it('centres every step on one column, top to bottom without overlap', () => {
-    const { nodes } = buildUseCaseFlow('P::Pay', semantic)
-    const boxes = nodes.map((n) => ({
-      cx: n.position.x + Number(n.style?.width) / 2,
-      top: n.position.y,
-      bottom: n.position.y + Number(n.style?.height),
-    }))
-    for (const b of boxes) expect(b.cx).toBe(boxes[0].cx)
-    for (let i = 1; i < boxes.length; i++) {
-      expect(boxes[i].top).toBeGreaterThan(boxes[i - 1].bottom + 20)
-    }
-  })
-
   it('links perform-of-action without expanding it', () => {
     const { actionLinks, nodes } = buildUseCaseFlow('P::Pay', semantic)
     expect(actionLinks).toContain('P::ChargeAction')
@@ -467,3 +454,161 @@ function payWithDone(): Record<string, SemanticElement> {
   succ('succ4', 'P::Pay::stepD', 'P::Pay::done')
   return sem
 }
+
+type Box = { cx: number; top: number; bottom: number; left: number; right: number }
+
+function boxes(nodes: ReturnType<typeof buildUseCaseFlow>['nodes']): Record<string, Box> {
+  const out: Record<string, Box> = {}
+  for (const n of nodes) {
+    const w = Number(n.style?.width)
+    const h = Number(n.style?.height)
+    const name = n.id.split('::').pop()!
+    out[name] = {
+      cx: n.position.x + w / 2,
+      top: n.position.y,
+      bottom: n.position.y + h,
+      left: n.position.x,
+      right: n.position.x + w,
+    }
+  }
+  return out
+}
+
+/** StartVehicle: two decisions, each branch ends in done. */
+const startVehicle = () =>
+  flowModel(
+    [
+      ['start', 'start'],
+      ['pressStart', null],
+      ['brakeHeld', 'decide'],
+      ['checkKey', null],
+      ['askForBrake', null],
+      ['keyApproved', 'decide'],
+      ['showReady', null],
+      ['rejectKey', null],
+      ['done', 'done'],
+    ],
+    [
+      ['start', 'pressStart'],
+      ['pressStart', 'brakeHeld'],
+      ['brakeHeld', 'checkKey', 'if_brakeHeld_yes'],
+      ['brakeHeld', 'askForBrake', 'if_brakeHeld_else'],
+      ['checkKey', 'keyApproved'],
+      ['keyApproved', 'showReady', 'if_keyApproved_yes'],
+      ['keyApproved', 'rejectKey', 'if_keyApproved_else'],
+      ['showReady', 'done'],
+      ['rejectKey', 'done'],
+      ['askForBrake', 'done'],
+    ],
+  )
+
+describe('buildUseCaseFlow layout', () => {
+  it('keeps a flow without branches in one column, top to bottom', () => {
+    const sem = flowModel(
+      [['start', 'start'], ['a', null], ['b', null], ['done', 'done']],
+      [['start', 'a'], ['a', 'b'], ['b', 'done']],
+    )
+    const b = boxes(buildUseCaseFlow('U::C', sem).nodes)
+    const order = ['start', 'a', 'b', 'done']
+    for (const name of order) expect(b[name].cx).toBe(b.start.cx)
+    for (let i = 1; i < order.length; i++) {
+      expect(b[order[i]].top).toBeGreaterThan(b[order[i - 1]].bottom + 20)
+    }
+  })
+
+  it('puts done last, below every branch', () => {
+    const b = boxes(buildUseCaseFlow('U::C', startVehicle()).nodes)
+    for (const [name, box] of Object.entries(b)) {
+      if (name !== 'done') expect(box.bottom, name).toBeLessThan(b.done.top)
+    }
+    expect(b.start.top).toBe(Math.min(...Object.values(b).map((x) => x.top)))
+  })
+
+  it('places the branches after a decision side by side, yes left of else', () => {
+    const b = boxes(buildUseCaseFlow('U::C', startVehicle()).nodes)
+    for (const [yes, no] of [
+      ['checkKey', 'askForBrake'],
+      ['showReady', 'rejectKey'],
+    ]) {
+      expect(b[yes].right, `${yes} left of ${no}`).toBeLessThan(b[no].left)
+      // Same row: they follow the same decision.
+      expect(b[yes].top).toBe(b[no].top)
+    }
+    // A step follows its decision on the branch's side.
+    expect(b.keyApproved.cx).toBe(b.checkKey.cx)
+  })
+
+  it('never stacks two steps on each other', () => {
+    const list = Object.entries(boxes(buildUseCaseFlow('U::C', startVehicle()).nodes))
+    for (const [n1, a] of list) {
+      for (const [n2, c] of list) {
+        if (n1 >= n2) continue
+        const apart = a.right < c.left || c.right < a.left || a.bottom < c.top || c.bottom < a.top
+        expect(apart, `${n1} / ${n2}`).toBe(true)
+      }
+    }
+  })
+
+  it('draws a loop on the right and the way out of the loop straight down', () => {
+    // Drive: ... brake, then if arrived then arrive else accelerate (loop).
+    const sem = flowModel(
+      [
+        ['start', 'start'],
+        ['accelerate', null],
+        ['brake', null],
+        ['arrived', 'decide'],
+        ['arrive', null],
+        ['done', 'done'],
+      ],
+      [
+        ['start', 'accelerate'],
+        ['accelerate', 'brake'],
+        ['brake', 'arrived'],
+        ['arrived', 'arrive', 'if_arrived_yes'],
+        ['arrived', 'accelerate', 'if_arrived_else'],
+        ['arrive', 'done'],
+      ],
+    )
+    const { nodes, edges } = buildUseCaseFlow('U::C', sem)
+    const b = boxes(nodes)
+    expect(endsOf(edges, 'U::C::arrived', 'U::C::accelerate')).toMatchObject({
+      sourceHandle: 'out-right',
+      targetHandle: 'in-right',
+      feedback: true,
+    })
+    expect(b.accelerate.bottom).toBeLessThan(b.arrived.top)
+    // The loop does not push the remaining step aside.
+    expect(endsOf(edges, 'U::C::arrived', 'U::C::arrive').sourceHandle).toBe('out-bottom')
+    for (const name of ['accelerate', 'brake', 'arrived', 'arrive', 'done']) {
+      expect(b[name].cx, name).toBe(b.start.cx)
+    }
+    expect(b.done.top).toBeGreaterThan(b.arrive.bottom)
+  })
+
+  it('loops on yes too: PlayMedia picks another title, else stops below', () => {
+    const sem = flowModel(
+      [
+        ['start', 'start'],
+        ['selectTitle', null],
+        ['playTitle', null],
+        ['anotherTitle', 'decide'],
+        ['stopPlayback', null],
+        ['done', 'done'],
+      ],
+      [
+        ['start', 'selectTitle'],
+        ['selectTitle', 'playTitle'],
+        ['playTitle', 'anotherTitle'],
+        ['anotherTitle', 'selectTitle', 'if_anotherTitle_yes'],
+        ['anotherTitle', 'stopPlayback', 'if_anotherTitle_else'],
+        ['stopPlayback', 'done'],
+      ],
+    )
+    const { nodes, edges } = buildUseCaseFlow('U::C', sem)
+    const b = boxes(nodes)
+    expect(endsOf(edges, 'U::C::anotherTitle', 'U::C::selectTitle').feedback).toBe(true)
+    expect(endsOf(edges, 'U::C::anotherTitle', 'U::C::stopPlayback').sourceHandle).toBe('out-bottom')
+    expect(b.stopPlayback.cx).toBe(b.anotherTitle.cx)
+    expect(b.done.top).toBeGreaterThan(b.stopPlayback.bottom)
+  })
+})

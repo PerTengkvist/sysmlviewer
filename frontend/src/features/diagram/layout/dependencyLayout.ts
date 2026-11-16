@@ -173,7 +173,7 @@ function isDecisionNode(n: Node | undefined): boolean {
   return !!d?.isDecision
 }
 
-function branchKind(e: Edge): 'yes' | 'no' | null {
+export function branchKind(e: Edge): 'yes' | 'no' | null {
   const label = typeof e.label === 'string' ? e.label.toUpperCase() : ''
   if (label === 'YES') return 'yes'
   if (label === 'NO') return 'no'
