@@ -111,3 +111,40 @@ test('the use case flow enters steps at the top and draws a loop on the right', 
   near(loop.end.x, loop.t.x + loop.t.w)
   near(loop.end.y, loop.t.y + loop.t.h / 2)
 })
+
+test('every use case opens a flow from start to done in its dialog', async ({ page }) => {
+  test.setTimeout(300_000)
+  const projectId = await openProject(page, exampleProjectFile('electric_car'))
+  const res = await page.request.get(`/api/projects/${projectId}`)
+  type El = { id: string; kind: string; name: string; parentId: string | null; typeRef: string | null }
+  const semantic = ((await res.json()) as { semantic: Record<string, El> }).semantic
+  const useCases = Object.values(semantic).filter((e) => e.kind === 'useCase')
+  expect(useCases).toHaveLength(21)
+
+  await openView(page, 'UseCases::VehicleUseCaseView')
+  await fitView(page)
+  const shown: Record<string, { nodes: number; edges: number }> = {}
+  const expected: Record<string, { nodes: number; edges: number }> = {}
+  for (const uc of useCases) {
+    const kids = Object.values(semantic).filter((e) => e.parentId === uc.id)
+    expected[uc.name] = {
+      nodes: kids.filter((e) => e.kind === 'action').length,
+      edges: kids.filter((e) => e.kind === 'succession').length,
+    }
+    // An «include» label can sit on top of a node in the fitted view; the
+    // dialog, not hit testing, is under test here.
+    await page.locator(nodeSel(uc.id)).dispatchEvent('dblclick')
+    const dlg = page.getByRole('dialog', { name: `Use case ${uc.name}` })
+    await expect(dlg).toBeVisible()
+    await expect(dlg.locator(nodeSel(`${uc.id}::start`))).toBeVisible()
+    await expect(dlg.locator(nodeSel(`${uc.id}::done`))).toBeVisible()
+    await expect(dlg.locator('.react-flow__edge')).toHaveCount(expected[uc.name].edges)
+    shown[uc.name] = {
+      nodes: await dlg.locator('.react-flow__node').count(),
+      edges: await dlg.locator('.react-flow__edge').count(),
+    }
+    await dlg.getByRole('button', { name: 'Close' }).click()
+    await expect(dlg).toBeHidden()
+  }
+  expect(shown).toEqual(expected)
+})

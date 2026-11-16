@@ -531,6 +531,182 @@ def test_use_case_view_exposes_both_packages():
     assert shown == DRIVING_USE_CASES | MANAGING_USE_CASES
 
 
+# --- Use cases: an activity flow on the system boundary ----------------------
+
+# Use cases whose flow has an alternative path (`then if g then a else b;`).
+USE_CASES_WITH_ALTERNATIVES = {
+    "StartVehicle",
+    "StopVehicle",
+    "ChangeGear",
+    "Accelerate",
+    "CleanWindshield",
+    "ToggleHeadlights",
+    "Drive",
+    "Unlock",
+    "Lock",
+    "OpenDoor",
+    "CloseDoor",
+    "CloseWindow",
+    "PlayMedia",
+    "Charge",
+}
+
+
+def _use_case_flow(elements, uc_id):
+    """Actions and successions a use case owns: its activity flow."""
+    kids = [elements[c] for c in elements[uc_id].children if c in elements]
+    actions = [c for c in kids if c.kind == ArtifactKind.ACTION]
+    successions = [c for c in kids if c.kind == ArtifactKind.SUCCESSION]
+    return actions, successions
+
+
+def _reachable(outs: dict[str, set[str]], start: str) -> set[str]:
+    reached = {start}
+    todo = [start]
+    while todo:
+        for nxt in outs.get(todo.pop(), ()):
+            if nxt not in reached:
+                reached.add(nxt)
+                todo.append(nxt)
+    return reached
+
+
+def _outs(successions) -> dict[str, set[str]]:
+    outs: dict[str, set[str]] = {}
+    for s in successions:
+        outs.setdefault(s.source_id, set()).add(s.target_id)
+    return outs
+
+
+def _is_decision(action) -> bool:
+    return (action.type_ref or "").lower() in DECISION_TYPES
+
+
+def test_every_use_case_has_a_flow_from_start_to_done():
+    """One start, one done, every succession inside the flow, every step on the chain."""
+    elements = _load().elements
+    problems = []
+    for uc in sorted(_use_cases(elements), key=lambda u: u.name):
+        actions, successions = _use_case_flow(elements, uc.id)
+        ids = {a.id for a in actions}
+        starts = [a.id for a in actions if (a.type_ref or "").lower() == "start"]
+        dones = [a.id for a in actions if (a.type_ref or "").lower() == "done"]
+        if len(starts) != 1 or len(dones) != 1:
+            problems.append((uc.name, "start/done", len(starts), len(dones)))
+            continue
+        loose = sorted(
+            s.name for s in successions if s.source_id not in ids or s.target_id not in ids
+        )
+        if loose:
+            problems.append((uc.name, "succession outside the flow", loose))
+        reached = _reachable(_outs(successions), starts[0])
+        if dones[0] not in reached:
+            problems.append((uc.name, "done not reached"))
+        unreached = sorted(a.name for a in actions if a.id not in reached)
+        if unreached:
+            problems.append((uc.name, "not on the chain", unreached))
+        steps = [a for a in actions if not _is_pseudo(a)]
+        if len(steps) < 2:
+            problems.append((uc.name, "fewer than two steps", [a.name for a in steps]))
+    assert problems == []
+
+
+def test_every_use_case_step_has_a_doc():
+    """A step says what the actor does or how the car answers; a performed
+    use case is described by its own doc."""
+    elements = _load().elements
+    missing = []
+    for uc in _use_cases(elements):
+        actions, _ = _use_case_flow(elements, uc.id)
+        for a in actions:
+            if _is_pseudo(a):
+                continue
+            if "perform" in (a.metadata_keywords or []):
+                target = elements.get(a.perform_target_id or "")
+                if target is None or target.kind != ArtifactKind.USE_CASE:
+                    missing.append((uc.name, a.name, "perform does not name a use case"))
+                elif not target.documentation:
+                    missing.append((uc.name, a.name, "performed use case has no doc"))
+            elif not (a.documentation or "").strip():
+                missing.append((uc.name, a.name))
+    assert sorted(missing) == []
+
+
+def test_every_alternative_path_of_a_use_case_reaches_done():
+    """Each decision has a yes and an else branch, and from every step done is reachable."""
+    elements = _load().elements
+    problems = []
+    branching = set()
+    for uc in _use_cases(elements):
+        actions, successions = _use_case_flow(elements, uc.id)
+        outs = _outs(successions)
+        done = next((a.id for a in actions if (a.type_ref or "").lower() == "done"), None)
+        for a in actions:
+            if a.id == done:
+                continue
+            if done is None or done not in _reachable(outs, a.id):
+                problems.append((uc.name, a.name, "dead end"))
+        for d in (a for a in actions if _is_decision(a)):
+            branching.add(uc.name)
+            names = {s.name for s in successions if s.source_id == d.id}
+            if names != {f"if_{d.name}_yes", f"if_{d.name}_else"}:
+                problems.append((uc.name, d.name, sorted(names)))
+    assert sorted(problems) == []
+    assert branching == USE_CASES_WITH_ALTERNATIVES
+
+
+def test_composite_use_cases_perform_what_they_include():
+    """Drive and Park call the use cases they include, in their flow."""
+    elements = _load().elements
+    for uc in _use_cases(elements):
+        if uc.name not in COMPOSITE_USE_CASES:
+            continue
+        included = {
+            e.target_id
+            for e in elements.values()
+            if e.kind == ArtifactKind.INCLUDE and e.source_id == uc.id
+        }
+        actions, _ = _use_case_flow(elements, uc.id)
+        performed = {
+            a.perform_target_id for a in actions if "perform" in (a.metadata_keywords or [])
+        }
+        assert performed == included, uc.name
+
+
+def test_use_case_alternatives_are_the_intended_ones():
+    elements = _load().elements
+    assert _succession_pairs(elements, "UseCases::Driving::StartVehicle") == {
+        ("start", "pressStart", False),
+        ("pressStart", "brakeHeld", False),
+        ("brakeHeld", "checkKey", True),
+        ("brakeHeld", "askForBrake", True),
+        ("checkKey", "keyApproved", False),
+        ("keyApproved", "showReady", True),
+        ("keyApproved", "rejectKey", True),
+        ("showReady", "done", False),
+        ("rejectKey", "done", False),
+        ("askForBrake", "done", False),
+    }
+    assert _succession_pairs(elements, "UseCases::Managing::Unlock") == {
+        ("start", "pressUnlock", False),
+        ("pressUnlock", "credentialValid", False),
+        ("credentialValid", "unlockDoors", True),
+        ("credentialValid", "rejectKey", True),
+        ("unlockDoors", "wakeCabin", False),
+        ("wakeCabin", "done", False),
+        ("rejectKey", "done", False),
+    }
+    # The inside handle always opens; the outside one only on an unlocked car.
+    assert _succession_pairs(elements, "UseCases::Managing::OpenDoor") == {
+        ("start", "pullHandle", False),
+        ("pullHandle", "insideOrUnlocked", False),
+        ("insideOrUnlocked", "releaseDoor", True),
+        ("insideOrUnlocked", "stayLatched", True),
+        ("releaseDoor", "done", False),
+        ("stayLatched", "done", False),
+    }
+
+
 # --- Functions: functional entities allocated to logical parts ---------------
 
 

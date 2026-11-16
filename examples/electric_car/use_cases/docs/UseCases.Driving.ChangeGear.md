@@ -1,6 +1,6 @@
 # ChangeGear
 
-The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear.
+The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear. An unsafe change is refused and the gear stays as it was.
 
 ## Relations
 
