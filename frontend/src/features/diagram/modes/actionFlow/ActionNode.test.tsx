@@ -76,3 +76,30 @@ describe('ActionNode performer', () => {
     expect(render({ label: 'Step' })).not.toContain('action-performer')
   })
 })
+
+describe('ActionNode decision shape', () => {
+  it('draws the diamond across the whole node, its tips at the middle of each side', () => {
+    const html = render({ isDecision: true, label: 'Ok?' })
+    // Not a rotated square: its tips would miss the node box (and so the handles).
+    expect(html).not.toContain('rotate(')
+    expect(html).toMatch(/<polygon[^>]*points="50,0 100,50 50,100 0,50"/)
+    expect(html).toMatch(/<svg[^>]*viewBox="0 0 100 100"[^>]*preserveAspectRatio="none"/)
+  })
+
+  it('leaves its handles where React Flow puts them: the middle of each side', () => {
+    const html = render({ isDecision: true })
+    const tags = [...html.matchAll(/<div[^>]*data-handleid="[^"]+"[^>]*>/g)].map((m) => m[0])
+    expect(tags).toHaveLength(7)
+    for (const tag of tags) expect(tag).not.toMatch(/style="[^"]*(top|left|right|bottom|transform)/)
+  })
+})
+
+describe('ActionNode connection handles', () => {
+  it('marks the connection handles of every shape so they can be hidden until Option', () => {
+    for (const data of [{}, { isDecision: true }, { isDone: true }]) {
+      const tags = [...render(data).matchAll(/<div[^>]*data-handleid="[^"]+"[^>]*>/g)]
+      expect(tags.length).toBeGreaterThan(0)
+      for (const m of tags) expect(m[0]).toContain('flow-handle')
+    }
+  })
+})

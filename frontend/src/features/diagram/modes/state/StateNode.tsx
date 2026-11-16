@@ -18,20 +18,20 @@ function StateNodeInner({ data, selected }: NodeProps) {
   if (d.isInitial) {
     return (
       <div className={`state-pseudo initial${selected ? ' selected' : ''}`}>
-        <Handle type="source" position={Position.Right} id="out" />
-        <Handle type="target" position={Position.Left} id="in" />
-        <Handle type="source" position={Position.Bottom} id="bottom" />
-        <Handle type="target" position={Position.Top} id="top" />
+        <Handle type="source" position={Position.Right} id="out" className="flow-handle" />
+        <Handle type="target" position={Position.Left} id="in" className="flow-handle" />
+        <Handle type="source" position={Position.Bottom} id="bottom" className="flow-handle" />
+        <Handle type="target" position={Position.Top} id="top" className="flow-handle" />
       </div>
     )
   }
   if (d.isFinal) {
     return (
       <div className={`state-pseudo final${selected ? ' selected' : ''}`}>
-        <Handle type="source" position={Position.Right} id="out" />
-        <Handle type="target" position={Position.Left} id="in" />
-        <Handle type="source" position={Position.Bottom} id="bottom" />
-        <Handle type="target" position={Position.Top} id="top" />
+        <Handle type="source" position={Position.Right} id="out" className="flow-handle" />
+        <Handle type="target" position={Position.Left} id="in" className="flow-handle" />
+        <Handle type="source" position={Position.Bottom} id="bottom" className="flow-handle" />
+        <Handle type="target" position={Position.Top} id="top" className="flow-handle" />
       </div>
     )
   }
@@ -44,10 +44,10 @@ function StateNodeInner({ data, selected }: NodeProps) {
     >
       <span className="stereotype">«state»</span>
       <strong>{d.label}</strong>
-      <Handle type="source" position={Position.Right} id="out" />
-      <Handle type="target" position={Position.Left} id="in" />
-      <Handle type="source" position={Position.Bottom} id="bottom" />
-      <Handle type="target" position={Position.Top} id="top" />
+      <Handle type="source" position={Position.Right} id="out" className="flow-handle" />
+      <Handle type="target" position={Position.Left} id="in" className="flow-handle" />
+      <Handle type="source" position={Position.Bottom} id="bottom" className="flow-handle" />
+      <Handle type="target" position={Position.Top} id="top" className="flow-handle" />
     </div>
   )
 }

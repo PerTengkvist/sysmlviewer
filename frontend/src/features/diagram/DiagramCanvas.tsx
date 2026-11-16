@@ -157,6 +157,7 @@ import {
 } from './layout/layoutEdgeKinds'
 import { buildScopeConstraints, normalizeLayoutScopes } from './layoutScopes'
 import { planStructureRoutes } from './layout/layoutRouter'
+import { handleVisibilityClass, useOptionKeyHeld } from './optionKey'
 import { flowViewportBounds } from './layout/layoutNormalize'
 import {
   changedEdgeAttachments,
@@ -664,7 +665,8 @@ export function DiagramCanvas({
 }: Props) {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
-  const [portMoveMode, setPortMoveMode] = useState(false)
+  // Option held: move ports, edit relation ends, show connection handles.
+  const portMoveMode = useOptionKeyHeld()
   const [shiftHeld, setShiftHeld] = useState(false)
   const suppressPortMarqueePaneClickRef = useRef(false)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
@@ -852,21 +854,16 @@ export function DiagramCanvas({
   }, [view?.view.id])
 
   useEffect(() => {
-    const isOption = (e: KeyboardEvent) =>
-      e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight'
     const isShift = (e: KeyboardEvent) =>
       e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight'
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isOption(e)) setPortMoveMode(true)
       if (isShift(e)) setShiftHeld(true)
     }
     const onKeyUp = (e: KeyboardEvent) => {
-      if (isOption(e)) setPortMoveMode(false)
       if (isShift(e)) setShiftHeld(false)
     }
     const clear = () => {
-      setPortMoveMode(false)
       setShiftHeld(false)
       // Abort a stuck Option-drag if the window loses focus (Alt menu, etc.).
       document.body.classList.remove('port-dragging')
@@ -2800,9 +2797,14 @@ export function DiagramCanvas({
 
   return (
     <div
-      className={`diagram-canvas${portMoveMode ? ' tool-move-ports' : ' tool-connect'}${
-        printMode ? ' diagram-canvas-print' : ''
-      }`}
+      className={[
+        'diagram-canvas',
+        portMoveMode ? 'tool-move-ports' : 'tool-connect',
+        printMode ? 'diagram-canvas-print' : '',
+        printMode ? '' : handleVisibilityClass(portMoveMode),
+      ]
+        .filter(Boolean)
+        .join(' ')}
       data-theme={captureLight ? 'light' : undefined}
     >
       {!printMode && (

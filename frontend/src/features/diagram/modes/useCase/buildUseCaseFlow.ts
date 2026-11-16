@@ -2,6 +2,8 @@ import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { SemanticElement } from '../../../../api'
 import { orientEdgeHandles } from '../../layout/dependencyLayout'
+import { fixedActionNodeSize } from '../actionFlow/actionNodeSize'
+import { feedbackEdgeIds, layoutFlowTopDown } from '../../layout/flowLayout'
 import {
   elementDisplayName,
   useCaseRequirementLinks,
@@ -32,8 +34,14 @@ export type UseCaseFlowGraph = {
   actionLinks: string[]
 }
 
-const COL_X = 80
-const ROW_H = 90
+/** Centre of the middle lane; branches take lanes beside it. */
+const COL_CX = 160
+const TOP_Y = 40
+/** Free space between two rows of steps. */
+const ROW_GAP = 42
+/** Free space between two lanes. */
+const LANE_GAP = 60
+const STEP_SIZE = { width: 160, height: 48 }
 
 function childrenOf(
   parentId: string,
@@ -175,22 +183,29 @@ export function buildUseCaseFlow(
     if (!ordered.includes(s)) ordered.push(s)
   }
 
-  const nodes: Node[] = ordered.map((step, i) => ({
-    id: step.id,
-    type: 'action',
-    position: { x: COL_X, y: 40 + i * ROW_H },
-    data: {
-      label: step.label,
-      kind: step.kind,
-      artifactId: step.id.startsWith('exp:') ? step.id.slice(4) : step.id,
+  const nodes: Node[] = ordered.map((step) => {
+    const shape = {
       isStart: step.kind === 'start',
       isDone: step.kind === 'done',
       isDecision: step.kind === 'decide',
-      flowDir: 'TD' as const,
-      viewMode: 'light' as const,
-    },
-    style: { width: 160, height: 48 },
-  }))
+    }
+    // The same circles and diamond as the action flow view.
+    const size = fixedActionNodeSize(shape) ?? STEP_SIZE
+    return {
+      id: step.id,
+      type: 'action',
+      position: { x: 0, y: 0 },
+      data: {
+        label: step.label,
+        kind: step.kind,
+        artifactId: step.id.startsWith('exp:') ? step.id.slice(4) : step.id,
+        ...shape,
+        flowDir: 'TD' as const,
+        viewMode: 'light' as const,
+      },
+      style: { width: size.width, height: size.height },
+    }
+  })
 
   const nodeIds = new Set(nodes.map((n) => n.id))
   const edges: Edge[] = []
@@ -220,52 +235,25 @@ export function buildUseCaseFlow(
     }
   }
 
-  return { params, nodes, edges: orientFlowPorts(nodes, edges, start?.id), actionLinks }
-}
-
-/**
- * Edge ids that loop back: depth-first from start, an edge whose target is
- * still on the walk's stack. Converging branches are not loops, so the
- * order of the column (a preorder walk) is not used for this.
- */
-export function feedbackEdgeIds(edges: Edge[], startId: string | undefined): Set<string> {
-  const out = new Map<string, Edge[]>()
-  for (const e of edges) {
-    const list = out.get(e.source)
-    if (list) list.push(e)
-    else out.set(e.source, [e])
-  }
-  const feedback = new Set<string>()
-  const done = new Set<string>()
-  const onStack = new Set<string>()
-  const visit = (id: string) => {
-    onStack.add(id)
-    for (const e of out.get(id) || []) {
-      if (onStack.has(e.target)) feedback.add(e.id)
-      else if (!done.has(e.target)) visit(e.target)
-    }
-    onStack.delete(id)
-    done.add(id)
-  }
-  if (startId) visit(startId)
-  return feedback
+  const hinted = hintBranches(nodes, edges)
+  const positions = layoutFlowTopDown(nodes, hinted, start?.id, {
+    centerX: COL_CX,
+    top: TOP_Y,
+    rowGap: ROW_GAP,
+    laneGap: LANE_GAP,
+  })
+  const placed = nodes.map((n) => ({ ...n, position: positions[n.id] ?? n.position }))
+  return { params, nodes: placed, edges: orientFlowPorts(placed, hinted, start?.id), actionLinks }
 }
 
 function isDecision(n: Node | undefined): boolean {
   return !!(n?.data as { isDecision?: boolean } | undefined)?.isDecision
 }
 
-/**
- * Top-down ports: in at the top, out at the bottom; decision branches as in
- * the action flow (yes left, else right). A loop back leaves on the right and
- * enters the earlier step on its right side, drawn as a step line beside the
- * column; the other branch of a looping decision then goes down.
- */
-function orientFlowPorts(nodes: Node[], edges: Edge[], startId: string | undefined): Edge[] {
+/** `then if g then a else b` names its branches if_g_yes / if_g_else. */
+function hintBranches(nodes: Node[], edges: Edge[]): Edge[] {
   const byId = new Map(nodes.map((n) => [n.id, n]))
-  const feedback = feedbackEdgeIds(edges, startId)
-  // `then if g then a else b` names its branches if_g_yes / if_g_else.
-  const hinted = edges.map((e) => {
+  return edges.map((e) => {
     if (!isDecision(byId.get(e.source))) return e
     const name = String(e.label ?? e.id)
     if (/_yes$/i.test(name)) return { ...e, sourceHandle: 'yes', label: 'yes' }
@@ -273,10 +261,25 @@ function orientFlowPorts(nodes: Node[], edges: Edge[], startId: string | undefin
     if (/_no$/i.test(name)) return { ...e, sourceHandle: 'no', label: 'no' }
     return e
   })
+}
+
+/**
+ * Top-down ports: in at the top, out at the bottom; decision branches as in
+ * the action flow (yes left, else right). A loop back leaves on the right and
+ * enters the earlier step on its right side, drawn as a step line beside the
+ * column; the one other branch of a looping decision then goes straight down.
+ */
+function orientFlowPorts(nodes: Node[], hinted: Edge[], startId: string | undefined): Edge[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const feedback = feedbackEdgeIds(hinted, startId)
   const oriented = orientEdgeHandles(hinted, 'TD', nodes)
   const loopingDecisions = new Set(
     oriented.filter((e) => feedback.has(e.id) && isDecision(byId.get(e.source))).map((e) => e.source),
   )
+  const forwardOut = new Map<string, number>()
+  for (const e of oriented) {
+    if (!feedback.has(e.id)) forwardOut.set(e.source, (forwardOut.get(e.source) || 0) + 1)
+  }
   return oriented.map((e) => {
     if (feedback.has(e.id)) {
       return {
@@ -287,7 +290,8 @@ function orientFlowPorts(nodes: Node[], edges: Edge[], startId: string | undefin
         data: { ...(e.data as Record<string, unknown>), feedback: true },
       }
     }
-    if (loopingDecisions.has(e.source) && e.sourceHandle === 'out-right') {
+    // The layout keeps that branch in the decision's lane.
+    if (loopingDecisions.has(e.source) && forwardOut.get(e.source) === 1) {
       return { ...e, sourceHandle: 'out-bottom' }
     }
     return e
