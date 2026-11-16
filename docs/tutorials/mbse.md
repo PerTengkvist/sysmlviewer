@@ -73,7 +73,7 @@ flowchart LR
 
 Use cases are typically defined on the system boundary. A use case captures the interaction between a user and the system, and it is triggered by the user or by an event. Describe each use case at least with text, and preferably with an activity flow with alternative paths where that applies.
 
-In `use_cases/use_cases.sysml` the Brake use case names its actor, the requirement it must fulfil (`objective`) and a short flow:
+In `use_cases/use_cases.sysml` the Brake use case names its actor, the requirement it must fulfil (`objective`) and a short flow. Each step is declared as an action with its own `doc`, and the flow then orders the steps:
 
 ```sysml
 use case def Brake {
@@ -81,26 +81,37 @@ use case def Brake {
   objective Requirements::BrakingDistance;
   doc /* The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit. */
 
+  action pressBrake {
+    doc /* The driver presses the brake pedal. */
+  }
+  action applyBrake {
+    doc /* The car slows in proportion to pedal travel, recovering energy where it can. */
+  }
+  action applyBrakeLights {
+    doc /* The brake lamps light while the pedal is pressed, so traffic behind sees the car slow down. */
+  }
   first start;
-  then action pressBrake;
-  then action applyBrake;
-  then action applyBrakeLights;
+  then pressBrake;
+  then applyBrake;
+  then applyBrakeLights;
   then done;
 }
 ```
 
-The flow of the Charge use case has an alternative path, a loop that keeps charging while the charger stays plugged in:
+The flow of the Charge use case has an alternative path, a loop that keeps charging while the charger stays plugged in (the step declarations are left out):
 
 ```sysml
 first start;
-then action connectCharger;
-then action negotiateSession;
-then action transferEnergy;
-then action reportCharge;
+then connectCharger;
+then negotiateSession;
+then transferEnergy;
+then reportCharge;
 // Loop: keep charging while the charger stays plugged in.
 then if pluggedIn then transferEnergy else endSession;
 first endSession then done;
 ```
+
+Every use case in the example has such a flow. StartVehicle, for instance, has two decisions: without the brake held the car asks for the brake, and without an approved key it rejects the start. Double-click a use case in a diagram to see its flow.
 
 A use case also refines the user story it serves:
 

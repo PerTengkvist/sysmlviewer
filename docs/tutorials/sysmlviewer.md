@@ -233,7 +233,9 @@ Lock an element (the **Edit** lock in Details), a selection (**Bulk** › **Lock
 
 ## Connection handles
 
-The diagrams show connection handles only while you hold down **Option** (macOS) or **Alt**. Release the key and they are hidden again, so they do not get in the way when you select and move elements.
+Connection handles are the small dots where lines attach to a shape. They are shown only while you hold down **Option** (macOS) or **Alt**. Release the key and they are hidden again, so they do not get in the way when you select and move elements. This applies to action flows (actions, decisions, start and done), the use case dialog, state diagrams, and use case, actor and requirement nodes. Lines always end on the outline of the shape, whether the handles are shown or not; on a decision diamond they meet the tips.
+
+Ports in structure diagrams are not connection handles. They are elements of the model, so they are always visible; holding Option or Alt switches them to port-move mode (see *Ports and their names*).
 
 ## Redraw and AutoLayout
 
