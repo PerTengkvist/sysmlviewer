@@ -7,6 +7,7 @@ from pathlib import Path
 from adapters.api.static_paths import resolve_repo_root
 
 TUTORIAL_FILES = (
+    "sysmlviewer.md",
     "sysml-v2.md",
     "cheatsheet.md",
     "use-cases-and-scenarios.md",
@@ -14,6 +15,7 @@ TUTORIAL_FILES = (
 )
 
 TUTORIAL_TITLES = {
+    "sysmlviewer": "Using SysML Viewer",
     "sysml-v2": "SysML v2 introduction",
     "cheatsheet": "SysML v2 cheatsheet",
     "use-cases-and-scenarios": "Use cases and scenarios",
