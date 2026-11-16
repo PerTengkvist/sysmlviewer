@@ -11,6 +11,7 @@ import { ActionNode } from '../actionFlow/ActionNode'
 import { UseCaseFlowParamsPanel } from './UseCaseFlowParamsPanel'
 import { DIAGRAM_MAX_ZOOM, DIAGRAM_MIN_ZOOM, diagramFitOptions } from '../../diagramZoom'
 import { DependencyTreeButton } from '../../../dependencyTree/DependencyTreeButton'
+import { handleVisibilityClass, useOptionKeyHeld } from '../../optionKey'
 
 const nodeTypes = { action: ActionNode }
 
@@ -33,6 +34,8 @@ export function UseCaseFlowDialog({
   onOpenElement,
   onOpenDependencyTree,
 }: Props) {
+  // Connection handles show only while Option is held, as on the canvas.
+  const optionHeld = useOptionKeyHeld()
   const flow = useMemo(
     () => buildUseCaseFlow(useCaseId, semantic),
     [useCaseId, semantic],
@@ -65,7 +68,11 @@ export function UseCaseFlowDialog({
             onOpenAction={onOpenAction}
             onOpenElement={onOpenElement}
           />
-          <div className="usecase-flow-canvas">
+          <div
+            className={['usecase-flow-canvas', handleVisibilityClass(optionHeld)]
+              .filter(Boolean)
+              .join(' ')}
+          >
             <ReactFlow
               nodes={flow.nodes}
               edges={flow.edges}

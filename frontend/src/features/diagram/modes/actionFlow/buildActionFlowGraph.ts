@@ -7,6 +7,7 @@ import type { RedrawDirection } from '../../layout/dependencyLayout'
 import { orientEdgeHandles } from '../../layout/dependencyLayout'
 import type { HighlightOpts } from '../sequence/buildSequenceGraph'
 import type { ActionNodeData } from './ActionNode'
+import { fixedActionNodeSize } from './actionNodeSize'
 
 const COL_W = 200
 const ROW_H = 100
@@ -203,15 +204,10 @@ export function buildActionFlowGraph(
       viewMode,
       ...(performedBy ? { performedBy } : {}),
     }
-    const defaultW = startNode || doneNode ? 28 : decisionNode ? 120 : 150
-    const defaultH =
-      startNode || doneNode
-        ? 28
-        : decisionNode
-          ? 80
-          : 56 + (performedBy ? PERFORMER_ROW_H : 0)
-    // Prefer mode-appropriate size for pseudo/decision nodes even if old viz exists
-    const useDefaultSize = startNode || doneNode || decisionNode
+    // Start, done and decision keep their own size even if old viz exists.
+    const fixed = fixedActionNodeSize(data)
+    const defaultW = 150
+    const defaultH = 56 + (performedBy ? PERFORMER_ROW_H : 0)
     return {
       id: act.id,
       type: 'action',
@@ -219,15 +215,10 @@ export function buildActionFlowGraph(
         x: viz?.x ?? LEFT + p.col * COL_W,
         y: viz?.y ?? TOP + p.row * ROW_H,
       },
-      style: {
-        width: useDefaultSize
-          ? defaultW
-          : viz?.width && viz.width >= 20
-            ? viz.width
-            : defaultW,
-        height: useDefaultSize
-          ? defaultH
-          : viz?.height && viz.height >= 20
+      style: fixed ?? {
+        width: viz?.width && viz.width >= 20 ? viz.width : defaultW,
+        height:
+          viz?.height && viz.height >= 20
             ? // A saved height from before the performer row still fits it.
               performedBy
               ? Math.max(viz.height, defaultH)

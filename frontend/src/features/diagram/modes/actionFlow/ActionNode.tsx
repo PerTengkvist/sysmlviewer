@@ -63,12 +63,12 @@ function ActionNodeInner({ data, selected }: NodeProps) {
         className={`action-pseudo done${selected ? ' selected' : ''}`}
         title={d.label}
       >
-        <Handle type="target" position={Position.Left} id="in" />
-        <Handle type="target" position={Position.Top} id="top" />
-        <Handle type="source" position={Position.Right} id="out" />
-        <Handle type="source" position={Position.Bottom} id="bottom" />
+        <Handle type="target" position={Position.Left} id="in" className="flow-handle" />
+        <Handle type="target" position={Position.Top} id="top" className="flow-handle" />
+        <Handle type="source" position={Position.Right} id="out" className="flow-handle" />
+        <Handle type="source" position={Position.Bottom} id="bottom" className="flow-handle" />
         {/* Last, so edges without a handle id keep their old default. */}
-        <Handle type="target" position={Position.Right} id="in-right" />
+        <Handle type="target" position={Position.Right} id="in-right" className="flow-handle" />
       </div>
     )
   }
@@ -81,51 +81,59 @@ function ActionNodeInner({ data, selected }: NodeProps) {
         className={`action-decision${selected ? ' selected' : ''}`}
         data-flow={flowDir}
       >
-        <div className="action-decision-diamond">
-          <span className="action-decision-label">{d.label}</span>
-        </div>
+        {/* Drawn across the whole node box, so its tips are the middle of
+            each side, where React Flow puts the handles. */}
+        <svg
+          className="action-decision-diamond"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <polygon points="50,0 100,50 50,100 0,50" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <span className="action-decision-label">{d.label}</span>
         <Handle
           type="target"
           position={Position.Top}
           id="in-top"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
         <Handle
           type="target"
           position={Position.Left}
           id="in-left"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
         <Handle
           type="source"
           position={Position.Bottom}
           id="out-bottom"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
         <Handle
           type="source"
           position={Position.Left}
           id="out-left"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
         <Handle
           type="source"
           position={Position.Right}
           id="out-right"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
         <Handle
           type="source"
           position={Position.Top}
           id="out-top"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
         {/* Loop back into the decision; last so defaults stay unchanged. */}
         <Handle
           type="target"
           position={Position.Right}
           id="in-right"
-          className="action-decision-handle"
+          className="action-decision-handle flow-handle"
         />
       </div>
     )
@@ -145,12 +153,12 @@ function ActionNodeInner({ data, selected }: NodeProps) {
           ⟨{d.performedBy.join(', ')}⟩
         </span>
       ) : null}
-      <Handle type="source" position={Position.Right} id="out" />
-      <Handle type="target" position={Position.Left} id="in" />
-      <Handle type="source" position={Position.Bottom} id="bottom" />
-      <Handle type="target" position={Position.Top} id="top" />
+      <Handle type="source" position={Position.Right} id="out" className="flow-handle" />
+      <Handle type="target" position={Position.Left} id="in" className="flow-handle" />
+      <Handle type="source" position={Position.Bottom} id="bottom" className="flow-handle" />
+      <Handle type="target" position={Position.Top} id="top" className="flow-handle" />
       {/* Loop back from a later step; last so defaults stay unchanged. */}
-      <Handle type="target" position={Position.Right} id="in-right" />
+      <Handle type="target" position={Position.Right} id="in-right" className="flow-handle" />
     </div>
   )
 }
