@@ -1,6 +1,6 @@
 # OpenDoor
 
-An occupant pulls a door handle on an unlocked car and the door releases.
+An occupant pulls a door handle and the door releases. The inside handle always opens the door, so nobody can be shut in; the outside handle opens it only on an unlocked car.
 
 ## Relations
 

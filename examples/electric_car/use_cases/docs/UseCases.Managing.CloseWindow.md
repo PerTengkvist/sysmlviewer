@@ -1,6 +1,6 @@
 # CloseWindow
 
-An occupant presses the window switch up and the window rises, stopping if it pinches.
+An occupant presses the window switch up and the window rises, backing off if something is caught in the gap.
 
 ## Relations
 
