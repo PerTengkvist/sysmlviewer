@@ -4,13 +4,7 @@
       "id": "action_flow.sysml",
       "name": "action_flow.sysml",
       "path": "action_flow.sysml",
-      "warnings": [
-        "connection target not found: Example::Vehicle::engine::powerIn (in 'Example::Vehicle::conn1')",
-        "connection target not found: Example::Vehicle::engine::PowerIn (in 'Example::Vehicle::poower')",
-        "connection source not found: Example::Vehicle::engine::TorqueOut (in 'Example::Vehicle::torque')",
-        "connection target not found: Example::Vehicle::axle::TorqueIn (in 'Example::Vehicle::torque')",
-        "connection target not found: Example::Vehicle::engine::GaugeIn (in 'Example::Vehicle::gaugebus')"
-      ]
+      "warnings": []
     },
     {
       "id": "car_logical.sysml",
@@ -66,7 +60,9 @@
       "id": "vehicle.sysml",
       "name": "vehicle.sysml",
       "path": "vehicle.sysml",
-      "warnings": []
+      "warnings": [
+        "line 17: connection target not found: engine.powerIn (in 'Example::Vehicle::conn1')"
+      ]
     },
     {
       "id": "vehicle2.sysml",
@@ -135,7 +131,8 @@
         "ActionExample::BootFlow::s4",
         "ActionExample::BootFlow::s5"
       ],
-      "fileId": "action_flow.sysml"
+      "fileId": "action_flow.sysml",
+      "isDefinition": true
     },
     "ActionExample::BootFlow::start": {
       "id": "ActionExample::BootFlow::start",
@@ -490,7 +487,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Integer": {
       "id": "CarLogical::Integer",
@@ -510,7 +508,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::String": {
       "id": "CarLogical::String",
@@ -530,7 +529,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Boolean": {
       "id": "CarLogical::Boolean",
@@ -550,7 +550,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Chassis": {
       "id": "CarLogical::Chassis",
@@ -572,7 +573,8 @@
       "children": [
         "CarLogical::Chassis::role"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Chassis::role": {
       "id": "CarLogical::Chassis::role",
@@ -592,7 +594,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::String"
     },
     "CarLogical::Engine": {
       "id": "CarLogical::Engine",
@@ -614,7 +617,8 @@
       "children": [
         "CarLogical::Engine::powerKW"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Engine::powerKW": {
       "id": "CarLogical::Engine::powerKW",
@@ -634,7 +638,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Real"
     },
     "CarLogical::Transmission": {
       "id": "CarLogical::Transmission",
@@ -656,7 +661,8 @@
       "children": [
         "CarLogical::Transmission::gears"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Transmission::gears": {
       "id": "CarLogical::Transmission::gears",
@@ -676,7 +682,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Integer"
     },
     "CarLogical::SteeringWheel": {
       "id": "CarLogical::SteeringWheel",
@@ -698,7 +705,8 @@
       "children": [
         "CarLogical::SteeringWheel::diameterMM"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::SteeringWheel::diameterMM": {
       "id": "CarLogical::SteeringWheel::diameterMM",
@@ -718,7 +726,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Real"
     },
     "CarLogical::Axle": {
       "id": "CarLogical::Axle",
@@ -740,7 +749,8 @@
       "children": [
         "CarLogical::Axle::driven"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Axle::driven": {
       "id": "CarLogical::Axle::driven",
@@ -760,7 +770,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Boolean"
     },
     "CarLogical::BrakeSystem": {
       "id": "CarLogical::BrakeSystem",
@@ -782,7 +793,8 @@
       "children": [
         "CarLogical::BrakeSystem::type"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::BrakeSystem::type": {
       "id": "CarLogical::BrakeSystem::type",
@@ -802,7 +814,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::String"
     },
     "CarLogical::Car": {
       "id": "CarLogical::Car",
@@ -840,7 +853,8 @@
         "CarLogical::Car::dep9",
         "CarLogical::Car::dep10"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "isDefinition": true
     },
     "CarLogical::Car::chassis": {
       "id": "CarLogical::Car::chassis",
@@ -862,7 +876,8 @@
       "children": [
         "CarLogical::Car::chassis::role"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Chassis"
     },
     "CarLogical::Car::engine": {
       "id": "CarLogical::Car::engine",
@@ -884,7 +899,8 @@
       "children": [
         "CarLogical::Car::engine::powerKW"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Engine"
     },
     "CarLogical::Car::transmission": {
       "id": "CarLogical::Car::transmission",
@@ -906,7 +922,8 @@
       "children": [
         "CarLogical::Car::transmission::gears"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Transmission"
     },
     "CarLogical::Car::steeringWheel": {
       "id": "CarLogical::Car::steeringWheel",
@@ -928,7 +945,8 @@
       "children": [
         "CarLogical::Car::steeringWheel::diameterMM"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::SteeringWheel"
     },
     "CarLogical::Car::frontAxle": {
       "id": "CarLogical::Car::frontAxle",
@@ -950,7 +968,8 @@
       "children": [
         "CarLogical::Car::frontAxle::driven"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Axle"
     },
     "CarLogical::Car::rearAxle": {
       "id": "CarLogical::Car::rearAxle",
@@ -972,7 +991,8 @@
       "children": [
         "CarLogical::Car::rearAxle::driven"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Axle"
     },
     "CarLogical::Car::brakes": {
       "id": "CarLogical::Car::brakes",
@@ -994,7 +1014,8 @@
       "children": [
         "CarLogical::Car::brakes::type"
       ],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::BrakeSystem"
     },
     "CarLogical::Car::dep1": {
       "id": "CarLogical::Car::dep1",
@@ -1287,7 +1308,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::HBox": {
       "id": "hbox::HBox",
@@ -1319,7 +1341,8 @@
         "hbox::HBox::conn3",
         "hbox::HBox::conn4"
       ],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::HBox::BoxA": {
       "id": "hbox::HBox::BoxA",
@@ -1363,7 +1386,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::EventPort"
     },
     "hbox::HBox::BoxA::eventlog": {
       "id": "hbox::HBox::BoxA::eventlog",
@@ -1383,7 +1407,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::List"
     },
     "hbox::HBox::BoxA::status": {
       "id": "hbox::HBox::BoxA::status",
@@ -1403,7 +1428,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::String"
     },
     "hbox::HBox::BoxB": {
       "id": "hbox::HBox::BoxB",
@@ -1447,7 +1473,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::EventPort"
     },
     "hbox::HBox::BoxB::eventlog": {
       "id": "hbox::HBox::BoxB::eventlog",
@@ -1467,7 +1494,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::List"
     },
     "hbox::HBox::BoxB::status": {
       "id": "hbox::HBox::BoxB::status",
@@ -1487,7 +1515,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::String"
     },
     "hbox::HBox::BoxC": {
       "id": "hbox::HBox::BoxC",
@@ -1531,7 +1560,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::EventPort"
     },
     "hbox::HBox::BoxC::eventlog": {
       "id": "hbox::HBox::BoxC::eventlog",
@@ -1551,7 +1581,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::List"
     },
     "hbox::HBox::BoxC::status": {
       "id": "hbox::HBox::BoxC::status",
@@ -1571,7 +1602,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::String"
     },
     "hbox::HBox::EventBroker": {
       "id": "hbox::HBox::EventBroker",
@@ -1614,7 +1646,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::EventPort"
     },
     "hbox::HBox::EventBroker::eventlog": {
       "id": "hbox::HBox::EventBroker::eventlog",
@@ -1634,7 +1667,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::List"
     },
     "hbox::HBox::event": {
       "id": "hbox::HBox::event",
@@ -1654,7 +1688,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::EventPort"
     },
     "hbox::HBox::eventlog": {
       "id": "hbox::HBox::eventlog",
@@ -1674,7 +1709,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::List"
     },
     "hbox::HBox::status": {
       "id": "hbox::HBox::status",
@@ -1694,7 +1730,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "typeTargetId": "hbox::String"
     },
     "hbox::HBox::bind1": {
       "id": "hbox::HBox::bind1",
@@ -1801,7 +1838,8 @@
         "hbox::EventInteraction::msg1",
         "hbox::EventInteraction::msg2"
       ],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::EventInteraction::BoxA": {
       "id": "hbox::EventInteraction::BoxA",
@@ -1985,7 +2023,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::Integer": {
       "id": "hbox::Integer",
@@ -2005,7 +2044,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::List": {
       "id": "hbox::List",
@@ -2025,7 +2065,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::Real": {
       "id": "hbox::Real",
@@ -2045,7 +2086,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "hbox::String": {
       "id": "hbox::String",
@@ -2065,7 +2107,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hbox.sysml"
+      "fileId": "hbox.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg": {
       "id": "HierarchicalPartsPkg",
@@ -2699,7 +2742,8 @@
       "documentation": "Service-side leaf of the first layer.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::sP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::sP2",
@@ -2719,7 +2763,8 @@
       "documentation": "Service-side leaf of the second layer.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::sPort": {
       "id": "HierarchicalPartsPkg::NestedPorts::sPort",
@@ -2742,7 +2787,8 @@
         "HierarchicalPartsPkg::NestedPorts::sPort::sP1",
         "HierarchicalPartsPkg::NestedPorts::sPort::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::sPort::sP1": {
       "id": "HierarchicalPartsPkg::NestedPorts::sPort::sP1",
@@ -2762,7 +2808,8 @@
       "documentation": "Nested first-layer end of sPort.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::sPort::sP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::sPort::sP2",
@@ -2782,7 +2829,8 @@
       "documentation": "Nested second-layer end of sPort.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPorts::LayeredInterface": {
       "id": "HierarchicalPartsPkg::NestedPorts::LayeredInterface",
@@ -2802,7 +2850,8 @@
       "documentation": "Joins a service sPort to a client ~sPort as one hierarchical connection.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::S1": {
       "id": "HierarchicalPartsPkg::NestedPorts::S1",
@@ -2824,7 +2873,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::S1::sP1"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::S1::sP1": {
       "id": "HierarchicalPartsPkg::NestedPorts::S1::sP1",
@@ -2844,7 +2894,8 @@
       "documentation": "Bound to serviceA.sPort.sP1.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::S2": {
       "id": "HierarchicalPartsPkg::NestedPorts::S2",
@@ -2866,7 +2917,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::S2::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::S2::sP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::S2::sP2",
@@ -2886,7 +2938,8 @@
       "documentation": "Bound to serviceA.sPort.sP2.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPorts::C1": {
       "id": "HierarchicalPartsPkg::NestedPorts::C1",
@@ -2908,7 +2961,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::C1::cP1"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::C1::cP1": {
       "id": "HierarchicalPartsPkg::NestedPorts::C1::cP1",
@@ -2928,7 +2982,8 @@
       "documentation": "Conjugated counterpart of sP1; bound to client.sPort.sP1.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::C2": {
       "id": "HierarchicalPartsPkg::NestedPorts::C2",
@@ -2950,7 +3005,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::C2::cP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::C2::cP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::C2::cP2",
@@ -2970,7 +3026,8 @@
       "documentation": "Conjugated counterpart of sP2; bound to client.sPort.sP2.",
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA",
@@ -2996,7 +3053,8 @@
         "HierarchicalPartsPkg::NestedPorts::ServiceA::bind1",
         "HierarchicalPartsPkg::NestedPorts::ServiceA::bind2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort",
@@ -3019,7 +3077,8 @@
         "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort::sP1",
         "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sPort"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::s1": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::s1",
@@ -3041,7 +3100,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::ServiceA::s1::sP1"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::S1"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::s2": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::s2",
@@ -3063,7 +3123,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::ServiceA::s2::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::S2"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::bind1": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::bind1",
@@ -3129,7 +3190,8 @@
         "HierarchicalPartsPkg::NestedPorts::Client::bind3",
         "HierarchicalPartsPkg::NestedPorts::Client::bind4"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "isDefinition": true
     },
     "HierarchicalPartsPkg::NestedPorts::Client::sPort": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::sPort",
@@ -3152,7 +3214,8 @@
         "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP1",
         "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sPort"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::c1": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::c1",
@@ -3174,7 +3237,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::Client::c1::cP1"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::C1"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::c2": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::c2",
@@ -3196,7 +3260,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPorts::Client::c2::cP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::C2"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::bind3": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::bind3",
@@ -3286,7 +3351,8 @@
         "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind1",
         "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::ServiceA"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client",
@@ -3312,7 +3378,8 @@
         "HierarchicalPartsPkg::NestedPortsExample::client::bind3",
         "HierarchicalPartsPkg::NestedPortsExample::client::bind4"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::Client"
     },
     "HierarchicalPartsPkg::NestedPortsExample::layered": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::layered",
@@ -3332,7 +3399,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::LayeredInterface"
     },
     "HierarchicalPartsPkg::HierarchicalPartsView": {
       "id": "HierarchicalPartsPkg::HierarchicalPartsView",
@@ -3541,7 +3609,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "isDefinition": true
     },
     "PartRelationships::String": {
       "id": "PartRelationships::String",
@@ -3561,7 +3630,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "isDefinition": true
     },
     "PartRelationships::Base": {
       "id": "PartRelationships::Base",
@@ -3585,7 +3655,8 @@
         "PartRelationships::Base::pout",
         "PartRelationships::Base::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "isDefinition": true
     },
     "PartRelationships::Base::capacity": {
       "id": "PartRelationships::Base::capacity",
@@ -3605,7 +3676,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::Base::pout": {
       "id": "PartRelationships::Base::pout",
@@ -3669,7 +3741,9 @@
         "PartRelationships::Small::pout",
         "PartRelationships::Small::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "isDefinition": true,
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::Small_specializes_Base": {
       "id": "PartRelationships::Small_specializes_Base",
@@ -3709,7 +3783,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::Aggregator": {
       "id": "PartRelationships::Aggregator",
@@ -3731,7 +3806,8 @@
       "children": [
         "PartRelationships::Aggregator::sharedEng"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "isDefinition": true
     },
     "PartRelationships::Aggregator::sharedEng": {
       "id": "PartRelationships::Aggregator::sharedEng",
@@ -3755,7 +3831,8 @@
         "PartRelationships::Aggregator::sharedEng::pout",
         "PartRelationships::Aggregator::sharedEng::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System": {
       "id": "PartRelationships::System",
@@ -3794,7 +3871,8 @@
         "PartRelationships::System::bind1",
         "PartRelationships::System::power"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "isDefinition": true
     },
     "PartRelationships::System::baseEng": {
       "id": "PartRelationships::System::baseEng",
@@ -3818,7 +3896,8 @@
         "PartRelationships::System::baseEng::pout",
         "PartRelationships::System::baseEng::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System::eng": {
       "id": "PartRelationships::System::eng",
@@ -3844,7 +3923,8 @@
         "PartRelationships::System::eng::pout",
         "PartRelationships::System::eng::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System::eng_redefines_baseEng": {
       "id": "PartRelationships::System::eng_redefines_baseEng",
@@ -3890,7 +3970,8 @@
         "PartRelationships::System::child::pout",
         "PartRelationships::System::child::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System::child_subsets_baseEng": {
       "id": "PartRelationships::System::child_subsets_baseEng",
@@ -3936,7 +4017,8 @@
         "PartRelationships::System::logical::pout",
         "PartRelationships::System::logical::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System::physical": {
       "id": "PartRelationships::System::physical",
@@ -3962,7 +4044,8 @@
         "PartRelationships::System::physical::pout",
         "PartRelationships::System::physical::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System::sharedEng": {
       "id": "PartRelationships::System::sharedEng",
@@ -3986,7 +4069,8 @@
         "PartRelationships::System::sharedEng::pout",
         "PartRelationships::System::sharedEng::pin"
       ],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Base"
     },
     "PartRelationships::System::sharedEng_subsets_Aggregator_sharedEng": {
       "id": "PartRelationships::System::sharedEng_subsets_Aggregator_sharedEng",
@@ -4026,7 +4110,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::reading": {
       "id": "PartRelationships::System::reading",
@@ -4046,7 +4131,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::wire": {
       "id": "PartRelationships::System::wire",
@@ -4265,7 +4351,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::Safety": {
       "id": "RequirementsExample::Safety",
@@ -4285,7 +4372,8 @@
       "documentation": "System must shut down safely under fault conditions",
       "shortId": "R-01",
       "children": [],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::ShowStatus": {
       "id": "RequirementsExample::ShowStatus",
@@ -4307,7 +4395,8 @@
       "children": [
         "RequirementsExample::ShowStatus::Type"
       ],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::ShowStatus::Type": {
       "id": "RequirementsExample::ShowStatus::Type",
@@ -4349,7 +4438,8 @@
       "children": [
         "RequirementsExample::ConfirmAction::Type"
       ],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::ConfirmAction::Type": {
       "id": "RequirementsExample::ConfirmAction::Type",
@@ -4391,7 +4481,8 @@
       "children": [
         "RequirementsExample::functional::Type"
       ],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "typeTargetId": "RequirementsExample::SomeDef"
     },
     "RequirementsExample::functional::Type": {
       "id": "RequirementsExample::functional::Type",
@@ -4433,7 +4524,8 @@
       "children": [
         "RequirementsExample::Parent::child"
       ],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::Parent::child": {
       "id": "RequirementsExample::Parent::child",
@@ -4475,7 +4567,8 @@
       "children": [
         "RequirementsExample::Controller::powerIn"
       ],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::Controller::powerIn": {
       "id": "RequirementsExample::Controller::powerIn",
@@ -4515,7 +4608,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "requirements.sysml"
+      "fileId": "requirements.sysml",
+      "isDefinition": true
     },
     "RequirementsExample::RequirementsGraphView": {
       "id": "RequirementsExample::RequirementsGraphView",
@@ -4610,7 +4704,8 @@
         "StateExample::DoorMachine::close",
         "StateExample::DoorMachine::lock"
       ],
-      "fileId": "state_machine.sysml"
+      "fileId": "state_machine.sysml",
+      "isDefinition": true
     },
     "StateExample::DoorMachine::Closed": {
       "id": "StateExample::DoorMachine::Closed",
@@ -4820,7 +4915,8 @@
         "TreeExample::Vehicle::battery",
         "TreeExample::Vehicle::cabin"
       ],
-      "fileId": "tree_view.sysml"
+      "fileId": "tree_view.sysml",
+      "isDefinition": true
     },
     "TreeExample::Vehicle::engine": {
       "id": "TreeExample::Vehicle::engine",
@@ -5021,7 +5117,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::Operator": {
       "id": "UseCasesExample::Operator",
@@ -5041,7 +5138,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::Driver": {
       "id": "UseCasesExample::Driver",
@@ -5061,7 +5159,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::AuthenticatedAccess": {
       "id": "UseCasesExample::AuthenticatedAccess",
@@ -5081,7 +5180,8 @@
       "documentation": "Access requires successful authentication",
       "shortId": "R-UC-01",
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::Authenticate": {
       "id": "UseCasesExample::Authenticate",
@@ -5101,7 +5201,8 @@
       "documentation": "Verify operator credentials",
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::Login": {
       "id": "UseCasesExample::Login",
@@ -5125,7 +5226,8 @@
         "UseCasesExample::Login::include_Authenticate",
         "UseCasesExample::Login::objective_1"
       ],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::Login::operator": {
       "id": "UseCasesExample::Login::operator",
@@ -5145,7 +5247,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "typeTargetId": "UseCasesExample::Operator"
     },
     "UseCasesExample::Login::include_Authenticate": {
       "id": "UseCasesExample::Login::include_Authenticate",
@@ -5210,7 +5313,8 @@
         "UseCasesExample::Drive::driver",
         "UseCasesExample::Drive::vehicle"
       ],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::Drive::driver": {
       "id": "UseCasesExample::Drive::driver",
@@ -5230,7 +5334,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "typeTargetId": "UseCasesExample::Driver"
     },
     "UseCasesExample::Drive::vehicle": {
       "id": "UseCasesExample::Drive::vehicle",
@@ -5251,12 +5356,9 @@
       ],
       "documentation": null,
       "shortId": null,
-      "children": [
-        "UseCasesExample::Drive::vehicle::engine",
-        "UseCasesExample::Drive::vehicle::battery",
-        "UseCasesExample::Drive::vehicle::cabin"
-      ],
-      "fileId": "use_cases.sysml"
+      "children": [],
+      "fileId": "use_cases.sysml",
+      "typeTargetId": "UseCasesExample::Vehicle"
     },
     "UseCasesExample::EmergencyStop": {
       "id": "UseCasesExample::EmergencyStop",
@@ -5278,7 +5380,8 @@
       "children": [
         "UseCasesExample::EmergencyStop::driver"
       ],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "isDefinition": true
     },
     "UseCasesExample::EmergencyStop::driver": {
       "id": "UseCasesExample::EmergencyStop::driver",
@@ -5298,7 +5401,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases.sysml"
+      "fileId": "use_cases.sysml",
+      "typeTargetId": "UseCasesExample::Driver"
     },
     "UseCasesExample::dep1": {
       "id": "UseCasesExample::dep1",
@@ -5440,7 +5544,8 @@
       "children": [
         "Example::FunctionalModule::powerIn"
       ],
-      "fileId": "vehicle.sysml"
+      "fileId": "vehicle.sysml",
+      "isDefinition": true
     },
     "Example::FunctionalModule::powerIn": {
       "id": "Example::FunctionalModule::powerIn",
@@ -5488,7 +5593,8 @@
         "Example::Engine::status",
         "Example::Engine::torque"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::Engine::powerIn": {
       "id": "Example::Engine::powerIn",
@@ -5558,7 +5664,8 @@
         "Example::Vehicle::torque",
         "Example::Vehicle::gaugebus"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::Vehicle::engine": {
       "id": "Example::Vehicle::engine",
@@ -5578,9 +5685,16 @@
       "documentation": null,
       "shortId": null,
       "children": [
-        "Example::Vehicle::engine::powerKW"
+        "Example::Vehicle::engine::EventOut",
+        "Example::Vehicle::engine::GaugeIn",
+        "Example::Vehicle::engine::PowerIn",
+        "Example::Vehicle::engine::TorqueOut",
+        "Example::Vehicle::engine::rpm",
+        "Example::Vehicle::engine::status",
+        "Example::Vehicle::engine::torque"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Engine"
     },
     "Example::Vehicle::fm1": {
       "id": "Example::Vehicle::fm1",
@@ -5602,7 +5716,8 @@
       "children": [
         "Example::Vehicle::fm1::powerIn"
       ],
-      "fileId": "vehicle.sysml"
+      "fileId": "vehicle.sysml",
+      "typeTargetId": "Example::FunctionalModule"
     },
     "Example::Vehicle::powerOut": {
       "id": "Example::Vehicle::powerOut",
@@ -5682,7 +5797,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::Integer": {
       "id": "Example::Integer",
@@ -5702,7 +5818,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::String": {
       "id": "Example::String",
@@ -5722,7 +5839,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::EventClientPort": {
       "id": "Example::EventClientPort",
@@ -5742,7 +5860,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::EventBrokerPort": {
       "id": "Example::EventBrokerPort",
@@ -5762,7 +5881,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::PowerPort": {
       "id": "Example::PowerPort",
@@ -5782,7 +5902,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::Axle": {
       "id": "Example::Axle",
@@ -5805,7 +5926,8 @@
         "Example::Axle::TorqueIn",
         "Example::Axle::rotationSpeed"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::Axle::TorqueIn": {
       "id": "Example::Axle::TorqueIn",
@@ -5845,7 +5967,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Battery": {
       "id": "Example::Battery",
@@ -5870,7 +5993,8 @@
         "Example::Battery::SoC",
         "Example::Battery::power"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "isDefinition": true
     },
     "Example::Battery::EventOut": {
       "id": "Example::Battery::EventOut",
@@ -5890,7 +6014,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::EventClientPort"
     },
     "Example::Battery::powerOut": {
       "id": "Example::Battery::powerOut",
@@ -5910,7 +6035,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::PowerPort"
     },
     "Example::Battery::SoC": {
       "id": "Example::Battery::SoC",
@@ -5930,7 +6056,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Battery::power": {
       "id": "Example::Battery::power",
@@ -5950,7 +6077,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Engine::EventOut": {
       "id": "Example::Engine::EventOut",
@@ -5970,7 +6098,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::EventClientPort"
     },
     "Example::Engine::GaugeIn": {
       "id": "Example::Engine::GaugeIn",
@@ -6010,7 +6139,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::PowerPort"
     },
     "Example::Engine::TorqueOut": {
       "id": "Example::Engine::TorqueOut",
@@ -6050,7 +6180,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Integer"
     },
     "Example::Engine::status": {
       "id": "Example::Engine::status",
@@ -6070,7 +6201,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::String"
     },
     "Example::Engine::torque": {
       "id": "Example::Engine::torque",
@@ -6090,7 +6222,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Vehicle::axle": {
       "id": "Example::Vehicle::axle",
@@ -6110,9 +6243,11 @@
       "documentation": null,
       "shortId": null,
       "children": [
-        "Example::Vehicle::axle::driven"
+        "Example::Vehicle::axle::TorqueIn",
+        "Example::Vehicle::axle::rotationSpeed"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Axle"
     },
     "Example::Vehicle::battery": {
       "id": "Example::Vehicle::battery",
@@ -6137,7 +6272,8 @@
         "Example::Vehicle::battery::SoC",
         "Example::Vehicle::battery::power"
       ],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Battery"
     },
     "Example::Vehicle::EventOut": {
       "id": "Example::Vehicle::EventOut",
@@ -6197,7 +6333,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::String"
     },
     "Example::Vehicle::poower": {
       "id": "Example::Vehicle::poower",
@@ -6299,7 +6436,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort::sP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::sPort::sP2",
@@ -6319,7 +6457,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP1": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP1",
@@ -6339,7 +6478,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::sPort::sP2",
@@ -6359,7 +6499,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "CarLogical::Car::chassis::role": {
       "id": "CarLogical::Car::chassis::role",
@@ -6379,7 +6520,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::String"
     },
     "CarLogical::Car::engine::powerKW": {
       "id": "CarLogical::Car::engine::powerKW",
@@ -6399,7 +6541,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Real"
     },
     "CarLogical::Car::transmission::gears": {
       "id": "CarLogical::Car::transmission::gears",
@@ -6419,7 +6562,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Integer"
     },
     "CarLogical::Car::steeringWheel::diameterMM": {
       "id": "CarLogical::Car::steeringWheel::diameterMM",
@@ -6439,7 +6583,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Real"
     },
     "CarLogical::Car::frontAxle::driven": {
       "id": "CarLogical::Car::frontAxle::driven",
@@ -6459,7 +6604,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Boolean"
     },
     "CarLogical::Car::rearAxle::driven": {
       "id": "CarLogical::Car::rearAxle::driven",
@@ -6479,7 +6625,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::Boolean"
     },
     "CarLogical::Car::brakes::type": {
       "id": "CarLogical::Car::brakes::type",
@@ -6499,7 +6646,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "car_logical.sysml"
+      "fileId": "car_logical.sysml",
+      "typeTargetId": "CarLogical::String"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::s1::sP1": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::s1::sP1",
@@ -6519,7 +6667,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::ServiceA::s2::sP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::ServiceA::s2::sP2",
@@ -6539,7 +6688,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::c1::cP1": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::c1::cP1",
@@ -6559,7 +6709,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPorts::Client::c2::cP2": {
       "id": "HierarchicalPartsPkg::NestedPorts::Client::c2::cP2",
@@ -6579,7 +6730,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort",
@@ -6602,7 +6754,8 @@
         "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP1",
         "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sPort"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP1",
@@ -6622,7 +6775,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP2": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::sPort::sP2",
@@ -6642,7 +6796,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1",
@@ -6664,7 +6819,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1::sP1"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::S1"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1::sP1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::s1::sP1",
@@ -6684,7 +6840,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2",
@@ -6706,7 +6863,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::S2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2::sP2": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::s2::sP2",
@@ -6726,7 +6884,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::serviceA::bind1",
@@ -6789,7 +6948,8 @@
         "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP1",
         "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sPort"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP1",
@@ -6809,7 +6969,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP2": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::sPort::sP2",
@@ -6829,7 +6990,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::c1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::c1",
@@ -6851,7 +7013,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPortsExample::client::c1::cP1"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::C1"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::c1::cP1": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::c1::cP1",
@@ -6871,7 +7034,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP1"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::c2": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::c2",
@@ -6893,7 +7057,8 @@
       "children": [
         "HierarchicalPartsPkg::NestedPortsExample::client::c2::cP2"
       ],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::C2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::c2::cP2": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::c2::cP2",
@@ -6913,7 +7078,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "hierarchicalParts.sysml"
+      "fileId": "hierarchicalParts.sysml",
+      "typeTargetId": "HierarchicalPartsPkg::NestedPorts::sP2"
     },
     "HierarchicalPartsPkg::NestedPortsExample::client::bind3": {
       "id": "HierarchicalPartsPkg::NestedPortsExample::client::bind3",
@@ -7013,7 +7179,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::Aggregator::sharedEng::pout": {
       "id": "PartRelationships::Aggregator::sharedEng::pout",
@@ -7073,7 +7240,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::baseEng::pout": {
       "id": "PartRelationships::System::baseEng::pout",
@@ -7133,7 +7301,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::eng::pout": {
       "id": "PartRelationships::System::eng::pout",
@@ -7193,7 +7362,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::child::pout": {
       "id": "PartRelationships::System::child::pout",
@@ -7253,7 +7423,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::logical::pout": {
       "id": "PartRelationships::System::logical::pout",
@@ -7313,7 +7484,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::physical::pout": {
       "id": "PartRelationships::System::physical::pout",
@@ -7373,7 +7545,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "part_relationships.sysml"
+      "fileId": "part_relationships.sysml",
+      "typeTargetId": "PartRelationships::Real"
     },
     "PartRelationships::System::sharedEng::pout": {
       "id": "PartRelationships::System::sharedEng::pout",
@@ -7415,78 +7588,39 @@
       "children": [],
       "fileId": "part_relationships.sysml"
     },
-    "UseCasesExample::Drive::vehicle::engine": {
-      "id": "UseCasesExample::Drive::vehicle::engine",
-      "kind": "part",
-      "name": "engine",
-      "parentId": "UseCasesExample::Drive::vehicle",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "use_cases.sysml"
-    },
-    "UseCasesExample::Drive::vehicle::battery": {
-      "id": "UseCasesExample::Drive::vehicle::battery",
-      "kind": "part",
-      "name": "battery",
-      "parentId": "UseCasesExample::Drive::vehicle",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "use_cases.sysml"
-    },
-    "UseCasesExample::Drive::vehicle::cabin": {
-      "id": "UseCasesExample::Drive::vehicle::cabin",
-      "kind": "part",
-      "name": "cabin",
-      "parentId": "UseCasesExample::Drive::vehicle",
-      "typeRef": null,
-      "sourceId": null,
-      "targetId": null,
-      "exposeRef": null,
-      "exposeRefs": [],
-      "viewFilters": [],
-      "defaultValue": null,
-      "multiplicity": null,
-      "isReference": false,
-      "metadataKeywords": [],
-      "documentation": null,
-      "shortId": null,
-      "children": [],
-      "fileId": "use_cases.sysml"
-    },
-    "Example::Vehicle::engine::powerKW": {
-      "id": "Example::Vehicle::engine::powerKW",
-      "kind": "attribute",
-      "name": "powerKW",
+    "Example::Vehicle::engine::EventOut": {
+      "id": "Example::Vehicle::engine::EventOut",
+      "kind": "port",
+      "name": "EventOut",
       "parentId": "Example::Vehicle::engine",
-      "typeRef": "Real",
+      "typeRef": "EventClientPort",
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
-      "defaultValue": "110.0",
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::EventClientPort"
+    },
+    "Example::Vehicle::engine::GaugeIn": {
+      "id": "Example::Vehicle::engine::GaugeIn",
+      "kind": "port",
+      "name": "GaugeIn",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -7494,6 +7628,110 @@
       "shortId": null,
       "children": [],
       "fileId": "vehicle2.sysml"
+    },
+    "Example::Vehicle::engine::PowerIn": {
+      "id": "Example::Vehicle::engine::PowerIn",
+      "kind": "port",
+      "name": "PowerIn",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "PowerPort",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::PowerPort"
+    },
+    "Example::Vehicle::engine::TorqueOut": {
+      "id": "Example::Vehicle::engine::TorqueOut",
+      "kind": "port",
+      "name": "TorqueOut",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml"
+    },
+    "Example::Vehicle::engine::rpm": {
+      "id": "Example::Vehicle::engine::rpm",
+      "kind": "attribute",
+      "name": "rpm",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "Integer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "0",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Integer"
+    },
+    "Example::Vehicle::engine::status": {
+      "id": "Example::Vehicle::engine::status",
+      "kind": "attribute",
+      "name": "status",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "String",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "\"idle\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::String"
+    },
+    "Example::Vehicle::engine::torque": {
+      "id": "Example::Vehicle::engine::torque",
+      "kind": "attribute",
+      "name": "torque",
+      "parentId": "Example::Vehicle::engine",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Vehicle::fm1::powerIn": {
       "id": "Example::Vehicle::fm1::powerIn",
@@ -7515,18 +7753,18 @@
       "children": [],
       "fileId": "vehicle.sysml"
     },
-    "Example::Vehicle::axle::driven": {
-      "id": "Example::Vehicle::axle::driven",
-      "kind": "attribute",
-      "name": "driven",
+    "Example::Vehicle::axle::TorqueIn": {
+      "id": "Example::Vehicle::axle::TorqueIn",
+      "kind": "port",
+      "name": "TorqueIn",
       "parentId": "Example::Vehicle::axle",
-      "typeRef": "Boolean",
+      "typeRef": null,
       "sourceId": null,
       "targetId": null,
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
-      "defaultValue": "true",
+      "defaultValue": null,
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -7534,6 +7772,27 @@
       "shortId": null,
       "children": [],
       "fileId": "vehicle2.sysml"
+    },
+    "Example::Vehicle::axle::rotationSpeed": {
+      "id": "Example::Vehicle::axle::rotationSpeed",
+      "kind": "attribute",
+      "name": "rotationSpeed",
+      "parentId": "Example::Vehicle::axle",
+      "typeRef": "Real",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "0.0",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Vehicle::battery::EventOut": {
       "id": "Example::Vehicle::battery::EventOut",
@@ -7553,7 +7812,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::EventClientPort"
     },
     "Example::Vehicle::battery::powerOut": {
       "id": "Example::Vehicle::battery::powerOut",
@@ -7573,7 +7833,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::PowerPort"
     },
     "Example::Vehicle::battery::SoC": {
       "id": "Example::Vehicle::battery::SoC",
@@ -7593,7 +7854,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     },
     "Example::Vehicle::battery::power": {
       "id": "Example::Vehicle::battery::power",
@@ -7613,7 +7875,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "vehicle2.sysml"
+      "fileId": "vehicle2.sysml",
+      "typeTargetId": "Example::Real"
     }
   },
   "visualization": {
@@ -9592,35 +9855,45 @@
         "side": "left",
         "offset": 0.3833333333333333
       },
-      "UseCasesExample::Drive::vehicle::engine": {
-        "artifactId": "UseCasesExample::Drive::vehicle::engine",
-        "x": 80.0,
-        "y": 6380.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
+      "Example::Vehicle::engine::EventOut": {
+        "artifactId": "Example::Vehicle::engine::EventOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.50875
       },
-      "UseCasesExample::Drive::vehicle::battery": {
-        "artifactId": "UseCasesExample::Drive::vehicle::battery",
-        "x": 360.0,
-        "y": 6380.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
+      "Example::Vehicle::engine::GaugeIn": {
+        "artifactId": "Example::Vehicle::engine::GaugeIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.62625
       },
-      "UseCasesExample::Drive::vehicle::cabin": {
-        "artifactId": "UseCasesExample::Drive::vehicle::cabin",
-        "x": 640.0,
-        "y": 6380.0,
-        "width": 200.0,
-        "height": 120.0,
-        "symbolRef": "default-part",
-        "side": null,
-        "offset": null
+      "Example::Vehicle::engine::PowerIn": {
+        "artifactId": "Example::Vehicle::engine::PowerIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.74375
+      },
+      "Example::Vehicle::engine::TorqueOut": {
+        "artifactId": "Example::Vehicle::engine::TorqueOut",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "right",
+        "offset": 0.8612500000000001
       },
       "Example::Vehicle::fm1::powerIn": {
         "artifactId": "Example::Vehicle::fm1::powerIn",
@@ -9631,6 +9904,16 @@
         "symbolRef": "default-port",
         "side": "left",
         "offset": 0.7
+      },
+      "Example::Vehicle::axle::TorqueIn": {
+        "artifactId": "Example::Vehicle::axle::TorqueIn",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 12.0,
+        "height": 12.0,
+        "symbolRef": "default-port",
+        "side": "left",
+        "offset": 0.685
       },
       "Example::Vehicle::battery::EventOut": {
         "artifactId": "Example::Vehicle::battery::EventOut",

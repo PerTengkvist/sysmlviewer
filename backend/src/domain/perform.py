@@ -9,9 +9,8 @@ and ``perform_target_id`` the element it resolves to.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from domain.models import ArtifactKind, SemanticElement
+from domain.name_resolution import NameResolver
 
 
 def is_perform(el: SemanticElement) -> bool:
@@ -33,100 +32,33 @@ def ref_leaf(ref: str) -> str:
     return segments[-1] if segments else ref
 
 
-def _child_named(
-    semantic: dict[str, SemanticElement],
-    owner_id: str | None,
-    name: str,
-    skip: str,
-) -> SemanticElement | None:
-    if owner_id is None:
-        # Top level: a root element (no owner) with that name.
-        el = semantic.get(name)
-        return el if el is not None and el.parent_id is None else None
-    owner = semantic.get(owner_id)
-    if owner is None:
-        return None
-    for cid in owner.children:
-        if cid == skip:
-            continue
-        child = semantic.get(cid)
-        if child is not None and child.name == name:
-            return child
-    return None
-
-
-def _follow(
-    semantic: dict[str, SemanticElement],
-    start: SemanticElement,
-    rest: list[str],
-    skip: str,
-) -> str | None:
-    cur: SemanticElement | None = start
-    for seg in rest:
-        cur = _child_named(semantic, cur.id, seg, skip=skip)
-        if cur is None:
-            return None
-    return cur.id if cur.id != skip else None
-
-
-def _find_namespace(semantic: dict[str, SemanticElement], path: str) -> SemanticElement | None:
-    """Element for an import path: exact id, else a unique id ending in it."""
-    if path in semantic:
-        return semantic[path]
-    matches = [e for e in semantic.values() if e.id.endswith(f"::{path}")]
-    return matches[0] if len(matches) == 1 else None
-
-
 def resolve_perform_target(
     semantic: dict[str, SemanticElement],
     perform: SemanticElement,
-    imports: Sequence[str] = (),
+    resolver: NameResolver | None = None,
 ) -> str | None:
     """Id of the element a perform names, or None when it does not resolve.
 
-    The first segment is looked up in the perform's owner and then in each
-    owner above it, up to the top level, and then in the imported
-    namespaces (`Lib::*`, `Lib::**`) and members (`Lib::name`); the
-    remaining segments follow children with the same name.
+    The reference is resolved from the perform's owner with the namespace and
+    import rules of `NameResolver`; the result must be an existing element
+    other than the perform itself.
     """
-    segments = ref_segments(perform.type_ref or "")
-    if not segments:
+    ref = perform.type_ref or ""
+    if not ref_segments(ref):
         return None
-    first, rest = segments[0], segments[1:]
-    skip = perform.id
-    owner_id = perform.parent_id
-    seen: set[str] = set()
-    while True:
-        found = _child_named(semantic, owner_id, first, skip=skip)
-        if found is not None:
-            target = _follow(semantic, found, rest, skip)
-            if target is not None:
-                return target
-        if owner_id is None or owner_id in seen:
-            break
-        seen.add(owner_id)
-        owner = semantic.get(owner_id)
-        owner_id = owner.parent_id if owner else None
-
-    for path in imports:
-        path = path.replace(".", "::")
-        if path.endswith("::**") or path.endswith("::*"):
-            ns = _find_namespace(semantic, path.rsplit("::", 1)[0])
-            found = _child_named(semantic, ns.id, first, skip=skip) if ns else None
-        elif path.split("::")[-1] == first:
-            found = _find_namespace(semantic, path)
-        else:
-            found = None
-        if found is not None:
-            target = _follow(semantic, found, rest, skip)
-            if target is not None:
-                return target
-    return None
+    if resolver is None:
+        resolver = NameResolver(semantic, ())
+    res = resolver.resolve_feature_ref(ref, perform.parent_id, perform.file_id or "")
+    target = res.element_id
+    if target is None or target == perform.id or target not in semantic:
+        return None
+    return target
 
 
 def resolve_performers(semantic: dict[str, SemanticElement]) -> dict[str, list[str]]:
     """Map each performed action id to the ids of the parts that perform it."""
     out: dict[str, list[str]] = {}
+    resolver: NameResolver | None = None
     for el in sorted(semantic.values(), key=lambda e: e.id):
         if not is_perform(el) or not el.parent_id:
             continue
@@ -135,7 +67,9 @@ def resolve_performers(semantic: dict[str, SemanticElement]) -> dict[str, list[s
             continue
         target = el.perform_target_id
         if target not in semantic:
-            target = resolve_perform_target(semantic, el)
+            if resolver is None:
+                resolver = NameResolver(semantic, ())
+            target = resolve_perform_target(semantic, el, resolver)
         if target is None:
             continue
         parts = out.setdefault(target, [])

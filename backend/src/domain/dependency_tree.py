@@ -31,7 +31,6 @@ from typing import Any
 
 from domain.models import ArtifactKind, SemanticElement
 from domain.relationships import is_relation_element
-from domain.type_resolution import part_def_resolver
 
 # Upward chain priority (lower wins). The chain follows the trace from a
 # physical part to its logical part, the functional entity allocated to it,
@@ -234,21 +233,11 @@ def _dependency_priority(
 def _resolve_type(
     semantic: Mapping[str, SemanticElement],
     usage: SemanticElement,
-    resolve_part_def,
 ) -> SemanticElement | None:
-    ref = usage.type_ref
-    if not ref:
+    # Resolved by the parser (namespaces and imports); never guessed from a name.
+    if not usage.type_ref or not usage.type_target_id:
         return None
-    direct = semantic.get(ref)
-    if direct is not None and direct.kind == usage.kind:
-        return direct
-    if usage.kind == ArtifactKind.PART:
-        return resolve_part_def(ref)
-    simple = ref.split("::")[-1]
-    for el in semantic.values():
-        if el.kind == usage.kind and el.name == simple and el.type_ref is None:
-            return el
-    return None
+    return semantic.get(usage.type_target_id)
 
 
 def _collect_edges(
@@ -288,7 +277,6 @@ def _collect_edges(
     # "perform", priority `_PRIORITY_USAGE`. Add the edges here from
     # `domain.perform.resolve_performers` once that module exists.
 
-    resolve_part_def = part_def_resolver(semantic)
     for el in semantic.values():
         if el.kind == ArtifactKind.PACKAGE or is_relation_element(el):
             continue
@@ -300,7 +288,7 @@ def _collect_edges(
         ):
             add(_Edge(parent.id, el.id, None, LABEL_OWNS, _PRIORITY_OWNER,
                       up_label=LABEL_OWNED_BY))
-        type_def = _resolve_type(semantic, el, resolve_part_def)
+        type_def = _resolve_type(semantic, el)
         if type_def is not None and (type_def.id, el.id) not in specialized:
             add(_Edge(type_def.id, el.id, None, LABEL_TYPED_BY, _PRIORITY_TYPE))
     return edges

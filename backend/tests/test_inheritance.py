@@ -13,6 +13,7 @@ package Logical {
   }
 }
 package Physical {
+  private import Logical::*;
   part def Site {
     part logical : Vehicle;
     connection c connect logical.engine.p to logical.engine.p;

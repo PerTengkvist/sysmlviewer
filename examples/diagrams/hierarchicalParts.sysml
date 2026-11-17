@@ -114,6 +114,8 @@ package HierarchicalPartsPkg {
 
     }
     package NestedPortsExample {
+        // ServiceA and Client are declared in the sibling package NestedPorts.
+        private import HierarchicalPartsPkg::NestedPorts::*;
 
         part serviceA : ServiceA {
             doc /* Service usage. */;

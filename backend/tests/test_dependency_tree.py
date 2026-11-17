@@ -431,3 +431,31 @@ def test_depth_limit_not_truncated_when_only_seen_elements_remain():
     assert r2["children"] == []
     assert r2["truncated"] is False
     assert tree["truncated"] is False
+
+
+def test_typed_by_follows_the_imported_definition_not_the_first_same_name():
+    semantic = _semantic(
+        "package Other { part def Box; }\n"
+        "package Types { part def Box; }\n"
+        "package Main { private import Types::*; part box : Box; }"
+    )
+    tree = build_dependency_tree(semantic, "Main::box")
+    assert [n["id"] for n in tree["up"]] == ["Types::Box"]
+
+
+def test_typed_by_gives_no_edge_without_a_resolved_type():
+    semantic = _semantic("package P { part def Box; part box : Box; }")
+    semantic["P::box"].type_target_id = None
+    tree = build_dependency_tree(semantic, "P::box")
+    assert tree["up"] == []
+
+
+def test_typed_by_for_a_port_follows_the_imported_definition():
+    semantic = _semantic(
+        "package Other { port def Pd; }\n"
+        "package Lib { port def Pd; }\n"
+        "package App { private import Lib::*; part def Q { port p : Pd; } }"
+    )
+    tree = build_dependency_tree(semantic, "App::Q::p")
+    ids = [n["id"] for n in tree["up"]]
+    assert "Lib::Pd" in ids and "Other::Pd" not in ids
