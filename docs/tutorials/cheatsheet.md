@@ -20,7 +20,7 @@ package App {
 }
 ```
 
-`import X::*` brings in the members of `X`, `import X::**` `X` and everything below it (`import X::*::**` leaves `X` out), and `import X::Name` one member. Own names shadow imported ones, a `public import` is passed on to whoever imports the package, and a name that two imports give different elements is reported as ambiguous. The same rules apply to the type in `part p : T;`: `T` must be declared in the same or an enclosing package, or imported; a definition with the same name in some unrelated package is not used.
+`import X::*` brings in the members of `X`, `import X::**` `X` and everything below it (`import X::*::**` leaves `X` out), and `import X::Name` one member. Own names shadow imported ones, a `public import` is passed on to whoever imports the package, and a name that two imports give different elements is reported as ambiguous. The same rules apply to the type in `part p : T;`: `T` must be declared in the same or an enclosing package, or imported; a definition with the same name in some unrelated package is not used. You get a warning instead: `type 'T' is not visible from 'id' (Other::T exists; add an import or qualify the name)`, or `type reference 'T' is ambiguous: …` when two imports both give a `T`.
 
 ## Parts
 

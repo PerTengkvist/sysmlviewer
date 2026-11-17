@@ -83,20 +83,29 @@ class NameResolver:
 
     # -- public API ---------------------------------------------------------
 
-    def resolve_name(self, ref: str, scope_id: str | None, file_id: str) -> Resolution:
-        """Resolve `A::B::c` (or a simple name) written in `scope_id`."""
+    def resolve_name(
+        self, ref: str, scope_id: str | None, file_id: str, exclude: str | None = None
+    ) -> Resolution:
+        """Resolve `A::B::c` (or a simple name) written in `scope_id`.
+
+        `exclude` is an element the first segment must not resolve to (the
+        declaration that writes the reference, for `part def E :> E`)."""
         segments = [s for s in ref.split("::") if s]
         if not segments:
             return _UNRESOLVED
-        result = self._resolve_segments(segments, scope_id, file_id)
+        result = self._resolve_segments(segments, scope_id, file_id, exclude=exclude)
         return self._finish(result)
 
     def resolve_feature_ref(
-        self, ref: str, scope_id: str | None, file_id: str
+        self,
+        ref: str,
+        scope_id: str | None,
+        file_id: str,
+        exclude: str | None = None,
     ) -> Resolution:
         """Resolve `A::b.c.d`: the head `A::b` by name, the tail by ownership."""
         head, *tail = ref.split(".")
-        result = self.resolve_name(head, scope_id, file_id)
+        result = self.resolve_name(head, scope_id, file_id, exclude)
         if result.element_id is None or not tail:
             return result
         current = result.element_id
@@ -163,8 +172,12 @@ class NameResolver:
         scope_id: str | None,
         file_id: str,
         skip_imports_of: tuple[str | None] | None = None,
+        exclude: str | None = None,
     ) -> Resolution:
-        head = self._lookup_head(segments[0], scope_id, file_id, skip_imports_of)
+        accept = (lambda eid: eid != exclude) if exclude is not None else None
+        head = self._lookup_head(
+            segments[0], scope_id, file_id, skip_imports_of, accept=accept
+        )
         if head.element_id is None:
             return head
         current = head.element_id

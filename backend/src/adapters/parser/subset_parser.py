@@ -207,6 +207,8 @@ class _ParserState:
     element_lines: dict[str, int] = field(default_factory=dict)
     # (file id, text) of warnings about type references, filed under the usage's file.
     type_warnings: list[tuple[str, str]] = field(default_factory=list)
+    # Usages that already got an ambiguity or visibility warning.
+    type_warned: set[str] = field(default_factory=set)
     # Source line of each `perform` element, for warnings after linking.
     perform_lines: dict[str, int] = field(default_factory=dict)
     # Relationship ends resolved by `_link_references` once every file is parsed.
@@ -269,7 +271,7 @@ class SubsetSysmlParser:
     def parse(self, content: str, file_id: str) -> ParseResult:
         state = self._parse_declarations(content, file_id, defer_link=False)
         return ParseResult(
-            elements=state.elements,
+            elements=dict(state.elements),
             warnings=state.warnings,
             file_warnings={file_id: list(state.warnings)},
             imports=[
@@ -2582,7 +2584,12 @@ class SubsetSysmlParser:
         }
         names = {el.name for el in state.elements.values()} | known_library
         for el in state.elements.values():
-            if not el.type_ref or el.type_target_id or el.type_ref in names:
+            if (
+                not el.type_ref
+                or el.type_target_id
+                or el.type_ref in names
+                or el.id in state.type_warned
+            ):
                 continue
             if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
                 continue
@@ -2619,8 +2626,12 @@ class SubsetSysmlParser:
                 # ends are not ours to write.
                 pending.skipped = True
                 continue
+            # `:>` / `:>>`: the declaration itself is never its own target.
             res = resolver.resolve_feature_ref(
-                pending.ref, pending.scope_id, pending.file_id
+                pending.ref,
+                pending.scope_id,
+                pending.file_id,
+                exclude=el.source_id if el.kind in _LOCAL_RELATION_KINDS else None,
             )
             if res.element_id is not None:
                 value = res.element_id
@@ -2750,6 +2761,7 @@ class SubsetSysmlParser:
             prefix = f"line {line}: " if line is not None else ""
             fid = el.file_id or state.file_id
             if res.candidates:
+                state.type_warned.add(el.id)
                 listed = ", ".join(
                     f"{cid} (import line {cline})" for cid, cline in res.candidates
                 )
@@ -2763,13 +2775,15 @@ class SubsetSysmlParser:
                 continue
             leaf = el.type_ref.split("::")[-1]
             elsewhere = [d for d in defs_named.get((el.kind, leaf), []) if d != el.id]
-            if elsewhere and state.is_project:
+            if elsewhere and state.is_project and "::" not in el.type_ref:
+                state.type_warned.add(el.id)
                 shown = ", ".join(sorted(elsewhere)[:3])
+                verb = "exists" if len(elsewhere) == 1 else "exist"
                 state.type_warnings.append(
                     (
                         fid,
                         f"{prefix}type '{el.type_ref}' is not visible from '{el.id}' "
-                        f"({shown} exists; add an import or qualify the name)",
+                        f"({shown} {verb}; add an import or qualify the name)",
                     )
                 )
 
