@@ -60,6 +60,7 @@ class _ImportDecl:
     visibility: str  # private | public
     path: str  # e.g. Types::* or Types::Box
     line: int
+    owner_id: str | None = None  # namespace the import stands in (None = file root)
 
 
 _EXPOSE_SUFFIX_KINDS = {
@@ -198,6 +199,7 @@ class SubsetSysmlParser:
                     "visibility": imp.visibility,
                     "path": imp.path,
                     "line": imp.line,
+                    "ownerId": imp.owner_id,
                 }
                 for imp in state.imports
             ],
@@ -253,6 +255,7 @@ class SubsetSysmlParser:
                     "visibility": imp.visibility,
                     "path": imp.path,
                     "line": imp.line,
+                    "ownerId": imp.owner_id,
                 }
                 for imp in all_imports
             ],
@@ -2308,6 +2311,7 @@ class SubsetSysmlParser:
                                 visibility=visibility,
                                 path=path,
                                 line=line,
+                                owner_id=state.current_parent(),
                             )
                         )
                     else:
@@ -2328,6 +2332,7 @@ class SubsetSysmlParser:
                             visibility="public",
                             path=path,
                             line=line,
+                            owner_id=state.current_parent(),
                         )
                     )
                 else:
