@@ -530,13 +530,6 @@ class SubsetSysmlParser:
                     return sibling
                 el = state.elements.get(walk)
                 walk = el.parent_id if el else None
-            # Prefer package-scoped name when element exists at root of nesting
-            for el in state.elements.values():
-                if el.name == ref and "::" in el.id:
-                    # unique by simple name?
-                    matches = [e.id for e in state.elements.values() if e.name == ref]
-                    if len(matches) == 1:
-                        return matches[0]
             return f"{parent}::{ref.replace('.', '::')}"
 
         def add_pending(
@@ -2615,16 +2608,25 @@ class SubsetSysmlParser:
     def _link_performs(self, state: _ParserState) -> None:
         """Resolve each `perform <ref>;` and store its target, or warn.
 
-        The reference is looked up through the owners and then the imports of
-        its file. When the path does not resolve but its last segment names
+        The reference is resolved from its owner with `NameResolver`. When the path does not resolve but its last segment names
         some element, it is left unresolved without a warning (the name check
         used before paths were followed).
         """
         from domain.perform import is_perform
 
-        imports: dict[str | None, list[str]] = {}
-        for imp in state.imports:
-            imports.setdefault(imp.file_id, []).append(imp.path)
+        resolver = NameResolver(
+            state.elements,
+            [
+                ImportSpec(
+                    owner_id=imp.owner_id,
+                    file_id=imp.file_id,
+                    path=imp.path,
+                    visibility=imp.visibility,
+                    line=imp.line,
+                )
+                for imp in state.imports
+            ],
+        )
         names = {
             el.name
             for el in state.elements.values()
@@ -2633,9 +2635,7 @@ class SubsetSysmlParser:
         for el in sorted(state.elements.values(), key=lambda e: e.id):
             if not is_perform(el):
                 continue
-            target = resolve_perform_target(
-                state.elements, el, imports.get(el.file_id, [])
-            )
+            target = resolve_perform_target(state.elements, el, resolver)
             el.perform_target_id = target
             if target is not None or ref_leaf(el.type_ref or "") in names:
                 continue
