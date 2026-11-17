@@ -655,3 +655,99 @@ def test_typed_by_requires_matching_kind():
         "package App { private import Lib::*; part def Q { port p : Pd; } }"
     )
     assert result.elements["App::Q::p"].type_target_id is None
+
+
+# -- second review ------------------------------------------------------------
+
+
+def test_usage_named_like_its_type_still_resolves_outwards():
+    result = _project(
+        "package P { port def sP1; part def Car { port sP1 : sP1; "
+        "part Engine : Engine; } part def Engine { port p; } }"
+    )
+    assert result.elements["P::Car::sP1"].type_target_id == "P::sP1"
+    assert result.elements["P::Car::Engine"].type_target_id == "P::Engine"
+    assert "P::Car::Engine::p" in result.elements
+
+
+def test_usage_named_like_its_type_resolves_through_import():
+    result = _project(
+        "package Lib { part def Engine { port p; } }",
+        "package App { private import Lib::*; part def Car { part Engine : Engine; } }",
+    )
+    assert result.elements["App::Car::Engine"].type_target_id == "Lib::Engine"
+    assert "App::Car::Engine::p" in result.elements
+
+
+def test_untyped_usage_is_not_a_definition():
+    result = _project(
+        "package Lib { part def Engine { port p; } }\n"
+        "package App { private import Lib::*; part Engine; "
+        "part car { part e : Engine; } }"
+    )
+    assert result.elements["App::car::e"].type_target_id == "Lib::Engine"
+
+
+def test_specialized_attribute_def_is_accepted_as_type():
+    result = _project(
+        "package P { attribute def M; attribute def Mass :> M; "
+        "part def Q { attribute m : Mass; } }"
+    )
+    assert result.elements["P::Q::m"].type_target_id == "P::Mass"
+
+
+def test_unreachable_type_warns_with_line_in_the_referencing_file():
+    result = _project(
+        "package Other { part def Box; }",
+        "package Main {\n  part box : Box;\n}",
+    )
+    text = (
+        "line 2: type 'Box' is not visible from 'Main::box' "
+        "(Other::Box exists; add an import or qualify the name)"
+    )
+    assert text in result.warnings
+    assert text in result.file_warnings["f1"]
+    assert text not in result.file_warnings.get("f0", [])
+
+
+def test_unreachable_type_warning_scenario_from_review():
+    result = _project(
+        "package Types { part def Car { part engine { port p; } } }\n"
+        "package App { part engine { port p; } part x; "
+        "part car : Car { connection k connect engine.p to x; } }"
+    )
+    assert any("type 'Car' is not visible from 'App::car'" in w for w in result.warnings)
+
+
+def test_ambiguous_type_warning_has_line_and_file_for_any_kind():
+    result = _project(
+        "package A { port def Pd; }\npackage B { port def Pd; }",
+        "package Main {\n  private import A::*;\n  private import B::*;\n"
+        "  part def Q { port p : Pd; }\n}",
+    )
+    ws = [w for w in result.file_warnings["f1"] if "ambiguous" in w and "'Pd'" in w]
+    assert len(ws) == 1 and ws[0].startswith("line 4: type reference 'Pd' is ambiguous")
+    assert not [w for w in result.file_warnings.get("f0", []) if "ambiguous" in w]
+
+
+def test_qualified_type_gives_no_false_unresolved_warning():
+    result = _project(
+        "package Lib { part def Box; }\npackage App { part b : Lib::Box; }"
+    )
+    assert not any("could not be resolved" in w for w in result.warnings)
+
+
+def test_reachable_and_library_types_give_no_visibility_warning():
+    result = _project(
+        "package Lib { part def Box; }\n"
+        "package App { private import Lib::*; part b : Box; view v : GeneralView; }"
+    )
+    assert not any("not visible" in w for w in result.warnings)
+
+
+def test_free_id_never_collides():
+    from adapters.parser.subset_parser import _free_id
+
+    taken = {"S::x", "?x", "?x#2"}
+    assert _free_id(["S::x", "?x"], taken) == "?x#3"
+    assert _free_id(["S::y", "?y"], taken) == "S::y"

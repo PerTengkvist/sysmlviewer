@@ -38,7 +38,8 @@ _OLD_NEW_WARNINGS = [
 # Exact lines as produced by diff_snapshots().
 ACCEPTED_DIFFS: set[str] = set()
 for _old, _new in _OLD_NEW_WARNINGS:
-    ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning added {_new!r}")
+    if "conn1" in _new:  # the other four no longer occur, see _TYPE_RESOLUTION_*
+        ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning added {_new!r}")
     ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning removed {_old!r}")
 
 # Part types (`: T`) resolve through namespaces and imports instead of "first
@@ -76,6 +77,52 @@ for _id in _TYPE_RESOLUTION_ADDED:
     ACCEPTED_DIFFS.add(f"project:examples/diagrams: element id added {_id!r}")
 for _id in _TYPE_RESOLUTION_REMOVED:
     ACCEPTED_DIFFS.add(f"project:examples/diagrams: element id removed {_id!r}")
+
+# Typed-by targets (`typeTargetId`, compared with what main's name matching gave).
+# Usage -> (main, now). All in examples/diagrams, where the same names are
+# declared in several packages. Why each group changes:
+#   part types: as above (own/enclosing package wins over the first same name).
+#   scalar attribute types (Real, Integer, String): each package declares its
+#     own `attribute def`, and the usage now finds the one in its own package
+#     instead of CarLogical's.
+_TYPE_TARGET_CHANGES = {
+    "Example::Vehicle::axle": ("CarLogical::Axle", "Example::Axle"),
+    "Example::Vehicle::engine": ("CarLogical::Engine", "Example::Engine"),
+    "UseCasesExample::Drive::vehicle": ("TreeExample::Vehicle", "UseCasesExample::Vehicle"),
+    "Example::Axle::rotationSpeed": ("CarLogical::Real", "Example::Real"),
+    "Example::Battery::SoC": ("CarLogical::Real", "Example::Real"),
+    "Example::Battery::power": ("CarLogical::Real", "Example::Real"),
+    "Example::Engine::rpm": ("CarLogical::Integer", "Example::Integer"),
+    "Example::Engine::status": ("CarLogical::String", "Example::String"),
+    "Example::Engine::torque": ("CarLogical::Real", "Example::Real"),
+    "Example::Vehicle::battery::SoC": ("CarLogical::Real", "Example::Real"),
+    "Example::Vehicle::battery::power": ("CarLogical::Real", "Example::Real"),
+    "Example::Vehicle::status": ("CarLogical::String", "Example::String"),
+    "hbox::HBox::BoxA::status": ("CarLogical::String", "hbox::String"),
+    "hbox::HBox::BoxB::status": ("CarLogical::String", "hbox::String"),
+    "hbox::HBox::BoxC::status": ("CarLogical::String", "hbox::String"),
+    "hbox::HBox::status": ("CarLogical::String", "hbox::String"),
+    **{
+        f"PartRelationships::{u}": ("CarLogical::Real", "PartRelationships::Real")
+        for u in (
+            "Aggregator::sharedEng::capacity",
+            "Base::capacity",
+            "Small::capacity",
+            "System::baseEng::capacity",
+            "System::child::capacity",
+            "System::eng::capacity",
+            "System::logical::capacity",
+            "System::physical::capacity",
+            "System::reading",
+            "System::sharedEng::capacity",
+            "System::temp",
+        )
+    },
+}
+for _usage, (_old, _new) in _TYPE_TARGET_CHANGES.items():
+    ACCEPTED_DIFFS.add(
+        f"project:examples/diagrams: {_usage} typeTargetId {_old!r} -> {_new!r}"
+    )
 
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 
@@ -119,11 +166,20 @@ def current():
     return collect_snapshot()
 
 
-def test_examples_match_endpoint_snapshot(current):
+@pytest.mark.parametrize("key", snapshot_keys())
+def test_examples_match_endpoint_snapshot(current, key):
+    old, new = load_fixture(), current
     unexpected = [
-        d for d in diff_snapshots(load_fixture(), current) if d not in ACCEPTED_DIFFS
+        d
+        for d in diff_snapshots({key: old[key]}, {key: new[key]})
+        if d not in ACCEPTED_DIFFS
     ]
     assert unexpected == []
+
+
+def test_accepted_diffs_are_all_used(current):
+    produced = set(diff_snapshots(load_fixture(), current))
+    assert ACCEPTED_DIFFS - produced == set()
 
 
 @pytest.mark.parametrize("key", snapshot_keys())

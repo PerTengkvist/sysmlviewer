@@ -39,3 +39,8 @@ package Ambiguous {
   dependency from a to q;
   part box : Box;
 }
+package Stray { part onlyHere; }
+package NoFallback {
+  part a;
+  dependency from a to onlyHere;
+}

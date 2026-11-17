@@ -26,8 +26,18 @@ def _kind(element: Any) -> str:
     return str(getattr(element.kind, "value", element.kind))
 
 
-def _summarize(result: Any) -> dict[str, Any]:
+def _type_target(e: Any, elements: Any) -> str | None:
+    return getattr(e, "type_target_id", None)
+
+
+def _summarize(result: Any, type_target: Any = None) -> dict[str, Any]:
+    type_target = type_target or _type_target
     elements = result.elements
+    type_targets = {
+        eid: type_target(e, elements)
+        for eid, e in elements.items()
+        if e.type_ref and not (e.kind.value == "action" and "perform" in e.metadata_keywords)
+    }
     relations = []
     performs = []
     for eid, e in elements.items():
@@ -47,11 +57,12 @@ def _summarize(result: Any) -> dict[str, Any]:
         "elementIds": sorted(elements),
         "relations": sorted(relations, key=lambda r: r["id"]),
         "performs": sorted(performs, key=lambda r: r["id"]),
+        "typeTargets": dict(sorted(type_targets.items())),
         "warnings": sorted(result.warnings),
     }
 
 
-def collect_snapshot() -> dict[str, Any]:
+def collect_snapshot(type_target: Any = None) -> dict[str, Any]:
     from adapters.parser.subset_parser import SubsetSysmlParser
     from domain.models import SysmlFile
 
@@ -69,11 +80,14 @@ def collect_snapshot() -> dict[str, Any]:
                     path=rel,
                 )
             )
-        snap[f"project:{rel_dir}"] = _summarize(SubsetSysmlParser().parse_project(files))
-    for path in sorted(EXAMPLES.rglob("*.sysml")):
+        snap[f"project:{rel_dir}"] = _summarize(
+            SubsetSysmlParser().parse_project(files), type_target
+        )
+    model = REPO_ROOT / IMPORT_MODEL_DIR
+    for path in (*sorted(EXAMPLES.rglob("*.sysml")), *sorted(model.rglob("*.sysml"))):
         rel = path.relative_to(REPO_ROOT).as_posix()
         result = SubsetSysmlParser().parse(path.read_text(encoding="utf-8"), rel)
-        snap[f"file:{rel}"] = _summarize(result)
+        snap[f"file:{rel}"] = _summarize(result, type_target)
     return snap
 
 
@@ -111,6 +125,10 @@ def diff_snapshots(a: dict[str, Any], b: dict[str, Any]) -> list[str]:
             for field in ("kind", "sourceId", "targetId", "typeRef"):
                 if ra[i][field] != rb[i][field]:
                     out.append(f"{key}: {i} {field} {ra[i][field]!r} -> {rb[i][field]!r}")
+        ta, tb = sa.get("typeTargets", {}), sb.get("typeTargets", {})
+        for i in sorted(set(ta) & set(tb)):
+            if ta[i] != tb[i]:
+                out.append(f"{key}: {i} typeTargetId {ta[i]!r} -> {tb[i]!r}")
         pa = {r["id"]: r["performTargetId"] for r in sa["performs"]}
         pb = {r["id"]: r["performTargetId"] for r in sb["performs"]}
         for i in sorted(set(pa) | set(pb)):
