@@ -284,8 +284,12 @@ class SubsetSysmlParser:
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
         self._warn_unresolved_type_refs(link_state)
-        self._warn_unresolved_endpoints(link_state)
         self._link_performs(link_state)
+        link_state.ref_warnings.clear()
+        self._warn_unresolved_references(link_state)
+        for fid, text in link_state.ref_warnings:
+            warnings.append(text)
+            file_warnings.setdefault(fid, []).append(text)
         warnings.extend(link_state.warnings)
         # Attach link warnings to first file for visibility
         if link_state.warnings and files:
@@ -2579,29 +2583,28 @@ class SubsetSysmlParser:
             else:
                 el.target_id = value
 
-    def _warn_unresolved_endpoints(self, state: _ParserState) -> None:
-        """Flag satisfy / dependency endpoints that name no element in the merged graph.
+    def _warn_unresolved_references(self, state: _ParserState) -> None:
+        """Flag relationship ends that name no element once everything is linked.
 
-        Only meaningful after all files are merged (parse_project); a single
-        file may legitimately point into another file.
+        Only meaningful after all files are merged and inheritance has run
+        (parse_project): a single file may point into another file, and an end
+        into an inherited feature exists only after inheritance.
         """
-        checks = {
-            ArtifactKind.SATISFY: "satisfy",
-            ArtifactKind.DEPENDENCY: "dependency",
-            ArtifactKind.CONNECTION: "connection",
-            ArtifactKind.BINDING: "binding",
-            ArtifactKind.FLOW: "flow",
-            ArtifactKind.INTERFACE: "interface",
-        }
-        for el in state.elements.values():
-            label = checks.get(el.kind)
-            if label is None:
+        for pending in state.pending_refs:
+            if pending.ambiguous:
                 continue
-            for role, endpoint in (("source", el.source_id), ("target", el.target_id)):
-                if endpoint and endpoint not in state.elements:
-                    state.warnings.append(
-                        f"{label} {role} not found: {endpoint} (in '{el.id}')"
-                    )
+            el = state.elements.get(pending.element_id)
+            if el is None:
+                continue
+            if pending.resolved_id is not None and pending.resolved_id in state.elements:
+                continue
+            state.ref_warnings.append(
+                (
+                    pending.file_id,
+                    f"line {pending.line}: {pending.label} {pending.role} "
+                    f"not found: {pending.ref} (in '{el.id}')",
+                )
+            )
 
     def _link_performs(self, state: _ParserState) -> None:
         """Resolve each `perform <ref>;` and store its target, or warn.

@@ -18,8 +18,28 @@ from endpoint_snapshot import (
     snapshot_keys,
 )
 
+# The five pre-existing "connection ... not found" warnings of examples/diagrams
+# (the same connections as before, unresolved before and after) are now worded
+# with the reference as written, e.g. `engine.powerIn` instead of the guessed id
+# `Example::Vehicle::engine::powerIn`, and carry a line number. The ends are unchanged.
+_OLD_NEW_WARNINGS = [
+    ("connection target not found: Example::Vehicle::engine::powerIn (in 'Example::Vehicle::conn1')",
+     "line 17: connection target not found: engine.powerIn (in 'Example::Vehicle::conn1')"),
+    ("connection target not found: Example::Vehicle::engine::PowerIn (in 'Example::Vehicle::poower')",
+     "line 57: connection target not found: engine.PowerIn (in 'Example::Vehicle::poower')"),
+    ("connection source not found: Example::Vehicle::engine::TorqueOut (in 'Example::Vehicle::torque')",
+     "line 58: connection source not found: engine.TorqueOut (in 'Example::Vehicle::torque')"),
+    ("connection target not found: Example::Vehicle::axle::TorqueIn (in 'Example::Vehicle::torque')",
+     "line 58: connection target not found: axle.TorqueIn (in 'Example::Vehicle::torque')"),
+    ("connection target not found: Example::Vehicle::engine::GaugeIn (in 'Example::Vehicle::gaugebus')",
+     "line 60: connection target not found: engine.GaugeIn (in 'Example::Vehicle::gaugebus')"),
+]
+
 # Exact lines as produced by diff_snapshots().
 ACCEPTED_DIFFS: set[str] = set()
+for _old, _new in _OLD_NEW_WARNINGS:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning added {_new!r}")
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning removed {_old!r}")
 
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 
@@ -74,4 +94,6 @@ def test_examples_match_endpoint_snapshot(current):
 def test_examples_add_no_warnings(current, key):
     old = load_fixture()[key]
     new = current[key]
-    assert normalize(new["warnings"]) - normalize(old["warnings"]) == set()
+    accepted = {normalize([n]).pop() for _, n in _OLD_NEW_WARNINGS}
+    added = normalize(new["warnings"]) - normalize(old["warnings"]) - accepted
+    assert added == set()

@@ -230,3 +230,104 @@ def test_local_flows_unchanged():
             ("P::Buy::succ2", "P::Buy::a", "P::Buy::done"),
             ("P::Flow::succ1", "P::Flow::x", "P::Flow::y"),
         ]
+
+
+# -- warnings for unresolved and ambiguous ends (step 5) --------------------
+
+AMBIGUOUS = (
+    "package A { part x; }\n"
+    "package B { part x; }\n"
+    "package App {\n"
+    "private import A::*;\n"
+    "private import B::*;\n"
+    "dependency from a to x;\n"
+    "part a;\n"
+    "}"
+)
+
+
+def test_ambiguous_endpoint_warns_with_candidates():
+    result = _project(AMBIGUOUS)
+    assert (
+        "line 6: dependency target 'x' is ambiguous: "
+        "A::x (import line 4), B::x (import line 5) (in 'App::dep1')"
+    ) in result.warnings
+    # Never a wrong element: the end keeps the legacy value.
+    assert result.elements["App::dep1"].target_id == "App::x"
+
+
+def test_unresolved_endpoint_warns_with_line():
+    result = _project("package App {\npart a;\ndependency from a to nope;\n}")
+    assert result.elements["App::dep1"].target_id == "App::nope"
+    assert (
+        "line 3: dependency target not found: nope (in 'App::dep1')"
+    ) in result.warnings
+
+
+def test_unique_name_fallback_removed():
+    result = _project("package A { part q; } package B { part x; dependency from x to q; }")
+    assert result.elements["B::dep1"].target_id == "B::q"
+    assert "line 1: dependency target not found: q (in 'B::dep1')" in result.warnings
+
+
+def test_unresolved_end_never_lands_on_real_element():
+    # App has its own Sub (without p); the top-level Sub::p must not be picked up
+    # by the legacy fallback of the unresolved reference.
+    result = _project(
+        "package Sub { part p; }\n"
+        "package App {\npart a;\npackage Sub { }\ndependency from a to Sub::p;\n}"
+    )
+    target = result.elements["App::dep1"].target_id
+    assert target != "Sub::p"
+    assert target == "App::Sub::p"
+    assert any("dependency target not found: Sub::p" in w for w in result.warnings)
+
+
+def test_pending_path_into_inherited_port_is_silent():
+    result = _project(
+        "package P {\n"
+        "  part def E { port powerIn; }\n"
+        "  part def Car {\n    part engine : E;\n    part other;\n"
+        "    connection c connect engine.powerIn to other;\n  }\n}"
+    )
+    c = result.elements["P::Car::c"]
+    assert c.source_id == "P::Car::engine::powerIn"
+    assert c.source_id in result.elements
+    assert result.warnings == []
+
+
+def test_pending_path_missing_after_inheritance_warns():
+    content = (
+        "package P {\n  port def hport { port hport_l1; }\n"
+        "  part def Parent { port layered_port : hport; }\n"
+        "  part a : Parent;\n  part b : Parent;\n"
+        "  connection c connect a.layered_port.missing to b.layered_port.hport_l1;\n}"
+    )
+    result = _project(content)
+    assert (
+        "line 6: connection source not found: a.layered_port.missing (in 'P::c')"
+    ) in result.warnings
+
+
+def test_allocation_unresolved_warns():
+    result = _project("package App {\npart a;\nallocate a to nope;\n}")
+    assert any("allocation target not found: nope" in w for w in result.warnings)
+
+
+def test_single_file_parse_warns_on_ambiguity_only():
+    assert any("is ambiguous" in w for w in _parse(AMBIGUOUS).warnings)
+    r = _parse("package App {\npart a;\ndependency from a to nope;\n}")
+    assert not any("not found" in w for w in r.warnings)
+
+
+def test_resolution_warning_goes_to_referencing_file():
+    lib = SysmlFile(id="lib", name="lib", content=LIB, path="lib")
+    app = SysmlFile(
+        id="app",
+        name="app",
+        content="package App {\npart a;\ndependency from a to nope;\n}",
+        path="app",
+    )
+    result = SubsetSysmlParser().parse_project([lib, app])
+    assert any("target not found: nope" in w for w in result.file_warnings["app"])
+    assert not any("nope" in w for w in result.file_warnings["lib"])
