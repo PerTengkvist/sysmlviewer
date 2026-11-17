@@ -478,3 +478,58 @@ def test_perform_import_respects_owner_namespace():
         e for e in result.elements.values() if "perform" in e.metadata_keywords
     )
     assert perform.perform_target_id is None
+
+
+def test_part_usage_records_resolved_type_target():
+    result = _project(
+        "package Other { part def Box; }\n"
+        "package Types { part def Box; }\n"
+        "package Main { private import Types::*; part box : Box; part n : Nope; }"
+    )
+    assert result.elements["Main::box"].type_target_id == "Types::Box"
+    assert result.elements["Main::box"].to_dict()["typeTargetId"] == "Types::Box"
+    assert result.elements["Main::n"].type_target_id is None
+    assert "typeTargetId" not in result.elements["Main::n"].to_dict()
+
+
+def test_type_target_id_survives_dict_roundtrip():
+    from domain.models import SemanticElement
+
+    result = _project("package P { part def B; part b : B; }")
+    again = SemanticElement.from_dict(result.elements["P::b"].to_dict())
+    assert again.type_target_id == "P::B"
+
+
+def test_ambiguous_type_warning_is_reported_once():
+    result = _project(
+        "package A { part def Box { port a; } }\n"
+        "package B { part def Box { port b; } }\n"
+        "package Main { private import A::*; private import B::*; part box : Box; }"
+    )
+    hits = [w for w in result.warnings if "type reference 'Box'" in w and "ambiguous" in w]
+    assert len(hits) == 1
+
+
+def test_nested_ports_example_types_resolve_through_import():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "examples" / "diagrams"
+    files = [
+        SysmlFile(
+            id=p.relative_to(root).as_posix(),
+            name=p.name,
+            content=p.read_text(encoding="utf-8"),
+            path=p.relative_to(root).as_posix(),
+        )
+        for p in sorted(root.rglob("*.sysml"))
+    ]
+    els = SubsetSysmlParser().parse_project(files).elements
+    pkg = "HierarchicalPartsPkg"
+    assert (
+        els[f"{pkg}::NestedPortsExample::serviceA"].type_target_id
+        == f"{pkg}::NestedPorts::ServiceA"
+    )
+    assert (
+        els[f"{pkg}::NestedPortsExample::client"].type_target_id
+        == f"{pkg}::NestedPorts::Client"
+    )
