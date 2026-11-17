@@ -367,10 +367,6 @@ def test_include_unresolved_warns():
 # -- types, specialization, subsetting and perform (step 9) -----------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="step 9 (types) not done: it changes element ids in examples/diagrams",
-)
 def test_type_ref_uses_import_not_first_same_name():
     result = _project(
         "package Other { part def Box { port wrong; } }\n"
@@ -379,6 +375,76 @@ def test_type_ref_uses_import_not_first_same_name():
     )
     assert "Main::box::out" in result.elements
     assert "Main::box::wrong" not in result.elements
+
+
+def test_type_ref_through_member_import():
+    result = _project(
+        "package Other { part def Box { port wrong; } }\n"
+        "package Types { part def Box { port out; } }\n"
+        "package Main { private import Types::Box; part box : Box; }"
+    )
+    assert "Main::box::out" in result.elements
+    assert "Main::box::wrong" not in result.elements
+
+
+def test_own_definition_shadows_imported_type():
+    result = _project(
+        "package Types { part def Box { port imported; } }\n"
+        "package Main { private import Types::*; "
+        "part def Box { port own; } part box : Box; }"
+    )
+    assert "Main::box::own" in result.elements
+    assert "Main::box::imported" not in result.elements
+
+
+def test_type_ref_found_in_enclosing_namespace():
+    result = _project(
+        "package Other { part def Box { port wrong; } }\n"
+        "package Outer { part def Box { port right; } "
+        "package Inner { part box : Box; } }"
+    )
+    assert "Outer::Inner::box::right" in result.elements
+    assert "Outer::Inner::box::wrong" not in result.elements
+
+
+def test_ambiguous_type_ref_warns_and_picks_nothing():
+    result = _project(
+        "package A { part def Box { port fromA; } }\n"
+        "package B { part def Box { port fromB; } }\n"
+        "package Main { private import A::*; private import B::*; part box : Box; }"
+    )
+    assert "Main::box::fromA" not in result.elements
+    assert "Main::box::fromB" not in result.elements
+    assert any(
+        "type reference 'Box'" in w and "ambiguous" in w and "A::Box" in w and "B::Box" in w
+        for w in result.warnings
+    )
+
+
+def test_type_not_imported_is_not_found_by_name_elsewhere():
+    result = _project(
+        "package Other { part def Box { port wrong; } }\n"
+        "package Main { part box : Box; }"
+    )
+    # Box lives in Other and is neither imported nor enclosing: unreachable.
+    assert "Main::box::wrong" not in result.elements
+
+
+def test_nested_copied_part_resolves_type_from_original_namespace():
+    result = _project(
+        "package Lib { part def Wheel { port hub; } "
+        "part def Car { part w : Wheel; } }\n"
+        "package Other { part def Wheel { port wrong; } }\n"
+        "package App { private import Lib::*; part car : Car; }"
+    )
+    assert "App::car::w::hub" in result.elements
+    assert "App::car::w::wrong" not in result.elements
+
+
+def test_unresolved_library_type_warning_policy_unchanged():
+    result = _project("package App { part p : Unknown; part v : GeneralView; }")
+    assert any("Type reference 'Unknown'" in w for w in result.warnings)
+    assert not any("GeneralView" in w for w in result.warnings)
 
 
 def test_specialization_target_through_import():
