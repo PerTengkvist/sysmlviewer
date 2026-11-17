@@ -8080,6 +8080,139 @@
   "relations": [],
   "warnings": []
  },
+ "project:backend/tests/fixtures/import_model": {
+  "elementIds": [
+   "Ambiguous",
+   "Ambiguous::a",
+   "Ambiguous::box",
+   "Ambiguous::dep8",
+   "FileLevelOwner",
+   "FileLevelOwner::a",
+   "FileLevelOwner::dep1",
+   "FileLevelUser",
+   "FileLevelUser::a",
+   "FileLevelUser::dep1",
+   "Inner",
+   "Inner::a",
+   "Inner::dep3",
+   "Lib",
+   "Lib::Box",
+   "Lib::Box::out",
+   "Lib::Sub",
+   "Lib::Sub::P",
+   "Lib::Sub::p",
+   "Lib::hub",
+   "Lib::q",
+   "Member",
+   "Member::a",
+   "Member::dep2",
+   "Other",
+   "Other::Box",
+   "Other::Box::wrong",
+   "Other::q",
+   "OwnShadowsImport",
+   "OwnShadowsImport::Box",
+   "OwnShadowsImport::Box::own",
+   "OwnShadowsImport::Sub",
+   "OwnShadowsImport::Sub::p",
+   "OwnShadowsImport::a",
+   "OwnShadowsImport::box",
+   "OwnShadowsImport::box::own",
+   "OwnShadowsImport::dep5",
+   "OwnShadowsImport::dep6",
+   "OwnShadowsImport::hub",
+   "Qualified",
+   "Qualified::a",
+   "Qualified::dep4",
+   "Unimported",
+   "Unimported::a",
+   "Unimported::dep7",
+   "Wildcard",
+   "Wildcard::a",
+   "Wildcard::box",
+   "Wildcard::box::out",
+   "Wildcard::dep1"
+  ],
+  "performs": [],
+  "relations": [
+   {
+    "id": "Ambiguous::dep8",
+    "kind": "dependency",
+    "sourceId": "Ambiguous::a",
+    "targetId": "Ambiguous::q",
+    "typeRef": null
+   },
+   {
+    "id": "FileLevelOwner::dep1",
+    "kind": "dependency",
+    "sourceId": "FileLevelOwner::a",
+    "targetId": "Lib::Sub::p",
+    "typeRef": null
+   },
+   {
+    "id": "FileLevelUser::dep1",
+    "kind": "dependency",
+    "sourceId": "FileLevelUser::a",
+    "targetId": "Sub::p",
+    "typeRef": null
+   },
+   {
+    "id": "Inner::dep3",
+    "kind": "dependency",
+    "sourceId": "Inner::a",
+    "targetId": "Lib::Sub::p",
+    "typeRef": null
+   },
+   {
+    "id": "Member::dep2",
+    "kind": "dependency",
+    "sourceId": "Member::a",
+    "targetId": "Lib::Sub::p",
+    "typeRef": null
+   },
+   {
+    "id": "OwnShadowsImport::dep5",
+    "kind": "dependency",
+    "sourceId": "OwnShadowsImport::a",
+    "targetId": "OwnShadowsImport::hub",
+    "typeRef": null
+   },
+   {
+    "id": "OwnShadowsImport::dep6",
+    "kind": "dependency",
+    "sourceId": "OwnShadowsImport::a",
+    "targetId": "OwnShadowsImport::Sub::p",
+    "typeRef": null
+   },
+   {
+    "id": "Qualified::dep4",
+    "kind": "dependency",
+    "sourceId": "Qualified::a",
+    "targetId": "Lib::Sub::p",
+    "typeRef": null
+   },
+   {
+    "id": "Unimported::dep7",
+    "kind": "dependency",
+    "sourceId": "Unimported::a",
+    "targetId": "Unimported::q",
+    "typeRef": null
+   },
+   {
+    "id": "Wildcard::dep1",
+    "kind": "dependency",
+    "sourceId": "Wildcard::a",
+    "targetId": "Lib::Sub::p",
+    "typeRef": null
+   }
+  ],
+  "warnings": [
+   "line 33: dependency target not found: q (in 'Unimported::dep7')",
+   "line 39: dependency target 'q' is ambiguous: Lib::q (import line 36), Other::q (import line 37) (in 'Ambiguous::dep8')",
+   "line 3: dependency target not found: Sub::p (in 'FileLevelUser::dep1')",
+   "type reference 'Box' is ambiguous: Lib::Box (import line 36), Other::Box (import line 37) (in 'Ambiguous::box')"
+  ]
+ },
  "project:examples/diagrams": {
   "elementIds": [
    "ActionExample",

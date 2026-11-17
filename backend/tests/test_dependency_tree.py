@@ -448,3 +448,14 @@ def test_typed_by_gives_no_edge_without_a_resolved_type():
     semantic["P::box"].type_target_id = None
     tree = build_dependency_tree(semantic, "P::box")
     assert tree["up"] == []
+
+
+def test_typed_by_for_a_port_follows_the_imported_definition():
+    semantic = _semantic(
+        "package Other { port def Pd; }\n"
+        "package Lib { port def Pd; }\n"
+        "package App { private import Lib::*; part def Q { port p : Pd; } }"
+    )
+    tree = build_dependency_tree(semantic, "App::Q::p")
+    ids = [n["id"] for n in tree["up"]]
+    assert "Lib::Pd" in ids and "Other::Pd" not in ids

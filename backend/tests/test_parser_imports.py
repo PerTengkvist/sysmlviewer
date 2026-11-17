@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from adapters.parser.subset_parser import SubsetSysmlParser
-from domain.models import SysmlFile
+from domain.models import ArtifactKind, SysmlFile
 
 
 def _parse(text: str):
@@ -146,8 +146,10 @@ def test_each_relation_kind_resolves_through_import(line):
     ]
     assert len(rels) == 1
     rel = rels[0]
-    ends = {rel.source_id, rel.target_id}
-    assert ends == {"App::a", "Lib::Sub::p"}
+    role = next(r[2] for r in RELATION_LINES if r[1] == line)
+    other = "source" if role == "target" else "target"
+    assert getattr(rel, f"{role}_id") == "Lib::Sub::p"
+    assert getattr(rel, f"{other}_id") == "App::a"
 
 
 def test_connection_end_head_through_import():
@@ -478,6 +480,9 @@ def test_perform_import_respects_owner_namespace():
         e for e in result.elements.values() if "perform" in e.metadata_keywords
     )
     assert perform.perform_target_id is None
+    # Deviation from the plan: `payStep` names an element somewhere, so the
+    # unresolved perform is silent (the pre-existing name check); no warning.
+    assert not any("perform target not found" in w for w in result.warnings)
 
 
 def test_part_usage_records_resolved_type_target():
@@ -533,3 +538,121 @@ def test_nested_ports_example_types_resolve_through_import():
         els[f"{pkg}::NestedPortsExample::client"].type_target_id
         == f"{pkg}::NestedPorts::Client"
     )
+
+
+# -- review findings ----------------------------------------------------------
+
+
+def test_declared_action_with_perform_keyword_is_not_hidden():
+    result = _project(
+        "package P { part x; action pay; "
+        "action def Flow { action pay { action sub; } first start; "
+        "then perform pay; dependency from pay to x; "
+        "dependency from pay.sub to x; } }"
+    )
+    deps = [
+        e for e in result.elements.values()
+        if e.kind == ArtifactKind.DEPENDENCY and e.parent_id == "P::Flow"
+    ]
+    assert sorted(d.source_id for d in deps) == ["P::Flow::pay", "P::Flow::pay::sub"]
+
+
+def test_recursive_import_ignores_perform_stubs():
+    result = _project(
+        "package Lib { use case def Accelerate; "
+        "use case def Drive { action go; then perform Accelerate; } }\n"
+        "package App { private import Lib::**; part a; dependency from a to Accelerate; }"
+    )
+    dep = result.elements["App::dep1"]
+    assert dep.target_id == "Lib::Accelerate"
+    assert not any("ambiguous" in w for w in result.warnings)
+
+
+def test_recursive_import_follows_public_reexport():
+    result = _project(
+        "package Base { part b; }\n"
+        "package Lib { public import Base::*; }\n"
+        "package App { private import Lib::**; part a; dependency from a to b; }"
+    )
+    assert result.elements["App::dep1"].target_id == "Base::b"
+
+
+def test_unresolved_simple_name_never_lands_on_perform_stub():
+    result = _project(
+        "package P { part x; action def Flow { first start; then perform pay; "
+        "dependency from x to pay; } }"
+    )
+    dep = next(e for e in result.elements.values() if e.kind == ArtifactKind.DEPENDENCY)
+    assert dep.target_id != "P::Flow::pay"
+    assert any("dependency target not found: pay" in w for w in result.warnings)
+
+
+def test_unresolved_simple_name_never_lands_on_stub_at_file_level():
+    result = _parse(
+        "package App { part x; action def Flow { first start; then perform pay; "
+        "dependency from x to pay; } }"
+    )
+    dep = next(e for e in result.elements.values() if e.kind == ArtifactKind.DEPENDENCY)
+    assert dep.target_id != "App::Flow::pay"
+
+
+def test_ambiguous_tail_segment_is_reported_ambiguous():
+    result = _project(
+        "package A { part x; }\npackage B { part x; }\n"
+        "package Lib { public import A::*; public import B::*; }\n"
+        "package App { part a; dependency from a to Lib::x; }"
+    )
+    assert any(
+        "dependency target 'Lib::x' is ambiguous" in w and "A::x" in w and "B::x" in w
+        for w in result.warnings
+    )
+    assert not any("not found: Lib::x" in w for w in result.warnings)
+
+
+def test_pending_ref_does_not_overwrite_element_from_another_file():
+    result = _project(
+        "package App { part a; part b; dependency from a to b; }",
+        "package App { part dep1; }",
+    )
+    part = result.elements["App::dep1"]
+    assert part.kind == ArtifactKind.PART
+    assert part.source_id is None and part.target_id is None
+
+
+def test_chain_head_inherited_in_typed_part_beats_outer_namesake():
+    result = _project(
+        "package P {\n"
+        "  part def E { port powerIn; part sub { port q; } }\n"
+        "  part sub { port q; }\n"
+        "  part def Car { part engine : E; part c; "
+        "connection k connect c to engine.sub.q; }\n"
+        "}"
+    )
+    k = result.elements["P::Car::k"]
+    assert k.target_id == "P::Car::engine::sub::q"
+
+
+def test_typed_by_resolved_for_ports_items_and_attributes():
+    result = _project(
+        "package Other { port def Pd; }\n"
+        "package Lib { port def Pd; item def It; attribute def At; "
+        "use case def Uc; action def Ac; requirement def Rq; }\n"
+        "package App { private import Lib::*; "
+        "part def Q { port p : Pd; item i : It; attribute a : At; } "
+        "action act : Ac; requirement rq : Rq; use case uc : Uc; }"
+    )
+    els = result.elements
+    assert els["App::Q::p"].type_target_id == "Lib::Pd"
+    assert els["App::Q::i"].type_target_id == "Lib::It"
+    assert els["App::Q::a"].type_target_id == "Lib::At"
+    assert els["App::act"].type_target_id == "Lib::Ac"
+    assert els["App::rq"].type_target_id == "Lib::Rq"
+    assert els["App::uc"].type_target_id == "Lib::Uc"
+
+
+def test_typed_by_requires_matching_kind():
+    result = _project(
+        "package Lib { part def Pd; }\n"
+        "package App { private import Lib::*; part def Q { port p : Pd; } }"
+    )
+    assert result.elements["App::Q::p"].type_target_id is None

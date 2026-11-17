@@ -17,6 +17,9 @@ EXAMPLES = REPO_ROOT / "examples"
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "endpoint_snapshot.json"
 
 PROJECT_DIRS = ("examples/electric_car", "examples/diagrams")
+# Small multi-file model for imports (the examples use none): its snapshot
+# values are the KerML-correct ones, reviewed by hand, not taken from main.
+IMPORT_MODEL_DIR = "backend/tests/fixtures/import_model"
 
 
 def _kind(element: Any) -> str:
@@ -53,7 +56,7 @@ def collect_snapshot() -> dict[str, Any]:
     from domain.models import SysmlFile
 
     snap: dict[str, Any] = {}
-    for rel_dir in PROJECT_DIRS:
+    for rel_dir in (*PROJECT_DIRS, IMPORT_MODEL_DIR):
         root = REPO_ROOT / rel_dir
         files = []
         for path in sorted(root.rglob("*.sysml")):
