@@ -2457,7 +2457,7 @@ class SubsetSysmlParser:
         Validates imports and warns about paths that name nothing (loosely, by name).
         Imports are *used* for resolution by `domain.name_resolution.NameResolver`
         (relationship ends, see `_link_references`) and `resolve_perform_target`.
-        Part type references (`: T`) go through `NameResolver.resolve_part_type`.
+        Part type references (`: T`) go through `NameResolver.resolve_type_def`.
         """
         # Build simple-name → element index for imported symbols
         # (Used by inheritance which already matches by name; this validates imports.)
@@ -2546,7 +2546,10 @@ class SubsetSysmlParser:
         resolver = NameResolver(state.elements, specs)
         for pending in state.pending_refs:
             el = state.elements.get(pending.element_id)
-            if el is None:
+            if el is None or el.file_id != pending.file_id:
+                # The element that won the merge came from another file; its
+                # ends are not ours to write.
+                pending.ambiguous = True
                 continue
             res = resolver.resolve_feature_ref(
                 pending.ref, pending.scope_id, pending.file_id
@@ -2557,12 +2560,17 @@ class SubsetSysmlParser:
             else:
                 value = _legacy_ref(pending.ref, pending.scope_id)
                 if value in state.elements:
-                    # Never let an unresolved end land on a real element.
+                    # Never let an unresolved end land on a real element (a
+                    # perform stub, or an element the rules do not reach).
+                    written = pending.ref.replace(".", "::")
                     scope = pending.scope_id
-                    value = (
-                        f"{scope}::{pending.ref.replace('.', '::')}"
-                        if scope
-                        else value
+                    value = next(
+                        v
+                        for v in (
+                            f"{scope}::{written}" if scope else written,
+                            f"?{written}",
+                        )
+                        if v not in state.elements
                     )
                 if res.candidates:
                     pending.ambiguous = True
@@ -2659,12 +2667,25 @@ class SubsetSysmlParser:
                 for imp in state.imports
             ],
         )
-        # A copied nested part keeps the type reference of the part it was copied
-        # from; that reference is resolved from the original's namespace.
-        origin_of: dict[str, SemanticElement] = {}
+        # Resolve every declared `: T` once, before anything is copied. A copy
+        # carries its original's `type_target_id`, because its type reference is
+        # written in the original's namespace, not where the copy ends up.
+        for el in list(state.elements.values()):
+            if not el.type_ref:
+                continue
+            type_def, res = name_resolver.resolve_type_def(el)
+            el.type_target_id = type_def.id if type_def else None
+            if type_def is None and res.candidates and el.kind == ArtifactKind.PART:
+                listed = ", ".join(
+                    f"{cid} (import line {cline})" for cid, cline in res.candidates
+                )
+                state.warnings.append(
+                    f"type reference '{el.type_ref}' is ambiguous: "
+                    f"{listed} (in '{el.id}')"
+                )
 
         def resolve_type_def(el: SemanticElement) -> SemanticElement | None:
-            return name_resolver.resolve_part_type(el, origin_of.get(el.id))[0]
+            return state.elements.get(el.type_target_id) if el.type_target_id else None
 
         def resolve_port_def(type_ref: str | None) -> SemanticElement | None:
             """Resolve a port definition by type ref (package-level `port def` preferred)."""
@@ -2703,6 +2724,7 @@ class SubsetSysmlParser:
                 name=child.name,
                 parent_id=usage.id,
                 type_ref=child.type_ref,
+                type_target_id=child.type_target_id,
                 default_value=child.default_value,
                 file_id=usage.file_id or state.file_id,
             )
@@ -2745,6 +2767,7 @@ class SubsetSysmlParser:
                 name=child.name,
                 parent_id=usage.id,
                 type_ref=child.type_ref,
+                type_target_id=child.type_target_id,
                 default_value=child.default_value,
                 file_id=usage.file_id or state.file_id,
             )
@@ -2762,12 +2785,12 @@ class SubsetSysmlParser:
                 name=child.name,
                 parent_id=usage.id,
                 type_ref=child.type_ref,
+                type_target_id=child.type_target_id,
                 multiplicity=child.multiplicity,
                 file_id=usage.file_id or state.file_id,
             )
             state.elements[usage_child_id] = nested
             state.add_child(usage.id, usage_child_id)
-            origin_of[nested.id] = origin_of.get(child.id, child)
             return nested
 
         _INHERITABLE_RELATIONS = {
@@ -2818,6 +2841,7 @@ class SubsetSysmlParser:
                 name=child.name,
                 parent_id=usage.id,
                 type_ref=child.type_ref,
+                type_target_id=child.type_target_id,
                 source_id=new_source,
                 target_id=new_target,
                 file_id=usage.file_id or state.file_id,
@@ -2919,19 +2943,3 @@ class SubsetSysmlParser:
                 expanded_child_count[usage.id] = child_count
             if len(state.elements) == before:
                 break
-
-        # Record each part usage's resolved definition; warn once per declared
-        # usage whose type is ambiguous (copies share their original's type).
-        for el in list(state.elements.values()):
-            if el.kind != ArtifactKind.PART or not el.type_ref:
-                continue
-            type_def, res = name_resolver.resolve_part_type(el, origin_of.get(el.id))
-            el.type_target_id = type_def.id if type_def else None
-            if type_def is None and res.candidates and el.id not in origin_of:
-                listed = ", ".join(
-                    f"{cid} (import line {cline})" for cid, cline in res.candidates
-                )
-                state.warnings.append(
-                    f"type reference '{el.type_ref}' is ambiguous: "
-                    f"{listed} (in '{el.id}')"
-                )

@@ -34,6 +34,22 @@ class Resolution:
 _UNRESOLVED = Resolution(None, (), False)
 
 
+def is_perform_stub(el: SemanticElement) -> bool:
+    """A `perform X;` step only references X; it declares no name.
+
+    The parser gives such a stub the reference as written (`type_ref`) and its
+    last segment as the name. A declared action that merely got the `perform`
+    keyword added (`then perform pay;` naming an existing `pay`) has no such
+    reference and stays a real member.
+    """
+    if el.kind != ArtifactKind.ACTION or "perform" not in el.metadata_keywords:
+        return False
+    if not el.type_ref:
+        return False
+    segments = [x for x in el.type_ref.replace("::", ".").split(".") if x]
+    return bool(segments) and segments[-1] == el.name
+
+
 class NameResolver:
     def __init__(
         self,
@@ -44,8 +60,7 @@ class NameResolver:
         self._imports = tuple(imports)
         self._members: dict[str | None, dict[str, str]] = {}
         for eid, el in elements.items():
-            if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
-                # A `perform X;` step only references X; it does not declare a name.
+            if is_perform_stub(el):
                 continue
             owner = el.parent_id
             if owner and eid.startswith(f"{owner}::"):
@@ -58,6 +73,7 @@ class NameResolver:
             self._by_owner.setdefault(spec.owner_id, []).append(spec)
         self._children: dict[str | None, list[str]] | None = None
         self._descendants: dict[str, dict[str, frozenset[str]]] = {}
+        self._descending: set[str] = set()
         self._base_cache: dict[ImportSpec, str | None] = {}
         self._resolving: set[ImportSpec] = set()
         self._specialized_defs = specialized_def_ids(elements)
@@ -89,31 +105,33 @@ class NameResolver:
             current = nxt if nxt else f"{current}::{seg}"
         return self._finish(Resolution(current))
 
-    def resolve_part_type(
-        self, usage: SemanticElement, origin: SemanticElement | None = None
+    def resolve_type_def(
+        self, usage: SemanticElement
     ) -> tuple[SemanticElement | None, Resolution]:
-        """Resolve a part usage's `: T` to its part definition.
+        """Resolve a usage's `: T` to its definition (same kind as the usage).
 
-        The reference is looked up from the namespace it is written in: the
-        parent of `origin` (default `usage`; a copied nested part passes the
-        part it was copied from). Only a part definition counts as a hit, so
-        a same-named non-definition never answers. An ambiguous or missing
+        The reference is looked up from the namespace it is written in (the
+        parent of `usage`). A part definition is a part without a type ref or
+        a specialized one; any other kind needs an untyped element of the same
+        kind. A hit of another kind never answers. An ambiguous or missing
         type gives `None`; the Resolution carries the ambiguity candidates.
         """
-        written = origin or usage
-        cached = self._type_defs.get(written.id)
+        cached = self._type_defs.get(usage.id)
         if cached is not None:
             return cached
-        if not written.type_ref:
+        if not usage.type_ref or is_perform_stub(usage):
             return (None, _UNRESOLVED)
-        res = self.resolve_name(
-            written.type_ref, written.parent_id, written.file_id or ""
-        )
+        res = self.resolve_name(usage.type_ref, usage.parent_id, usage.file_id or "")
         hit = self._elements.get(res.element_id) if res.element_id else None
-        if hit is not None and not is_part_def(hit, self._specialized_defs):
-            hit = None
+        if hit is not None:
+            if usage.kind == ArtifactKind.PART:
+                ok = is_part_def(hit, self._specialized_defs)
+            else:
+                ok = hit.kind == usage.kind and hit.type_ref is None
+            if not ok:
+                hit = None
         result = (hit, res)
-        self._type_defs[written.id] = result
+        self._type_defs[usage.id] = result
         return result
 
     # -- internals ----------------------------------------------------------
@@ -136,10 +154,24 @@ class NameResolver:
         current = head.element_id
         for seg in segments[1:]:
             found = self._exported(current, seg, frozenset())
+            if len(found) > 1:
+                return Resolution(None, self._reexport_candidates(current, seg, found))
             if len(found) != 1:
                 return _UNRESOLVED
             (current,) = found
         return Resolution(current)
+
+    def _reexport_candidates(
+        self, ns: str, name: str, found: set[str]
+    ) -> tuple[tuple[str, int], ...]:
+        """Ambiguous tail segment: each candidate with the line of the import that gives it."""
+        lines: dict[str, int] = {}
+        for spec in self._by_owner.get(ns, ()):
+            if spec.visibility != "public":
+                continue
+            for eid in self._spec_targets(spec, name, frozenset()):
+                lines[eid] = min(lines.get(eid, spec.line), spec.line)
+        return tuple(sorted((eid, lines.get(eid, 0)) for eid in found))
 
     def _lookup_head(
         self,
@@ -187,7 +219,7 @@ class NameResolver:
             return frozenset()
         self._inheriting.add(ns)
         try:
-            type_def, _ = self.resolve_part_type(el)
+            type_def, _ = self.resolve_type_def(el)
             names: frozenset[str] = frozenset()
             if type_def is not None and type_def.id != ns:
                 names = frozenset(self._members.get(type_def.id, {})) | self._inherited_names(
@@ -279,24 +311,81 @@ class NameResolver:
         return self._exported(base, name, visited)
 
     def _descendants_of(self, ns: str) -> dict[str, frozenset[str]]:
-        """Every element below `ns` at any depth, by name."""
+        """Every element below `ns` at any depth, by name, plus what they re-export."""
         cached = self._descendants.get(ns)
         if cached is not None:
             return cached
-        if self._children is None:
-            self._children = {}
-            for eid, el in self._elements.items():
-                self._children.setdefault(el.parent_id, []).append(eid)
-        names: dict[str, set[str]] = {}
-        stack = list(self._children.get(ns, ()))
-        seen = {ns}
-        while stack:
-            eid = stack.pop()
-            if eid in seen:
-                continue
-            seen.add(eid)
-            names.setdefault(eid.rsplit("::", 1)[-1], set()).add(eid)
-            stack.extend(self._children.get(eid, ()))
-        result = {k: frozenset(v) for k, v in names.items()}
+        if ns in self._descending:
+            return {}
+        self._descending.add(ns)
+        try:
+            if self._children is None:
+                self._children = {}
+                for eid, el in self._elements.items():
+                    self._children.setdefault(el.parent_id, []).append(eid)
+            names: dict[str, set[str]] = {}
+            stack = list(self._children.get(ns, ()))
+            seen = {ns}
+            while stack:
+                eid = stack.pop()
+                if eid in seen:
+                    continue
+                seen.add(eid)
+                if not is_perform_stub(self._elements[eid]):
+                    names.setdefault(eid.rsplit("::", 1)[-1], set()).add(eid)
+                stack.extend(self._children.get(eid, ()))
+            for namespace in seen:
+                for spec in self._by_owner.get(namespace, ()):
+                    if spec.visibility == "public":
+                        for name, ids in self._spec_names(spec).items():
+                            names.setdefault(name, set()).update(ids)
+            result = {k: frozenset(v) for k, v in names.items()}
+        finally:
+            self._descending.discard(ns)
         self._descendants[ns] = result
         return result
+
+    def _spec_names(self, spec: ImportSpec) -> dict[str, set[str]]:
+        """Every name (and its ids) this one import makes visible."""
+        segs, star, recursive = self._split_path(spec.path)
+        base = self._spec_base(spec) if segs else None
+        if base is None:
+            return {}
+        if not star and not recursive:
+            return {segs[-1]: {base}}
+        if recursive:
+            out = {k: set(v) for k, v in self._descendants_of(base).items()}
+            if not star:
+                out.setdefault(base.rsplit("::", 1)[-1], set()).add(base)
+            return out
+        return self._exported_names(base, frozenset())
+
+    def _exported_names(self, ns: str, visited: frozenset[str]) -> dict[str, set[str]]:
+        """All members others see in `ns`: own, inherited, re-exported."""
+        out: dict[str, set[str]] = {
+            name: {eid} for name, eid in self._members.get(ns, {}).items()
+        }
+        for name in self._inherited_names(ns):
+            out.setdefault(name, {f"{ns}::{name}"})
+        if ns in visited:
+            return out
+        visited = visited | {ns}
+        for spec in self._by_owner.get(ns, ()):
+            if spec.visibility != "public":
+                continue
+            segs, star, recursive = self._split_path(spec.path)
+            if not star and not recursive:
+                base = self._spec_base(spec)
+                if base is not None:
+                    out.setdefault(segs[-1], set()).add(base)
+                continue
+            base = self._spec_base(spec)
+            if base is None:
+                continue
+            if recursive:
+                for name, ids in self._descendants_of(base).items():
+                    out.setdefault(name, set()).update(ids)
+            else:
+                for name, ids in self._exported_names(base, visited).items():
+                    out.setdefault(name, set()).update(ids)
+        return out

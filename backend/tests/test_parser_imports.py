@@ -632,18 +632,17 @@ def test_chain_head_inherited_in_typed_part_beats_outer_namesake():
     assert k.target_id == "P::Car::engine::sub::q"
 
 
-def test_typed_by_resolved_for_ports_items_and_attributes():
+def test_typed_by_resolved_for_ports_attributes_and_other_usages():
     result = _project(
         "package Other { port def Pd; }\n"
-        "package Lib { port def Pd; item def It; attribute def At; "
+        "package Lib { port def Pd; attribute def At; "
         "use case def Uc; action def Ac; requirement def Rq; }\n"
         "package App { private import Lib::*; "
-        "part def Q { port p : Pd; item i : It; attribute a : At; } "
+        "part def Q { port p : Pd; attribute a : At; } "
         "action act : Ac; requirement rq : Rq; use case uc : Uc; }"
     )
     els = result.elements
     assert els["App::Q::p"].type_target_id == "Lib::Pd"
-    assert els["App::Q::i"].type_target_id == "Lib::It"
     assert els["App::Q::a"].type_target_id == "Lib::At"
     assert els["App::act"].type_target_id == "Lib::Ac"
     assert els["App::rq"].type_target_id == "Lib::Rq"

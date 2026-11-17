@@ -234,20 +234,10 @@ def _resolve_type(
     semantic: Mapping[str, SemanticElement],
     usage: SemanticElement,
 ) -> SemanticElement | None:
-    ref = usage.type_ref
-    if not ref:
+    # Resolved by the parser (namespaces and imports); never guessed from a name.
+    if not usage.type_ref or not usage.type_target_id:
         return None
-    if usage.kind == ArtifactKind.PART:
-        # Resolved by the parser; never guessed from the name here.
-        return semantic.get(usage.type_target_id) if usage.type_target_id else None
-    direct = semantic.get(ref)
-    if direct is not None and direct.kind == usage.kind:
-        return direct
-    simple = ref.split("::")[-1]
-    for el in semantic.values():
-        if el.kind == usage.kind and el.name == simple and el.type_ref is None:
-            return el
-    return None
+    return semantic.get(usage.type_target_id)
 
 
 def _collect_edges(

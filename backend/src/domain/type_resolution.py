@@ -1,6 +1,6 @@
 """Helpers for telling part definitions from part usages.
 
-Types themselves are resolved by `NameResolver.resolve_part_type`.
+Types themselves are resolved by `NameResolver.resolve_type_def`.
 """
 
 from __future__ import annotations
