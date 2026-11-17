@@ -2459,9 +2459,10 @@ class SubsetSysmlParser:
 
     def _apply_import_visibility(self, state: _ParserState) -> None:
         """
-        Alpha import handling: imported names become visible for type resolution.
-        `Pkg::*` imports all members of package Pkg; `Pkg::Name` imports that name.
-        Visibility (private/public) is recorded but both resolve types in-project.
+        Validates imports and warns about paths that name nothing (loosely, by name).
+        Imports are *used* for resolution by `domain.name_resolution.NameResolver`
+        (relationship ends, see `_link_references`) and `resolve_perform_target`.
+        Type references (`: T`) still match by name, whatever the imports say.
         """
         # Build simple-name → element index for imported symbols
         # (Used by inheritance which already matches by name; this validates imports.)

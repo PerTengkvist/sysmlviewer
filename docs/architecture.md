@@ -109,6 +109,19 @@ Supported textual constructs:
 - `#Keyword dependency … from … to …` (prefix metadata on dependencies; shown as `«Keyword»`)
 - `#Keyword part def …` / `#Keyword part …` / `#Keyword ref part …` (replaces `«part»` with `«Keyword»`)
 
+### Name resolution and imports
+
+References between elements are resolved by `domain/name_resolution.py` (`NameResolver`) after all files are merged and before inheritance, so a reference does not depend on file or declaration order.
+
+- **Lookup order** for a name written in namespace `N`: own members of `N` (and, for a typed part, the members of its definition), then the members `N`'s imports make visible, then the same two steps in `N`'s owner, and so on out to the root. The root holds the top-level elements of every file, then the file's own file-level imports. Own members shadow imported ones on the same level; an inner level always wins over an outer one.
+- **Import forms:** `import X::Name;` (one member), `import X::*;` (members of `X`), `import X::**;` (`X` and everything below it, at any depth) and `import X::*::**;` (everything below `X`, not `X`). An import applies to the namespace it is written in (and the namespaces inside it); a file-level import applies to its own file only.
+- **Re-export:** `public import` (also a bare `import`) makes the imported names visible members of the importing namespace for anyone who imports or qualifies through it, transitively. `private import` does not.
+- **Qualified names** `A::B::c` look `A` up as above and then follow members down. There is no backtracking: if `A` is found but has no `B`, the name is unresolved even when another `A::B` exists further out.
+- **Feature chains** `engine.powerIn`: the head is resolved by name, the tail follows ownership. When the tail is only created by inheritance (`engine : Engine` gets `powerIn` from `Engine`), the id `<head>::powerIn` is kept and checked after inheritance.
+- **Warnings** (in the file that holds the reference, with its line): `line N: <kind> <role> not found: <ref> (in '<relation id>')`, and `line N: <kind> <role> '<ref>' is ambiguous: <id> (import line M), ... (in '<relation id>')` when two imports on the same level give different elements. An unresolved or ambiguous end is never pointed at another element; it keeps the reference as written, qualified by its scope (`App::nope`). The old fallback "the only element with this name in the file" is gone.
+- **Covered:** the ends of `dependency` (including `#kw` forms and `objective`), `allocate`, `bind`, `flow`, `connection`, `interface … connect`, `satisfy` and the target of `include`. Successions, messages and transitions inside a flow are resolved locally. Specialization, subsetting and redefinition (`:>`, `:>>`) and `perform` targets are described below.
+- The parse result's `imports[]` entries carry `ownerId`, the namespace the import is written in (`null` for the file's root).
+
 Unknown constructs emit warnings and are skipped when possible.
 
 ## API (alpha)

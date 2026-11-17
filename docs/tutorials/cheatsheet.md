@@ -10,6 +10,18 @@ package VehicleModel {
 }
 ```
 
+### Imports
+
+```sysml
+package App {
+  private import Lib::Sub::*;   // p is now visible as `p`
+  part a;
+  dependency from a to p;       // → Lib::Sub::p
+}
+```
+
+`import X::*` brings in the members of `X`, `import X::**` everything below `X`, and `import X::Name` one member. Own names shadow imported ones, a `public import` is passed on to whoever imports the package, and a name that two imports give different elements is reported as ambiguous.
+
 ## Parts
 
 ```sysml
