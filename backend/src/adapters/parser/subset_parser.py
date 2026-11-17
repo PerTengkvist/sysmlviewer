@@ -93,11 +93,17 @@ _LOCAL_RELATION_KINDS = {
 }
 
 _RELATION_LABELS = {
+    ArtifactKind.SPECIALIZATION: "specialization",
+    ArtifactKind.SUBSETTING: "subsetting",
+    ArtifactKind.REDEFINITION: "redefinition",
     ArtifactKind.DEPENDENCY: "dependency",
     ArtifactKind.ALLOCATION: "allocation",
     ArtifactKind.BINDING: "binding",
     ArtifactKind.FLOW: "flow",
 }
+
+# Unresolved targets of these stay silent (library types are not modelled), as before.
+_SILENT_WHEN_UNRESOLVED = {"specialization", "subsetting", "redefinition"}
 
 _EXPOSE_SUFFIX_KINDS = {
     "": EXPOSE_MEMBER,
@@ -648,12 +654,9 @@ class SubsetSysmlParser:
         ) -> None:
             local = kind in _LOCAL_RELATION_KINDS
             scope = state.current_parent()
-            source_id = (
-                resolve_local_ref(source_ref) if local else _legacy_ref(source_ref, scope)
-            )
-            target_id = (
-                resolve_local_ref(target_ref) if local else _legacy_ref(target_ref, scope)
-            )
+            # For `:>` / `:>>` the source is the declaration itself.
+            source_id = state.qualify(source_ref) if local else _legacy_ref(source_ref, scope)
+            target_id = _legacy_ref(target_ref, scope)
             if not name:
                 current = getattr(state, counter_attr) + 1
                 setattr(state, counter_attr, current)
@@ -676,10 +679,10 @@ class SubsetSysmlParser:
             )
             state.add_child(el.parent_id, element_id)
             state.elements[element_id] = el
+            label = _RELATION_LABELS[kind]
             if not local:
-                label = _RELATION_LABELS[kind]
                 add_pending(element_id, "source", source_ref, line, label)
-                add_pending(element_id, "target", target_ref, line, label)
+            add_pending(element_id, "target", target_ref, line, label)
 
         def take_prefix_metadata_keywords() -> list[str]:
             """Consume zero or more `#Keyword` prefixes (SysML user-defined keywords)."""
@@ -2594,7 +2597,7 @@ class SubsetSysmlParser:
         into an inherited feature exists only after inheritance.
         """
         for pending in state.pending_refs:
-            if pending.ambiguous:
+            if pending.ambiguous or pending.label in _SILENT_WHEN_UNRESOLVED:
                 continue
             el = state.elements.get(pending.element_id)
             if el is None:

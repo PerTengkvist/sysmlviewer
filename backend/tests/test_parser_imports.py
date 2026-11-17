@@ -362,3 +362,53 @@ def test_include_unresolved_warns():
         "line 3: include target not found: Nope (in 'App::Buy::include_Nope')"
     ) in result.warnings
     assert result.elements["App::Buy::include_Nope"].target_id == "App::Buy::Nope"
+
+
+# -- types, specialization, subsetting and perform (step 9) -----------------
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="step 9 (types) not done: it changes element ids in examples/diagrams",
+)
+def test_type_ref_uses_import_not_first_same_name():
+    result = _project(
+        "package Other { part def Box { port wrong; } }\n"
+        "package Types { part def Box { port out; } }\n"
+        "package Main { private import Types::*; part box : Box; }"
+    )
+    assert "Main::box::out" in result.elements
+    assert "Main::box::wrong" not in result.elements
+
+
+def test_specialization_target_through_import():
+    result = _project(
+        "package Base { part def Vehicle; }",
+        "package App { private import Base::*; part def Car :> Vehicle; }",
+    )
+    rel = result.elements["App::Car_specializes_Vehicle"]
+    assert rel.kind == ArtifactKind.SPECIALIZATION
+    assert rel.source_id == "App::Car"
+    assert rel.target_id == "Base::Vehicle"
+
+
+def test_subsetting_qualified_unchanged():
+    result = _project(
+        "package LogicalArchitecture { part def Car { part vehicleController; } }\n"
+        "package P { #Logical ref part x :> LogicalArchitecture::Car::vehicleController; }"
+    )
+    rel = result.elements["P::x_subsets_LogicalArchitecture_Car_vehicleController"]
+    assert rel.source_id == "P::x"
+    assert rel.target_id == "LogicalArchitecture::Car::vehicleController"
+
+
+def test_perform_import_respects_owner_namespace():
+    result = _project(
+        "package Lib { action payStep; }",
+        "package Other { private import Lib::*; }\n"
+        "package App { part def S { part c { perform payStep; } } }",
+    )
+    perform = next(
+        e for e in result.elements.values() if "perform" in e.metadata_keywords
+    )
+    assert perform.perform_target_id is None
