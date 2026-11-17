@@ -8,11 +8,11 @@ imported ones on the same level; an inner level always wins over an outer one.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 from domain.models import ArtifactKind, SemanticElement
-from domain.type_resolution import is_part_def, specialized_def_ids
+from domain.type_resolution import specialized_def_ids
 
 
 @dataclass(frozen=True)
@@ -111,25 +111,41 @@ class NameResolver:
         """Resolve a usage's `: T` to its definition (same kind as the usage).
 
         The reference is looked up from the namespace it is written in (the
-        parent of `usage`). A part definition is a part without a type ref or
-        a specialized one; any other kind needs an untyped element of the same
-        kind. A hit of another kind never answers. An ambiguous or missing
-        type gives `None`; the Resolution carries the ambiguity candidates.
+        parent of `usage`). Only a definition of the same kind counts (declared
+        with `def`, or specialized); a candidate that is not one, including the
+        usage itself, does not stop a simple name's lookup, which goes on
+        outwards. An ambiguous or missing type gives `None`; the Resolution
+        carries the ambiguity candidates.
         """
         cached = self._type_defs.get(usage.id)
         if cached is not None:
             return cached
         if not usage.type_ref or is_perform_stub(usage):
             return (None, _UNRESOLVED)
-        res = self.resolve_name(usage.type_ref, usage.parent_id, usage.file_id or "")
+
+        def accept(eid: str) -> bool:
+            el = self._elements.get(eid)
+            return (
+                el is not None
+                and el.id != usage.id
+                and el.kind == usage.kind
+                and (el.is_definition or el.id in self._specialized_defs)
+            )
+
+        segments = [x for x in usage.type_ref.split("::") if x]
+        if len(segments) == 1:
+            res = self._finish(
+                self._lookup_head(
+                    segments[0], usage.parent_id, usage.file_id or "", accept=accept
+                )
+            )
+        else:
+            res = self.resolve_name(
+                usage.type_ref, usage.parent_id, usage.file_id or ""
+            )
         hit = self._elements.get(res.element_id) if res.element_id else None
-        if hit is not None:
-            if usage.kind == ArtifactKind.PART:
-                ok = is_part_def(hit, self._specialized_defs)
-            else:
-                ok = hit.kind == usage.kind and hit.type_ref is None
-            if not ok:
-                hit = None
+        if hit is not None and not accept(hit.id):
+            hit = None
         result = (hit, res)
         self._type_defs[usage.id] = result
         return result
@@ -179,16 +195,22 @@ class NameResolver:
         scope_id: str | None,
         file_id: str,
         skip_imports_of: tuple[str | None] | None = None,
+        accept: Callable[[str], bool] | None = None,
     ) -> Resolution:
+        """Look `name` up outwards. With `accept`, a candidate it rejects does not
+        stop the search: the lookup goes on in the next namespace (KerML: a name
+        that cannot be used as the wanted kind is not a hit)."""
         ns = scope_id
         seen: set[str | None] = set()
         while ns not in seen:
             seen.add(ns)
             hit = self._own_or_inherited(ns, name)
-            if hit is not None:
+            if hit is not None and (accept is None or accept(hit)):
                 return Resolution(hit)
             if skip_imports_of is None or skip_imports_of[0] != ns:
                 imported = self._imported_at(ns, name, file_id)
+                if accept is not None:
+                    imported = {k: v for k, v in imported.items() if accept(k)}
                 if len(imported) == 1:
                     return Resolution(next(iter(imported)))
                 if len(imported) > 1:

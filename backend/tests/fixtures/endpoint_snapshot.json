@@ -9050,8 +9050,8 @@
    "line 33: dependency target not found: q (in 'Unimported::dep7')",
    "line 39: dependency target 'q' is ambiguous: Lib::q (import line 36), Other::q (import line 37) (in 'Ambiguous::dep8')",
    "line 3: dependency target not found: Sub::p (in 'FileLevelUser::dep1')",
-   "line 45: dependency target not found: onlyHere (in 'NoFallback::dep9')",
-   "type reference 'Box' is ambiguous: Lib::Box (import line 36), Other::Box (import line 37) (in 'Ambiguous::box')"
+   "line 40: type reference 'Box' is ambiguous: Lib::Box (import line 36), Other::Box (import line 37) (in 'Ambiguous::box')",
+   "line 45: dependency target not found: onlyHere (in 'NoFallback::dep9')"
   ]
  },
  "project:examples/diagrams": {

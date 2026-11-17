@@ -140,7 +140,8 @@
         "Dynamics::VehicleModes::charge",
         "Dynamics::VehicleModes::endCharge"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::VehicleModes::Locked": {
       "id": "Dynamics::VehicleModes::Locked",
@@ -456,7 +457,8 @@
         "Dynamics::UnlockSequence::msg7",
         "Dynamics::UnlockSequence::msg8"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::UnlockSequence::Driver": {
       "id": "Dynamics::UnlockSequence::Driver",
@@ -792,7 +794,8 @@
         "Dynamics::UnlockDeniedSequence::msg5",
         "Dynamics::UnlockDeniedSequence::msg6"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::UnlockDeniedSequence::Driver": {
       "id": "Dynamics::UnlockDeniedSequence::Driver",
@@ -1053,7 +1056,8 @@
         "Dynamics::LockSequence::msg8",
         "Dynamics::LockSequence::msg9"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::LockSequence::Driver": {
       "id": "Dynamics::LockSequence::Driver",
@@ -1413,7 +1417,8 @@
         "Dynamics::OpenDoorSequence::msg6",
         "Dynamics::OpenDoorSequence::msg7"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::OpenDoorSequence::Passenger": {
       "id": "Dynamics::OpenDoorSequence::Passenger",
@@ -1710,7 +1715,8 @@
         "Dynamics::CloseDoorSequence::msg5",
         "Dynamics::CloseDoorSequence::msg6"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::CloseDoorSequence::Passenger": {
       "id": "Dynamics::CloseDoorSequence::Passenger",
@@ -1987,7 +1993,8 @@
         "Dynamics::OpenWindowSequence::msg6",
         "Dynamics::OpenWindowSequence::msg7"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::OpenWindowSequence::Passenger": {
       "id": "Dynamics::OpenWindowSequence::Passenger",
@@ -2265,7 +2272,8 @@
         "Dynamics::CloseWindowSequence::msg7",
         "Dynamics::CloseWindowSequence::msg8"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::CloseWindowSequence::Passenger": {
       "id": "Dynamics::CloseWindowSequence::Passenger",
@@ -2561,7 +2569,8 @@
         "Dynamics::AdjustClimateSequence::msg5",
         "Dynamics::AdjustClimateSequence::msg6"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::AdjustClimateSequence::Driver": {
       "id": "Dynamics::AdjustClimateSequence::Driver",
@@ -2817,7 +2826,8 @@
         "Dynamics::PlayMediaSequence::msg5",
         "Dynamics::PlayMediaSequence::msg6"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::PlayMediaSequence::Passenger": {
       "id": "Dynamics::PlayMediaSequence::Passenger",
@@ -3079,7 +3089,8 @@
         "Dynamics::ChargeSequence::msg10",
         "Dynamics::ChargeSequence::msg11"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::ChargeSequence::Driver": {
       "id": "Dynamics::ChargeSequence::Driver",
@@ -3460,7 +3471,8 @@
         "Dynamics::EndChargeSequence::msg8",
         "Dynamics::EndChargeSequence::msg9"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::EndChargeSequence::Driver": {
       "id": "Dynamics::EndChargeSequence::Driver",
@@ -3825,7 +3837,8 @@
         "Dynamics::StartVehicleSequence::msg11",
         "Dynamics::StartVehicleSequence::msg12"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::StartVehicleSequence::Driver": {
       "id": "Dynamics::StartVehicleSequence::Driver",
@@ -4269,7 +4282,8 @@
         "Dynamics::StopVehicleSequence::msg8",
         "Dynamics::StopVehicleSequence::msg9"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::StopVehicleSequence::Driver": {
       "id": "Dynamics::StopVehicleSequence::Driver",
@@ -4612,7 +4626,8 @@
         "Dynamics::ChangeGearSequence::msg8",
         "Dynamics::ChangeGearSequence::msg9"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::ChangeGearSequence::Driver": {
       "id": "Dynamics::ChangeGearSequence::Driver",
@@ -4978,7 +4993,8 @@
         "Dynamics::AccelerateSequence::msg10",
         "Dynamics::AccelerateSequence::msg11"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::AccelerateSequence::Driver": {
       "id": "Dynamics::AccelerateSequence::Driver",
@@ -5404,7 +5420,8 @@
         "Dynamics::BrakeSequence::msg9",
         "Dynamics::BrakeSequence::msg10"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::BrakeSequence::Driver": {
       "id": "Dynamics::BrakeSequence::Driver",
@@ -5831,7 +5848,8 @@
         "Dynamics::EmergencyStopSequence::msg12",
         "Dynamics::EmergencyStopSequence::msg13"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::EmergencyStopSequence::Driver": {
       "id": "Dynamics::EmergencyStopSequence::Driver",
@@ -6310,7 +6328,8 @@
         "Dynamics::TurnLeftSequence::msg7",
         "Dynamics::TurnLeftSequence::msg8"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::TurnLeftSequence::Driver": {
       "id": "Dynamics::TurnLeftSequence::Driver",
@@ -6629,7 +6648,8 @@
         "Dynamics::TurnRightSequence::msg7",
         "Dynamics::TurnRightSequence::msg8"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::TurnRightSequence::Driver": {
       "id": "Dynamics::TurnRightSequence::Driver",
@@ -6947,7 +6967,8 @@
         "Dynamics::CleanWindshieldSequence::msg7",
         "Dynamics::CleanWindshieldSequence::msg8"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::CleanWindshieldSequence::Driver": {
       "id": "Dynamics::CleanWindshieldSequence::Driver",
@@ -7248,7 +7269,8 @@
         "Dynamics::ToggleHeadlightsSequence::msg7",
         "Dynamics::ToggleHeadlightsSequence::msg8"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::ToggleHeadlightsSequence::Driver": {
       "id": "Dynamics::ToggleHeadlightsSequence::Driver",
@@ -7575,7 +7597,8 @@
         "Dynamics::ParkSequence::msg10",
         "Dynamics::ParkSequence::msg11"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::ParkSequence::Driver": {
       "id": "Dynamics::ParkSequence::Driver",
@@ -8025,7 +8048,8 @@
         "Dynamics::DriveSequence::msg15",
         "Dynamics::DriveSequence::msg16"
       ],
-      "fileId": "dynamics/sequences.sysml"
+      "fileId": "dynamics/sequences.sysml",
+      "isDefinition": true
     },
     "Dynamics::DriveSequence::Driver": {
       "id": "Dynamics::DriveSequence::Driver",
@@ -9216,7 +9240,8 @@
         "Functions::Security::cabinAccessFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::Security_specializes_Function": {
       "id": "Functions::Security_specializes_Function",
@@ -9259,7 +9284,8 @@
         "Functions::Security::authenticate::perform_securityFlow_checkCredential",
         "Functions::Security::authenticate::perform_securityFlow_rejectKey"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::authenticate::perform_securityFlow_checkCredential": {
       "id": "Functions::Security::authenticate::perform_securityFlow_checkCredential",
@@ -9327,7 +9353,8 @@
       "children": [
         "Functions::Security::immobilizer::perform_securityFlow_releaseImmobilizer"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::immobilizer::perform_securityFlow_releaseImmobilizer": {
       "id": "Functions::Security::immobilizer::perform_securityFlow_releaseImmobilizer",
@@ -9372,7 +9399,8 @@
       "children": [
         "Functions::Security::wakeUp::perform_securityFlow_wakeCabin"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::wakeUp::perform_securityFlow_wakeCabin": {
       "id": "Functions::Security::wakeUp::perform_securityFlow_wakeCabin",
@@ -9420,7 +9448,8 @@
         "Functions::Security::lockControl::perform_cabinAccessFlow_stayLatched",
         "Functions::Security::lockControl::perform_cabinAccessFlow_relatch"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::lockControl::perform_securityFlow_unlockDoors": {
       "id": "Functions::Security::lockControl::perform_securityFlow_unlockDoors",
@@ -9536,7 +9565,8 @@
         "Functions::Security::doorControl::perform_cabinAccessFlow_releaseDoor",
         "Functions::Security::doorControl::perform_cabinAccessFlow_closeDoor"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::doorControl::perform_cabinAccessFlow_readDoorHandle": {
       "id": "Functions::Security::doorControl::perform_cabinAccessFlow_readDoorHandle",
@@ -9627,7 +9657,8 @@
       "children": [
         "Functions::Security::windowControl::perform_cabinAccessFlow_runWindowLift"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::windowControl::perform_cabinAccessFlow_runWindowLift": {
       "id": "Functions::Security::windowControl::perform_cabinAccessFlow_runWindowLift",
@@ -9673,7 +9704,8 @@
         "Functions::Security::driverInformation::perform_securityFlow_showReady",
         "Functions::Security::driverInformation::perform_cabinAccessFlow_showDoorState"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Security::driverInformation::perform_securityFlow_showReady": {
       "id": "Functions::Security::driverInformation::perform_securityFlow_showReady",
@@ -10753,7 +10785,8 @@
         "Functions::Charging::chargingFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::Charging_specializes_Function": {
       "id": "Functions::Charging_specializes_Function",
@@ -10796,7 +10829,8 @@
         "Functions::Charging::chargeConnection::perform_chargingFlow_detectPlug",
         "Functions::Charging::chargeConnection::perform_chargingFlow_transferEnergy"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Charging::chargeConnection::perform_chargingFlow_detectPlug": {
       "id": "Functions::Charging::chargeConnection::perform_chargingFlow_detectPlug",
@@ -10865,7 +10899,8 @@
         "Functions::Charging::chargeSession::perform_chargingFlow_negotiateCurrent",
         "Functions::Charging::chargeSession::perform_chargingFlow_stopAtTarget"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Charging::chargeSession::perform_chargingFlow_negotiateCurrent": {
       "id": "Functions::Charging::chargeSession::perform_chargingFlow_negotiateCurrent",
@@ -10933,7 +10968,8 @@
       "children": [
         "Functions::Charging::energyStorage::perform_chargingFlow_storeEnergy"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Charging::energyStorage::perform_chargingFlow_storeEnergy": {
       "id": "Functions::Charging::energyStorage::perform_chargingFlow_storeEnergy",
@@ -11277,7 +11313,8 @@
         "Functions::SpeedControl::speedControlFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::SpeedControl_specializes_Function": {
       "id": "Functions::SpeedControl_specializes_Function",
@@ -11319,7 +11356,8 @@
       "children": [
         "Functions::SpeedControl::torqueArbitration::perform_speedControlFlow_arbitrateTorque"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::SpeedControl::torqueArbitration::perform_speedControlFlow_arbitrateTorque": {
       "id": "Functions::SpeedControl::torqueArbitration::perform_speedControlFlow_arbitrateTorque",
@@ -11364,7 +11402,8 @@
       "children": [
         "Functions::SpeedControl::regenBlending::perform_speedControlFlow_blendRegen"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::SpeedControl::regenBlending::perform_speedControlFlow_blendRegen": {
       "id": "Functions::SpeedControl::regenBlending::perform_speedControlFlow_blendRegen",
@@ -11409,7 +11448,8 @@
       "children": [
         "Functions::SpeedControl::tractionDrive::perform_speedControlFlow_driveWheels"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::SpeedControl::tractionDrive::perform_speedControlFlow_driveWheels": {
       "id": "Functions::SpeedControl::tractionDrive::perform_speedControlFlow_driveWheels",
@@ -11454,7 +11494,8 @@
       "children": [
         "Functions::SpeedControl::frictionBraking::perform_speedControlFlow_applyFriction"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::SpeedControl::frictionBraking::perform_speedControlFlow_applyFriction": {
       "id": "Functions::SpeedControl::frictionBraking::perform_speedControlFlow_applyFriction",
@@ -11818,7 +11859,8 @@
         "Functions::Maneuvrability::maneuvrabilityFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::Maneuvrability_specializes_Function": {
       "id": "Functions::Maneuvrability_specializes_Function",
@@ -11860,7 +11902,8 @@
       "children": [
         "Functions::Maneuvrability::steeringControl::perform_maneuvrabilityFlow_steerWheels"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Maneuvrability::steeringControl::perform_maneuvrabilityFlow_steerWheels": {
       "id": "Functions::Maneuvrability::steeringControl::perform_maneuvrabilityFlow_steerWheels",
@@ -11905,7 +11948,8 @@
       "children": [
         "Functions::Maneuvrability::gearSelection::perform_maneuvrabilityFlow_selectGear"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Maneuvrability::gearSelection::perform_maneuvrabilityFlow_selectGear": {
       "id": "Functions::Maneuvrability::gearSelection::perform_maneuvrabilityFlow_selectGear",
@@ -11950,7 +11994,8 @@
       "children": [
         "Functions::Maneuvrability::roadHolding::perform_maneuvrabilityFlow_holdRoad"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Maneuvrability::roadHolding::perform_maneuvrabilityFlow_holdRoad": {
       "id": "Functions::Maneuvrability::roadHolding::perform_maneuvrabilityFlow_holdRoad",
@@ -12207,7 +12252,8 @@
         "Functions::Entertainment::entertainmentFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::Entertainment_specializes_Function": {
       "id": "Functions::Entertainment_specializes_Function",
@@ -12250,7 +12296,8 @@
         "Functions::Entertainment::mediaPlayback::perform_entertainmentFlow_selectTitle",
         "Functions::Entertainment::mediaPlayback::perform_entertainmentFlow_playMedia"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Entertainment::mediaPlayback::perform_entertainmentFlow_selectTitle": {
       "id": "Functions::Entertainment::mediaPlayback::perform_entertainmentFlow_selectTitle",
@@ -12488,7 +12535,8 @@
         "Functions::Climate::climateFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::Climate_specializes_Function": {
       "id": "Functions::Climate_specializes_Function",
@@ -12531,7 +12579,8 @@
         "Functions::Climate::cabinTemperature::perform_climateFlow_readSetpoint",
         "Functions::Climate::cabinTemperature::perform_climateFlow_conditionCabin"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Climate::cabinTemperature::perform_climateFlow_readSetpoint": {
       "id": "Functions::Climate::cabinTemperature::perform_climateFlow_readSetpoint",
@@ -12770,7 +12819,8 @@
         "Functions::WindshieldCleaning::windshieldCleaningFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::WindshieldCleaning_specializes_Function": {
       "id": "Functions::WindshieldCleaning_specializes_Function",
@@ -12812,7 +12862,8 @@
       "children": [
         "Functions::WindshieldCleaning::wipeControl::perform_windshieldCleaningFlow_readStalk"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::WindshieldCleaning::wipeControl::perform_windshieldCleaningFlow_readStalk": {
       "id": "Functions::WindshieldCleaning::wipeControl::perform_windshieldCleaningFlow_readStalk",
@@ -12858,7 +12909,8 @@
         "Functions::WindshieldCleaning::wipeSweep::perform_windshieldCleaningFlow_sweepGlass",
         "Functions::WindshieldCleaning::wipeSweep::perform_windshieldCleaningFlow_parkBlades"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::WindshieldCleaning::wipeSweep::perform_windshieldCleaningFlow_sweepGlass": {
       "id": "Functions::WindshieldCleaning::wipeSweep::perform_windshieldCleaningFlow_sweepGlass",
@@ -13140,7 +13192,8 @@
         "Functions::Lighting::lightingFlow"
       ],
       "fileId": "functions/functions.sysml",
-      "isDefinition": true
+      "isDefinition": true,
+      "typeTargetId": "Functions::Function"
     },
     "Functions::Lighting_specializes_Function": {
       "id": "Functions::Lighting_specializes_Function",
@@ -13182,7 +13235,8 @@
       "children": [
         "Functions::Lighting::headlampControl::perform_lightingFlow_selectLamps"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Lighting::headlampControl::perform_lightingFlow_selectLamps": {
       "id": "Functions::Lighting::headlampControl::perform_lightingFlow_selectLamps",
@@ -13227,7 +13281,8 @@
       "children": [
         "Functions::Lighting::indicatorControl::perform_lightingFlow_flashIndicators"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Lighting::indicatorControl::perform_lightingFlow_flashIndicators": {
       "id": "Functions::Lighting::indicatorControl::perform_lightingFlow_flashIndicators",
@@ -13272,7 +13327,8 @@
       "children": [
         "Functions::Lighting::lampDrive::perform_lightingFlow_lightLamps"
       ],
-      "fileId": "functions/functions.sysml"
+      "fileId": "functions/functions.sysml",
+      "typeTargetId": "Functions::FunctionNode"
     },
     "Functions::Lighting::lampDrive::perform_lightingFlow_lightLamps": {
       "id": "Functions::Lighting::lampDrive::perform_lightingFlow_lightLamps",
@@ -16109,7 +16165,8 @@
       "documentation": "Steering command. The steering wheel provides the driver's angle to the drive controller, which provides the wheel angle to the road wheels.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::GearCommand": {
       "id": "LogicalArchitecture::GearCommand",
@@ -16129,7 +16186,8 @@
       "documentation": "Park, reverse, neutral or drive. The gear stick provides it to the drive controller, which provides the motor mode to the engine.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::TorqueRequest": {
       "id": "LogicalArchitecture::TorqueRequest",
@@ -16149,7 +16207,8 @@
       "documentation": "Requested traction torque from pedal travel. The accelerator provides it and the drive controller consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::TorqueCommand": {
       "id": "LogicalArchitecture::TorqueCommand",
@@ -16169,7 +16228,8 @@
       "documentation": "Arbitrated traction torque, positive for drive and negative for regeneration. The drive controller provides it and the engine consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::BrakeRequest": {
       "id": "LogicalArchitecture::BrakeRequest",
@@ -16189,7 +16249,8 @@
       "documentation": "Requested deceleration from pedal force. The brake pedal provides it and the drive controller consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::BrakeCommand": {
       "id": "LogicalArchitecture::BrakeCommand",
@@ -16209,7 +16270,8 @@
       "documentation": "Friction brake pressure after regen blending. The drive controller provides it and the friction brakes consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::StartRequest": {
       "id": "LogicalArchitecture::StartRequest",
@@ -16229,7 +16291,8 @@
       "documentation": "Start or stop the vehicle. The start button provides it and the vehicle controller consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::Credential": {
       "id": "LogicalArchitecture::Credential",
@@ -16249,7 +16312,8 @@
       "documentation": "Driver credential. The key fob provides it and the vehicle controller consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::DriveEnable": {
       "id": "LogicalArchitecture::DriveEnable",
@@ -16269,7 +16333,8 @@
       "documentation": "Immobilizer release and high-voltage ready. The vehicle controller provides it and the drive controller consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::LockCommand": {
       "id": "LogicalArchitecture::LockCommand",
@@ -16289,7 +16354,8 @@
       "documentation": "Engage or release the door latches. The body controller provides it and the locks consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::DoorCommand": {
       "id": "LogicalArchitecture::DoorCommand",
@@ -16309,7 +16375,8 @@
       "documentation": "Open or close a door. The body controller provides it and the doors consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::WindowCommand": {
       "id": "LogicalArchitecture::WindowCommand",
@@ -16329,7 +16396,8 @@
       "documentation": "Raise or lower a window. The body controller provides it and the window lifts consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::LampCommand": {
       "id": "LogicalArchitecture::LampCommand",
@@ -16349,7 +16417,8 @@
       "documentation": "Headlamps, brake lamps, indicators and hazard lights. The body controller provides it and the lamps consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::WipeCommand": {
       "id": "LogicalArchitecture::WipeCommand",
@@ -16369,7 +16438,8 @@
       "documentation": "Wipe and wash. The body controller provides it and the wipers consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::DriverFeedback": {
       "id": "LogicalArchitecture::DriverFeedback",
@@ -16389,7 +16459,8 @@
       "documentation": "Everything the driver is told: ready, gear, speed, state of charge, warnings. The vehicle controller provides it and the instrument cluster consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::EnergySupply": {
       "id": "LogicalArchitecture::EnergySupply",
@@ -16409,7 +16480,8 @@
       "documentation": "Traction energy. The battery provides it. The motor, climate, entertainment, lamps and window lifts consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::ChargeFeed": {
       "id": "LogicalArchitecture::ChargeFeed",
@@ -16429,7 +16501,8 @@
       "documentation": "Energy from an external charger. The charge inlet provides it and the battery consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::WindshieldClear": {
       "id": "LogicalArchitecture::WindshieldClear",
@@ -16449,7 +16522,8 @@
       "documentation": "Wiping action. The wipers provide it and the windshield consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "logical_architecture/car.sysml"
+      "fileId": "logical_architecture/car.sysml",
+      "isDefinition": true
     },
     "LogicalArchitecture::Car": {
       "id": "LogicalArchitecture::Car",
@@ -19595,7 +19669,8 @@
       "documentation": "Steering command, same contract as the logical architecture. Steering wheel to drive computer, drive computer to wheels.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::GearCommand": {
       "id": "PhysicalArchitecture::GearCommand",
@@ -19615,7 +19690,8 @@
       "documentation": "Gear selection, same contract as the logical architecture. Gear selector to drive computer, drive computer to engine computer.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::TorqueRequest": {
       "id": "PhysicalArchitecture::TorqueRequest",
@@ -19635,7 +19711,8 @@
       "documentation": "Torque request, same contract as the logical architecture. The accelerator provides it and the drive computer consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::TorqueCommand": {
       "id": "PhysicalArchitecture::TorqueCommand",
@@ -19655,7 +19732,8 @@
       "documentation": "Arbitrated torque, same contract as the logical architecture. The drive computer provides it and the engine computer consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::BrakeRequest": {
       "id": "PhysicalArchitecture::BrakeRequest",
@@ -19675,7 +19753,8 @@
       "documentation": "Brake request, same contract as the logical architecture. The brake pedal provides it and the drive computer consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::BrakeCommand": {
       "id": "PhysicalArchitecture::BrakeCommand",
@@ -19695,7 +19774,8 @@
       "documentation": "Friction brake pressure, same contract as the logical architecture. The drive computer provides it and the brake calipers consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::StartRequest": {
       "id": "PhysicalArchitecture::StartRequest",
@@ -19715,7 +19795,8 @@
       "documentation": "Start or stop, same contract as the logical architecture. The start button provides it and the vehicle computer consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::Credential": {
       "id": "PhysicalArchitecture::Credential",
@@ -19735,7 +19816,8 @@
       "documentation": "Driver credential, same contract as the logical architecture. The key fob provides it and the vehicle computer consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::DriveEnable": {
       "id": "PhysicalArchitecture::DriveEnable",
@@ -19755,7 +19837,8 @@
       "documentation": "Immobilizer release, same contract as the logical architecture. The vehicle computer provides it and the drive computer consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::LockCommand": {
       "id": "PhysicalArchitecture::LockCommand",
@@ -19775,7 +19858,8 @@
       "documentation": "Latch command, same contract as the logical architecture. The body computer provides it and the door locks consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::DoorCommand": {
       "id": "PhysicalArchitecture::DoorCommand",
@@ -19795,7 +19879,8 @@
       "documentation": "Door command, same contract as the logical architecture. The body computer provides it and the door assembly consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::WindowCommand": {
       "id": "PhysicalArchitecture::WindowCommand",
@@ -19815,7 +19900,8 @@
       "documentation": "Window command, same contract as the logical architecture. The body computer provides it and the window lift assembly consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::LampCommand": {
       "id": "PhysicalArchitecture::LampCommand",
@@ -19835,7 +19921,8 @@
       "documentation": "Lamp command, same contract as the logical architecture. The body computer provides it and the lamp units consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::WipeCommand": {
       "id": "PhysicalArchitecture::WipeCommand",
@@ -19855,7 +19942,8 @@
       "documentation": "Wipe command, same contract as the logical architecture. The body computer provides it and the wiper assembly consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::DriverFeedback": {
       "id": "PhysicalArchitecture::DriverFeedback",
@@ -19875,7 +19963,8 @@
       "documentation": "Driver feedback, same contract as the logical architecture. The vehicle computer provides it and the instrument cluster unit consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::EnergySupply": {
       "id": "PhysicalArchitecture::EnergySupply",
@@ -19895,7 +19984,8 @@
       "documentation": "Traction energy, same contract as the logical architecture. The battery controller provides it. The motor, climate hardware, display, lamps and window lifts consume it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::ChargeFeed": {
       "id": "PhysicalArchitecture::ChargeFeed",
@@ -19915,7 +20005,8 @@
       "documentation": "External charge energy, same contract as the logical architecture. The charge inlet provides it and the battery controller consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::WindshieldClear": {
       "id": "PhysicalArchitecture::WindshieldClear",
@@ -19935,7 +20026,8 @@
       "documentation": "Wiping action, same contract as the logical architecture. The wiper assembly provides it and the windshield consumes it.",
       "shortId": null,
       "children": [],
-      "fileId": "physical_architecture/vehicle_physical.sysml"
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
     },
     "PhysicalArchitecture::VehiclePhysical": {
       "id": "PhysicalArchitecture::VehiclePhysical",
@@ -24363,7 +24455,8 @@
       "children": [
         "Requirements::Size::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Size::Type": {
       "id": "Requirements::Size::Type",
@@ -24403,7 +24496,8 @@
       "documentation": "The vehicle shall be at most 4.5 m long.",
       "shortId": "REQ-SIZE-01",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::VehicleWidth": {
       "id": "Requirements::VehicleWidth",
@@ -24423,7 +24517,8 @@
       "documentation": "The vehicle shall be at most 1.85 m wide, excluding mirrors.",
       "shortId": "REQ-SIZE-02",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::VehicleHeight": {
       "id": "Requirements::VehicleHeight",
@@ -24443,7 +24538,8 @@
       "documentation": "The vehicle shall be at most 1.6 m high.",
       "shortId": "REQ-SIZE-03",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::PassengerCapacity": {
       "id": "Requirements::PassengerCapacity",
@@ -24463,7 +24559,8 @@
       "documentation": "The vehicle shall seat at least four occupants.",
       "shortId": "REQ-SIZE-04",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::CargoVolume": {
       "id": "Requirements::CargoVolume",
@@ -24483,7 +24580,8 @@
       "documentation": "The vehicle shall provide at least 300 litres of cargo volume behind the rear seats.",
       "shortId": "REQ-SIZE-05",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Performance": {
       "id": "Requirements::Performance",
@@ -24505,7 +24603,8 @@
       "children": [
         "Requirements::Performance::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Performance::Type": {
       "id": "Requirements::Performance::Type",
@@ -24545,7 +24644,8 @@
       "documentation": "The vehicle shall travel at least 350 km on a full charge in the WLTP cycle.",
       "shortId": "REQ-PERF-01",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Acceleration": {
       "id": "Requirements::Acceleration",
@@ -24565,7 +24665,8 @@
       "documentation": "The vehicle shall accelerate from 0 to 100 km/h in at most 8 seconds.",
       "shortId": "REQ-PERF-02",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::TopSpeed": {
       "id": "Requirements::TopSpeed",
@@ -24585,7 +24686,8 @@
       "documentation": "The vehicle shall be capable of at least 160 km/h.",
       "shortId": "REQ-PERF-03",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::ChargeTime": {
       "id": "Requirements::ChargeTime",
@@ -24605,7 +24707,8 @@
       "documentation": "The battery shall charge from 10 percent to 80 percent in at most 30 minutes on DC fast charge.",
       "shortId": "REQ-PERF-04",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::PropulsionModes": {
       "id": "Requirements::PropulsionModes",
@@ -24625,7 +24728,8 @@
       "documentation": "The driver shall be able to select park, reverse, neutral and drive.",
       "shortId": "REQ-PERF-05",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::PowerModes": {
       "id": "Requirements::PowerModes",
@@ -24645,7 +24749,8 @@
       "documentation": "The driver shall make the vehicle ready to drive, and shut it down, with a single control.",
       "shortId": "REQ-PERF-06",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Safety": {
       "id": "Requirements::Safety",
@@ -24667,7 +24772,8 @@
       "children": [
         "Requirements::Safety::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Safety::Type": {
       "id": "Requirements::Safety::Type",
@@ -24707,7 +24813,8 @@
       "documentation": "The occupant cell shall remain intact in the applicable frontal and side impact tests.",
       "shortId": "REQ-SAFE-01",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::BrakingDistance": {
       "id": "Requirements::BrakingDistance",
@@ -24727,7 +24834,8 @@
       "documentation": "The vehicle shall stop from 100 km/h within 40 m on dry pavement.",
       "shortId": "REQ-SAFE-02",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::PedestrianProtection": {
       "id": "Requirements::PedestrianProtection",
@@ -24747,7 +24855,8 @@
       "documentation": "The front structure shall reduce pedestrian leg and head injury in a frontal impact.",
       "shortId": "REQ-SAFE-03",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::OccupantRestraint": {
       "id": "Requirements::OccupantRestraint",
@@ -24767,7 +24876,8 @@
       "documentation": "Every seating position shall have a seat belt and be covered by an airbag.",
       "shortId": "REQ-SAFE-04",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::DirectionalControl": {
       "id": "Requirements::DirectionalControl",
@@ -24787,7 +24897,8 @@
       "documentation": "The vehicle shall follow the steering angle commanded by the driver.",
       "shortId": "REQ-SAFE-05",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::ForwardVisibility": {
       "id": "Requirements::ForwardVisibility",
@@ -24807,7 +24918,8 @@
       "documentation": "The driver shall be able to clear the windshield while driving.",
       "shortId": "REQ-SAFE-06",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::NightVisibility": {
       "id": "Requirements::NightVisibility",
@@ -24827,7 +24939,8 @@
       "documentation": "The driver shall be able to light the road ahead with low and high beam.",
       "shortId": "REQ-SAFE-07",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Comfort": {
       "id": "Requirements::Comfort",
@@ -24849,7 +24962,8 @@
       "children": [
         "Requirements::Comfort::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Comfort::Type": {
       "id": "Requirements::Comfort::Type",
@@ -24889,7 +25003,8 @@
       "documentation": "Occupants shall be able to open and close every door and side window from inside the cabin.",
       "shortId": "REQ-COMF-01",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::CabinClimate": {
       "id": "Requirements::CabinClimate",
@@ -24909,7 +25024,8 @@
       "documentation": "Occupants shall be able to set the cabin temperature between 16 and 28 degrees Celsius.",
       "shortId": "REQ-COMF-02",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::CabinMedia": {
       "id": "Requirements::CabinMedia",
@@ -24929,7 +25045,8 @@
       "documentation": "Occupants shall be able to play audio and video on the cabin system.",
       "shortId": "REQ-COMF-03",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Security": {
       "id": "Requirements::Security",
@@ -24951,7 +25068,8 @@
       "children": [
         "Requirements::Security::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Security::Type": {
       "id": "Requirements::Security::Type",
@@ -24991,7 +25109,8 @@
       "documentation": "Doors shall unlock only after the driver credential has been authenticated.",
       "shortId": "REQ-SEC-01",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::Immobilizer": {
       "id": "Requirements::Immobilizer",
@@ -25011,7 +25130,8 @@
       "documentation": "Propulsion shall stay inhibited until the driver has been authenticated.",
       "shortId": "REQ-SEC-02",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::LockIndication": {
       "id": "Requirements::LockIndication",
@@ -25031,7 +25151,8 @@
       "documentation": "The driver shall receive a confirmation when the vehicle is locked.",
       "shortId": "REQ-SEC-03",
       "children": [],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::DriveToDestination": {
       "id": "Requirements::DriveToDestination",
@@ -25053,7 +25174,8 @@
       "children": [
         "Requirements::DriveToDestination::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::DriveToDestination::Type": {
       "id": "Requirements::DriveToDestination::Type",
@@ -25095,7 +25217,8 @@
       "children": [
         "Requirements::ControlSpeed::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::ControlSpeed::Type": {
       "id": "Requirements::ControlSpeed::Type",
@@ -25137,7 +25260,8 @@
       "children": [
         "Requirements::FollowTheRoad::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::FollowTheRoad::Type": {
       "id": "Requirements::FollowTheRoad::Type",
@@ -25179,7 +25303,8 @@
       "children": [
         "Requirements::ChargeAtHome::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::ChargeAtHome::Type": {
       "id": "Requirements::ChargeAtHome::Type",
@@ -25221,7 +25346,8 @@
       "children": [
         "Requirements::ChargeAway::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::ChargeAway::Type": {
       "id": "Requirements::ChargeAway::Type",
@@ -25263,7 +25389,8 @@
       "children": [
         "Requirements::ParkAndLeave::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::ParkAndLeave::Type": {
       "id": "Requirements::ParkAndLeave::Type",
@@ -25305,7 +25432,8 @@
       "children": [
         "Requirements::EnjoyTheCabin::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::EnjoyTheCabin::Type": {
       "id": "Requirements::EnjoyTheCabin::Type",
@@ -25347,7 +25475,8 @@
       "children": [
         "Requirements::DriveAtNight::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::DriveAtNight::Type": {
       "id": "Requirements::DriveAtNight::Type",
@@ -25389,7 +25518,8 @@
       "children": [
         "Requirements::EnterAndExit::Type"
       ],
-      "fileId": "requirements/requirements.sysml"
+      "fileId": "requirements/requirements.sysml",
+      "isDefinition": true
     },
     "Requirements::EnterAndExit::Type": {
       "id": "Requirements::EnterAndExit::Type",
@@ -26677,7 +26807,8 @@
       "documentation": null,
       "shortId": null,
       "children": [],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "typeTargetId": "UseCases::ElectricCar"
     },
     "UseCases::Driving": {
       "id": "UseCases::Driving",
@@ -26766,7 +26897,8 @@
         "UseCases::Driving::StartVehicle::succ5",
         "UseCases::Driving::StartVehicle::succ6"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::StartVehicle::Driver": {
       "id": "UseCases::Driving::StartVehicle::Driver",
@@ -27245,7 +27377,8 @@
         "UseCases::Driving::StopVehicle::succ3",
         "UseCases::Driving::StopVehicle::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::StopVehicle::Driver": {
       "id": "UseCases::Driving::StopVehicle::Driver",
@@ -27562,7 +27695,8 @@
         "UseCases::Driving::ChangeGear::succ3",
         "UseCases::Driving::ChangeGear::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::ChangeGear::Driver": {
       "id": "UseCases::Driving::ChangeGear::Driver",
@@ -27874,7 +28008,8 @@
         "UseCases::Driving::TurnLeft::done",
         "UseCases::Driving::TurnLeft::succ3"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::TurnLeft::Driver": {
       "id": "UseCases::Driving::TurnLeft::Driver",
@@ -28086,7 +28221,8 @@
         "UseCases::Driving::TurnRight::done",
         "UseCases::Driving::TurnRight::succ3"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::TurnRight::Driver": {
       "id": "UseCases::Driving::TurnRight::Driver",
@@ -28300,7 +28436,8 @@
         "UseCases::Driving::Brake::done",
         "UseCases::Driving::Brake::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::Brake::Driver": {
       "id": "UseCases::Driving::Brake::Driver",
@@ -28560,7 +28697,8 @@
         "UseCases::Driving::Accelerate::done",
         "UseCases::Driving::Accelerate::succ5"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::Accelerate::Driver": {
       "id": "UseCases::Driving::Accelerate::Driver",
@@ -28936,7 +29074,8 @@
         "UseCases::Driving::EmergencyStop::done",
         "UseCases::Driving::EmergencyStop::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::EmergencyStop::Driver": {
       "id": "UseCases::Driving::EmergencyStop::Driver",
@@ -29195,7 +29334,8 @@
         "UseCases::Driving::CleanWindshield::done",
         "UseCases::Driving::CleanWindshield::succ5"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::CleanWindshield::Driver": {
       "id": "UseCases::Driving::CleanWindshield::Driver",
@@ -29554,7 +29694,8 @@
         "UseCases::Driving::ToggleHeadlights::done",
         "UseCases::Driving::ToggleHeadlights::succ5"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::ToggleHeadlights::Driver": {
       "id": "UseCases::Driving::ToggleHeadlights::Driver",
@@ -29926,7 +30067,8 @@
         "UseCases::Driving::Drive::done",
         "UseCases::Driving::Drive::succ8"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::Drive::Driver": {
       "id": "UseCases::Driving::Drive::Driver",
@@ -30562,7 +30704,8 @@
         "UseCases::Driving::Park::done",
         "UseCases::Driving::Park::succ5"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Driving::Park::Driver": {
       "id": "UseCases::Driving::Park::Driver",
@@ -31234,7 +31377,8 @@
         "UseCases::Managing::Unlock::succ4",
         "UseCases::Managing::Unlock::succ5"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::Unlock::Driver": {
       "id": "UseCases::Managing::Unlock::Driver",
@@ -31612,7 +31756,8 @@
         "UseCases::Managing::Lock::succ3",
         "UseCases::Managing::Lock::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::Lock::Driver": {
       "id": "UseCases::Managing::Lock::Driver",
@@ -31950,7 +32095,8 @@
         "UseCases::Managing::OpenDoor::succ3",
         "UseCases::Managing::OpenDoor::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::OpenDoor::Driver": {
       "id": "UseCases::Managing::OpenDoor::Driver",
@@ -32288,7 +32434,8 @@
         "UseCases::Managing::CloseDoor::succ3",
         "UseCases::Managing::CloseDoor::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::CloseDoor::Driver": {
       "id": "UseCases::Managing::CloseDoor::Driver",
@@ -32621,7 +32768,8 @@
         "UseCases::Managing::OpenWindow::done",
         "UseCases::Managing::OpenWindow::succ3"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::OpenWindow::Driver": {
       "id": "UseCases::Managing::OpenWindow::Driver",
@@ -32861,7 +33009,8 @@
         "UseCases::Managing::CloseWindow::succ4",
         "UseCases::Managing::CloseWindow::succ5"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::CloseWindow::Driver": {
       "id": "UseCases::Managing::CloseWindow::Driver",
@@ -33236,7 +33385,8 @@
         "UseCases::Managing::AdjustClimate::done",
         "UseCases::Managing::AdjustClimate::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::AdjustClimate::Driver": {
       "id": "UseCases::Managing::AdjustClimate::Driver",
@@ -33514,7 +33664,8 @@
         "UseCases::Managing::PlayMedia::done",
         "UseCases::Managing::PlayMedia::succ4"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::PlayMedia::Driver": {
       "id": "UseCases::Managing::PlayMedia::Driver",
@@ -33856,7 +34007,8 @@
         "UseCases::Managing::Charge::done",
         "UseCases::Managing::Charge::succ6"
       ],
-      "fileId": "use_cases/use_cases.sysml"
+      "fileId": "use_cases/use_cases.sysml",
+      "isDefinition": true
     },
     "UseCases::Managing::Charge::Driver": {
       "id": "UseCases::Managing::Charge::Driver",

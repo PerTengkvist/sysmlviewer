@@ -6,8 +6,9 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
-from domain.name_resolution import ImportSpec, NameResolver
+from domain.name_resolution import ImportSpec, NameResolver, is_perform_stub
 from domain.perform import ref_leaf, resolve_perform_target
+from domain.type_resolution import specialized_def_ids
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
 from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
@@ -63,6 +64,31 @@ class _ImportDecl:
     owner_id: str | None = None  # namespace the import stands in (None = file root)
 
 
+class _TrackedElements(dict):
+    """Element map that remembers the source line each id was first added on."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.lines: dict[str, int] = {}
+        self.line = 0
+
+    def __setitem__(self, key: str, value: SemanticElement) -> None:
+        if key not in self:
+            self.lines[key] = self.line
+        super().__setitem__(key, value)
+
+
+def _free_id(candidates: list[str], taken) -> str:
+    """First candidate that names no element; else the last with a numeric suffix."""
+    for cand in candidates:
+        if cand not in taken:
+            return cand
+    base, n = candidates[-1], 2
+    while f"{base}#{n}" in taken:
+        n += 1
+    return f"{base}#{n}"
+
+
 @dataclass
 class _PendingRef:
     """A relationship end whose reference is resolved after all files are parsed."""
@@ -76,6 +102,7 @@ class _PendingRef:
     label: str  # "dependency", "satisfy", ...
     resolved_id: str | None = None  # set by _link_references (None = unresolved)
     ambiguous: bool = False
+    skipped: bool = False  # the element belongs to another file: not ours to write
 
 
 def _legacy_ref(ref: str, scope: str | None) -> str:
@@ -152,7 +179,7 @@ def _resolve_expose_ref(
 
 @dataclass
 class _ParserState:
-    elements: dict[str, SemanticElement] = field(default_factory=dict)
+    elements: dict[str, SemanticElement] = field(default_factory=_TrackedElements)
     warnings: list[str] = field(default_factory=list)
     scopes: list[_Scope] = field(default_factory=list)
     file_id: str = ""
@@ -173,6 +200,13 @@ class _ParserState:
     pending_exposes: list[tuple[str, str, str, str | None]] = field(
         default_factory=list
     )
+    # True for the link pass over all files (a single-file parse cannot tell what
+    # another file declares, so it does not warn about types it cannot see).
+    is_project: bool = False
+    # Source line each element was declared on (per file; merged by parse_project).
+    element_lines: dict[str, int] = field(default_factory=dict)
+    # (file id, text) of warnings about type references, filed under the usage's file.
+    type_warnings: list[tuple[str, str]] = field(default_factory=list)
     # Source line of each `perform` element, for warnings after linking.
     perform_lines: dict[str, int] = field(default_factory=dict)
     # Relationship ends resolved by `_link_references` once every file is parsed.
@@ -259,6 +293,7 @@ class SubsetSysmlParser:
         pending_exposes: list[tuple[str, str, str, str | None]] = []
         pending_refs: list[_PendingRef] = []
         perform_lines: dict[str, int] = {}
+        element_lines: dict[str, int] = {}
         file_warnings: dict[str, list[str]] = {}
         warnings: list[str] = []
 
@@ -273,14 +308,17 @@ class SubsetSysmlParser:
             pending_exposes.extend(state.pending_exposes)
             pending_refs.extend(state.pending_refs)
             perform_lines.update(state.perform_lines)
+            element_lines.update(state.element_lines)
             for eid, element in state.elements.items():
                 merged[eid] = element
 
         self._link_expose_refs(merged, pending_exposes)
 
         link_state = _ParserState(elements=merged, file_id="")
+        link_state.is_project = True
         link_state.imports = all_imports
         link_state.perform_lines = perform_lines
+        link_state.element_lines = element_lines
         link_state.pending_refs = pending_refs
         self._link_references(link_state)
         for fid, text in link_state.ref_warnings:
@@ -288,6 +326,9 @@ class SubsetSysmlParser:
             file_warnings.setdefault(fid, []).append(text)
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
+        for fid, text in link_state.type_warnings:
+            warnings.append(text)
+            file_warnings.setdefault(fid, []).append(text)
         self._warn_unresolved_type_refs(link_state)
         self._link_performs(link_state)
         link_state.ref_warnings.clear()
@@ -895,6 +936,8 @@ class SubsetSysmlParser:
             tok = peek()
             if not tok:
                 break
+            if isinstance(state.elements, _TrackedElements):
+                state.elements.line = tok.line
 
             # The declaration `abstract` applied to has been parsed (or skipped).
             if pending_abstract and i > abstract_decl_at:
@@ -1107,6 +1150,7 @@ class SubsetSysmlParser:
                     type_ref=type_ref,
                     default_value=default_value,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
@@ -1337,8 +1381,10 @@ class SubsetSysmlParser:
 
             if tok.kind == "ident" and tok.value == "interaction":
                 take()
+                is_def = False
                 if peek() and peek().value == "def":
                     take()
+                    is_def = True
                 name = expect_ident()
                 if not name:
                     state.warnings.append(f"line {tok.line}: interaction without name")
@@ -1356,6 +1402,7 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
@@ -1421,6 +1468,7 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
@@ -1515,6 +1563,7 @@ class SubsetSysmlParser:
                     type_ref=type_ref,
                     is_abstract=pending_abstract,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 pending_abstract = False
                 state.add_child(el.parent_id, element_id)
@@ -1753,8 +1802,10 @@ class SubsetSysmlParser:
                 # case def / case usage (not "use case")
                 line = tok.line
                 take()
+                is_def = False
                 if peek() and peek().value == "def":
                     take()
+                    is_def = True
                 short_id = read_short_id()
                 name = expect_ident()
                 if not name:
@@ -1775,6 +1826,7 @@ class SubsetSysmlParser:
                     short_id=short_id,
                     is_abstract=pending_abstract,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 pending_abstract = False
                 state.add_child(el.parent_id, element_id)
@@ -1972,6 +2024,7 @@ class SubsetSysmlParser:
                     type_ref=type_ref,
                     default_value=default_value,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 # Mark defs without type as attribute def via missing type_ref + is_def convention
                 if is_def and type_ref is None:
@@ -1987,8 +2040,10 @@ class SubsetSysmlParser:
             if tok.kind == "ident" and tok.value == "requirement":
                 line = tok.line
                 take()
+                is_def = False
                 if peek() and peek().value == "def":
                     take()
+                    is_def = True
                 short_id = read_short_id()
                 name = expect_ident()
                 if not name:
@@ -2012,6 +2067,7 @@ class SubsetSysmlParser:
                     short_id=short_id,
                     is_abstract=pending_abstract,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 pending_abstract = False
                 state.add_child(el.parent_id, element_id)
@@ -2058,8 +2114,10 @@ class SubsetSysmlParser:
                     line = tok.line
                     take()  # use
                     take()  # case
+                    is_def = False
                     if peek() and peek().value == "def":
                         take()
+                        is_def = True
                     short_id = read_short_id()
                     name = expect_ident()
                     if not name:
@@ -2082,6 +2140,7 @@ class SubsetSysmlParser:
                         short_id=short_id,
                         is_abstract=pending_abstract,
                         file_id=file_id,
+                        is_definition=is_def,
                     )
                     pending_abstract = False
                     state.add_child(el.parent_id, element_id)
@@ -2104,8 +2163,10 @@ class SubsetSysmlParser:
             if tok.kind == "ident" and tok.value == "actor":
                 line = tok.line
                 take()
+                is_def = False
                 if peek() and peek().value == "def":
                     take()
+                    is_def = True
                 name = expect_ident()
                 if not name:
                     state.warnings.append(f"line {line}: actor without name")
@@ -2123,6 +2184,7 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
@@ -2251,8 +2313,10 @@ class SubsetSysmlParser:
             if tok.kind == "ident" and tok.value == "interface":
                 line = tok.line
                 take()
+                is_def = False
                 if peek() and peek().value == "def":
                     take()
+                    is_def = True
                 name = expect_ident()
                 if not name:
                     state.warnings.append(f"line {line}: interface without name")
@@ -2306,6 +2370,7 @@ class SubsetSysmlParser:
                     parent_id=state.current_parent(),
                     type_ref=type_ref,
                     file_id=file_id,
+                    is_definition=is_def,
                 )
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
@@ -2444,10 +2509,13 @@ class SubsetSysmlParser:
             # Skip stray punctuation
             take()
 
+        if isinstance(state.elements, _TrackedElements):
+            state.element_lines = state.elements.lines
         if not state.defer_link:
             self._link_references(state)
             state.warnings.extend(text for _, text in state.ref_warnings)
             self._inherit_features_onto_usages(state)
+            state.warnings.extend(text for _, text in state.type_warnings)
             self._warn_unresolved_type_refs(state)
             self._link_performs(state)
         return state
@@ -2514,7 +2582,7 @@ class SubsetSysmlParser:
         }
         names = {el.name for el in state.elements.values()} | known_library
         for el in state.elements.values():
-            if not el.type_ref or el.type_ref in names:
+            if not el.type_ref or el.type_target_id or el.type_ref in names:
                 continue
             if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
                 continue
@@ -2549,7 +2617,7 @@ class SubsetSysmlParser:
             if el is None or el.file_id != pending.file_id:
                 # The element that won the merge came from another file; its
                 # ends are not ours to write.
-                pending.ambiguous = True
+                pending.skipped = True
                 continue
             res = resolver.resolve_feature_ref(
                 pending.ref, pending.scope_id, pending.file_id
@@ -2564,13 +2632,9 @@ class SubsetSysmlParser:
                     # perform stub, or an element the rules do not reach).
                     written = pending.ref.replace(".", "::")
                     scope = pending.scope_id
-                    value = next(
-                        v
-                        for v in (
-                            f"{scope}::{written}" if scope else written,
-                            f"?{written}",
-                        )
-                        if v not in state.elements
+                    value = _free_id(
+                        [f"{scope}::{written}" if scope else written, f"?{written}"],
+                        state.elements,
                     )
                 if res.candidates:
                     pending.ambiguous = True
@@ -2597,7 +2661,7 @@ class SubsetSysmlParser:
         into an inherited feature exists only after inheritance.
         """
         for pending in state.pending_refs:
-            if pending.ambiguous or pending.label in _SILENT_WHEN_UNRESOLVED:
+            if pending.skipped or pending.ambiguous or pending.label in _SILENT_WHEN_UNRESOLVED:
                 continue
             el = state.elements.get(pending.element_id)
             if el is None:
@@ -2670,18 +2734,43 @@ class SubsetSysmlParser:
         # Resolve every declared `: T` once, before anything is copied. A copy
         # carries its original's `type_target_id`, because its type reference is
         # written in the original's namespace, not where the copy ends up.
+        defs_named: dict[tuple[ArtifactKind, str], list[str]] = {}
+        specialized = specialized_def_ids(state.elements)
+        for cand in state.elements.values():
+            if cand.is_definition or cand.id in specialized:
+                defs_named.setdefault((cand.kind, cand.name), []).append(cand.id)
         for el in list(state.elements.values()):
             if not el.type_ref:
                 continue
             type_def, res = name_resolver.resolve_type_def(el)
             el.type_target_id = type_def.id if type_def else None
-            if type_def is None and res.candidates and el.kind == ArtifactKind.PART:
+            if type_def is not None or is_perform_stub(el):
+                continue
+            line = state.element_lines.get(el.id)
+            prefix = f"line {line}: " if line is not None else ""
+            fid = el.file_id or state.file_id
+            if res.candidates:
                 listed = ", ".join(
                     f"{cid} (import line {cline})" for cid, cline in res.candidates
                 )
-                state.warnings.append(
-                    f"type reference '{el.type_ref}' is ambiguous: "
-                    f"{listed} (in '{el.id}')"
+                state.type_warnings.append(
+                    (
+                        fid,
+                        f"{prefix}type reference '{el.type_ref}' is ambiguous: "
+                        f"{listed} (in '{el.id}')",
+                    )
+                )
+                continue
+            leaf = el.type_ref.split("::")[-1]
+            elsewhere = [d for d in defs_named.get((el.kind, leaf), []) if d != el.id]
+            if elsewhere and state.is_project:
+                shown = ", ".join(sorted(elsewhere)[:3])
+                state.type_warnings.append(
+                    (
+                        fid,
+                        f"{prefix}type '{el.type_ref}' is not visible from '{el.id}' "
+                        f"({shown} exists; add an import or qualify the name)",
+                    )
                 )
 
         def resolve_type_def(el: SemanticElement) -> SemanticElement | None:
