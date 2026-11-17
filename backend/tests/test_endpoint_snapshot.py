@@ -41,6 +41,42 @@ for _old, _new in _OLD_NEW_WARNINGS:
     ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning added {_new!r}")
     ACCEPTED_DIFFS.add(f"project:examples/diagrams: warning removed {_old!r}")
 
+# Part types (`: T`) resolve through namespaces and imports instead of "first
+# definition with that name" (examples/diagrams only; the other examples are
+# identical). Each changed type and the ids that follow from it:
+#   UseCasesExample::Drive::vehicle : Vehicle  TreeExample::Vehicle -> UseCasesExample::Vehicle
+#     (`Vehicle` is declared next to it in UseCasesExample). Its inherited
+#     battery/cabin/engine copies were TreeExample::Vehicle's and are gone.
+#   Example::Vehicle::engine : Engine          CarLogical::Engine -> Example::Engine
+#   Example::Vehicle::axle   : Axle            CarLogical::Axle -> Example::Axle
+#     (both are declared in the enclosing package Example). The copies of
+#     CarLogical's members (powerKW, driven) are replaced by Example's own.
+# As a consequence the four connection warnings on engine.PowerIn,
+# engine.TorqueOut, axle.TorqueIn and engine.GaugeIn disappear: those ports now
+# exist (the ends are the same ids as before).
+_TYPE_RESOLUTION_ADDED = [
+    "Example::Vehicle::axle::TorqueIn",
+    "Example::Vehicle::axle::rotationSpeed",
+    "Example::Vehicle::engine::EventOut",
+    "Example::Vehicle::engine::GaugeIn",
+    "Example::Vehicle::engine::PowerIn",
+    "Example::Vehicle::engine::TorqueOut",
+    "Example::Vehicle::engine::rpm",
+    "Example::Vehicle::engine::status",
+    "Example::Vehicle::engine::torque",
+]
+_TYPE_RESOLUTION_REMOVED = [
+    "Example::Vehicle::axle::driven",
+    "Example::Vehicle::engine::powerKW",
+    "UseCasesExample::Drive::vehicle::battery",
+    "UseCasesExample::Drive::vehicle::cabin",
+    "UseCasesExample::Drive::vehicle::engine",
+]
+for _id in _TYPE_RESOLUTION_ADDED:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: element id added {_id!r}")
+for _id in _TYPE_RESOLUTION_REMOVED:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: element id removed {_id!r}")
+
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 
 

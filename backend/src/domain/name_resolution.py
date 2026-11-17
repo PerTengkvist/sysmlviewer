@@ -12,7 +12,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from domain.models import ArtifactKind, SemanticElement
-from domain.type_resolution import part_def_resolver
+from domain.type_resolution import is_part_def, specialized_def_ids
 
 
 @dataclass(frozen=True)
@@ -60,7 +60,8 @@ class NameResolver:
         self._descendants: dict[str, dict[str, frozenset[str]]] = {}
         self._base_cache: dict[ImportSpec, str | None] = {}
         self._resolving: set[ImportSpec] = set()
-        self._resolve_type_def = part_def_resolver(elements)
+        self._specialized_defs = specialized_def_ids(elements)
+        self._type_defs: dict[str, tuple[SemanticElement | None, Resolution]] = {}
         self._inherited: dict[str, frozenset[str]] = {}
         self._inheriting: set[str] = set()
 
@@ -87,6 +88,33 @@ class NameResolver:
             nxt = self._own_or_inherited(current, seg)
             current = nxt if nxt else f"{current}::{seg}"
         return self._finish(Resolution(current))
+
+    def resolve_part_type(
+        self, usage: SemanticElement, origin: SemanticElement | None = None
+    ) -> tuple[SemanticElement | None, Resolution]:
+        """Resolve a part usage's `: T` to its part definition.
+
+        The reference is looked up from the namespace it is written in: the
+        parent of `origin` (default `usage`; a copied nested part passes the
+        part it was copied from). Only a part definition counts as a hit, so
+        a same-named non-definition never answers. An ambiguous or missing
+        type gives `None`; the Resolution carries the ambiguity candidates.
+        """
+        written = origin or usage
+        cached = self._type_defs.get(written.id)
+        if cached is not None:
+            return cached
+        if not written.type_ref:
+            return (None, _UNRESOLVED)
+        res = self.resolve_name(
+            written.type_ref, written.parent_id, written.file_id or ""
+        )
+        hit = self._elements.get(res.element_id) if res.element_id else None
+        if hit is not None and not is_part_def(hit, self._specialized_defs):
+            hit = None
+        result = (hit, res)
+        self._type_defs[written.id] = result
+        return result
 
     # -- internals ----------------------------------------------------------
 
@@ -159,7 +187,7 @@ class NameResolver:
             return frozenset()
         self._inheriting.add(ns)
         try:
-            type_def = self._resolve_type_def(el.type_ref)
+            type_def, _ = self.resolve_part_type(el)
             names: frozenset[str] = frozenset()
             if type_def is not None and type_def.id != ns:
                 names = frozenset(self._members.get(type_def.id, {})) | self._inherited_names(

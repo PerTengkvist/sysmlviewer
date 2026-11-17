@@ -14,7 +14,6 @@ from domain.expose import MEMBERS_RECURSIVE as EXPOSE_MEMBERS_RECURSIVE
 from domain.expose import RECURSIVE as EXPOSE_RECURSIVE
 from domain.expose import kind_of as kind_of_expose
 from domain.expose import set_kind as set_expose_kind
-from domain.type_resolution import part_def_resolver
 from domain.view_filter import (
     MetaclassAnyFilter,
     MetaclassFilter,
@@ -2458,7 +2457,7 @@ class SubsetSysmlParser:
         Validates imports and warns about paths that name nothing (loosely, by name).
         Imports are *used* for resolution by `domain.name_resolution.NameResolver`
         (relationship ends, see `_link_references`) and `resolve_perform_target`.
-        Type references (`: T`) still match by name, whatever the imports say.
+        Part type references (`: T`) go through `NameResolver.resolve_part_type`.
         """
         # Build simple-name → element index for imported symbols
         # (Used by inheritance which already matches by name; this validates imports.)
@@ -2647,7 +2646,25 @@ class SubsetSysmlParser:
 
     def _inherit_features_onto_usages(self, state: _ParserState) -> None:
         """Copy ports, attributes, nested parts, and relations from defs onto usages."""
-        resolve_type_def = part_def_resolver(state.elements)
+        name_resolver = NameResolver(
+            state.elements,
+            [
+                ImportSpec(
+                    owner_id=imp.owner_id,
+                    file_id=imp.file_id,
+                    path=imp.path,
+                    visibility=imp.visibility,
+                    line=imp.line,
+                )
+                for imp in state.imports
+            ],
+        )
+        # A copied nested part keeps the type reference of the part it was copied
+        # from; that reference is resolved from the original's namespace.
+        origin_of: dict[str, SemanticElement] = {}
+
+        def resolve_type_def(el: SemanticElement) -> SemanticElement | None:
+            return name_resolver.resolve_part_type(el, origin_of.get(el.id))[0]
 
         def resolve_port_def(type_ref: str | None) -> SemanticElement | None:
             """Resolve a port definition by type ref (package-level `port def` preferred)."""
@@ -2750,6 +2767,7 @@ class SubsetSysmlParser:
             )
             state.elements[usage_child_id] = nested
             state.add_child(usage.id, usage_child_id)
+            origin_of[nested.id] = origin_of.get(child.id, child)
             return nested
 
         _INHERITABLE_RELATIONS = {
@@ -2836,7 +2854,7 @@ class SubsetSysmlParser:
                         copy_attribute(usage, child)
                     elif child.kind == ArtifactKind.PART:
                         nested = copy_nested_part(usage, child)
-                        nested_def = resolve_type_def(child.type_ref)
+                        nested_def = resolve_type_def(nested)
                         if nested_def:
                             inherit_from_def(nested, nested_def, branch)
                 for child_id in list(type_def.children):
@@ -2858,7 +2876,7 @@ class SubsetSysmlParser:
                 if not parent:
                     break
                 if parent.kind == ArtifactKind.PART:
-                    parent_def = resolve_type_def(parent.type_ref)
+                    parent_def = resolve_type_def(parent)
                     if parent_def and parent_def.id == type_def.id:
                         return [type_def.id]
                 parent_id = parent.parent_id
@@ -2889,7 +2907,7 @@ class SubsetSysmlParser:
                 if el.kind == ArtifactKind.PART and el.type_ref
             ]
             for usage in usages:
-                type_def = resolve_type_def(usage.type_ref)
+                type_def = resolve_type_def(usage)
                 if not type_def:
                     continue
                 child_count = len(type_def.children)
@@ -2901,3 +2919,19 @@ class SubsetSysmlParser:
                 expanded_child_count[usage.id] = child_count
             if len(state.elements) == before:
                 break
+
+        # Record each part usage's resolved definition; warn once per declared
+        # usage whose type is ambiguous (copies share their original's type).
+        for el in list(state.elements.values()):
+            if el.kind != ArtifactKind.PART or not el.type_ref:
+                continue
+            type_def, res = name_resolver.resolve_part_type(el, origin_of.get(el.id))
+            el.type_target_id = type_def.id if type_def else None
+            if type_def is None and res.candidates and el.id not in origin_of:
+                listed = ", ".join(
+                    f"{cid} (import line {cline})" for cid, cline in res.candidates
+                )
+                state.warnings.append(
+                    f"type reference '{el.type_ref}' is ambiguous: "
+                    f"{listed} (in '{el.id}')"
+                )

@@ -204,6 +204,9 @@ class SemanticElement:
     # For `perform <ref>;`: the id the reference resolves to (set by the parser,
     # which knows the imports)
     perform_target_id: str | None = None
+    # For a typed part usage: the definition `type_ref` resolves to (set by the
+    # parser, which knows the imports). Absent when unresolved or ambiguous.
+    type_target_id: str | None = None
     # Prefix metadata keywords from `#Mount dependency …` (not resolved defs)
     metadata_keywords: list[str] = field(default_factory=list)
     # Documentation body from `doc /* … */`
@@ -221,6 +224,8 @@ class SemanticElement:
             out["isAbstract"] = True
         if self.perform_target_id:
             out["performTargetId"] = self.perform_target_id
+        if self.type_target_id:
+            out["typeTargetId"] = self.type_target_id
         return out
 
     def _to_dict(self) -> dict[str, Any]:
@@ -269,6 +274,7 @@ class SemanticElement:
             is_reference=bool(data.get("isReference", False)),
             is_abstract=bool(data.get("isAbstract", False)),
             perform_target_id=data.get("performTargetId"),
+            type_target_id=data.get("typeTargetId"),
             metadata_keywords=list(data.get("metadataKeywords") or []),
             documentation=data.get("documentation"),
             short_id=data.get("shortId"),
