@@ -49,3 +49,184 @@ def test_parse_project_records_owner_for_both_files():
         ("b", None),
         ("b", "B"),
     ]
+
+
+# -- endpoint resolution through imports (step 4) ---------------------------
+
+import pytest
+
+from domain.models import ArtifactKind
+
+LIB = "package Lib {\n  package Sub {\n    part def P;\n    part p;\n  }\n}"
+
+
+def _project(*texts: str):
+    files = [
+        SysmlFile(id=f"f{i}", name=f"f{i}", content=t, path=f"f{i}")
+        for i, t in enumerate(texts)
+    ]
+    return SubsetSysmlParser().parse_project(files)
+
+
+def _app(*lines: str) -> str:
+    return "package App {\n" + "\n".join(lines) + "\n}"
+
+
+_DEP = "part a;\ndependency from a to {ref};"
+
+VERIFIED_CASES = [
+    # id, texts, dep id, expected source, expected target
+    (1, [LIB, _app("private import Lib::*;", _DEP.format(ref="Sub::p"))],
+     "App::dep1", "App::a", "Lib::Sub::p"),
+    (2, [LIB, _app("private import Lib::Sub;", _DEP.format(ref="Sub::p"))],
+     "App::dep1", "App::a", "Lib::Sub::p"),
+    (3, [LIB, _app("private import Lib::Sub::*;", _DEP.format(ref="p"))],
+     "App::dep1", "App::a", "Lib::Sub::p"),
+    (4, [LIB, _app(_DEP.format(ref="Lib::Sub::p"))],
+     "App::dep1", "App::a", "Lib::Sub::p"),
+    (5, [LIB + "\nprivate import Lib::*;\n" + _app(_DEP.format(ref="Sub::p"))],
+     "App::dep1", "App::a", "Lib::Sub::p"),
+    (6, [_app(_DEP.format(ref="Sub::p"), "package Sub { part p; }")],
+     "App::dep1", "App::a", "App::Sub::p"),
+    (7, [LIB, _app("private import Lib::*;", "package Sub { part p; }",
+                   _DEP.format(ref="Sub::p"))],
+     "App::dep1", "App::a", "App::Sub::p"),
+    (8, ["package A { part x; }\npackage B { part x; }\n"
+         + _app("private import A::*;", _DEP.format(ref="x"))],
+     "App::dep1", "App::a", "A::x"),
+    (9, [LIB, "package Other { part p; }\n"
+         + _app("private import Lib::Sub::*;", _DEP.format(ref="p"))],
+     "App::dep1", "App::a", "Lib::Sub::p"),
+    (10, [LIB, "package Root {\n package Sub { part p; }\n package App {\n"
+          "  private import Lib::*;\n  " + _DEP.format(ref="Sub::p") + "\n }\n}"],
+     "Root::App::dep1", "Root::App::a", "Lib::Sub::p"),
+]
+
+
+@pytest.mark.parametrize(
+    "texts,dep_id,source,target",
+    [c[1:] for c in VERIFIED_CASES],
+    ids=[f"case{c[0]}" for c in VERIFIED_CASES],
+)
+def test_verified_case(texts, dep_id, source, target):
+    result = _project(*texts)
+    dep = result.elements[dep_id]
+    assert (dep.source_id, dep.target_id) == (source, target)
+
+
+@pytest.mark.parametrize("case", [5, 6, 8], ids=lambda n: f"case{n}")
+def test_verified_single_file_case(case):
+    _, texts, dep_id, source, target = next(c for c in VERIFIED_CASES if c[0] == case)
+    dep = _parse(texts[0]).elements[dep_id]
+    assert (dep.source_id, dep.target_id) == (source, target)
+
+
+RELATION_LINES = [
+    ("dependency", "dependency from a to p;", "target"),
+    ("implements", "#implements dependency from a to p;", "target"),
+    ("refine_short", "#refine dependency a to p;", "target"),
+    ("satisfy", "satisfy p by a;", "target"),
+    ("allocate", "allocate a to p;", "target"),
+    ("connection", "connection c connect a to p;", "target"),
+    ("bind", "bind a = p;", "target"),
+    ("flow", "flow from a to p;", "target"),
+    ("interface", "interface i connect a to p;", "target"),
+]
+
+
+@pytest.mark.parametrize(
+    "line", [r[1] for r in RELATION_LINES], ids=[r[0] for r in RELATION_LINES]
+)
+def test_each_relation_kind_resolves_through_import(line):
+    result = _project(LIB, _app("private import Lib::Sub::*;", "part a;", line))
+    rels = [
+        e
+        for e in result.elements.values()
+        if e.parent_id == "App" and e.source_id is not None and e.target_id is not None
+    ]
+    assert len(rels) == 1
+    rel = rels[0]
+    ends = {rel.source_id, rel.target_id}
+    assert ends == {"App::a", "Lib::Sub::p"}
+
+
+def test_connection_end_head_through_import():
+    result = _project(
+        "package Lib { part hub { port y; } }",
+        _app("private import Lib::*;", "part a { port x; }", "connection c connect a.x to hub.y;"),
+    )
+    c = result.elements["App::c"]
+    assert c.source_id == "App::a::x"
+    assert c.target_id == "Lib::hub::y"
+
+
+def test_multi_target_dependency():
+    result = _project(
+        LIB,
+        _app("private import Lib::*;", "part a;", "dependency from a to Sub::p, Sub::P;"),
+    )
+    assert result.elements["App::dep1"].target_id == "Lib::Sub::p"
+    assert result.elements["App::dep2"].target_id == "Lib::Sub::P"
+
+
+def test_relation_ids_unchanged():
+    result = _project(
+        LIB,
+        _app(
+            "private import Lib::Sub::*;",
+            "part a;",
+            "part req;",
+            "dependency from a to p;",
+            "connect a to p;",
+            "allocate a to p;",
+            "bind a = p;",
+            "flow from a to p;",
+            "satisfy p by a;",
+        ),
+    )
+    ids = {e.id for e in result.elements.values() if e.id.startswith("App::")}
+    assert {
+        "App::dep1",
+        "App::conn1",
+        "App::alloc1",
+        "App::bind1",
+        "App::flow1",
+        "App::satisfy_1",
+    } <= ids
+
+
+def test_inherited_relation_retargeted_after_link():
+    usages = "package Main {\n  private import Types::*;\n  part rack : GenericRack;\n}\n"
+    types = (
+        "package Types {\n"
+        "  part def PDU { port pwrIn; port pwrOut; }\n"
+        "  part def GenericRack {\n"
+        "    part pduA : PDU;\n    part pduB : PDU;\n"
+        "    connection bus connect pduA.pwrOut to pduB.pwrIn;\n"
+        "  }\n}\n"
+    )
+    bus = _project(usages, types).elements["Main::rack::bus"]
+    assert bus.kind == ArtifactKind.CONNECTION
+    assert bus.source_id == "Main::rack::pduA::pwrOut"
+    assert bus.target_id == "Main::rack::pduB::pwrIn"
+
+
+def test_local_flows_unchanged():
+    text = (
+        "package P {\n"
+        "  use case def Buy {\n    first start;\n    then action a;\n    then done;\n"
+        "    succession s1 first a then done;\n  }\n"
+        "  action def Flow {\n    action x;\n    action y;\n    first x then y;\n  }\n}"
+    )
+    for result in (_parse(text), _project(text)):
+        got = sorted(
+            (e.id, e.source_id, e.target_id)
+            for e in result.elements.values()
+            if e.kind == ArtifactKind.SUCCESSION
+        )
+        assert got == [
+            ("P::Buy::s1", "P::Buy::a", "P::Buy::done"),
+            ("P::Buy::succ1", "P::Buy::start", "P::Buy::a"),
+            ("P::Buy::succ2", "P::Buy::a", "P::Buy::done"),
+            ("P::Flow::succ1", "P::Flow::x", "P::Flow::y"),
+        ]

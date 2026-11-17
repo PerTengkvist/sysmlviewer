@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.name_resolution import ImportSpec, NameResolver
 from domain.perform import ref_leaf, resolve_perform_target
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -62,6 +63,41 @@ class _ImportDecl:
     line: int
     owner_id: str | None = None  # namespace the import stands in (None = file root)
 
+
+@dataclass
+class _PendingRef:
+    """A relationship end whose reference is resolved after all files are parsed."""
+
+    element_id: str
+    role: str  # "source" | "target"
+    ref: str  # as written, e.g. "engine.powerIn" or "Lib::Sub::p"
+    scope_id: str | None  # namespace the reference is written in
+    file_id: str
+    line: int
+    label: str  # "dependency", "satisfy", ...
+    resolved_id: str | None = None  # set by _link_references (None = unresolved)
+    ambiguous: bool = False
+
+
+def _legacy_ref(ref: str, scope: str | None) -> str:
+    """Provisional/unresolved value of an end: the reference as the parser always stored it."""
+    if "::" in ref or not scope:
+        return ref
+    return f"{scope}::{ref.replace('.', '::')}"
+
+
+_LOCAL_RELATION_KINDS = {
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
+}
+
+_RELATION_LABELS = {
+    ArtifactKind.DEPENDENCY: "dependency",
+    ArtifactKind.ALLOCATION: "allocation",
+    ArtifactKind.BINDING: "binding",
+    ArtifactKind.FLOW: "flow",
+}
 
 _EXPOSE_SUFFIX_KINDS = {
     "": EXPOSE_MEMBER,
@@ -134,6 +170,10 @@ class _ParserState:
     )
     # Source line of each `perform` element, for warnings after linking.
     perform_lines: dict[str, int] = field(default_factory=dict)
+    # Relationship ends resolved by `_link_references` once every file is parsed.
+    pending_refs: list[_PendingRef] = field(default_factory=list)
+    # (file id, text) of warnings produced while linking references.
+    ref_warnings: list[tuple[str, str]] = field(default_factory=list)
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -212,6 +252,7 @@ class SubsetSysmlParser:
         merged: dict[str, SemanticElement] = {}
         all_imports: list[_ImportDecl] = []
         pending_exposes: list[tuple[str, str, str, str | None]] = []
+        pending_refs: list[_PendingRef] = []
         perform_lines: dict[str, int] = {}
         file_warnings: dict[str, list[str]] = {}
         warnings: list[str] = []
@@ -225,6 +266,7 @@ class SubsetSysmlParser:
             warnings.extend(state.warnings)
             all_imports.extend(state.imports)
             pending_exposes.extend(state.pending_exposes)
+            pending_refs.extend(state.pending_refs)
             perform_lines.update(state.perform_lines)
             for eid, element in state.elements.items():
                 merged[eid] = element
@@ -234,6 +276,11 @@ class SubsetSysmlParser:
         link_state = _ParserState(elements=merged, file_id="")
         link_state.imports = all_imports
         link_state.perform_lines = perform_lines
+        link_state.pending_refs = pending_refs
+        self._link_references(link_state)
+        for fid, text in link_state.ref_warnings:
+            warnings.append(text)
+            file_warnings.setdefault(fid, []).append(text)
         self._apply_import_visibility(link_state)
         self._inherit_features_onto_usages(link_state)
         self._warn_unresolved_type_refs(link_state)
@@ -421,8 +468,8 @@ class SubsetSysmlParser:
                 elif tok.value == ";" and depth == 0:
                     break
 
-        def resolve_ref(ref: str) -> str:
-            """Resolve relative, dotted, or qualified names against current scope."""
+        def resolve_local_ref(ref: str) -> str:
+            """Resolve flow-local names (successions, messages, transitions, :>) in the file so far."""
             if "::" in ref:
                 if ref in state.elements:
                     return ref
@@ -482,6 +529,23 @@ class SubsetSysmlParser:
                         return matches[0]
             return f"{parent}::{ref.replace('.', '::')}"
 
+        def add_pending(
+            element_id: str, role: str, ref: str, line: int, label: str
+        ) -> None:
+            if not ref:
+                return
+            state.pending_refs.append(
+                _PendingRef(
+                    element_id=element_id,
+                    role=role,
+                    ref=ref,
+                    scope_id=state.current_parent(),
+                    file_id=file_id,
+                    line=line,
+                    label=label,
+                )
+            )
+
         def read_endpoint() -> str | None:
             parts: list[str] = []
             name = expect_qualified_name()
@@ -538,7 +602,7 @@ class SubsetSysmlParser:
                     cand = f"{parent}::{name}"
                     if cand in state.elements:
                         return cand
-                return resolve_ref(name)
+                return resolve_local_ref(name)
 
             if not succ_name:
                 succ_name = state.next_anon_name("succ")
@@ -578,8 +642,14 @@ class SubsetSysmlParser:
             default_prefix: str,
             metadata_keywords: list[str] | None = None,
         ) -> None:
-            source_id = resolve_ref(source_ref)
-            target_id = resolve_ref(target_ref)
+            local = kind in _LOCAL_RELATION_KINDS
+            scope = state.current_parent()
+            source_id = (
+                resolve_local_ref(source_ref) if local else _legacy_ref(source_ref, scope)
+            )
+            target_id = (
+                resolve_local_ref(target_ref) if local else _legacy_ref(target_ref, scope)
+            )
             if not name:
                 current = getattr(state, counter_attr) + 1
                 setattr(state, counter_attr, current)
@@ -602,6 +672,10 @@ class SubsetSysmlParser:
             )
             state.add_child(el.parent_id, element_id)
             state.elements[element_id] = el
+            if not local:
+                label = _RELATION_LABELS[kind]
+                add_pending(element_id, "source", source_ref, line, label)
+                add_pending(element_id, "target", target_ref, line, label)
 
         def take_prefix_metadata_keywords() -> list[str]:
             """Consume zero or more `#Keyword` prefixes (SysML user-defined keywords)."""
@@ -677,7 +751,7 @@ class SubsetSysmlParser:
                             and child.name == name
                         ):
                             return child.id
-                return resolve_ref(name)
+                return resolve_local_ref(name)
 
             msg_name = state.next_anon_name("msg")
             element_id = state.qualify(msg_name)
@@ -1079,8 +1153,10 @@ class SubsetSysmlParser:
                     state.anon_conn += 1
                     conn_name = f"conn{state.anon_conn}"
                 element_id = state.qualify(conn_name)
-                source_id = resolve_ref(source_ref)
-                target_id = resolve_ref(target_ref)
+                source_id = _legacy_ref(source_ref, state.current_parent())
+                target_id = _legacy_ref(target_ref, state.current_parent())
+                add_pending(element_id, "source", source_ref, line, "connection")
+                add_pending(element_id, "target", target_ref, line, "connection")
                 el = SemanticElement(
                     id=element_id,
                     kind=ArtifactKind.CONNECTION,
@@ -1400,7 +1476,7 @@ class SubsetSysmlParser:
                         cand = f"{parent}::{name}"
                         if cand in state.elements:
                             return cand
-                    return resolve_ref(name)
+                    return resolve_local_ref(name)
 
                 element_id = state.qualify(trans_name)
                 el = SemanticElement(
@@ -1489,7 +1565,7 @@ class SubsetSysmlParser:
                         cand = f"{parent}::{name}"
                         if cand in state.elements:
                             return cand
-                    return resolve_ref(name)
+                    return resolve_local_ref(name)
 
                 element_id = state.qualify(succ_name)
                 el = SemanticElement(
@@ -2084,7 +2160,7 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=parent,
                     source_id=parent,
-                    target_id=resolve_ref(target_ref),
+                    target_id=resolve_local_ref(target_ref),
                     file_id=file_id,
                 )
                 state.add_child(parent, element_id)
@@ -2136,7 +2212,7 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=parent,
                     source_id=parent,
-                    target_id=resolve_ref(target_ref),
+                    target_id=resolve_local_ref(target_ref),
                     metadata_keywords=["objective"],
                     file_id=file_id,
                 )
@@ -2206,14 +2282,16 @@ class SubsetSysmlParser:
                     if peek() and peek().value == ";":
                         take()
                     element_id = state.qualify(name)
+                    add_pending(element_id, "source", source_ref, line, "interface")
+                    add_pending(element_id, "target", target_ref, line, "interface")
                     el = SemanticElement(
                         id=element_id,
                         kind=ArtifactKind.INTERFACE,
                         name=name,
                         parent_id=state.current_parent(),
                         type_ref=type_ref,
-                        source_id=resolve_ref(source_ref),
-                        target_id=resolve_ref(target_ref),
+                        source_id=_legacy_ref(source_ref, state.current_parent()),
+                        target_id=_legacy_ref(target_ref, state.current_parent()),
                         file_id=file_id,
                     )
                     state.add_child(el.parent_id, element_id)
@@ -2259,13 +2337,15 @@ class SubsetSysmlParser:
                 parent = state.current_parent()
                 name = f"satisfy_{len([e for e in state.elements.values() if e.kind == ArtifactKind.SATISFY]) + 1}"
                 element_id = f"{parent}::{name}" if parent else name
+                add_pending(element_id, "source", part_ref, line, "satisfy")
+                add_pending(element_id, "target", req_ref, line, "satisfy")
                 el = SemanticElement(
                     id=element_id,
                     kind=ArtifactKind.SATISFY,
                     name=name,
                     parent_id=parent,
-                    source_id=resolve_ref(part_ref),
-                    target_id=resolve_ref(req_ref),
+                    source_id=_legacy_ref(part_ref, parent),
+                    target_id=_legacy_ref(req_ref, parent),
                     file_id=file_id,
                 )
                 state.add_child(parent, element_id)
@@ -2364,6 +2444,8 @@ class SubsetSysmlParser:
             take()
 
         if not state.defer_link:
+            self._link_references(state)
+            state.warnings.extend(text for _, text in state.ref_warnings)
             self._inherit_features_onto_usages(state)
             self._warn_unresolved_type_refs(state)
             self._link_performs(state)
@@ -2438,6 +2520,64 @@ class SubsetSysmlParser:
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
                 f"in the semantic graph."
             )
+
+    def _link_references(self, state: _ParserState) -> None:
+        """Resolve pending relationship ends with namespace and import rules.
+
+        Runs once every file is merged and before inheritance, because copying
+        relations onto usages needs the definitions' ends to be resolved.
+        An end that does not resolve keeps the legacy value (the reference as
+        written, qualified by its scope); it never points at another element.
+        """
+        if not state.pending_refs:
+            return
+        specs = [
+            ImportSpec(
+                owner_id=imp.owner_id,
+                file_id=imp.file_id,
+                path=imp.path,
+                visibility=imp.visibility,
+                line=imp.line,
+            )
+            for imp in state.imports
+        ]
+        resolver = NameResolver(state.elements, specs)
+        for pending in state.pending_refs:
+            el = state.elements.get(pending.element_id)
+            if el is None:
+                continue
+            res = resolver.resolve_feature_ref(
+                pending.ref, pending.scope_id, pending.file_id
+            )
+            if res.element_id is not None:
+                value = res.element_id
+                pending.resolved_id = res.element_id
+            else:
+                value = _legacy_ref(pending.ref, pending.scope_id)
+                if value in state.elements:
+                    # Never let an unresolved end land on a real element.
+                    scope = pending.scope_id
+                    value = (
+                        f"{scope}::{pending.ref.replace('.', '::')}"
+                        if scope
+                        else value
+                    )
+                if res.candidates:
+                    pending.ambiguous = True
+                    listed = ", ".join(
+                        f"{cid} (import line {cline})" for cid, cline in res.candidates
+                    )
+                    state.ref_warnings.append(
+                        (
+                            pending.file_id,
+                            f"line {pending.line}: {pending.label} {pending.role} "
+                            f"'{pending.ref}' is ambiguous: {listed} (in '{el.id}')",
+                        )
+                    )
+            if pending.role == "source":
+                el.source_id = value
+            else:
+                el.target_id = value
 
     def _warn_unresolved_endpoints(self, state: _ParserState) -> None:
         """Flag satisfy / dependency endpoints that name no element in the merged graph.
