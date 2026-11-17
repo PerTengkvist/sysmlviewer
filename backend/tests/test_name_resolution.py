@@ -303,3 +303,14 @@ def test_file_level_import_only_in_its_file():
 def test_unresolvable_import_path_is_ignored():
     r = _model(_app("import Nope::*;"))
     assert _id(r.resolve_name("x", "App", "f0")) is None
+
+
+def test_perform_step_does_not_shadow_declared_member():
+    # `then perform Accelerate;` creates a step element Drive::Accelerate that only
+    # references the use case; it is not a declaration of that name.
+    r = _model(
+        "package P {\n use case def Accelerate;\n"
+        " use case def Drive {\n  action go {\n  }\n  then perform Accelerate;\n }\n}"
+    )
+    assert "P::Drive::Accelerate" in r._elements
+    assert _id(r.resolve_name("Accelerate", "P::Drive", "f0")) == "P::Accelerate"

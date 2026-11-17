@@ -44,6 +44,9 @@ class NameResolver:
         self._imports = tuple(imports)
         self._members: dict[str | None, dict[str, str]] = {}
         for eid, el in elements.items():
+            if el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords:
+                # A `perform X;` step only references X; it does not declare a name.
+                continue
             owner = el.parent_id
             if owner and eid.startswith(f"{owner}::"):
                 name = eid[len(owner) + 2 :]

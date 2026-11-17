@@ -2164,11 +2164,12 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=parent,
                     source_id=parent,
-                    target_id=resolve_local_ref(target_ref),
+                    target_id=_legacy_ref(target_ref, parent),
                     file_id=file_id,
                 )
                 state.add_child(parent, element_id)
                 state.elements[element_id] = el
+                add_pending(element_id, "target", target_ref, line, "include")
                 if peek() and peek().value == ";":
                     take()
                 continue
@@ -2216,12 +2217,13 @@ class SubsetSysmlParser:
                     name=name,
                     parent_id=parent,
                     source_id=parent,
-                    target_id=resolve_local_ref(target_ref),
+                    target_id=_legacy_ref(target_ref, parent),
                     metadata_keywords=["objective"],
                     file_id=file_id,
                 )
                 state.add_child(parent, element_id)
                 state.elements[element_id] = el
+                add_pending(element_id, "target", target_ref, line, "dependency")
                 if peek() and peek().value == ";":
                     take()
                 continue

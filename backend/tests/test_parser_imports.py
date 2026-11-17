@@ -331,3 +331,34 @@ def test_resolution_warning_goes_to_referencing_file():
     result = SubsetSysmlParser().parse_project([lib, app])
     assert any("target not found: nope" in w for w in result.file_warnings["app"])
     assert not any("nope" in w for w in result.file_warnings["lib"])
+
+
+# -- include and objective (step 6) -----------------------------------------
+
+
+def test_include_through_import():
+    result = _project(
+        "package Shared { use case def Login; }",
+        "package App { private import Shared::*; use case def Buy { include use case Login; } }",
+    )
+    inc = result.elements["App::Buy::include_Login"]
+    assert inc.target_id == "Shared::Login"
+    assert inc.source_id == "App::Buy"
+
+
+def test_objective_through_import():
+    result = _project(
+        "package Reqs { requirement def Fast; }",
+        "package App { private import Reqs::*; use case def Go { objective Fast; } }",
+    )
+    assert result.elements["App::Go::objective_1"].target_id == "Reqs::Fast"
+
+
+def test_include_unresolved_warns():
+    result = _project(
+        "package App {\nuse case def Buy {\ninclude use case Nope;\n}\n}"
+    )
+    assert (
+        "line 3: include target not found: Nope (in 'App::Buy::include_Nope')"
+    ) in result.warnings
+    assert result.elements["App::Buy::include_Nope"].target_id == "App::Buy::Nope"
