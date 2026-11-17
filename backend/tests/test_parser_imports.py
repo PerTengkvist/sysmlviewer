@@ -751,3 +751,66 @@ def test_free_id_never_collides():
     taken = {"S::x", "?x", "?x#2"}
     assert _free_id(["S::x", "?x"], taken) == "?x#3"
     assert _free_id(["S::y", "?y"], taken) == "S::y"
+
+
+# -- third review ---------------------------------------------------------------
+
+
+def test_qualified_unresolved_type_gets_no_visibility_warning():
+    result = _project(
+        "package Other { part def Box; }\npackage App { part b : StdLib::Box; }"
+    )
+    assert not any("not visible" in w for w in result.warnings)
+
+
+def test_old_unresolved_warning_is_silent_after_a_visibility_warning():
+    result = _project(
+        "package Other { part def Box; }\npackage App { part b : Box; }"
+    )
+    assert any("type 'Box' is not visible" in w for w in result.warnings)
+    assert not any("Type reference 'Box'" in w for w in result.warnings)
+
+
+def test_old_unresolved_warning_is_silent_after_an_ambiguity_warning():
+    result = _project(
+        "package A { part def Box; }\npackage B { part def Box; }\n"
+        "package Main { private import A::*; private import B::*; part b : Box; }"
+    )
+    assert any("ambiguous" in w for w in result.warnings)
+    assert not any("Type reference 'Box'" in w for w in result.warnings)
+
+
+def test_visibility_warning_says_exist_for_several_candidates():
+    result = _project(
+        "package A { part def Box; }\npackage B { part def Box; }\n"
+        "package Main { part b : Box; }"
+    )
+    w = next(w for w in result.warnings if "not visible" in w)
+    assert "exist;" in w and "exists" not in w
+
+
+def test_specialization_of_same_named_def_resolves_to_the_import():
+    result = _project(
+        "package Lib { part def Engine { port p; } }",
+        "package App { private import Lib::*; part def Engine :> Engine; "
+        "part e : Engine; }",
+    )
+    rel = result.elements["App::Engine_specializes_Engine"]
+    assert rel.source_id == "App::Engine"
+    assert rel.target_id == "Lib::Engine"
+    assert result.elements["App::e"].type_target_id == "App::Engine"
+    assert "App::e::p" in result.elements
+
+
+def test_def_typed_by_itself_name_skips_itself():
+    result = _project(
+        "package Lib { part def Engine { port p; } }",
+        "package App { private import Lib::*; part def Engine :> Engine; "
+        "part e : Lib::Engine; }",
+    )
+    assert result.elements["App::e"].type_target_id == "Lib::Engine"
+
+
+def test_parse_returns_a_plain_dict():
+    result = _parse("package P { part def A; }")
+    assert type(result.elements) is dict
