@@ -196,7 +196,7 @@ def _expand_down(
     return truncated
 
 
-def _lift(
+def lift_port_to_part(
     semantic: Mapping[str, SemanticElement], endpoint: str | None, root_id: str
 ) -> str | None:
     """A port stands for the part that owns it (unless it is the root)."""
@@ -256,8 +256,8 @@ def _collect_edges(
     for rel in semantic.values():
         if not is_relation_element(rel):
             continue
-        src = _lift(semantic, rel.source_id, root_id)
-        tgt = _lift(semantic, rel.target_id, root_id)
+        src = lift_port_to_part(semantic, rel.source_id, root_id)
+        tgt = lift_port_to_part(semantic, rel.target_id, root_id)
         if not src or not tgt:
             continue
         label = _relation_label(rel)
