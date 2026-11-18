@@ -7,6 +7,12 @@
       "warnings": []
     },
     {
+      "id": "failure_model/failure_model.sysml",
+      "name": "failure_model.sysml",
+      "path": "failure_model/failure_model.sysml",
+      "warnings": []
+    },
+    {
       "id": "functions/functions.sysml",
       "name": "functions.sysml",
       "path": "functions/functions.sysml",
@@ -9080,6 +9086,26 @@
       "shortId": null,
       "children": [],
       "fileId": "dynamics/sequences.sysml"
+    },
+    "FailureModel": {
+      "id": "FailureModel",
+      "kind": "package",
+      "name": "FailureModel",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Small reusable library for failure-impact analysis. A failure mode is a FailureKind. The metadata keywords tell the analysis how instances of a part combine: Single (all needed, the default), Pool (instance capacities add up, with a minimum required), Redundant (k of n, k given by the required attribute) and Soft (on a dependency: degrades the dependent function instead of losing it).",
+      "shortId": null,
+      "children": [],
+      "fileId": "failure_model/failure_model.sysml"
     },
     "Functions": {
       "id": "Functions",
@@ -19644,6 +19670,8 @@
         "PhysicalArchitecture::EnergySupply",
         "PhysicalArchitecture::ChargeFeed",
         "PhysicalArchitecture::WindshieldClear",
+        "PhysicalArchitecture::BatteryModule",
+        "PhysicalArchitecture::BrakeCircuit",
         "PhysicalArchitecture::VehiclePhysical",
         "PhysicalArchitecture::PhysicalView",
         "PhysicalArchitecture::PhysicalDependenciesView",
@@ -20029,6 +20057,70 @@
       "fileId": "physical_architecture/vehicle_physical.sysml",
       "isDefinition": true
     },
+    "PhysicalArchitecture::BatteryModule": {
+      "id": "PhysicalArchitecture::BatteryModule",
+      "kind": "part",
+      "name": "BatteryModule",
+      "parentId": "PhysicalArchitecture",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "One battery module of the pack. Its capacity is inherited by every module instance in the pool.",
+      "shortId": null,
+      "children": [
+        "PhysicalArchitecture::BatteryModule::capacityKWh"
+      ],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
+    },
+    "PhysicalArchitecture::BatteryModule::capacityKWh": {
+      "id": "PhysicalArchitecture::BatteryModule::capacityKWh",
+      "kind": "attribute",
+      "name": "capacityKWh",
+      "parentId": "PhysicalArchitecture::BatteryModule",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "7.5",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::BrakeCircuit": {
+      "id": "PhysicalArchitecture::BrakeCircuit",
+      "kind": "part",
+      "name": "BrakeCircuit",
+      "parentId": "PhysicalArchitecture",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "One hydraulic brake circuit. The car has two independent circuits, one of which is enough to brake.",
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
+    },
     "PhysicalArchitecture::VehiclePhysical": {
       "id": "PhysicalArchitecture::VehiclePhysical",
       "kind": "part",
@@ -20067,6 +20159,8 @@
         "PhysicalArchitecture::VehiclePhysical::chassisFrame",
         "PhysicalArchitecture::VehiclePhysical::wheelSet",
         "PhysicalArchitecture::VehiclePhysical::brakeCaliperAsm",
+        "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+        "PhysicalArchitecture::VehiclePhysical::brakeCircuitsRequired",
         "PhysicalArchitecture::VehiclePhysical::suspensionAsm",
         "PhysicalArchitecture::VehiclePhysical::doorAsm",
         "PhysicalArchitecture::VehiclePhysical::windowAsm",
@@ -20117,6 +20211,8 @@
         "PhysicalArchitecture::VehiclePhysical::dep38",
         "PhysicalArchitecture::VehiclePhysical::dep39",
         "PhysicalArchitecture::VehiclePhysical::dep40",
+        "PhysicalArchitecture::VehiclePhysical::dep41",
+        "PhysicalArchitecture::VehiclePhysical::dep42",
         "PhysicalArchitecture::VehiclePhysical::bind1",
         "PhysicalArchitecture::VehiclePhysical::bind2",
         "PhysicalArchitecture::VehiclePhysical::bind3",
@@ -21870,7 +21966,9 @@
       "documentation": "Mechanical battery pack. Implements the logical battery. The battery computer manages it.",
       "shortId": null,
       "children": [
-        "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body"
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body",
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::required"
       ],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
@@ -21886,6 +21984,51 @@
       "exposeRefs": [],
       "viewFilters": [],
       "defaultValue": "\"iconmind/battery\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::modules": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+      "kind": "part",
+      "name": "modules",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack",
+      "typeRef": "BatteryModule",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": "8",
+      "isReference": false,
+      "metadataKeywords": [
+        "Pool"
+      ],
+      "documentation": "Eight battery modules. Their capacities add up to 60 kWh, and the pack counts as available while at least 45 kWh survive.",
+      "shortId": null,
+      "children": [
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::modules::capacityKWh"
+      ],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "typeTargetId": "PhysicalArchitecture::BatteryModule"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::required": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::required",
+      "kind": "attribute",
+      "name": "required",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "45",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -22011,6 +22154,49 @@
       "exposeRefs": [],
       "viewFilters": [],
       "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::brakeCircuits": {
+      "id": "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+      "kind": "part",
+      "name": "brakeCircuits",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": "BrakeCircuit",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": "2",
+      "isReference": false,
+      "metadataKeywords": [
+        "Redundant"
+      ],
+      "documentation": "Two brake circuits. One of them is enough to brake, so the set tolerates a single failure.",
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "typeTargetId": "PhysicalArchitecture::BrakeCircuit"
+    },
+    "PhysicalArchitecture::VehiclePhysical::brakeCircuitsRequired": {
+      "id": "PhysicalArchitecture::VehiclePhysical::brakeCircuitsRequired",
+      "kind": "attribute",
+      "name": "brakeCircuitsRequired",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "1",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -23302,6 +23488,50 @@
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::chargeInletMech",
       "targetId": "LogicalArchitecture::Car::chargeInlet",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "implements"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::dep41": {
+      "id": "PhysicalArchitecture::VehiclePhysical::dep41",
+      "kind": "dependency",
+      "name": "dep41",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+      "targetId": "LogicalArchitecture::Car::battery",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "implements"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::dep42": {
+      "id": "PhysicalArchitecture::VehiclePhysical::dep42",
+      "kind": "dependency",
+      "name": "dep42",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+      "targetId": "LogicalArchitecture::Car::frictionBrakes",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -34680,6 +34910,26 @@
       "shortId": null,
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::modules::capacityKWh": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules::capacityKWh",
+      "kind": "attribute",
+      "name": "capacityKWh",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "7.5",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
     }
   },
   "visualization": {
@@ -36511,6 +36761,16 @@
         "width": 120.0,
         "height": 48.0,
         "symbolRef": "default-lifeline",
+        "side": null,
+        "offset": null
+      },
+      "FailureModel": {
+        "artifactId": "FailureModel",
+        "x": 80.0,
+        "y": 11060.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
         "side": null,
         "offset": null
       },
@@ -39014,6 +39274,26 @@
         "side": null,
         "offset": null
       },
+      "PhysicalArchitecture::BatteryModule": {
+        "artifactId": "PhysicalArchitecture::BatteryModule",
+        "x": 80.0,
+        "y": 21320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::BrakeCircuit": {
+        "artifactId": "PhysicalArchitecture::BrakeCircuit",
+        "x": 360.0,
+        "y": 21320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "PhysicalArchitecture::VehiclePhysical": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical",
         "x": 360.0,
@@ -39804,6 +40084,16 @@
         "side": null,
         "offset": null
       },
+      "PhysicalArchitecture::VehiclePhysical::batteryPack::modules": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+        "x": 80.0,
+        "y": 22940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "PhysicalArchitecture::VehiclePhysical::chassisFrame": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::chassisFrame",
         "x": 360.0,
@@ -39853,6 +40143,16 @@
         "symbolRef": "default-port",
         "side": "left",
         "offset": 0.685
+      },
+      "PhysicalArchitecture::VehiclePhysical::brakeCircuits": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+        "x": 360.0,
+        "y": 23120.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
       },
       "PhysicalArchitecture::VehiclePhysical::suspensionAsm": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::suspensionAsm",
@@ -48729,6 +49029,44 @@
       },
       "PhysicalArchitecture::VehiclePhysical::dep40": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::dep40",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::dep41": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::dep41",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::dep42": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::dep42",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {
