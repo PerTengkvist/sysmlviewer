@@ -72,8 +72,22 @@ class _TrackedElements(dict):
         super().__init__()
         self.lines: dict[str, int] = {}
         self.line = 0
+        # Called with a message of an occurrence that another kind of member is
+        # about to replace; it must move the message to another id.
+        self.on_message_clash = None
 
     def __setitem__(self, key: str, value: SemanticElement) -> None:
+        old = dict.get(self, key)
+        if (
+            old is not None
+            and self.on_message_clash is not None
+            and old is not value
+            and old.kind == ArtifactKind.MESSAGE
+            and value.kind != ArtifactKind.MESSAGE
+        ):
+            owner = dict.get(self, old.parent_id) if old.parent_id else None
+            if owner is not None and owner.kind == ArtifactKind.OCCURRENCE:
+                self.on_message_clash(old)
         if key not in self:
             self.lines[key] = self.line
         super().__setitem__(key, value)
@@ -239,6 +253,8 @@ class _ParserState:
     pending_message_ends: list[_PendingMessageEnd] = field(default_factory=list)
     # Parts `_link_occurrences` made for features a message end passes through.
     materialized_ids: set[str] = field(default_factory=set)
+    # Messages declared without a name (numbered by the parser).
+    anonymous_messages: set[str] = field(default_factory=set)
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -780,31 +796,53 @@ class SubsetSysmlParser:
                 )
             return False
 
-        def displace_message(element_id: str, line: int) -> None:
-            """A part declared after a message of the same name takes the name; the
-            message moves to a free id (`<occ>::a#2`) and keeps its ends."""
-            clash = state.elements.get(element_id)
-            if (
-                clash is None
-                or clash.kind != ArtifactKind.MESSAGE
-                or clash.parent_id != state.current_parent()
-                or clash.parent_id not in state.elements
-                or state.elements[clash.parent_id].kind != ArtifactKind.OCCURRENCE
-            ):
-                return
-            new_id = _free_id([element_id], state.elements)
-            clash.id = new_id
-            del state.elements[element_id]
-            state.elements[new_id] = clash
-            owner = state.elements[clash.parent_id]
-            owner.children[owner.children.index(element_id)] = new_id
+        def displace_message(old: SemanticElement) -> None:
+            """Another member took the name of a message in an occurrence: the
+            message moves to a free id and keeps its ends. A named message becomes
+            `<occ>::a#2` (several of them keep their declaration order, with a
+            warning); one the parser numbered itself gets the next free `msgN`."""
+            elements = state.elements
+            assert old.parent_id is not None
+            owner = elements[old.parent_id]
+            if old.id in state.anonymous_messages:
+                n = state.anon_per_owner.get((owner.id, "msg"), 0)
+                while f"{owner.id}::msg{n + 1}" in elements:
+                    n += 1
+                n += 1
+                state.anon_per_owner[(owner.id, "msg")] = n
+                mapping = {old.id: f"{owner.id}::msg{n}"}
+                old.name = f"msg{n}"
+            else:
+                key = old.id
+                pattern = re.compile(re.escape(key) + r"#\d+")
+                group = [
+                    cid
+                    for cid in owner.children
+                    if cid == key or (pattern.fullmatch(cid) and elements[cid].kind == ArtifactKind.MESSAGE)
+                ]
+                mapping = {cid: f"{key}#{i + 2}" for i, cid in enumerate(group)}
+                state.warnings.append(
+                    f"line {getattr(elements, 'line', 0)}: message name '{old.name}' "
+                    f"already names a member of '{owner.id}'"
+                )
+            moved = {cid: dict.pop(elements, cid) for cid in mapping}
+            for cid, msg in moved.items():
+                new_id = mapping[cid]
+                msg.id = new_id
+                dict.__setitem__(elements, new_id, msg)
+                if isinstance(elements, _TrackedElements):
+                    elements.lines[new_id] = elements.lines.get(cid, elements.line)
+                if cid in state.anonymous_messages:
+                    state.anonymous_messages.discard(cid)
+                    state.anonymous_messages.add(new_id)
+            owner.children = [mapping.get(c, c) for c in owner.children]
+            # The new member was already listed under the old id; list it again.
+            owner.children.append(next(iter(moved)))
             for pending in state.pending_message_ends:
-                if pending.message_id == element_id:
-                    pending.message_id = new_id
-            state.warnings.append(
-                f"line {line}: message name '{clash.name}' already names a "
-                f"member of '{clash.parent_id}'"
-            )
+                pending.message_id = mapping.get(pending.message_id, pending.message_id)
+
+        if isinstance(state.elements, _TrackedElements):
+            state.elements.on_message_clash = displace_message
 
         def parse_occurrence_message(
             line: int, metadata_keywords: list[str]
@@ -851,6 +889,7 @@ class SubsetSysmlParser:
                 while state.qualify(name) in state.elements:
                     name = state.next_anon_name("msg")
                 element_id = state.qualify(name)
+                state.anonymous_messages.add(element_id)
 
             def head(path: str | None) -> str | None:
                 return f"{occurrence_id}::{path.split('.')[0]}" if path else None
@@ -1244,7 +1283,6 @@ class SubsetSysmlParser:
                 )
                 pending_metadata_keywords = []
                 pending_abstract = False
-                displace_message(element_id, tok.line)
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if is_def and is_specialization and type_ref:
@@ -2849,7 +2887,11 @@ class SubsetSysmlParser:
                     el.target_id = end
         for pending in state.pending_message_ends:
             msg = elements.get(pending.message_id)
-            if msg is None or msg.file_id != pending.file_id:
+            if (
+                msg is None
+                or msg.kind != ArtifactKind.MESSAGE
+                or msg.file_id != pending.file_id
+            ):
                 continue
             end = resolve_message_end(
                 elements,

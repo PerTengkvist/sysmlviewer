@@ -89,3 +89,52 @@ def test_dead_wrappers_are_gone():
 
     assert not hasattr(occ, "feature_chain_end")
     assert not hasattr(occ, "resolve_event")
+
+
+# -- second review ---------------------------------------------------------
+
+
+def test_message_declared_before_an_event_or_attribute_of_the_same_name():
+    for member in ("event occurrence e;", "attribute e;"):
+        r = _occ(f"part a; part b; message e from a to b; {member}")
+        assert r.elements["P::S::e"].kind != ArtifactKind.MESSAGE
+        assert r.elements["P::S::e"].source_id is None
+        msg = r.elements["P::S::e#2"]
+        assert (msg.kind, msg.source_id, msg.target_id) == (
+            ArtifactKind.MESSAGE, "P::S::a", "P::S::b"
+        )
+        assert any("message name 'e' already names a member" in w for w in r.warnings)
+
+
+def test_anonymous_message_is_renumbered_when_a_member_takes_its_name():
+    r = _occ("part a; part b; message from a to b; part msg1;")
+    assert r.elements["P::S::msg1"].kind == ArtifactKind.PART
+    msg = r.elements["P::S::msg2"]
+    assert (msg.kind, msg.name, msg.source_id) == (ArtifactKind.MESSAGE, "msg2", "P::S::a")
+    assert r.warnings == []
+
+
+def test_duplicate_message_names_keep_declaration_order():
+    r = _occ("part b; message a from b to b; message a from b to b; part a;")
+    order = [c for c in r.elements["P::S"].children if c.startswith("P::S::a#")]
+    assert order == ["P::S::a#2", "P::S::a#3"]
+    again = SubsetSysmlParser().parse(serialize_file(r.elements, "f"), "f")
+    assert [c for c in again.elements["P::S"].children if c.startswith("P::S::a#")] == order
+
+
+def test_event_type_must_be_a_definition():
+    r = SubsetSysmlParser().parse(
+        "package P { part def X { part n; event occurrence e : n; } occurrence def S; }", "f"
+    )
+    assert r.elements["P::X::e"].type_target_id is None
+    assert any("type 'n' is not a definition" in w for w in r.warnings)
+
+
+def test_foreign_flag_is_reset_per_lookup():
+    # `a` has an unresolved type, but `holder` is found through its subsetting;
+    # that must not mute the missing event on the resolved Holder.
+    r = _occ(
+        "ref part a : Missing :> proto; part b; message m from a.holder.nope to b;",
+        "part def Holder; part proto { part holder : Holder; }",
+    )
+    assert any("no event 'nope' on 'holder'" in w for w in r.warnings)
