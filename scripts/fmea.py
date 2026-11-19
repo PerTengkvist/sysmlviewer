@@ -120,6 +120,8 @@ class _Context:
 
 
 def _find_line(ctx: _Context, f: Finding) -> str:
+    if not f.file:  # comes from the model, not from a data file
+        return f"{f.path}: {f.message}"
     where = f"{ctx.shown(f.file)}:{f.line}" if f.line else ctx.shown(f.file)
     out = f"{where}  {f.path}: {f.ref if f.ref else f.message}"
     if f.ref:

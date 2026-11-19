@@ -219,3 +219,19 @@ def test_duplicate_part_message(cli, capsys, copy):
     assert code == 1
     assert "is also described at instances.yaml:" in err
     assert err.count("fmea/instances.yaml:") >= 2
+
+
+def test_severity_downgrade_warns_but_does_not_stop(cli, capsys, tmp_path):
+    extra = tmp_path / "mixed.sysml"
+    extra.write_text(
+        'package Mixed { requirement def R { attribute Type = "Comfort"; } '
+        "#refine dependency from R to Requirements::Safety; }",
+        encoding="utf-8",
+    )
+    code, out, _ = run(cli, capsys, "validate", CAR, "--extra", extra)
+    assert code == 0
+    assert "warning: Mixed::R: requirement 'Mixed::R' has Type 'Comfort' (score 3)" in out
+    assert "0 errors, 1 warning (mode: both)" in out
+    code, out, err = run(cli, capsys, "analyze", CAR, "--extra", extra, "--format", "csv")
+    assert code == 0 and "Failure mode" in out
+    assert "Mixed::R" in err and "mixing requirement levels" in err

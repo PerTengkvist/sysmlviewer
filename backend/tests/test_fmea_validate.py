@@ -348,3 +348,71 @@ def test_unknown_mode_id_in_override(sources):
     err = [e for e in findings.errors if e.code == "unknown-mode-id"]
     assert len(err) == 1 and err[0].path == "[3].overrides[0].id"
     assert err[0].suggestions == ("cell_short",)
+
+
+# -- severity-downgrade: mixed requirement levels in one refine chain -------------------
+
+def downgrade_findings(requirements: str, extra_groups=None):
+    from adapters.parser.subset_parser import SubsetSysmlParser
+    from domain.models import SysmlFile
+    from domain.name_resolution import ImportSpec, NameResolver
+
+    text = f"""package S {{
+      requirement def Comfort {{ attribute Type = "Comfort"; }}
+      requirement def Safety {{ attribute Type = "Safety"; }}
+      {requirements}
+    }}"""
+    result = SubsetSysmlParser().parse_project([SysmlFile("m.sysml", "m.sysml", text, path="m.sysml")])
+    assert result.warnings == []
+    resolver = NameResolver(result.elements, [ImportSpec.from_dict(i) for i in result.imports])
+    severity = {
+        "requirement_groups": {"Safety": 10, "Comfort": 3, **(extra_groups or {})},
+        "status_factor": {"LOST": 1.0, "DEGRADED": 0.6},
+    }
+    fmea = load_fmea(FmeaSources({"severity.yaml": severity}, {}), result.elements, resolver)
+    return [w for w in validate(fmea, result.elements, "fmea").warnings if w.code == "severity-downgrade"]
+
+
+def test_lower_own_type_under_higher_group_warns():
+    found = downgrade_findings(
+        'requirement def R { attribute Type = "Comfort"; } #refine dependency from R to Safety;'
+    )
+    assert len(found) == 1
+    msg = found[0].message
+    assert found[0].path == "S::R" and found[0].file == ""
+    for part in ("'S::R'", "Type 'Comfort' (score 3)", "'S::Safety'", "Type 'Safety' (score 10)",
+                 "S follows the requirement's own Type", "mixing requirement levels"):
+        assert part in msg, part
+
+
+def test_higher_own_type_under_lower_group_is_fine():
+    assert downgrade_findings(
+        'requirement def R { attribute Type = "Safety"; } #refine dependency from R to Comfort;'
+    ) == []
+
+
+def test_requirement_without_own_type_is_fine():
+    assert downgrade_findings("requirement def R; #refine dependency from R to Safety;") == []
+
+
+def test_multiple_paths_name_the_highest_ancestor():
+    found = downgrade_findings(
+        'requirement def R { attribute Type = "Comfort"; } requirement def Mid; '
+        'requirement def Perf { attribute Type = "Performance"; } '
+        "#refine dependency from R to Mid, Perf; #refine dependency from Mid to Safety;",
+        {"Performance": 6},
+    )
+    assert len(found) == 1 and "'S::Safety'" in found[0].message and "'S::Perf'" not in found[0].message
+
+
+def test_cycle_terminates():
+    found = downgrade_findings(
+        'requirement def R { attribute Type = "Comfort"; } requirement def A { attribute Type = "Safety"; } '
+        "#refine dependency from R to A; #refine dependency from A to R;"
+    )
+    assert [f.path for f in found] == ["S::R"]
+
+
+def test_example_has_no_downgrades(sources):
+    _, findings, _, _ = run(sources)
+    assert [w for w in findings.warnings if w.code == "severity-downgrade"] == []
