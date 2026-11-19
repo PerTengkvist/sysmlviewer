@@ -28,6 +28,19 @@ describe('elementDialogTitle', () => {
     ).toEqual({ kind: 'requirement', name: 'Safety' })
   })
 
+  it('uses shortId + name for use cases that have a short id', () => {
+    const withUc: typeof semantic = {
+      ...semantic,
+      'Pkg::Brake': { ...semantic['Pkg::car'], id: 'Pkg::Brake', kind: 'useCase' as const, name: 'Brake', shortId: 'UC006' },
+      'Pkg::Plain': { ...semantic['Pkg::car'], id: 'Pkg::Plain', kind: 'useCase' as const, name: 'Plain' },
+    }
+    expect(elementDialogTitle('Pkg::Brake', withUc)).toEqual({
+      kind: 'useCase',
+      name: 'UC006 Brake',
+    })
+    expect(elementDialogTitle('Pkg::Plain', withUc).name).toBe('Plain')
+  })
+
   it('falls back to "element" and the id for unknown elements', () => {
     expect(elementDialogTitle('Nope', semantic)).toEqual({
       kind: 'element',

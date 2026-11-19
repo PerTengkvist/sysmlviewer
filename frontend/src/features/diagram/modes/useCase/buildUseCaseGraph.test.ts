@@ -123,6 +123,15 @@ describe('buildUseCaseGraph', () => {
   })
 
 
+  it('labels use cases with their short id when they have one', () => {
+    const f = fixture()
+    const first = Object.values(f.semantic).find((e) => e.kind === 'useCase')!
+    f.semantic[first.id] = { ...first, shortId: 'UC001' }
+    const { nodes } = buildUseCaseGraph(f, 'light')
+    const node = nodes.find((n) => n.id === first.id)!
+    expect((node.data as { label: string }).label).toBe(`UC001 ${first.name}`)
+  })
+
   it('places use cases, actors, include and extend edges', () => {
     const { nodes, edges } = buildUseCaseGraph(fixture(), 'light')
     expect(nodes.some((n) => n.type === 'useCase')).toBe(true)

@@ -1,3 +1,4 @@
+import { useCaseLabel } from './useCaseLabel'
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { PortSide, SemanticElement, ViewPayload } from '../../../../api'
@@ -212,7 +213,7 @@ export function buildUseCaseGraph(
       placeholder,
     )
     const data: UseCaseNodeData = {
-      label: uc.name,
+      label: useCaseLabel(uc),
       artifactId: uc.id,
       formatStyle: visualization.nodes[uc.id]?.style,
       viewMode,
