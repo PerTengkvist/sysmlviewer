@@ -37,3 +37,14 @@ for (const [file, title] of [
     await expect(canvas.locator('.mermaid-diagram-loading')).toHaveCount(0)
   })
 }
+
+test('the FMEA and FMECA tutorial is listed and its mermaid renders', async ({ page }) => {
+  await page.getByLabel('Tutorials').selectOption({ label: 'FMEA and FMECA' })
+  const body = page.locator('.markdown-canvas, .tutorial-markdown, .markdown-body').first()
+  await expect(body).toContainText('FMEA versus FMECA', { timeout: 30_000 })
+  await expect(page.locator('.mermaid-diagram svg').first()).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator('.mermaid-diagram-error')).toHaveCount(0)
+  // The source/output markers that the backend tests use must not show up as text.
+  await expect(body).not.toContainText('[//]')
+  await expect(body).not.toContainText('<!--')
+})

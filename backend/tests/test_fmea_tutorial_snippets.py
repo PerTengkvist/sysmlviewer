@@ -16,8 +16,9 @@ REPO = resolve_repo_root()
 CAR = REPO / "examples" / "electric_car"
 TUTORIAL = REPO / "docs" / "tutorials" / "fmea.md"
 TEXT = TUTORIAL.read_text(encoding="utf-8")
-# A fenced block, optionally preceded by an HTML comment on the line before it.
-BLOCK = re.compile(r"(?:<!-- (?P<tag>[^>]*?) -->\n)?```(?P<lang>[\w-]*)\n(?P<body>.*?)\n```", re.S)
+# A fenced block, optionally preceded by a markdown comment `[//]: # (tag)` on the line before it
+# (an HTML comment would show up as text in the viewer).
+BLOCK = re.compile(r"(?:\[//\]: # \((?P<tag>[^)\n]*)\)\n)?```(?P<lang>[\w-]*)\n(?P<body>.*?)\n```", re.S)
 BLOCKS = [m.groupdict() for m in BLOCK.finditer(TEXT)]
 
 

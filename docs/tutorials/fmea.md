@@ -88,7 +88,7 @@ from the architecture. A design change therefore changes the table without touch
 Example. The functional model says that losing `SpeedControl` hurts `Maneuvrability`, and that
 `Maneuvrability` is needed by `Lighting` through an `#Indicate` dependency:
 
-<!-- source: examples/electric_car/functions/functions.sysml -->
+[//]: # (source: examples/electric_car/functions/functions.sysml)
 ```sysml
 #Indicate dependency from Lighting to Maneuvrability;
 ```
@@ -145,7 +145,7 @@ At every step the tool tracks a capability between 0 and 1: 1 is **OK**, between
 
 The pool and the redundant set are ordinary SysML in the physical architecture:
 
-<!-- source: examples/electric_car/physical_architecture/vehicle_physical.sysml -->
+[//]: # (source: examples/electric_car/physical_architecture/vehicle_physical.sysml)
 ```sysml
 #Pool part modules[8] : BatteryModule {
   doc /* Eight battery modules. Their capacities add up to 60 kWh, and the pack counts as available while at least 45 kWh survive. */
@@ -153,7 +153,7 @@ The pool and the redundant set are ordinary SysML in the physical architecture:
 attribute required = 45;
 ```
 
-<!-- source: examples/electric_car/physical_architecture/vehicle_physical.sysml -->
+[//]: # (source: examples/electric_car/physical_architecture/vehicle_physical.sysml)
 ```sysml
 #Redundant part brakeCircuits[2] : BrakeCircuit {
   doc /* Two brake circuits. One of them is enough to brake, so the set tolerates a single failure. */
@@ -164,7 +164,7 @@ attribute brakeCircuitsRequired = 1;
 The `#implements` dependencies tie the groups to the logical architecture, which is how a module
 failure reaches the functions:
 
-<!-- source: examples/electric_car/physical_architecture/vehicle_physical.sysml -->
+[//]: # (source: examples/electric_car/physical_architecture/vehicle_physical.sysml)
 ```sysml
 #implements dependency from batteryPack.modules to LogicalArchitecture::Car::battery;
 #implements dependency from brakeCircuits to LogicalArchitecture::Car::frictionBrakes;
@@ -186,7 +186,7 @@ comment, so an editor with a YAML extension offers completion and error markers.
 A library file gives the modes of a part definition, here one module of the battery pack. It applies to
 all eight modules at once:
 
-<!-- source: examples/electric_car/fmea/library/battery_module.yaml -->
+[//]: # (source: examples/electric_car/fmea/library/battery_module.yaml)
 ```yaml
 part_def: PhysicalArchitecture::BatteryModule
 rate_fit: 500
@@ -204,7 +204,7 @@ failure_modes:
 CAN transceiver are not modelled, so they are written as sub-units (SRUs). Their failure modes give a
 local effect on the computer:
 
-<!-- source: examples/electric_car/fmea/instances.yaml -->
+[//]: # (source: examples/electric_car/fmea/instances.yaml)
 ```yaml
 - part: PhysicalArchitecture::VehiclePhysical::driveEcu
   srus:
@@ -222,7 +222,7 @@ local effect on the computer:
 
 `severity.yaml` makes severity something the tool derives:
 
-<!-- source: examples/electric_car/fmea/severity.yaml -->
+[//]: # (source: examples/electric_car/fmea/severity.yaml)
 ```yaml
 requirement_groups: { Safety: 10, Security: 8, Performance: 6, Comfort: 3, Size: 2 }
 status_factor: { LOST: 1.0, DEGRADED: 0.6 }
@@ -239,7 +239,7 @@ one item or sub-unit may not add up to more than 1. `fmea.py schema --write` reg
 
 Brake circuits are the simplest file. This is the whole library for them:
 
-<!-- source: examples/electric_car/fmea/library/brake_circuit.yaml -->
+[//]: # (source: examples/electric_car/fmea/library/brake_circuit.yaml)
 ```yaml
 part_def: PhysicalArchitecture::BrakeCircuit
 rate_fit: 30
@@ -257,7 +257,7 @@ Say you want to add worn brake pads. Follow these steps in `fmea/library/brake_c
 
 1. **Make room in the failure rate.** The mode ratios of an item add up to at most 1, and the leak already takes all of it. Lower the leak's share:
 
-<!-- illustration: lower the existing mode ratio -->
+[//]: # (illustration: lower the existing mode ratio)
 ```diff
 -    mode_ratio: 1.0
 +    mode_ratio: 0.6
@@ -265,7 +265,7 @@ Say you want to add worn brake pads. Follow these steps in `fmea/library/brake_c
 
 2. **Append the new mode** at the end of `failure_modes`. The local effect is `degraded` with a fraction between 0 and 1, here a braking capacity of 70 percent:
 
-<!-- illustration: the new mode -->
+[//]: # (illustration: the new mode)
 ```yaml
   - id: pad_wear
     description: Friction lining worn down
@@ -355,7 +355,7 @@ Close the project in the viewer (or reload it afterwards: the viewer may rewrite
 backend/.venv/bin/python scripts/electric_car_trigger_fmea_failure.py apply
 ```
 
-<!-- output: trigger apply -->
+[//]: # (output: trigger apply)
 ```text
 Applied: renamed part def PhysicalArchitecture::BatteryModule -> BatteryCellModule
   in physical_architecture/vehicle_physical.sysml (2 places: declaration and the type of batteryPack.modules).
@@ -368,7 +368,7 @@ Next:
 The part definition was renamed consistently in SysML, so the model has no parser warnings. Only the FMEA
 data is out of date:
 
-<!-- output: fmea validate after trigger apply -->
+[//]: # (output: fmea validate after trigger apply)
 ```text
 FMEA is out of sync with the SysML model: 1 error
 
@@ -394,7 +394,7 @@ For the demo, undo it with `reset`:
 backend/.venv/bin/python scripts/electric_car_trigger_fmea_failure.py reset
 ```
 
-<!-- output: trigger reset -->
+[//]: # (output: trigger reset)
 ```text
 Reset: renamed part def BatteryCellModule back to BatteryModule in physical_architecture/vehicle_physical.sysml; state.json restored.
 Next:
