@@ -1,14 +1,14 @@
 .DS_Store
 __pycache__/
 *.py[cod]
-.venv/
-venv/
+.venv
+venv
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
 data/projects/**
 !data/projects/.gitkeep
-frontend/node_modules/
+frontend/node_modules
 frontend/dist/
 backend/data-test/
 *.log
