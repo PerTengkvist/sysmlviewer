@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../../docs/schemas/fmea-instances.schema.json
+- part: PhysicalArchitecture::VehiclePhysical::driveEcu
+  srus:
+    - id: powerSupply
+      rate_fit: 50
+      failure_modes:
+        - id: psu_dead
+          description: Supply voltage lost
+          local_effect: { kind: loss }
+          mode_ratio: 1.0
+          effect_probability: 1.0
+          occurrence: 3
+          detection: { method: Supply monitor, score: 2 }
+    - id: canTransceiver
+      rate_fit: 20
+      failure_modes:
+        - id: can_babbling
+          description: Transceiver floods the bus
+          local_effect: { kind: erroneous }
+          mode_ratio: 1.0
+          effect_probability: 0.5
+          occurrence: 3
+          detection: { method: Bus load monitor, score: 4 }
+- part: PhysicalArchitecture::VehiclePhysical::electricMotor
+  rate_fit: 100
+  failure_modes:
+    - id: winding_open
+      description: Open stator winding
+      local_effect: { kind: loss }
+      mode_ratio: 0.8
+      effect_probability: 1.0
+      occurrence: 4
+      detection: { method: Phase current plausibility, score: 5 }
+- part: PhysicalArchitecture::VehiclePhysical::infotainmentEcu
+  rate_fit: 250
+  failure_modes:
+    - id: soc_lockup
+      description: Processor locks up
+      local_effect: { kind: loss }
+      mode_ratio: 0.8
+      effect_probability: 1.0
+      occurrence: 5
+      detection: { method: Watchdog, score: 6 }

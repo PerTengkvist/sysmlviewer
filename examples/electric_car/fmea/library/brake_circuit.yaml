@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../docs/schemas/fmea-library.schema.json
+part_def: PhysicalArchitecture::BrakeCircuit
+rate_fit: 30
+failure_modes:
+  - id: hydraulic_leak
+    description: Fluid leak in one brake circuit
+    local_effect: { kind: loss }
+    mode_ratio: 1.0
+    effect_probability: 1.0
+    occurrence: 3
+    detection: { method: Brake fluid level and pressure sensor, score: 4 }
