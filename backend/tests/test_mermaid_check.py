@@ -12,7 +12,7 @@ def test_accepts_flowchart():
 
 
 def test_accepts_quadrant():
-    src = "quadrantChart\n    title T\n    x-axis Low --> High\n    y-axis Low --> High\n    m1: [0.2, 0.9]"
+    src = "quadrantChart\n    title T\n    x-axis Low --> High\n    y-axis Low --> High\n    m1 a: [0.2, 0.9]"
     assert check_mermaid(src) == []
 
 
@@ -35,6 +35,16 @@ def test_rejects_quadrant_out_of_range_and_missing_axis():
     src = "quadrantChart\n    x-axis a --> b\n    m1: [1.2, 0.5]"
     problems = check_mermaid(src)
     assert any("y-axis" in p for p in problems) and any("outside" in p for p in problems)
+
+
+def test_rejects_underscore_in_quadrant_point_name():
+    src = "quadrantChart\n    x-axis a --> b\n    y-axis a --> b\n    winding_open: [0.1, 0.2]"
+    assert any("point name" in p for p in check_mermaid(src))
+
+
+def test_rejects_one_point_zero_in_quadrant_point():
+    src = "quadrantChart\n    x-axis a --> b\n    y-axis a --> b\n    m a: [0.1, 1.000]"
+    assert any("write 1" in p for p in check_mermaid(src))
 
 
 def test_mermaid_blocks_extracts_in_order():

@@ -83,6 +83,10 @@ def _check_quadrant(lines: list[str]) -> list[str]:
             problems.append(f"unrecognised line: {ln.strip()!r}")
             continue
         points += 1
+        if not re.fullmatch(r"[A-Za-z0-9 ]+", m.group(1).strip()):
+            problems.append(f"point name must be letters, digits and spaces only: {m.group(1).strip()!r}")
+        if re.fullmatch(r"1\.0+", m.group(2)) or re.fullmatch(r"1\.0+", m.group(3)):
+            problems.append(f"write 1 instead of 1.0 (mermaid's lexer rejects it): {ln.strip()!r}")
         if not (0 <= float(m.group(2)) <= 1 and 0 <= float(m.group(3)) <= 1):
             problems.append(f"point outside [0, 1]: {ln.strip()!r}")
     if points == 0:

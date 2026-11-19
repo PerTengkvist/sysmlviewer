@@ -45,13 +45,13 @@ quadrantChart
     quadrant-2 Severe but rare
     quadrant-3 Accept
     quadrant-4 Frequent but mild
-    winding_open: [0.381, 1.000]
-    psu_dead: [0.340, 1.000]
-    can_babbling: [0.200, 1.000]
-    capacity_fade: [0.515, 0.600]
-    cell_short: [0.419, 0.600]
-    soc_lockup: [0.460, 0.300]
-    hydraulic_leak: [0.295, 0.100]
+    winding open: [0.381, 1]
+    psu dead: [0.340, 1]
+    can babbling: [0.200, 1]
+    capacity fade: [0.515, 0.600]
+    cell short: [0.419, 0.600]
+    soc lockup: [0.460, 0.300]
+    hydraulic leak: [0.295, 0.100]
 ```
 
 ## Effect chains

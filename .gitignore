@@ -22,6 +22,7 @@ running-session.json
 .sysmlviewer/
 frontend/e2e/*
 !frontend/e2e/traceability.spec.ts
+!frontend/e2e/fmea_report.spec.ts
 !frontend/e2e/save_verification.spec.ts
 !frontend/e2e/view_filter.spec.ts
 !frontend/e2e/port_label_move.spec.ts

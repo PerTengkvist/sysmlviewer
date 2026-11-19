@@ -219,6 +219,11 @@ def _mid(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "_", text)
 
 
+def _coord(v: float) -> str:
+    """mermaid's quadrant lexer accepts 1 but not 1.0 or 1.000."""
+    return "1" if v >= 1 else f"{v:.3f}"
+
+
 def _quadrant(analysis: Analysis) -> list[str]:
     lines = [
         "```mermaid",
@@ -234,7 +239,8 @@ def _quadrant(analysis: Analysis) -> list[str]:
     for r in analysis.ranking:
         x = (math.log10(max(r.c_m or 0.0, 1e-300)) - _LOG_MIN) / (_LOG_MAX - _LOG_MIN)
         x = min(1.0, max(0.0, x))
-        lines.append(f"    {_mid(r.mode_id)}: [{x:.3f}, {r.severity / 10:.3f}]")
+        # mermaid's quadrant lexer rejects "_" in point names
+        lines.append(f"    {r.mode_id.replace('_', ' ')}: [{_coord(x)}, {_coord(r.severity / 10)}]")
     return lines + ["```"]
 
 
