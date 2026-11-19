@@ -42,7 +42,7 @@ Use one package per layer and one folder per package. The order below is the ord
 
 ### Dynamics/
 
-(`dynamics/`) Interactions (sequence diagrams) between the logical parts that realise the use cases, with lifelines named after the logical parts, and state machines. The internal behaviour of a single part may also be modelled with state machines and activity flows in its part definition.
+(`dynamics/`) Occurrence defs (sequence diagrams) between the logical parts that realise the use cases, with lifelines that are instances of the logical parts, named after them, and state machines. The internal behaviour of a single part may also be modelled with state machines and activity flows in its part definition.
 
 ### PhysicalArchitecture/
 
@@ -224,24 +224,25 @@ part def Car {
 
 #### Dynamics
 
-The dynamics between parts are defined as sequence diagrams in the Dynamics part of the model. The lifelines carry the names of the logical parts, so the sequences and the logical architecture read as one model. From `dynamics/sequences.sysml` (shortened):
+The dynamics between parts are defined as sequence diagrams in the Dynamics part of the model. Each sequence is an `occurrence def`, and its lifelines are `ref part`s typed by the logical part definitions and named like the logical parts, so the sequences and the logical architecture read as one model. From `dynamics/sequences.sysml` (shortened):
 
+[//]: # (source: examples/electric_car/dynamics/sequences.sysml)
 ```sysml
-interaction def BrakeSequence {
-  lifeline Driver;
-  lifeline brakePedal;
-  lifeline driveController;
+occurrence def BrakeSequence {
+  ref part Driver : Driver;
+  ref part brakePedal : BrakePedal;
+  ref part driveController : DriveController;
   // …
-  lifeline frictionBrakes;
-  lifeline wheels;
+  ref part frictionBrakes : FrictionBrakes;
+  ref part wheels : Wheels;
   // …
   message pressPedal from Driver to brakePedal;
-  then message decelerationRequest from brakePedal to driveController;
+  message decelerationRequest from brakePedal to driveController;
   // …
-  then message frictionPressure from driveController to frictionBrakes;
-  then message brakingForce from frictionBrakes to wheels;
-  then #reply message wheelSpeed from wheels to driveController;
-  then #reply message pedalFeedback from brakePedal to Driver;
+  message frictionPressure from driveController to frictionBrakes;
+  message brakingForce from frictionBrakes to wheels;
+  #Reply message wheelSpeed from wheels to driveController;
+  #Reply message pedalFeedback from brakePedal to Driver;
 }
 ```
 

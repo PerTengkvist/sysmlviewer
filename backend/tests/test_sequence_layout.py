@@ -135,7 +135,8 @@ def test_electric_car_drive_sequence_declaration_order():
     ]
     elements = SubsetSysmlParser().parse_project(files).elements
     owner = "Dynamics::DriveSequence"
-    lifelines = [e.name for e in elements.values() if e.parent_id == owner and e.kind.value == "lifeline"]
+    # The lifelines are the parts of the occurrence def, declared in this order.
+    lifelines = [e.name for e in elements.values() if e.parent_id == owner and e.kind.value == "part"]
     messages = [e.name for e in elements.values() if e.parent_id == owner and e.kind.value == "message"]
     assert lifelines[0] == "Driver"
     assert messages[:3] == ["pressStart", "startRequest", "releaseImmobilizer"]

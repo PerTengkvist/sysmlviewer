@@ -56,40 +56,126 @@ package LogicalArchitecture {
     doc /* Wiping action. The wipers provide it and the windshield consumes it. */
   }
 
+  package Types {
+    doc /* One part def per logical part of Car, so that sequences can declare typed run-time instances (ref part keyFob : KeyFob). The usages in Car keep their ports, connections and behaviour; these defs only name the types. */
+
+    part def KeyFob {
+      doc /* Type of Car::keyFob. Ports, connections and behaviour are described on that part. */
+    }
+    part def StartButton {
+      doc /* Type of Car::startButton. Ports, connections and behaviour are described on that part. */
+    }
+    part def SteeringWheel {
+      doc /* Type of Car::steeringWheel. Ports, connections and behaviour are described on that part. */
+    }
+    part def GearStick {
+      doc /* Type of Car::gearStick. Ports, connections and behaviour are described on that part. */
+    }
+    part def AcceleratorPedal {
+      doc /* Type of Car::acceleratorPedal. Ports, connections and behaviour are described on that part. */
+    }
+    part def BrakePedal {
+      doc /* Type of Car::brakePedal. Ports, connections and behaviour are described on that part. */
+    }
+    part def VehicleController {
+      doc /* Type of Car::vehicleController. Ports, connections and behaviour are described on that part. */
+    }
+    part def DriveController {
+      doc /* Type of Car::driveController. Ports, connections and behaviour are described on that part. */
+    }
+    part def BodyController {
+      doc /* Type of Car::bodyController. Ports, connections and behaviour are described on that part. */
+    }
+    part def InstrumentCluster {
+      doc /* Type of Car::instrumentCluster. Ports, connections and behaviour are described on that part. */
+    }
+    part def ClimateSystem {
+      doc /* Type of Car::climateSystem. Ports, connections and behaviour are described on that part. */
+    }
+    part def EntertainmentSystem {
+      doc /* Type of Car::entertainmentSystem. Ports, connections and behaviour are described on that part. */
+    }
+    part def Engine {
+      doc /* Type of Car::engine. Ports, connections and behaviour are described on that part. */
+    }
+    part def Battery {
+      doc /* Type of Car::battery. Ports, connections and behaviour are described on that part. */
+    }
+    part def ChargeInlet {
+      doc /* Type of Car::chargeInlet. Ports, connections and behaviour are described on that part. */
+    }
+    part def Chassis {
+      doc /* Type of Car::chassis. Ports, connections and behaviour are described on that part. */
+    }
+    part def Wheels {
+      doc /* Type of Car::wheels. Ports, connections and behaviour are described on that part. */
+    }
+    part def FrictionBrakes {
+      doc /* Type of Car::frictionBrakes. Ports, connections and behaviour are described on that part. */
+    }
+    part def Suspension {
+      doc /* Type of Car::suspension. Ports, connections and behaviour are described on that part. */
+    }
+    part def Body {
+      doc /* Type of Car::body. Ports, connections and behaviour are described on that part. */
+    }
+    part def Doors {
+      doc /* Type of Car::doors. Ports, connections and behaviour are described on that part. */
+    }
+    part def Windows {
+      doc /* Type of Car::windows. Ports, connections and behaviour are described on that part. */
+    }
+    part def WindowLifts {
+      doc /* Type of Car::windowLifts. Ports, connections and behaviour are described on that part. */
+    }
+    part def Windshield {
+      doc /* Type of Car::windshield. Ports, connections and behaviour are described on that part. */
+    }
+    part def Wipers {
+      doc /* Type of Car::wipers. Ports, connections and behaviour are described on that part. */
+    }
+    part def Locks {
+      doc /* Type of Car::locks. Ports, connections and behaviour are described on that part. */
+    }
+    part def Lamps {
+      doc /* Type of Car::lamps. Ports, connections and behaviour are described on that part. */
+    }
+  }
+
   part def Car {
     doc /* Logical electric car: driver controls, three controllers, traction, energy, body and cabin systems. */
 
-    part keyFob {
+    part keyFob : Types::KeyFob {
       doc /* Remote key the driver carries. Provides Credential to the vehicle controller for unlock, lock and start. */
       port credentialOut : Credential;
     }
 
-    part startButton {
+    part startButton : Types::StartButton {
       doc /* Driver control that starts and stops the vehicle. Provides StartRequest to the vehicle controller. */
       port startOut : StartRequest;
     }
 
-    part steeringWheel {
+    part steeringWheel : Types::SteeringWheel {
       doc /* Driver control for direction. Provides DirectionCommand to the drive controller. */
       port directionOut : DirectionCommand;
     }
 
-    part gearStick {
+    part gearStick : Types::GearStick {
       doc /* Driver control for park, reverse, neutral and drive. Provides GearCommand to the drive controller. */
       port gearOut : GearCommand;
     }
 
-    part acceleratorPedal {
+    part acceleratorPedal : Types::AcceleratorPedal {
       doc /* Driver control for requested traction torque. Provides TorqueRequest to the drive controller. */
       port torqueOut : TorqueRequest;
     }
 
-    part brakePedal {
+    part brakePedal : Types::BrakePedal {
       doc /* Driver control for deceleration. Provides BrakeRequest to the drive controller. */
       port brakeOut : BrakeRequest;
     }
 
-    part vehicleController {
+    part vehicleController : Types::VehicleController {
       doc /* Decides whether the car is Locked, Unlocked, Ready, Driving, Parked or Charging. Authenticates the key fob, releases the immobilizer, enables the drive controller and tells the driver through the instrument cluster. */
       port credentialIn : Credential;
       port startIn : StartRequest;
@@ -97,7 +183,7 @@ package LogicalArchitecture {
       port feedbackOut : DriverFeedback;
     }
 
-    part driveController {
+    part driveController : Types::DriveController {
       doc /* Turns pedal, gear and steering inputs into torque, brake pressure, motor mode and wheel angle. Blends regenerative and friction braking. Only acts when the vehicle controller has enabled driving. */
       port driveEnableIn : DriveEnable;
       port torqueIn : TorqueRequest;
@@ -110,7 +196,7 @@ package LogicalArchitecture {
       port directionCommandOut : DirectionCommand;
     }
 
-    part bodyController {
+    part bodyController : Types::BodyController {
       doc /* Commands the body actuators: locks, doors, window lifts, lamps and wipers. Flashes the indicators to confirm lock and unlock. */
       port lockOut : LockCommand;
       port doorOut : DoorCommand;
@@ -119,22 +205,22 @@ package LogicalArchitecture {
       port wipeOut : WipeCommand;
     }
 
-    part instrumentCluster {
+    part instrumentCluster : Types::InstrumentCluster {
       doc /* Display and chimes in front of the driver. Consumes DriverFeedback and shows ready state, gear, speed, state of charge and warnings. */
       port feedbackIn : DriverFeedback;
     }
 
-    part climateSystem {
+    part climateSystem : Types::ClimateSystem {
       doc /* Logical heating, ventilation and cooling of the cabin. Consumes EnergySupply from the battery. */
       port energyIn : EnergySupply;
     }
 
-    part entertainmentSystem {
+    part entertainmentSystem : Types::EntertainmentSystem {
       doc /* Logical cabin audio and video. Consumes EnergySupply from the battery. */
       port energyIn : EnergySupply;
     }
 
-    part engine {
+    part engine : Types::Engine {
       attribute powerKW = 150;
       doc /* Electric traction motor, nominally 150 kW. Consumes GearCommand and TorqueCommand from the drive controller and EnergySupply from the battery. Drives the wheels. */
       port gearCommandIn : GearCommand;
@@ -142,7 +228,7 @@ package LogicalArchitecture {
       port energyIn : EnergySupply;
     }
 
-    part battery {
+    part battery : Types::Battery {
       attribute _icon="battery";
       attribute capacityKWh = 60;
       doc /* Traction battery, nominally 60 kWh. Provides EnergySupply and consumes ChargeFeed. Its discharge limit bounds the torque the drive controller may command. */
@@ -150,65 +236,65 @@ package LogicalArchitecture {
       port chargeIn : ChargeFeed;
     }
 
-    part chargeInlet {
+    part chargeInlet : Types::ChargeInlet {
       doc /* Inlet where a home or DC charger connects. Provides ChargeFeed to the battery. */
       port chargeOut : ChargeFeed;
     }
 
-    part chassis {
+    part chassis : Types::Chassis {
       doc /* Structural backbone. The motor, battery, suspension and body are mounted on it. */
     }
 
-    part wheels {
+    part wheels : Types::Wheels {
       doc /* Road wheels that accelerate, brake and steer the car. Consume DirectionCommand from the drive controller; the engine and the friction brakes act on them. */
       port directionCommandIn : DirectionCommand;
     }
 
-    part frictionBrakes {
+    part frictionBrakes : Types::FrictionBrakes {
       doc /* Hydraulic friction brakes on every wheel. Consume BrakeCommand from the drive controller and act on the wheels. */
       port brakeCommandIn : BrakeCommand;
     }
 
-    part suspension {
+    part suspension : Types::Suspension {
       doc /* Links the wheels to the chassis and keeps the tyres on the road. */
     }
 
-    part body {
+    part body : Types::Body {
       doc /* Body shell (kaross). Sets length, width, height, seating and cargo volume, and forms the occupant cell. */
     }
 
-    part doors {
+    part doors : Types::Doors {
       doc /* Four doors in the body shell. Consume DoorCommand from the body controller and report open or closed. */
       port doorIn : DoorCommand;
     }
 
-    part windows {
+    part windows : Types::Windows {
       doc /* Side and rear glazing in the body shell. */
     }
 
-    part windowLifts {
+    part windowLifts : Types::WindowLifts {
       doc /* Motors that raise and lower the side windows. Consume WindowCommand from the body controller and EnergySupply from the battery. Stop on pinch. */
       port windowIn : WindowCommand;
       port energyIn : EnergySupply;
     }
 
-    part windshield {
+    part windshield : Types::Windshield {
       doc /* Front glass. Consumes WindshieldClear from the wipers. */
       port clearIn : WindshieldClear;
     }
 
-    part wipers {
+    part wipers : Types::Wipers {
       doc /* Wiper and washer mechanism on the body. Consumes WipeCommand from the body controller and provides WindshieldClear to the windshield. */
       port wipeIn : WipeCommand;
       port clearOut : WindshieldClear;
     }
 
-    part locks {
+    part locks : Types::Locks {
       doc /* Door latches. Consume LockCommand from the body controller and report latched or released. */
       port lockIn : LockCommand;
     }
 
-    part lamps {
+    part lamps : Types::Lamps {
       doc /* Headlamps, tail lamps, brake lamps, direction indicators and hazard lights. Consume LampCommand from the body controller and EnergySupply from the battery. */
       port lampIn : LampCommand;
       port energyIn : EnergySupply;

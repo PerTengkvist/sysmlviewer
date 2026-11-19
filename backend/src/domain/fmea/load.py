@@ -125,7 +125,14 @@ def _is_part_usage(el: SemanticElement, semantic: Mapping[str, SemanticElement])
 
 
 def _suggest(ref: str, elements: list[SemanticElement]) -> tuple[str, ...]:
-    last = [s for s in ref.replace(".", "::").split("::") if s][-1:] or [ref]
+    segments = [s for s in ref.replace(".", "::").split("::") if s] or [ref]
+    last = segments[-1:]
+    # A qualified reference names a package: look there first, so that a type of
+    # the same name elsewhere (the logical part types) does not crowd the answer.
+    scope = "::".join(segments[:-1]) + "::" if len(segments) > 1 else ""
+    local = [e for e in elements if scope and e.id.startswith(scope)]
+    if local and difflib.get_close_matches(last[0], [e.name for e in local], n=1, cutoff=0.6):
+        elements = local
     names = sorted({e.name for e in elements})
     close = difflib.get_close_matches(last[0], names, n=3, cutoff=0.6)
     return tuple(e.id for name in close for e in elements if e.name == name)

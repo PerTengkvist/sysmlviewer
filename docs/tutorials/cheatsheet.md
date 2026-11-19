@@ -218,13 +218,18 @@ A use case traces to requirements with `objective`, `#refine dependency`,
 ## Sequences
 
 ```sysml
-interaction def LockSequence {
-  lifeline Driver;
-  lifeline bodyController;
-  lifeline locks;
+metadata def Reply;
+part def Driver;
+part def BodyController;
+part def Locks;
+
+occurrence def LockSequence {
+  ref part Driver : Driver;
+  ref part bodyController : BodyController;
+  ref part locks : Locks;
   message requestLock from Driver to bodyController;
-  then message engageLatches from bodyController to locks;
-  then #reply message indicateLocked from locks to Driver;
+  message engageLatches from bodyController to locks;
+  #Reply message indicateLocked from locks to Driver;
 }
 
 view LockSequenceView : SequenceView {
@@ -232,4 +237,4 @@ view LockSequenceView : SequenceView {
 }
 ```
 
-`then` chains messages in order. `#reply` marks an acknowledgement, drawn dashed.
+The parts of an `occurrence def` that messages use as ends are the lifelines, and messages are drawn in the order written. `ref part` is for a participant that exists outside the scenario, `part` for one that lives only within it. `#Reply` marks an acknowledgement, drawn dashed. The older `interaction def` with `lifeline` still works.

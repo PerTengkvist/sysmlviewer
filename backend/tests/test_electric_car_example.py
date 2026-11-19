@@ -7,6 +7,7 @@ from adapters.parser.subset_parser import SubsetSysmlParser
 from adapters.persistence.workspace_repo import WorkspaceProjectRepository
 from application.project_service import ProjectService
 from domain.models import ArtifactKind, SysmlFile
+from domain.occurrence import in_occurrence
 
 ROOT = resolve_repo_root() / "examples" / "electric_car"
 
@@ -262,11 +263,14 @@ def test_documentation_files_match_artifacts():
         ArtifactKind.USE_CASE,
         ArtifactKind.ACTOR,
         ArtifactKind.INTERACTION,
+        ArtifactKind.OCCURRENCE,
     }
     missing = []
     for el in elements.values():
         if el.kind not in documented or not el.file_id or "/" not in el.file_id:
             continue
+        if in_occurrence(elements, el.id):
+            continue  # a lifeline of a sequence is an instance, not a documented element
         folder = el.file_id.rsplit("/", 1)[0]
         # Docs are named <Package>[.<SubPackage>…].<name>.md (package chain only).
         packages = []

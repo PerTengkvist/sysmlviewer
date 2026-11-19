@@ -1,6 +1,6 @@
-"""Dynamics rules for the electric car: one sequence per use case, lifelines are
-logical parts, every driver action is acknowledged, modes come from a state
-machine."""
+"""Dynamics rules for the electric car: one sequence (an occurrence def) per use
+case, lifelines are typed instances of the logical parts, every driver action is
+acknowledged, modes come from a state machine."""
 
 import re
 from pathlib import Path
@@ -10,6 +10,7 @@ from adapters.parser.subset_parser import SubsetSysmlParser
 from adapters.persistence.workspace_repo import WorkspaceProjectRepository
 from application.project_service import ProjectService
 from domain.models import ArtifactKind, SysmlFile
+from domain.occurrence import sequence_lifelines
 
 ROOT = resolve_repo_root() / "examples" / "electric_car"
 CAR = "LogicalArchitecture::Car"
@@ -29,30 +30,24 @@ def _load():
 
 
 def _interactions(elements):
+    """The sequences: one occurrence def per use case."""
     return {
         e.name: e
         for e in elements.values()
-        if e.kind == ArtifactKind.INTERACTION and e.parent_id == "Dynamics"
+        if e.kind == ArtifactKind.OCCURRENCE and e.parent_id == "Dynamics"
     }
 
 
 def _messages(elements, interaction):
-    return sorted(
-        (
-            e
-            for e in elements.values()
-            if e.kind == ArtifactKind.MESSAGE and e.parent_id == interaction.id
-        ),
-        key=lambda e: int(e.id.rsplit("msg", 1)[-1]),
-    )
+    """Messages in declaration order (ids are names, so no sort by number)."""
+    return [
+        elements[c] for c in interaction.children if elements[c].kind == ArtifactKind.MESSAGE
+    ]
 
 
 def _lifelines(elements, interaction):
-    return {
-        e.id: e
-        for e in elements.values()
-        if e.kind == ArtifactKind.LIFELINE and e.parent_id == interaction.id
-    }
+    """The lifelines: the parts the messages use as ends, in first-appearance order."""
+    return {pid: elements[pid] for pid in sequence_lifelines(elements, interaction.id)}
 
 
 def test_every_use_case_has_sequence_and_view():
@@ -79,16 +74,22 @@ def test_sequences_are_chains():
 
 def test_lifelines_are_logical_parts_or_actors():
     elements = _load()
-    part_names = {
-        e.name for e in elements.values() if e.kind == ArtifactKind.PART and e.parent_id == CAR
+    car_parts = {
+        e.name: e
+        for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id == CAR
     }
-    allowed = part_names | ACTORS
-    bad = sorted(
-        (it.name, ll.name)
-        for it in _interactions(elements).values()
-        for ll in _lifelines(elements, it).values()
-        if ll.name not in allowed
-    )
+    bad = []
+    for it in _interactions(elements).values():
+        for ll in _lifelines(elements, it).values():
+            if ll.name in ACTORS:
+                if ll.type_target_id != f"Dynamics::{ll.name}":
+                    bad.append((it.name, ll.name))
+            elif ll.name not in car_parts:
+                bad.append((it.name, ll.name))
+            elif ll.type_target_id != car_parts[ll.name].type_target_id:
+                # keyFob in a sequence has the same type as Car::keyFob
+                bad.append((it.name, ll.name))
     assert bad == []
 
 
@@ -112,7 +113,7 @@ def test_driver_actions_are_acknowledged():
         if initiator not in ACTORS:
             continue
         assert lifelines[last.target_id].name == initiator, (it.name, last.name)
-        assert "reply" in (last.metadata_keywords or []), (it.name, last.name)
+        assert "reply" in [k.lower() for k in last.metadata_keywords or []], (it.name, last.name)
 
 
 def test_interaction_docs_state_pre_and_post_conditions():
@@ -167,7 +168,8 @@ def test_state_view_renders():
     replies = [
         e
         for e in brake["semantic"].values()
-        if e["kind"] == "message" and "reply" in (e.get("metadataKeywords") or [])
+        if e["kind"] == "message"
+        and "reply" in [k.lower() for k in e.get("metadataKeywords") or []]
     ]
     assert replies
 
