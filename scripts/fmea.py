@@ -31,6 +31,7 @@ from domain.failure.extract import build_impact_graph  # noqa: E402
 from domain.fmea import export  # noqa: E402
 from domain.fmea.analyze import analyze  # noqa: E402
 from domain.fmea.load import FmeaLoadError, load_fmea  # noqa: E402
+from domain.fmea.simulate import simulate  # noqa: E402
 from domain.fmea.schema import instances_json_schema, library_json_schema, severity_json_schema  # noqa: E402
 from domain.fmea.validate import Finding, coverage, validate  # noqa: E402
 from domain.models import SysmlFile  # noqa: E402
@@ -236,8 +237,25 @@ def main(argv: list[str] | None = None) -> int:
     return handlers[args.command](ctx)
 
 
-def _cmd_simulate(ctx: _Context) -> int:  # filled in with step 20
-    return _fail("error: simulate is not available yet")
+def _cmd_simulate(ctx: _Context) -> int:
+    args = ctx.args
+    if args.trials < 1:
+        return _fail("error: --trials must be at least 1")
+    state, code = _prepare(ctx, "fmeca")
+    if state is None:
+        return code
+    fmea, _, graph, _ = state
+    t = args.mission_time if args.mission_time is not None else fmea.severity.mission_time_h
+    result = simulate(fmea, graph, trials=args.trials, seed=args.seed, mission_time_h=t)
+    rows = export.simulation_rows(graph, result)
+    if args.format == "csv":
+        print(export.simulation_to_csv(rows), end="")
+    elif args.format == "json":
+        doc = {"trials": result.trials, "seed": result.seed, "missionTimeH": t, "nodes": rows}
+        print(json.dumps(doc, indent=2, ensure_ascii=False))
+    else:
+        print(export.simulation_to_markdown(rows), end="")
+    return 0
 
 
 if __name__ == "__main__":

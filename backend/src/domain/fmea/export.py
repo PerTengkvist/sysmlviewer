@@ -147,3 +147,42 @@ def to_json_dict(analysis: Analysis) -> dict:
             for r in analysis.ranking
         ],
     }
+
+
+SIM_COLUMNS = ["Node", "Layer", "P(LOST)", "P(DEGRADED)"]
+_SIM_LAYERS = ("function", "useCase", "requirement")
+
+
+def simulation_rows(graph, result) -> list[dict]:
+    """Functions, use cases and requirements, by layer and id."""
+    from domain.failure.model import Status
+
+    rows = []
+    for layer in _SIM_LAYERS:
+        for nid in sorted(n for n, node in graph.nodes.items() if node.layer.value == layer):
+            rows.append(
+                {
+                    "Node": nid,
+                    "Layer": layer,
+                    "P(LOST)": result.p(nid, Status.LOST),
+                    "P(DEGRADED)": result.p(nid, Status.DEGRADED),
+                }
+            )
+    return rows
+
+
+def _sim_cells(rows: list[dict]) -> list[dict[str, str]]:
+    return [
+        {**r, "P(LOST)": f"{r['P(LOST)']:.4f}", "P(DEGRADED)": f"{r['P(DEGRADED)']:.4f}"} for r in rows
+    ]
+
+
+def simulation_to_csv(rows: list[dict]) -> str:
+    return _csv(SIM_COLUMNS, _sim_cells(rows))
+
+
+def simulation_to_markdown(rows: list[dict]) -> str:
+    cells = _sim_cells(rows)
+    lines = ["| " + " | ".join(SIM_COLUMNS) + " |", "|" + "|".join("---" for _ in SIM_COLUMNS) + "|"]
+    lines += ["| " + " | ".join(_cell(r[c]) for c in SIM_COLUMNS) + " |" for r in cells]
+    return "\n".join(lines) + "\n"
