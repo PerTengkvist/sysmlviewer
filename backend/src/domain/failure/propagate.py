@@ -18,6 +18,7 @@ from domain.failure.model import (
     Impact,
     ImpactGraph,
     Layer,
+    Status,
     status_of,
 )
 
@@ -290,3 +291,16 @@ def failure_flags(graph: ImpactGraph, failure: Failure) -> frozenset[str]:
     if failure.part_id in graph.nodes and len(common_cause_targets(graph, failure.part_id)) >= 2:
         return frozenset({"common_cause"})
     return frozenset()
+
+
+def affected_nodes(
+    graph: ImpactGraph, impacts: Mapping[str, Impact], layer: Layer
+) -> list[str]:
+    """Nodes of a layer that are not OK: LOST before DEGRADED, then by id."""
+    rank = {Status.LOST: 0, Status.DEGRADED: 1}
+    hit = [
+        nid
+        for nid, node in graph.nodes.items()
+        if node.layer is layer and impacts[nid].status in rank
+    ]
+    return sorted(hit, key=lambda nid: (rank[impacts[nid].status], nid))

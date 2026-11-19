@@ -49,6 +49,10 @@ def test_implementing_def_makes_descendants_physical():
     for pid in ("P::Phys::a", "P::Phys::b", "P::Phys::b::c"):
         assert _layer(g, pid) == Layer.PHYSICAL
     assert g.parent["P::Phys::b::c"] == "P::Phys::b"
+    # "The whole implements Log" is a roll-up, not an input: no part becomes a
+    # common cause of Log.
+    assert g.nodes["P::Log"].layer == Layer.LOGICAL
+    assert "P::Log" not in g.inputs
     assert "P::Phys" not in g.parent.values()
 
 

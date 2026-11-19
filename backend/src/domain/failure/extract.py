@@ -101,15 +101,18 @@ class _Extractor:
                 src, tgt = self._lift(rel.source_id), self._lift(rel.target_id)
                 if not src or not tgt:
                     continue
+                # A usage implements for itself and its descendants. A definition
+                # only makes its parts physical: "the whole implements X" is a
+                # roll-up, not an input, or every part would be a common cause of X.
                 if self._is_usage(src):
-                    descendants, sources = self._descendant_usages(src), [src]
+                    members, sources = [src, *self._descendant_usages(src)], [src]
                 elif self.sem[src].is_definition and self.sem[src].kind == ArtifactKind.PART:
-                    descendants = sources = self._descendant_usages(src)
+                    members, sources = self._descendant_usages(src), []
                 else:
                     continue
-                for pid in (*sources, *descendants):
+                for pid in members:
                     self.layers[pid] = Layer.PHYSICAL
-                if sources:
+                if members:
                     self._implemented[rel.id] = sources
                     self.layers.setdefault(tgt, Layer.LOGICAL)
             elif rel.kind == ArtifactKind.ALLOCATION:
