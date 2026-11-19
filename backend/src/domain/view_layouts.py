@@ -292,6 +292,9 @@ class ViewLayout:
     # AutoLayout dialog: which edges place nodes ({connections, bindings,
     # relations}); None when never chosen for this view.
     auto_layout_edge_kinds: dict[str, bool] | None = None
+    # Sequence diagrams: user-chosen lifeline order and header widths
+    # ({order?: [id], widths?: {id: px}}); None when never set.
+    sequence_layout: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
@@ -305,6 +308,8 @@ class ViewLayout:
             out["layoutScopes"] = [dict(s) for s in self.layout_scopes]
         if self.auto_layout_edge_kinds is not None:
             out["autoLayoutEdgeKinds"] = dict(self.auto_layout_edge_kinds)
+        if self.sequence_layout is not None:
+            out["sequenceLayout"] = _copy_sequence_layout(self.sequence_layout)
         return out
 
     @classmethod
@@ -342,6 +347,7 @@ class ViewLayout:
             auto_layout_edge_kinds=normalize_auto_layout_edge_kinds(
                 data.get("autoLayoutEdgeKinds")
             ),
+            sequence_layout=normalize_sequence_layout(data.get("sequenceLayout")),
         )
 
 
@@ -353,6 +359,39 @@ def normalize_auto_layout_edge_kinds(raw: Any) -> dict[str, bool] | None:
     if not isinstance(raw, dict):
         return None
     return {key: bool(raw.get(key, False)) for key in AUTO_LAYOUT_EDGE_KINDS}
+
+
+def normalize_sequence_layout(raw: Any) -> dict[str, Any] | None:
+    """`{order?: [id], widths?: {id: px}}`; invalid entries dropped, None if not a dict."""
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, Any] = {}
+    order = raw.get("order")
+    if isinstance(order, list):
+        seen: list[str] = []
+        for item in order:
+            if isinstance(item, str) and item and item not in seen:
+                seen.append(item)
+        out["order"] = seen
+    widths = raw.get("widths")
+    if isinstance(widths, dict):
+        clean: dict[str, float] = {}
+        for key, value in widths.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                continue
+            if isinstance(key, str) and key and value > 0:
+                clean[key] = float(value)
+        out["widths"] = clean
+    return out
+
+
+def _copy_sequence_layout(layout: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    if "order" in layout:
+        out["order"] = list(layout["order"])
+    if "widths" in layout:
+        out["widths"] = dict(layout["widths"])
+    return out
 
 
 def _normalize_view_filters(raw: Any) -> list[dict[str, Any]]:
@@ -735,6 +774,7 @@ def _copy_view_layout(
     view_filters: list[dict[str, Any]] | None = None,
     layout_scopes: list[dict[str, Any]] | None = None,
     auto_layout_edge_kinds: dict[str, bool] | None | object = ...,
+    sequence_layout: dict[str, Any] | None | object = ...,
 ) -> ViewLayout:
     """Rebuild ViewLayout while preserving fields not explicitly overridden."""
     override = view_layout.hierarchical_levels_override
@@ -743,6 +783,9 @@ def _copy_view_layout(
     edge_kinds = view_layout.auto_layout_edge_kinds
     if auto_layout_edge_kinds is not ...:
         edge_kinds = auto_layout_edge_kinds  # type: ignore[assignment]
+    seq_layout = view_layout.sequence_layout
+    if sequence_layout is not ...:
+        seq_layout = sequence_layout  # type: ignore[assignment]
     return ViewLayout(
         nodes=nodes if nodes is not None else dict(view_layout.nodes),
         edges=edges if edges is not None else dict(view_layout.edges),
@@ -758,6 +801,9 @@ def _copy_view_layout(
             else [dict(s) for s in view_layout.layout_scopes]
         ),
         auto_layout_edge_kinds=dict(edge_kinds) if edge_kinds is not None else None,
+        sequence_layout=(
+            _copy_sequence_layout(seq_layout) if seq_layout is not None else None
+        ),
     )
 
 
@@ -913,3 +959,18 @@ def apply_auto_layout_edge_kinds(
     )
     return ViewLayouts(by_view=by_view)
 
+
+
+def apply_sequence_layout(
+    layouts: ViewLayouts,
+    view_id: str,
+    raw: dict[str, Any] | None,
+) -> ViewLayouts:
+    """Replace per-view sequence layout (None clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        sequence_layout=normalize_sequence_layout(raw),
+    )
+    return ViewLayouts(by_view=by_view)

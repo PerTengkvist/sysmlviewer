@@ -73,6 +73,8 @@ class VisualizationPatch(BaseModel):
     layeredLayout: dict[str, Any] | None = None
     # AutoLayout dialog edge kinds {connections, bindings, relations}; null clears.
     autoLayoutEdgeKinds: dict[str, Any] | None = None
+    # Sequence diagrams {order?, widths?}; null clears.
+    sequenceLayout: dict[str, Any] | None = None
 
 
 class ViewSnapshotBody(BaseModel):

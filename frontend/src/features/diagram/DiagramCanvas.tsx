@@ -34,6 +34,7 @@ import type {
   PortSide,
   RoutingType,
   SemanticElement,
+  SequenceLayout,
   ViewPayload,
   ViewSnapshot,
   VisualizationEdge,
@@ -115,6 +116,13 @@ import {
 } from './modes/structure/buildStructureGraph'
 import { relativePositionFromFlow } from './nestedPartPosition'
 import { buildSequenceGraph } from './modes/sequence/buildSequenceGraph'
+import { relayoutSequenceNodes } from './modes/sequence/relayoutSequenceNodes'
+import {
+  LIFELINE_TOP,
+  layoutSequence,
+  minLifelineWidth,
+  orderAfterDrop,
+} from './modes/sequence/sequenceLayout'
 import { LifelineNode } from './modes/sequence/LifelineNode'
 import { MessageEdge } from './modes/sequence/MessageEdge'
 import { buildStateGraph } from './modes/state/buildStateGraph'
@@ -586,6 +594,8 @@ type Props = {
   onLayoutScopesChange?: (scopes: LayoutScope[]) => void
   /** Save the AutoLayout "Place by" choice with the view. */
   onAutoLayoutEdgeKindsChange?: (kinds: LayoutEdgeKinds) => void
+  /** Sequence diagrams: save the lifeline order / widths with the view (null resets). */
+  onSequenceLayoutChange?: (layout: SequenceLayout | null) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
   onPortsMoved?: (
@@ -652,6 +662,7 @@ export function DiagramCanvas({
   onNodesMoved,
   onLayoutScopesChange,
   onAutoLayoutEdgeKindsChange,
+  onSequenceLayoutChange,
   onPortMoved,
   onPortsMoved,
   onRelationEndMoved,
@@ -824,6 +835,10 @@ export function DiagramCanvas({
   onWaypointsMovedRef.current = onWaypointsMoved
   onLabelOffsetMovedRef.current = onLabelOffsetMoved
   onNodesMovedRef.current = onNodesMoved
+  const onSequenceLayoutChangeRef = useRef(onSequenceLayoutChange)
+  onSequenceLayoutChangeRef.current = onSequenceLayoutChange
+  // Lifeline order / widths currently on the canvas (saved with the view).
+  const sequenceLayoutRef = useRef<SequenceLayout | null>(null)
   trackLayoutWriteRef.current = trackLayoutWrite ?? ((work) => work)
   onClientErrorRef.current = onClientError
   onSelectArtifactRef.current = onSelectArtifact
@@ -839,6 +854,8 @@ export function DiagramCanvas({
   const boundaryDragRef = useRef<BoundaryDragSnapshot | null>(null)
 
   const mode: DiagramMode = view?.diagramMode || 'structure'
+  const modeRef = useRef(mode)
+  modeRef.current = mode
   const isStructure = mode === 'whitebox' || mode === 'structure'
   const syncRelationGeometry = isStructure || mode === 'useCase'
   const renderViewMode: ViewMode = captureLight ? 'light' : viewMode
@@ -1085,7 +1102,11 @@ export function DiagramCanvas({
     }
     const previousViewId = viewKeyRef.current?.split('|')[1]
     const geometry =
-      previousViewId && previousViewId === view.view.id && nodesRef.current.length
+      previousViewId &&
+      previousViewId === view.view.id &&
+      nodesRef.current.length &&
+      // Sequence lifelines are derived from order and widths, never kept.
+      view.diagramMode !== 'sequence'
         ? preserveExistingGeometry(
             built.nodes,
             built.edges,
@@ -1437,8 +1458,39 @@ export function DiagramCanvas({
     [isStructure],
   )
 
+  useEffect(() => {
+    sequenceLayoutRef.current = view?.sequenceLayout ?? null
+  }, [view?.view.id, view?.sequenceLayout])
+
+  /** Re-pack the lifelines with `layout`, show it and save it (null resets). */
+  const applySequenceLayout = useCallback((layout: SequenceLayout | null) => {
+    sequenceLayoutRef.current = layout
+    const { nodes: next } = relayoutSequenceNodes(
+      nodesRef.current,
+      edgesRef.current,
+      layout,
+    )
+    nodesRef.current = next
+    setNodes(next)
+    onSequenceLayoutChangeRef.current?.(layout)
+  }, [])
+
   const onNodesChange: OnNodesChange = useCallback(
-    (changes: NodeChange[]) => {
+    (rawChanges: NodeChange[]) => {
+      let changes = rawChanges
+      let sequenceResizeEnds: Extract<NodeChange, { type: 'dimensions' }>[] = []
+      if (mode === 'sequence') {
+        // Lifelines sit on one line: only horizontal moves are allowed.
+        changes = rawChanges.map((c) =>
+          c.type === 'position' && c.position
+            ? { ...c, position: { x: c.position.x, y: LIFELINE_TOP } }
+            : c,
+        )
+        sequenceResizeEnds = changes.filter(
+          (c): c is Extract<NodeChange, { type: 'dimensions' }> =>
+            c.type === 'dimensions' && c.resizing === false && !!c.dimensions,
+        )
+      }
       setNodes((nds) => {
         const applied = applyNodeChanges(changes, nds)
         const next = applyDimensionChangesToStyle(applied, changes)
@@ -1452,6 +1504,28 @@ export function DiagramCanvas({
         }
         return next
       })
+
+      if (mode === 'sequence') {
+        // Width is saved as part of the view's sequence layout, never as
+        // lifeline geometry; the lifelines are re-packed around it.
+        if (sequenceResizeEnds.length) {
+          const widths = { ...(sequenceLayoutRef.current?.widths ?? {}) }
+          for (const c of sequenceResizeEnds) {
+            const label = (
+              nodesRef.current.find((n) => n.id === c.id)?.data as
+                | { label?: string }
+                | undefined
+            )?.label
+            if (label === undefined) continue
+            widths[c.id] = Math.max(
+              minLifelineWidth(label),
+              Math.round(c.dimensions!.width),
+            )
+          }
+          applySequenceLayout({ ...(sequenceLayoutRef.current ?? {}), widths })
+        }
+        return
+      }
 
       const resized = changes.filter(
         (c): c is Extract<NodeChange, { type: 'dimensions' }> =>
@@ -1475,7 +1549,7 @@ export function DiagramCanvas({
       // Resizing moves the ports, so what is attached needs a new route too.
       rerouteAfterMove(live.filter((node) => patch[node.id]))
     },
-    [onNodesMoved, rerouteAfterMove],
+    [mode, onNodesMoved, rerouteAfterMove, applySequenceLayout],
   )
 
   const applyBoundaryEdgeDelta = useCallback((dx: number, dy: number) => {
@@ -1505,6 +1579,7 @@ export function DiagramCanvas({
     let timer: ReturnType<typeof setTimeout> | undefined
     const onKeyUp = (event: KeyboardEvent) => {
       if (!ARROW_KEYS.has(event.key)) return
+      if (modeRef.current === 'sequence') return
       if (!(event.target as Element | null)?.closest?.('.react-flow')) return
       clearTimeout(timer)
       timer = setTimeout(() => {
@@ -1563,6 +1638,31 @@ export function DiagramCanvas({
 
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, node, draggedNodes) => {
+      if (mode === 'sequence') {
+        // The drop position only decides the order; x is derived from it.
+        const lifelines = nodesRef.current.filter((n) => n.type === 'lifeline')
+        const centreOf = (n: Node) =>
+          n.position.x + (nodeExtentSize(n).width ?? 0) / 2
+        const current = layoutSequence(
+          lifelines.map((n) => ({
+            id: n.id,
+            name: (n.data as { label: string }).label,
+          })),
+          edgesRef.current.map((e) => ({
+            sourceId: e.source,
+            targetId: e.target,
+            label: String((e.data as { label?: string } | undefined)?.label ?? ''),
+          })),
+          sequenceLayoutRef.current,
+        ).order
+        const centres = Object.fromEntries(
+          lifelines.filter((n) => n.id !== node.id).map((n) => [n.id, centreOf(n)]),
+        )
+        const dropped = nodesRef.current.find((n) => n.id === node.id) ?? node
+        const order = orderAfterDrop(current, node.id, centreOf(dropped), centres)
+        applySequenceLayout({ ...(sequenceLayoutRef.current ?? {}), order })
+        return
+      }
       const dragged = draggedNodes.length ? draggedNodes : [node]
       const patch = buildDragStopPatch(dragged)
 
@@ -1599,7 +1699,7 @@ export function DiagramCanvas({
 
       onNodesMovedRef.current(patch, edgePatch)
     },
-    [applyBoundaryEdgeDelta, isStructure, rerouteAfterMove],
+    [applyBoundaryEdgeDelta, isStructure, rerouteAfterMove, mode, applySequenceLayout],
   )
 
   const onConnect: OnConnect = useCallback(
@@ -1617,6 +1717,12 @@ export function DiagramCanvas({
 
   const applyRedraw = useCallback(
     (direction: RedrawDirection) => {
+      if (mode === 'sequence') {
+        // Default order and widths: forget what the user chose.
+        applySequenceLayout(null)
+        setLayoutEpoch((n) => n + 1)
+        return
+      }
       setFlowDir(direction)
       const { positions } = layoutByDependency(nodes, edges, direction)
       const nextNodes = nodes.map((n) => {
@@ -1628,7 +1734,7 @@ export function DiagramCanvas({
       const nextEdges =
         mode === 'whitebox' || mode === 'structure'
           ? orientRelationBoundaryHandles(edges, nextNodes)
-          : mode === 'sequence' || mode === 'useCase'
+          : mode === 'useCase'
             ? edges
             : orientEdgeHandles(edges, direction, nextNodes)
 
@@ -1654,7 +1760,7 @@ export function DiagramCanvas({
       onNodesMovedRef.current(patch)
       setLayoutEpoch((n) => n + 1)
     },
-    [nodes, edges, mode],
+    [nodes, edges, mode, applySequenceLayout],
   )
 
   const currentViewBounds = useCallback(() => {

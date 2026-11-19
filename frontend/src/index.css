@@ -2290,6 +2290,15 @@ button.linkish {
   background: #c45c26;
 }
 
+.lifeline-resize-handle {
+  width: 8px !important;
+  height: 18px !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  border: 1.5px solid var(--accent) !important;
+  cursor: ew-resize;
+}
+
 .part-resize-line {
   border-color: var(--accent) !important;
 }

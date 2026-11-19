@@ -1462,6 +1462,7 @@ class ProjectService:
             ViewLayout,
             ViewLayouts,
             apply_auto_layout_edge_kinds,
+            apply_sequence_layout,
             apply_layout_scopes,
             apply_legacy_layout_rules,
             apply_view_filters,
@@ -1479,6 +1480,7 @@ class ProjectService:
         layout_scopes_patch = "layoutScopes" in patch
         legacy_layout_patch = "layoutRules" in patch or "layeredLayout" in patch
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
+        sequence_layout_patch = "sequenceLayout" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1540,6 +1542,13 @@ class ProjectService:
             if edge_kinds_patch:
                 working = apply_auto_layout_edge_kinds(
                     working, view_id, patch.get("autoLayoutEdgeKinds")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if sequence_layout_patch:
+                working = apply_sequence_layout(
+                    working, view_id, patch.get("sequenceLayout")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1619,6 +1628,7 @@ class ProjectService:
                 or layout_scopes_patch
                 or legacy_layout_patch
                 or edge_kinds_patch
+                or sequence_layout_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -2032,10 +2042,12 @@ class ProjectService:
         }
         artifact_ids -= hidden_relations
 
+        # Declaration order (not set order): sequence diagrams order lifelines
+        # and messages by it.
         semantic = {
-            aid: project.semantic[aid].to_dict()
-            for aid in artifact_ids
-            if aid in project.semantic
+            aid: el.to_dict()
+            for aid, el in project.semantic.items()
+            if aid in artifact_ids
         }
         performers: dict[str, list[str]] | None = None
         if diagram_mode == "actionFlow":
@@ -2259,6 +2271,11 @@ class ProjectService:
                 dict(layout_for_view.auto_layout_edge_kinds)
                 if layout_for_view
                 and layout_for_view.auto_layout_edge_kinds is not None
+                else None
+            ),
+            "sequenceLayout": (
+                layout_for_view.to_dict().get("sequenceLayout")
+                if layout_for_view
                 else None
             ),
             "semantic": semantic,

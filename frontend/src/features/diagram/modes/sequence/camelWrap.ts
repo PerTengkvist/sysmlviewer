@@ -9,7 +9,7 @@ export function camelCaseSegments(name: string): string[] {
 /** 0.75rem name, matching the lifeline header font (25% below 1rem). */
 const NAME_LINE_PX = 16
 const HEADER_CHROME_PX = 28
-const CHAR_PX = 7.2
+export const CHAR_PX = 7.2
 const MIN_HEADER_PX = 48
 
 /**
