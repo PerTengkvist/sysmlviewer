@@ -1,0 +1,376 @@
+{
+  "$defs": {
+    "Detection": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How the failure is detected.",
+          "title": "Method"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Detection score D, 1 (always found) to 10. Needed for --mode fmea.",
+          "title": "Score"
+        }
+      },
+      "title": "Detection",
+      "type": "object"
+    },
+    "FailureMode": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What fails, and how.",
+          "title": "Description"
+        },
+        "local_effect": {
+          "$ref": "#/$defs/LocalEffect",
+          "description": "The local effect of the mode on its item."
+        },
+        "mode_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Share (alpha) of the item's failures that has this mode. Needed for --mode fmeca.",
+          "title": "Mode Ratio"
+        },
+        "effect_probability": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability (beta) that the failure has the stated effect. Needed for --mode fmeca.",
+          "title": "Effect Probability"
+        },
+        "occurrence": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Occurrence score O, 1 to 10. Needed for --mode fmea, unless 'rate_fit' and 'mode_ratio' are given together with an 'occurrence_scale' in severity.yaml; an explicit value always wins.",
+          "title": "Occurrence"
+        },
+        "detection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Detection"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mitigation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Design or process measure against the mode.",
+          "title": "Mitigation"
+        },
+        "id": {
+          "description": "Mode id, unique within its item or SRU.",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "local_effect",
+        "id"
+      ],
+      "title": "FailureMode",
+      "type": "object"
+    },
+    "InstanceEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "part": {
+          "description": "Qualified name of a part usage (an LRU, or any part with its own data).",
+          "title": "Part",
+          "type": "string"
+        },
+        "rate_fit": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rate of the item, failure rate in FIT (failures per 1e9 h). Overrides the library. Needed for --mode fmeca.",
+          "title": "Rate Fit"
+        },
+        "failure_modes": {
+          "items": {
+            "$ref": "#/$defs/FailureMode"
+          },
+          "title": "Failure Modes",
+          "type": "array"
+        },
+        "srus": {
+          "description": "Sub-units that are not modelled in SysML.",
+          "items": {
+            "$ref": "#/$defs/Sru"
+          },
+          "title": "Srus",
+          "type": "array"
+        },
+        "overrides": {
+          "description": "Changes to library modes, by mode id, for this usage only.",
+          "items": {
+            "$ref": "#/$defs/ModeOverride"
+          },
+          "title": "Overrides",
+          "type": "array"
+        }
+      },
+      "required": [
+        "part"
+      ],
+      "title": "InstanceEntry",
+      "type": "object"
+    },
+    "LocalEffect": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "description": "What the failure does to the item. 'erroneous' is treated as loss and flagged.",
+          "enum": [
+            "loss",
+            "degraded",
+            "erroneous"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "fraction": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Remaining capability in (0, 1), required for 'degraded' and not allowed otherwise.",
+          "title": "Fraction"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "LocalEffect",
+      "type": "object"
+    },
+    "ModeOverride": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What fails, and how.",
+          "title": "Description"
+        },
+        "local_effect": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocalEffect"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mode_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Share (alpha) of the item's failures that has this mode. Needed for --mode fmeca.",
+          "title": "Mode Ratio"
+        },
+        "effect_probability": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Probability (beta) that the failure has the stated effect. Needed for --mode fmeca.",
+          "title": "Effect Probability"
+        },
+        "occurrence": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Occurrence score O, 1 to 10. Needed for --mode fmea, unless 'rate_fit' and 'mode_ratio' are given together with an 'occurrence_scale' in severity.yaml; an explicit value always wins.",
+          "title": "Occurrence"
+        },
+        "detection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Detection"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mitigation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Design or process measure against the mode.",
+          "title": "Mitigation"
+        },
+        "id": {
+          "description": "Id of the library mode to change.",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "ModeOverride",
+      "type": "object"
+    },
+    "Sru": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Name of the sub-unit (SRU) of the item.",
+          "title": "Id",
+          "type": "string"
+        },
+        "rate_fit": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rate of the SRU, failure rate in FIT (failures per 1e9 h). Needed for --mode fmeca.",
+          "title": "Rate Fit"
+        },
+        "failure_modes": {
+          "items": {
+            "$ref": "#/$defs/FailureMode"
+          },
+          "title": "Failure Modes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Sru",
+      "type": "object"
+    }
+  },
+  "items": {
+    "$ref": "#/$defs/InstanceEntry"
+  },
+  "type": "array"
+}

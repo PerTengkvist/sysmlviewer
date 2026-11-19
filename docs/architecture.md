@@ -122,6 +122,53 @@ A function dependency is a `dependency` between two functions with a metadata ke
 
 **Command line.** `--fail <name>:<kind>[:<fraction>][:<count>]` (repeatable) or `--spof` (every physical part lost in turn, one instance of a group), `--format text|markdown|json`. Names are resolved first with `NameResolver`, then as a suffix of whole segments (`.` counts as `::`); an ambiguous name lists its candidates and an unknown name suggests close matches (exit 2). Parser warnings stop the run (exit 1) unless `--allow-warnings` is given. The JSON output has `failures`, `nodes` (per id: `layer`, `capability`, `status`, `limitedBy`, `flags`, `chain`), `functions`, `useCases`, `requirements` (the ones that are not OK, LOST first) and `warnings`.
 
+### FMEA/FMECA (toolbox)
+
+`scripts/fmea.py` puts an FMEA or FMECA on top of the failure-impact engine. The rule of thumb: if a change alters how the system is built, it belongs in the SysML model; if it alters how it fails, it belongs in the FMEA data. Redundancy (`#Pool`, `#Redundant`, multiplicity, `required`) therefore stays in SysML, so a data file cannot quietly change the architecture. The data holds only the **local effect** of each failure mode (`loss`, `degraded` with a fraction, or `erroneous`), rates and scores. The **next higher effect** (logical parts, functions) and the **end effect** (use cases, requirements) are computed by `domain/failure`, so an architecture change recomputes the table.
+
+Code: `backend/src/domain/fmea/` (`schema` pydantic models, `model`, `load`, `severity`, `validate`, `analyze`, `export`, `simulate`) is domain code. It may use pydantic (decision B1) but not `adapters`, FastAPI, `json` or `yaml` (`tests/test_domain_purity.py`). Reading YAML and the line number of every key is `backend/src/adapters/fmea/yaml_source.py`. No API endpoint, no viewer change; the data is not read by the viewer.
+
+**Data** in `<project>/fmea/` (a different folder with `--fmea-dir`), each file starting with a `# yaml-language-server: $schema=...` comment that points at `docs/schemas/`:
+
+| File | Content |
+|---|---|
+| `library/<name>.yaml` | `part_def` (qualified name), `rate_fit` (lambda_p, FIT = failures per 1e9 h) and `failure_modes`. Applies to every part usage typed by that definition (`typeTargetId`). |
+| `instances.yaml` | A list of entries: `part` (qualified name of a usage), optional `rate_fit`, `failure_modes`, `srus` (sub-units that are not in SysML, each with its own `rate_fit` and modes) and `overrides` (change a library mode by `id` for this usage only). |
+| `severity.yaml` | `requirement_groups`, `status_factor`, `default_group_score`, `spof_severity_threshold`, `mission_time_h`, `occurrence_scale`, `severity_classes`, `probability_levels`. |
+
+A failure mode has `id` (`^[a-z][a-z0-9_]*$`), `local_effect`, `mode_ratio` (alpha), `effect_probability` (beta), `occurrence`, `detection {method, score}`, `description` and `mitigation`. Unknown keys are errors. The sum of the `mode_ratio` is checked per merged item or SRU, after library, instance entry and overrides are combined (not per YAML list): over 1 is the error `mode-ratio-sum`; below 1 is a note (`validate --notes`), because the rest of the failures may have no modelled effect.
+
+**Two modes.** Every field is optional in the schema; `--mode` decides what is required (`validate` without it checks `both`).
+
+| | FMEA (`--mode fmea`) | FMECA (`--mode fmeca`) |
+|---|---|---|
+| Per mode | `occurrence` (or lambda_m with an `occurrence_scale`) and `detection.score` | `mode_ratio`, `effect_probability` |
+| Per item or SRU | - | `rate_fit` |
+| `severity.yaml` | `requirement_groups`, `status_factor` | also `mission_time_h` |
+| Result | S, O, D, RPN = S*O*D | C_m = lambda_p * alpha * beta * t, C_r = sum of C_m per item, severity class and probability level |
+| Ranking | RPN falling, then item and mode id | class (I first), then C_m falling |
+
+- **S** (both modes): for every requirement that is at risk, `round_half_up(group_score * status_factor[status])`; S is the maximum, clamped to 1-10, and 1 when no requirement is at risk. The group of a requirement is its own `Type` attribute when that is a configured group, otherwise the best group reached upwards along `#refine` (`UserStory` is never a group). A requirement without a group gets `default_group_score`.
+- **O** is the explicit `occurrence`; without it, lambda_m = `rate_fit` * `mode_ratio` is looked up in `occurrence_scale` (ascending `{max_fit, score}`; above the last step 10).
+- **D** has no default: a mode without `detection.score` is an error in FMEA mode.
+- **Class and level** come from `severity_classes` (smallest S per class) and `probability_levels` (smallest C_m per level); the defaults are I for S 9-10, II 7-8, III 4-6, IV 1-3 and A >= 0.2, B >= 0.1, C >= 0.01, D >= 0.001, otherwise E.
+- **SPOF**: modes that alone make a function LOST and have `S >= spof_severity_threshold`.
+- **Flags** from the engine are kept per row (`common_cause`, `erroneous_as_loss`, `redundancy_exhausted`, `pool_at_minimum`). For a group usage a mode hits one instance; `Qty` is the number of instances and C_m is per instance.
+
+**Validation** (`validate`, also run first by `analyze` and `simulate`) fails when the data and the model have drifted apart: `unknown-part-def`, `unknown-part`, `not-a-part-def`, `not-a-part-usage`, `ambiguous-part`, `ambiguous-part-def`, `unknown-mode-id`, `duplicate-part` (two entries in `instances.yaml` for the same part; both places are reported), `mode-ratio-sum` and `missing-field` (per mode). A library whose `part_def` has no typed usage in the model is the warning `unused-library` (its modes apply to nothing, for example after the usages were retyped). A short but unique `part_def` or `part` is accepted with a `short-reference` warning; a short name that matches several definitions is `ambiguous-part-def` and lists the candidates. Each finding has the file, the line, the reference, close matches (difflib on the last name segment) and a fix. A short but unique `part` reference is a warning (`use the qualified name ...`). Severity groups that do not match the `Type` of any requirement, and the other way round, are warnings. `coverage` lists physical parts without failure modes, modes on parts that implement nothing, and requirements without a group.
+
+**Simulation** (`simulate`, needs FMECA data): for each trial, item instance and mode `T = -ln(1-u)/lambda_m` is drawn with a seeded `random.Random`; the first mode of an instance with `T <= t` strikes it (competing risks, SRU modes strike the LRU, erroneous counts as loss). All times are drawn before the comparison with `t`, so one seed gives the same sample for any `t`. The effect of a set of failures is computed by the trace engine and cached per set. The result is `P(LOST)` and `P(DEGRADED)` per function, use case and requirement. Beta is not used (decision B9); it only enters C_m.
+
+**Limits and risks.**
+
+- Competing risks count only the first failure of an instance. A degraded mode that strikes first hides a later loss of the same instance, so the loss probability is slightly underestimated when degraded modes are common.
+- C_m and C_r are per instance. For a group usage (`Qty` above 1) multiply by `Qty`; the FMECA markdown table says so in a note below the table, and the CSV keeps its fixed columns.
+- A requirement takes the group of its own `Type` when that is a configured group, and the search upwards stops there, even if the requirement refines one of a higher group. Without a configured own `Type` the highest group reached upwards along `#refine` counts. Mixing requirement levels in one refine chain is bad practice, so `validate` gives the warning `severity-downgrade` when a requirement's own group scores lower than the best group further up the chain. The message names the requirement, its `Type` and score, the ancestor with the highest group and its score, says that S follows the own `Type`, and asks whether the mix is intended (the model gives no line numbers, so the qualified id is used). The warning never changes S or the exit code; `analyze` prints it to stderr like other data warnings. The search upwards is cycle safe. The electric car gives none, since only the group requirements have a `Type`.
+
+**Tags.** Use cases and requirements in `End effect` (and `Requirements at risk` in the SPOF table) are labelled like the failure report, with the short name first: `UC007 Accelerate LOST`, `REQ-SAFE-02 BrakingDistance LOST`. They are sorted by tag, untagged elements after them by name. The label comes from `domain/failure/report.label`. `Next higher effect` (logical parts, functions) has no tags. In JSON every effect has `id`, `label`, `shortId` (null when untagged), `layer` and `status`, and a SPOF entry also lists `requirements` with the same fields.
+
+**Command line.** `validate [--mode fmea|fmeca|both] [--notes]`, `coverage`, `analyze [--mode fmea|fmeca] [--format markdown|csv|json] [--spof]`, `simulate [--trials N] [--seed S] [--mission-time H] [--format ...]` and `schema [--write] [--out DIR]` (writes the JSON Schemas; `tests` compare them with `docs/schemas/`). Exit codes: 0 ok, 1 drift or validation errors (nothing is analysed), 2 usage error. CSV has fixed columns and one row per failure mode: `Item, Qty, SRU, Function, Failure mode, Local effect, Next higher effect, End effect, S, Flags, Detection method`, then `O, D, RPN` (FMEA) or `Rate (FIT), Mode ratio, Effect probability, Mission time (h), Criticality, Severity class, Probability level` (FMECA). Lists in a cell are separated by `; `.
+
 ## Parser subset
 
 Supported textual constructs:

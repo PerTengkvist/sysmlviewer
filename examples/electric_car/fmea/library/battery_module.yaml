@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../../../../docs/schemas/fmea-library.schema.json
+part_def: PhysicalArchitecture::BatteryModule
+rate_fit: 500
+failure_modes:
+  - id: cell_short
+    description: Internal short circuit in a cell
+    local_effect: { kind: loss }
+    mode_ratio: 0.25
+    effect_probability: 1.0
+    occurrence: 5
+    detection: { method: BMS cell voltage monitoring, score: 3 }
+  - id: capacity_fade
+    description: Gradual loss of usable capacity
+    local_effect: { kind: degraded, fraction: 0.8 }
+    mode_ratio: 0.75
+    effect_probability: 1.0
+    occurrence: 6
+    detection: { method: BMS state-of-health estimate, score: 2 }

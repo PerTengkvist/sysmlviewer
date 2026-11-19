@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../../../docs/schemas/fmea-severity.schema.json
+requirement_groups: { Safety: 10, Security: 8, Performance: 6, Comfort: 3, Size: 2 }
+status_factor: { LOST: 1.0, DEGRADED: 0.6 }
+default_group_score: 1
+spof_severity_threshold: 8
+mission_time_h: 10000
+occurrence_scale:
+  - { max_fit: 1, score: 1 }
+  - { max_fit: 10, score: 2 }
+  - { max_fit: 50, score: 3 }
+  - { max_fit: 100, score: 4 }
+  - { max_fit: 200, score: 5 }
+  - { max_fit: 500, score: 6 }
+  - { max_fit: 1000, score: 7 }
+  - { max_fit: 5000, score: 8 }
+  - { max_fit: 10000, score: 9 }
+severity_classes:
+  - { min_severity: 9, label: I }
+  - { min_severity: 7, label: II }
+  - { min_severity: 4, label: III }
+  - { min_severity: 1, label: IV }
+probability_levels:
+  - { min_cm: 0.2, label: A }
+  - { min_cm: 0.1, label: B }
+  - { min_cm: 0.01, label: C }
+  - { min_cm: 0.001, label: D }
+  - { min_cm: 0.0, label: E }

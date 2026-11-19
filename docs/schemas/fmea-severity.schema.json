@@ -1,0 +1,177 @@
+{
+  "$defs": {
+    "ProbabilityLevel": {
+      "additionalProperties": false,
+      "properties": {
+        "min_cm": {
+          "description": "Lowest criticality C_m (inclusive) that gets this level.",
+          "minimum": 0,
+          "title": "Min Cm",
+          "type": "number"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "min_cm",
+        "label"
+      ],
+      "title": "ProbabilityLevel",
+      "type": "object"
+    },
+    "ScaleStep": {
+      "additionalProperties": false,
+      "properties": {
+        "max_fit": {
+          "description": "Upper limit of the step in FIT (inclusive).",
+          "minimum": 0,
+          "title": "Max Fit",
+          "type": "number"
+        },
+        "score": {
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Score",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_fit",
+        "score"
+      ],
+      "title": "ScaleStep",
+      "type": "object"
+    },
+    "SeverityClass": {
+      "additionalProperties": false,
+      "properties": {
+        "min_severity": {
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Min Severity",
+          "type": "integer"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "min_severity",
+        "label"
+      ],
+      "title": "SeverityClass",
+      "type": "object"
+    },
+    "StatusFactor": {
+      "additionalProperties": false,
+      "properties": {
+        "LOST": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Lost",
+          "type": "number"
+        },
+        "DEGRADED": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Degraded",
+          "type": "number"
+        }
+      },
+      "required": [
+        "LOST",
+        "DEGRADED"
+      ],
+      "title": "StatusFactor",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "requirement_groups": {
+      "additionalProperties": {
+        "maximum": 10,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "description": "Severity score 1-10 per requirement group (the 'Type' of a requirement). Needed in both modes.",
+      "title": "Requirement Groups",
+      "type": "object"
+    },
+    "status_factor": {
+      "$ref": "#/$defs/StatusFactor",
+      "description": "Factor per status, 'LOST' and 'DEGRADED', each in [0, 1]. Needed in both modes."
+    },
+    "default_group_score": {
+      "default": 1,
+      "description": "Score of a requirement without group.",
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Default Group Score",
+      "type": "integer"
+    },
+    "spof_severity_threshold": {
+      "default": 8,
+      "description": "Smallest S of a single point of failure.",
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Spof Severity Threshold",
+      "type": "integer"
+    },
+    "mission_time_h": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mission time t in hours. Needed for --mode fmeca.",
+      "title": "Mission Time H"
+    },
+    "occurrence_scale": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ScaleStep"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Occurrence O from the mode rate lambda_m = rate_fit * mode_ratio, for --mode fmea. Ascending steps; a rate above the last step gets 10.",
+      "title": "Occurrence Scale"
+    },
+    "severity_classes": {
+      "description": "Severity classes for --mode fmeca, from the most severe, by smallest S.",
+      "items": {
+        "$ref": "#/$defs/SeverityClass"
+      },
+      "title": "Severity Classes",
+      "type": "array"
+    },
+    "probability_levels": {
+      "description": "Probability levels for --mode fmeca, from the most probable, by smallest C_m.",
+      "items": {
+        "$ref": "#/$defs/ProbabilityLevel"
+      },
+      "title": "Probability Levels",
+      "type": "array"
+    }
+  },
+  "required": [
+    "requirement_groups",
+    "status_factor"
+  ],
+  "title": "SeverityConfig",
+  "type": "object"
+}
