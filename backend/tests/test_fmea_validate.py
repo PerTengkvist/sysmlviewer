@@ -21,14 +21,14 @@ def sources():
     return read_fmea_dir(CAR / "fmea")
 
 
-def run(sources, mode="both", extra=None, replace=None, edit=None):
+def run(sources, mode="both", extra=None, replace=None, edit=None, transform=None):
     data = copy.deepcopy(sources.data)
     if edit:
         edit(data)
-    semantic, resolver = parse_model(extra, replace)
+    semantic, resolver = parse_model(extra, replace, transform)
     fmea = load_fmea(FmeaSources(data, sources.lines), semantic, resolver)
     graph = build_impact_graph(semantic)
-    return fmea, validate(fmea, semantic, graph, mode), semantic, graph
+    return fmea, validate(fmea, semantic, mode), semantic, graph
 
 
 @pytest.mark.parametrize("mode", MODES)
@@ -60,10 +60,25 @@ def test_renamed_part_is_error(sources):
     assert f"{PA}::tractionMotor" in err[0].suggestions
 
 
+def _remove_infotainment(text: str) -> str:
+    """Delete the `part infotainmentEcu { ... }` block and every other line that names it."""
+    start = text.find("part infotainmentEcu {")
+    if start >= 0:
+        depth, i = 0, text.index("{", start)
+        while True:
+            depth += {"{": 1, "}": -1}.get(text[i], 0)
+            i += 1
+            if depth == 0:
+                break
+        text = text[:start] + text[i:]
+    return "\n".join(l for l in text.splitlines() if "infotainmentEcu" not in l)
+
+
 def test_removed_part_is_error(sources):
-    _, findings, _, _ = run(sources, replace={"infotainmentEcu": "zzqx"})
+    _, findings, _, _ = run(sources, transform=_remove_infotainment)
     err = [e for e in findings.errors if e.code == "unknown-part"]
     assert len(err) == 1 and err[0].path == "[2].part"
+    assert err[0].suggestions == ()
 
 
 def _short_motor(data):
@@ -80,8 +95,8 @@ def test_ambiguous_reference_is_error(sources):
 def test_short_unique_reference_warns(sources):
     _, findings, _, _ = run(sources, edit=_short_motor)
     assert findings.errors == []
-    assert [w.message for w in findings.warnings] == [
-        f"use the qualified name {PA}::electricMotor"
+    assert [(w.code, w.message) for w in findings.warnings] == [
+        ("short-reference", f"use the qualified name {PA}::electricMotor")
     ]
 
 
@@ -241,3 +256,95 @@ def test_coverage_requirements_without_group(sources):
     fmea, _, _, graph = run(sources, edit=edit)
     missing = coverage(fmea, semantic, graph).requirements_without_group
     assert "Requirements::Range" in missing
+
+
+def test_duplicate_part_is_error_with_both_places(sources):
+    def edit(data):
+        data["instances.yaml"].append(
+            {"part": "electricMotor", "failure_modes": [{"id": "bearing", "local_effect": {"kind": "loss"}}]}
+        )
+
+    _, findings, _, _ = run(sources, edit=edit)
+    dup = [e for e in findings.errors if e.code == "duplicate-part"]
+    assert sorted(e.path for e in dup) == ["[1].part", "[3].part"]
+    lines = {e.path: e.line for e in dup}
+    assert lines["[1].part"] == sources.lines[("instances.yaml", "[1].part")]
+    assert all(e.file == "instances.yaml" for e in dup)
+    other = next(e for e in dup if e.path == "[3].part")
+    assert f"instances.yaml:{lines['[1].part']}" in other.message
+
+
+def test_unused_library_warns(sources):
+    _, findings, _, _ = run(
+        sources,
+        replace={
+            "part def BatteryModule {": "part def BatteryModule;\n  part def BatteryModuleV2 {",
+            ": BatteryModule {": ": BatteryModuleV2 {",
+        },
+    )
+    assert findings.errors == []
+    assert [(w.code, w.ref) for w in findings.warnings] == [
+        ("unused-library", "PhysicalArchitecture::BatteryModule")
+    ]
+    assert findings.warnings[0].line == sources.lines[("library/battery_module.yaml", "part_def")]
+
+
+def test_ratio_sum_over_one_after_merge_is_error(sources):
+    def edit(data):
+        data["instances.yaml"].append(
+            {
+                "part": f"{PA}::batteryPack::modules",
+                "overrides": [{"id": "cell_short", "mode_ratio": 0.6}],
+                "failure_modes": [
+                    {"id": "swelling", "local_effect": {"kind": "loss"}, "mode_ratio": 0.5}
+                ],
+            }
+        )
+
+    _, findings, _, _ = run(sources, "fmeca", edit=edit)
+    err = [e for e in findings.errors if e.code == "mode-ratio-sum"]
+    assert len(err) == 1 and "sum to 1.85" in err[0].message
+    assert err[0].ref == f"{PA}::batteryPack::modules"
+
+
+def test_ratio_sum_below_one_is_a_note(sources):
+    fmea, findings, _, _ = run(sources)
+    assert findings.errors == [] and findings.warnings == []
+    assert f"{PA}::electricMotor: mode ratios sum to 0.8" in fmea.notes
+
+
+def test_short_part_def_unique_warns(sources):
+    def edit(data):
+        data["library/brake_circuit.yaml"]["part_def"] = "BrakeCircuit"
+
+    _, findings, _, _ = run(sources, edit=edit)
+    assert findings.errors == []
+    assert [(w.code, w.message) for w in findings.warnings] == [
+        ("short-reference", "use the qualified name PhysicalArchitecture::BrakeCircuit")
+    ]
+
+
+def test_short_part_def_matching_two_definitions(sources):
+    def edit(data):
+        data["library/battery_module.yaml"]["part_def"] = "BatteryModule"
+
+    _, findings, _, _ = run(
+        sources, extra="package Spare { part def BatteryModule; }", edit=edit
+    )
+    err = [e for e in findings.errors if e.code == "ambiguous-part-def"]
+    assert len(err) == 1
+    assert set(err[0].suggestions) == {"PhysicalArchitecture::BatteryModule", "Spare::BatteryModule"}
+    assert "use the qualified name" in err[0].message
+    assert "no part definition" not in err[0].message
+
+
+def test_unknown_mode_id_in_override(sources):
+    def edit(data):
+        data["instances.yaml"].append(
+            {"part": f"{PA}::batteryPack::modules", "overrides": [{"id": "cell_shor", "mode_ratio": 0.2}]}
+        )
+
+    _, findings, _, _ = run(sources, edit=edit)
+    err = [e for e in findings.errors if e.code == "unknown-mode-id"]
+    assert len(err) == 1 and err[0].path == "[3].overrides[0].id"
+    assert err[0].suggestions == ("cell_short",)

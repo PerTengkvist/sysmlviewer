@@ -134,7 +134,6 @@ def _mode(data, **changes):
         (lambda d: d.update(severity="high"), "severity"),
         (lambda d: _mode(d, id="Cell Short"), "id"),
         (lambda d: d["failure_modes"].append(dict(d["failure_modes"][0])), "failure_modes"),
-        (lambda d: _mode(d, mode_ratio=0.9), "failure_modes"),  # 0.9 + 0.75 > 1
     ],
 )
 def test_invalid_library(mutation, where):
@@ -142,24 +141,6 @@ def test_invalid_library(mutation, where):
         PartLibrary.model_validate(_mutate(BATTERY, mutation))
     locs = [".".join(str(p) for p in e["loc"]) for e in exc.value.errors()]
     assert any(where in loc or where in e["msg"] for loc, e in zip(locs, exc.value.errors())), locs
-
-
-def test_invalid_instance_ratio_sum_per_sru():
-    entry = {
-        "part": "P::V::x",
-        "srus": [
-            {
-                "id": "s",
-                "failure_modes": [
-                    {"id": "a", "local_effect": {"kind": "loss"}, "mode_ratio": 0.7},
-                    {"id": "b", "local_effect": {"kind": "loss"}, "mode_ratio": 0.7},
-                ],
-            }
-        ],
-    }
-    with pytest.raises(ValidationError) as exc:
-        InstanceEntry.model_validate(entry)
-    assert "mode ratios sum to 1.4" in str(exc.value)
 
 
 def test_invalid_severity_missing_lost():
@@ -187,14 +168,30 @@ def test_severity_defaults():
     ]
 
 
-def test_mode_ratio_sum_below_one_warns():
-    data = _mutate(BATTERY, lambda d: _mode(d, mode_ratio=0.05))
-    lib = PartLibrary.model_validate(data)
-    assert lib.warnings() == ["PhysicalArchitecture::BatteryModule: mode ratios sum to 0.8"]
+def test_ratio_sum_is_not_a_schema_matter():
+    """The sum is checked per merged item in load_fmea, not per YAML list."""
+    data = _mutate(BATTERY, lambda d: _mode(d, mode_ratio=0.9))
+    assert PartLibrary.model_validate(data).failure_modes[0].mode_ratio == 0.9
 
 
-def test_mode_ratio_sum_one_has_no_warning():
-    assert PartLibrary.model_validate(BATTERY).warnings() == []
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"requirement_groups": {"Safety": 0}},
+        {"requirement_groups": {"Safety": 11}},
+        {"status_factor": {"LOST": 1.0, "DEGRADED": 1.5}},
+        {"status_factor": {"LOST": -0.1, "DEGRADED": 0.5}},
+        {"status_factor": {"LOST": 1.0, "DEGRADED": 0.5, "OK": 0.0}},
+    ],
+)
+def test_invalid_severity_values(change):
+    with pytest.raises(ValidationError):
+        SeverityConfig.model_validate({**SEVERITY, **change})
+
+
+def test_status_factor_is_a_model():
+    cfg = SeverityConfig.model_validate(SEVERITY)
+    assert (cfg.status_factor.LOST, cfg.status_factor.DEGRADED) == (1.0, 0.6)
 
 
 SCHEMA_FILES = {

@@ -51,10 +51,12 @@ class Item:
 
 @dataclass(frozen=True)
 class Unresolved:
-    code: str  # unknown-part-def, not-a-part-def, ambiguous-part-def, unknown-part, ...
+    code: str  # unknown-part-def, unknown-part, duplicate-part, unused-library, mode-ratio-sum, ...
     loc: Loc
     ref: str
     suggestions: tuple[str, ...] = ()
+    other: Loc | None = None  # the other place involved (duplicate-part)
+    detail: str = ""
 
 
 @dataclass(frozen=True)

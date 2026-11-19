@@ -64,12 +64,37 @@
       ],
       "title": "SeverityClass",
       "type": "object"
+    },
+    "StatusFactor": {
+      "additionalProperties": false,
+      "properties": {
+        "LOST": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Lost",
+          "type": "number"
+        },
+        "DEGRADED": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Degraded",
+          "type": "number"
+        }
+      },
+      "required": [
+        "LOST",
+        "DEGRADED"
+      ],
+      "title": "StatusFactor",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
     "requirement_groups": {
       "additionalProperties": {
+        "maximum": 10,
+        "minimum": 1,
         "type": "integer"
       },
       "description": "Severity score 1-10 per requirement group (the 'Type' of a requirement). Needed in both modes.",
@@ -77,12 +102,8 @@
       "type": "object"
     },
     "status_factor": {
-      "additionalProperties": {
-        "type": "number"
-      },
-      "description": "Factor per status, 'LOST' and 'DEGRADED'. Needed in both modes.",
-      "title": "Status Factor",
-      "type": "object"
+      "$ref": "#/$defs/StatusFactor",
+      "description": "Factor per status, 'LOST' and 'DEGRADED', each in [0, 1]. Needed in both modes."
     },
     "default_group_score": {
       "default": 1,

@@ -10,6 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from domain.failure.model import Failure, FailureKind, Impact, ImpactGraph, Layer, Status
+from domain.failure.report import short_name
 from domain.failure.propagate import affected_nodes, chain, common_cause_targets, evaluate, failure_flags
 from domain.fmea.model import FmeaModel, ModeSpec, Unit
 from domain.fmea.severity import requirement_groups
@@ -104,8 +105,6 @@ def _effects(graph: ImpactGraph, impacts: Mapping[str, Impact], layers: Sequence
 
 
 def _item_name(graph: ImpactGraph, part_id: str) -> str:
-    from domain.failure.report import short_name
-
     if part_id in graph.nodes:
         return short_name(graph, part_id)
     return ".".join(part_id.split("::")[-2:])
@@ -125,8 +124,8 @@ def _functions_of(graph: ImpactGraph, part_id: str) -> tuple[str, ...]:
 
 def analyze(
     fmea: FmeaModel,
-    graph: ImpactGraph,
     semantic: Mapping[str, SemanticElement],
+    graph: ImpactGraph,
     mode: str,
 ) -> Analysis:
     if mode not in ("fmea", "fmeca"):
@@ -184,7 +183,7 @@ def _row(fmea, graph, groups, part_id, name, qty, unit: Unit, m: ModeSpec, failu
         if e.layer != Layer.REQUIREMENT.value:
             continue
         score = max((cfg.requirement_groups[g] for g in groups.get(e.id, ())), default=cfg.default_group_score)
-        value = round_half_up(score * cfg.status_factor[e.status.value])
+        value = round_half_up(score * getattr(cfg.status_factor, e.status.value))
         if value > best:
             best, target = value, e.id
     severity = min(10, max(1, best))

@@ -41,7 +41,7 @@ def build(sources, mode, replace=None, edit=None):
     semantic, resolver = parse_model(None, replace)
     fmea = load_fmea(FmeaSources(data, sources.lines), semantic, resolver)
     graph = build_impact_graph(semantic)
-    return analyze(fmea, graph, semantic, mode), fmea, graph
+    return analyze(fmea, semantic, graph, mode), fmea, graph
 
 
 @pytest.fixture(scope="module")
@@ -175,3 +175,87 @@ def test_analyze_requires_valid_mode_data(sources):
     with pytest.raises(FmeaValidationError) as exc:
         build(sources, "fmeca", edit=fmea_only)
     assert exc.value.findings.errors[0].code == "missing-field"
+
+
+# -- synthetic models: group choice and boundaries ---------------------------------
+
+def synth(requirements: str, mode: str = "fmea", edit=None, severity=None):
+    text = f"""package S {{
+      requirement def Comfort {{ attribute Type = "Comfort"; }}
+      requirement def Safety {{ attribute Type = "Safety"; }}
+      {requirements}
+      part def Phys {{ part a; }}
+      part def Log {{ part l; }}
+      #implements dependency from Phys::a to Log::l;
+    }}"""
+    from adapters.parser.subset_parser import SubsetSysmlParser
+    from domain.models import SysmlFile
+    from domain.name_resolution import ImportSpec, NameResolver
+
+    result = SubsetSysmlParser().parse_project([SysmlFile("m.sysml", "m.sysml", text, path="m.sysml")])
+    assert result.warnings == []
+    resolver = NameResolver(result.elements, [ImportSpec.from_dict(i) for i in result.imports])
+    sev = {
+        "requirement_groups": {"Safety": 10, "Comfort": 3},
+        "status_factor": {"LOST": 1.0, "DEGRADED": 0.6},
+        "mission_time_h": 10000,
+        **(severity or {}),
+    }
+    mode_data = {
+        "id": "dead", "local_effect": {"kind": "loss"}, "mode_ratio": 1.0, "effect_probability": 1.0,
+        "occurrence": 2, "detection": {"score": 2},
+    }
+    data = {
+        "severity.yaml": sev,
+        "instances.yaml": [{"part": "S::Phys::a", "rate_fit": 1000, "failure_modes": [mode_data]}],
+    }
+    if edit:
+        edit(data)
+    fmea = load_fmea(FmeaSources(data, {}), result.elements, resolver)
+    graph = build_impact_graph(result.elements)
+    return analyze(fmea, result.elements, graph, mode)
+
+
+def test_requirement_in_two_groups_takes_the_highest():
+    a = synth("requirement def R; #refine dependency from R to Comfort, Safety; satisfy R by Log::l;")
+    assert a.rows[0].severity == 10
+    b = synth("requirement def R; #refine dependency from R to Safety, Comfort; satisfy R by Log::l;")
+    assert b.rows[0].severity == 10
+
+
+def test_own_type_wins_and_stops_the_search_upwards():
+    # R is itself Comfort, although it refines Safety: its own Type counts.
+    a = synth(
+        'requirement def R { attribute Type = "Comfort"; } '
+        "#refine dependency from R to Safety; satisfy R by Log::l;"
+    )
+    assert a.rows[0].severity == 3
+
+
+def test_search_continues_through_a_requirement_without_group():
+    a = synth(
+        'requirement def Mid { attribute Type = "UserStory"; } requirement def R; '
+        "#refine dependency from R to Mid; #refine dependency from Mid to Safety; "
+        "satisfy R by Log::l;"
+    )
+    assert a.rows[0].severity == 10
+
+
+def test_probability_level_boundary_is_inclusive():
+    reqs = "requirement def R; #refine dependency from R to Safety; satisfy R by Log::l;"
+    c_m = synth(reqs, "fmeca").rows[0].c_m
+    levels = [{"min_cm": c_m, "label": "B"}, {"min_cm": 0.0, "label": "E"}]
+    assert synth(reqs, "fmeca", severity={"probability_levels": levels}).rows[0].probability_level == "B"
+    above = [{"min_cm": c_m * 1.001, "label": "B"}, {"min_cm": 0.0, "label": "E"}]
+    assert synth(reqs, "fmeca", severity={"probability_levels": above}).rows[0].probability_level == "E"
+
+
+def test_severity_class_boundary_is_inclusive():
+    reqs = "requirement def R; #refine dependency from R to Safety; satisfy R by Log::l;"
+    classes = [{"min_severity": 10, "label": "I"}, {"min_severity": 1, "label": "IV"}]
+    assert synth(reqs, "fmeca", severity={"severity_classes": classes}).rows[0].severity_class == "I"
+
+
+def test_spof_threshold_boundary_is_inclusive(fmea_a):
+    assert "winding_open" in {r.mode_id for r in spof_modes(fmea_a.rows, 10)}
+    assert "winding_open" not in {r.mode_id for r in spof_modes(fmea_a.rows, 11)}

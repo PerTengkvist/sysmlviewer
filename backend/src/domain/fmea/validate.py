@@ -19,10 +19,22 @@ _LONGER_FIX = "use a longer qualified name in {path} of {file}."
 _DRIFT = {
     "unknown-part-def": ("The model has no part definition '{ref}'.", _DEF_FIX),
     "not-a-part-def": ("'{ref}' is not a part definition in the model.", _DEF_FIX),
-    "ambiguous-part-def": ("'{ref}' matches several part definitions.", _LONGER_FIX),
+    "ambiguous-part-def": ("'{ref}' matches several part definitions; use the qualified name.", _LONGER_FIX),
     "unknown-part": ("The model has no part '{ref}'.", _PART_FIX),
     "not-a-part-usage": ("'{ref}' is not a part usage in the model.", _PART_FIX),
-    "ambiguous-part": ("'{ref}' matches several parts.", _LONGER_FIX),
+    "ambiguous-part": ("'{ref}' matches several parts; use the qualified name.", _LONGER_FIX),
+    "duplicate-part": (
+        "'{ref}' is also described at {other}.",
+        "keep one entry for the part in {file} and merge the failure modes into it.",
+    ),
+    "mode-ratio-sum": (
+        "The mode ratios of '{ref}' sum to {detail}, which is more than 1.",
+        "lower a 'mode_ratio' (or an override) in {file} so that one item or SRU sums to at most 1.",
+    ),
+    "unused-library": (
+        "No part usage in the model is typed by '{ref}', so its failure modes apply to nothing.",
+        "retype the parts that should use it to '{ref}', or update 'part_def' in {file}.",
+    ),
     "unknown-mode-id": (
         "The library has no failure mode '{ref}' to override.",
         "use the id of a mode of the library, in {path} of {file}.",
@@ -54,17 +66,27 @@ class FmeaValidationError(ValueError):
         self.findings = findings
 
 
+_WARNING_CODES = {"unused-library"}
+
+
 def reference_findings(fmea: FmeaModel) -> Findings:
     out = Findings()
+    seen: set[tuple[str, str, str]] = set()
     for u in fmea.unresolved:
         message, fix = _DRIFT[u.code]
-        out.errors.append(
-            Finding(
-                u.code, u.loc.file, u.loc.path, fmea.line(u.loc),
-                message.format(ref=u.ref), u.ref, u.suggestions,
-                fix.format(file="{file}", path=u.loc.path),
-            )
+        other = ""
+        if u.other is not None:
+            other = f"{u.other.file}:{fmea.line(u.other) or 1}"
+        finding = Finding(
+            u.code, u.loc.file, u.loc.path, fmea.line(u.loc),
+            message.format(ref=u.ref, other=other, detail=u.detail), u.ref, u.suggestions,
+            fix.format(file="{file}", path=u.loc.path, ref=u.ref),
         )
+        key = (u.code, u.loc.file, u.loc.path)
+        if key in seen:
+            continue
+        seen.add(key)
+        (out.warnings if u.code in _WARNING_CODES else out.errors).append(finding)
     for s in fmea.short_refs:
         out.warnings.append(
             Finding(
@@ -142,7 +164,6 @@ def group_findings(fmea: FmeaModel, semantic: Mapping[str, SemanticElement]) -> 
 def validate(
     fmea: FmeaModel,
     semantic: Mapping[str, SemanticElement],
-    graph: ImpactGraph,
     mode: str = "both",
 ) -> Findings:
     findings = reference_findings(fmea)

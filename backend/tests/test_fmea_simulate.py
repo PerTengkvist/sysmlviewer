@@ -1,8 +1,7 @@
 """Monte Carlo simulation against analytic cases (step 20).
 
-Tolerance: with N trials the estimate has sigma = sqrt(p(1-p)/N) <= 0.5/sqrt(N). For
-N = 20000 that is at most 0.0035, so 0.015 is more than four sigma (false alarm
-rate below 1e-4). With a fixed seed the outcome is also reproducible.
+Tolerance per case: 4 * sqrt(p(1-p)/N) with p the analytic probability, that is four
+sigma (false alarm rate about 6e-5). With a fixed seed the outcome is reproducible.
 """
 
 from __future__ import annotations
@@ -25,7 +24,13 @@ from domain.name_resolution import ImportSpec, NameResolver
 from test_fmea_cli import CAR, REPO, cli, run  # noqa: F401
 from test_fmea_load import parse_model
 
-TOL = 0.015
+N = 20000
+
+
+def tol(p: float, n: int = N) -> float:
+    return 4 * math.sqrt(p * (1 - p) / n)
+
+
 SEVERITY = {
     "requirement_groups": {"Safety": 10},
     "status_factor": {"LOST": 1.0, "DEGRADED": 0.6},
@@ -33,7 +38,7 @@ SEVERITY = {
 }
 
 
-def synthetic(structure: str, rate_fit: float):
+def synthetic(structure: str, rate_fit: float, ratio: float = 1.0, beta: float = 1.0):
     text = f"""package P {{
       part def U;
       part def Log {{ part l; }}
@@ -49,7 +54,7 @@ def synthetic(structure: str, rate_fit: float):
         "part_def": "P::U",
         "rate_fit": rate_fit,
         "failure_modes": [
-            {"id": "dead", "local_effect": {"kind": "loss"}, "mode_ratio": 1.0, "effect_probability": 1.0}
+            {"id": "dead", "local_effect": {"kind": "loss"}, "mode_ratio": ratio, "effect_probability": beta}
         ],
     }
     fmea = load_fmea(FmeaSources({"severity.yaml": SEVERITY, "library/u.yaml": library}, {}), result.elements, resolver)
@@ -75,14 +80,14 @@ def test_k_of_n_matches_analytic():
     expected = 1 - binom_at_least(3, 2, r)
     assert expected == pytest.approx(0.3426, abs=1e-3)
     res = simulate(fmea, graph, trials=20000, seed=1, mission_time_h=10000)
-    assert abs(res.p("P::F", Status.LOST) - expected) < TOL
+    assert abs(res.p("P::F", Status.LOST) - expected) < tol(expected)
 
 
 def test_one_of_two_matches_analytic():
     fmea, graph = synthetic("#Redundant part units[2] : U; attribute unitsRequired = 1;", 50000)
     expected = (1 - math.exp(-0.5)) ** 2
     res = simulate(fmea, graph, trials=20000, seed=1, mission_time_h=10000)
-    assert abs(res.p("P::F", Status.LOST) - expected) < TOL
+    assert abs(res.p("P::F", Status.LOST) - expected) < tol(expected)
 
 
 def test_pool_matches_analytic():
@@ -94,14 +99,35 @@ def test_pool_matches_analytic():
     degraded = binom_at_least(8, 6, r) - r**8
     assert lost == pytest.approx(0.0335, abs=1e-3) and degraded == pytest.approx(0.517, abs=1e-3)
     res = simulate(fmea, graph, trials=20000, seed=1, mission_time_h=10000)
-    assert abs(res.p("P::F", Status.LOST) - lost) < TOL
-    assert abs(res.p("P::F", Status.DEGRADED) - degraded) < TOL
+    assert abs(res.p("P::F", Status.LOST) - lost) < tol(lost)
+    assert abs(res.p("P::F", Status.DEGRADED) - degraded) < tol(degraded)
 
 
 def test_single_part_matches_analytic():
     fmea, graph = synthetic("part units : U;", 20000)
     res = simulate(fmea, graph, trials=20000, seed=1, mission_time_h=10000)
-    assert abs(res.p("P::F", Status.LOST) - (1 - math.exp(-0.2))) < TOL
+    expected = 1 - math.exp(-0.2)
+    assert abs(res.p("P::F", Status.LOST) - expected) < tol(expected)
+
+
+def test_mode_ratio_scales_the_rate():
+    """alpha 0.5 and 40000 FIT give lambda_m = 20000 FIT, lambda t = 0.2."""
+    fmea, graph = synthetic("part units : U;", 40000, ratio=0.5)
+    res = simulate(fmea, graph, trials=N, seed=1, mission_time_h=10000)
+    expected = 1 - math.exp(-0.2)
+    assert abs(res.p("P::F", Status.LOST) - expected) < tol(expected)
+    # ignoring alpha would give 1 - exp(-0.4) = 0.33, far outside the tolerance
+    assert abs(res.p("P::F", Status.LOST) - (1 - math.exp(-0.4))) > 0.05
+
+
+def test_effect_probability_is_not_used():
+    """Decision B9: beta enters C_m only, never the simulation."""
+    fmea, graph = synthetic("part units : U;", 20000, beta=0.5)
+    res = simulate(fmea, graph, trials=N, seed=1, mission_time_h=10000)
+    expected = 1 - math.exp(-0.2)
+    assert abs(res.p("P::F", Status.LOST) - expected) < tol(expected)
+    same = simulate(synthetic("part units : U;", 20000, beta=1.0)[0], graph, trials=N, seed=1, mission_time_h=10000)
+    assert res.counts == same.counts
 
 
 def test_longer_mission_never_lowers_loss():

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import difflib
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from pydantic import ValidationError
@@ -29,6 +29,7 @@ from domain.name_resolution import NameResolver
 
 SEVERITY_FILE = "severity.yaml"
 INSTANCES_FILE = "instances.yaml"
+RATIO_EPS = 1e-9
 
 
 @dataclass(frozen=True)
@@ -99,8 +100,6 @@ def _override(spec: ModeSpec, ov: ModeOverride) -> ModeSpec:
             changes["detection_score"] = ov.detection.score
         if ov.detection.method is not None:
             changes["detection_method"] = ov.detection.method
-    from dataclasses import replace
-
     return replace(spec, **changes)
 
 
@@ -141,10 +140,13 @@ def load_fmea(
     libraries: dict[str, tuple[str, PartLibrary]] = {}
     for file in sorted(f for f in sources.data if f.startswith("library/")):
         lib = _validated(sources, file, PartLibrary.model_validate)
-        model.notes += [f"{file}: {w.split(': ', 1)[1]}" for w in lib.warnings()]
         loc = Loc(file, "part_def")
         res = resolver.resolve_name(lib.part_def, None, "")
         found = semantic.get(res.element_id) if res.element_id else None
+        if found is None and not res.candidates:
+            found = _resolve_short_def(lib.part_def, defs, loc, model)
+            if found is False:
+                continue
         if found is None and res.candidates:
             model.unresolved.append(
                 Unresolved("ambiguous-part-def", loc, lib.part_def, tuple(sorted(c for c, _ in res.candidates)))
@@ -161,13 +163,18 @@ def load_fmea(
         parsed = _validated(sources, INSTANCES_FILE, instances_model().validate_python)
         for idx, entry in enumerate(parsed):
             loc = Loc(INSTANCES_FILE, f"[{idx}].part")
-            model.notes += [f"{INSTANCES_FILE}: {w}" for w in entry.warnings()]
             resolved = _resolve_part(entry.part, loc, semantic, resolver, usages, model)
             if resolved:
                 entries.append((idx, entry, resolved))
 
     by_part: dict[str, tuple[int, InstanceEntry]] = {}
     for idx, entry, pid in entries:
+        if pid in by_part:
+            first = by_part[pid][0]
+            here, there = Loc(INSTANCES_FILE, f"[{idx}].part"), Loc(INSTANCES_FILE, f"[{first}].part")
+            model.unresolved.append(Unresolved("duplicate-part", here, entry.part, other=there))
+            model.unresolved.append(Unresolved("duplicate-part", there, entry.part, other=here))
+            continue
         by_part[pid] = (idx, entry)
 
     items: dict[str, Item] = {}
@@ -217,7 +224,45 @@ def load_fmea(
                 )
         items[usage.id] = Item(usage.id, _qty(usage), tuple(units))
     model.items = sorted(items.values(), key=lambda i: order[i.part_id])
+    typed = {u.type_target_id for u in usages}
+    for def_id, (file, lib) in libraries.items():
+        if def_id not in typed:
+            model.unresolved.append(Unresolved("unused-library", Loc(file, "part_def"), lib.part_def))
+    _check_ratio_sums(model)
     return model
+
+
+def _check_ratio_sums(model: FmeaModel) -> None:
+    """Sum of the mode ratios per merged item or SRU: over 1 is an error, under 1 a note."""
+    seen: set[tuple[Loc, str]] = set()
+    for item in model.items:
+        for unit in item.units:
+            ratios = [m.mode_ratio for m in unit.modes if m.mode_ratio is not None]
+            if not ratios:
+                continue
+            total = sum(ratios)
+            label = f"{item.part_id}/{unit.sru}" if unit.sru else item.part_id
+            if total > 1 + RATIO_EPS:
+                if (unit.rate_loc, f"{total:g}") not in seen:
+                    seen.add((unit.rate_loc, f"{total:g}"))
+                    model.unresolved.append(
+                        Unresolved("mode-ratio-sum", unit.rate_loc, label, detail=f"{total:g}")
+                    )
+            elif total < 1 - RATIO_EPS and len(ratios) == len(unit.modes):
+                model.notes.append(f"{label}: mode ratios sum to {total:g}")
+
+
+def _resolve_short_def(ref: str, defs: list[SemanticElement], loc: Loc, model: FmeaModel):
+    """A part definition named by a suffix of whole segments. False = reported, None = unknown."""
+    segments = [s for s in ref.split("::") if s]
+    hits = sorted(d.id for d in defs if segments and d.id.split("::")[-len(segments):] == segments)
+    if len(hits) == 1:
+        model.short_refs.append(ShortRef(loc, ref, hits[0]))
+        return next(d for d in defs if d.id == hits[0])
+    if hits:
+        model.unresolved.append(Unresolved("ambiguous-part-def", loc, ref, tuple(hits)))
+        return False
+    return None
 
 
 def _resolve_part(
