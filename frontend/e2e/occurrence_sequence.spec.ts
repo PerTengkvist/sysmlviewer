@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
-import { exampleProjectFile, fitView, openProject } from './helpers/diagram'
+import { exampleProjectFile, fitView, openProject, openView } from './helpers/diagram'
 import {
   dragLifelineOver,
   lifelineOrder,
@@ -142,7 +142,7 @@ const FIXTURE = JSON.parse(
 
 test('electric car UnlockSequenceView after migration', async ({ page }) => {
   await openProject(page, exampleProjectFile('electric_car'))
-  await openView(page, UNLOCK_VIEW)
+  await openSequenceView(page, UNLOCK_VIEW, 7)
   const legacy = FIXTURE[UNLOCK]
   // The lifeline ids are the legacy ones, left to right in the default order.
   expect(legacy.defaultOrder).toHaveLength(7)
@@ -178,7 +178,7 @@ test('a sequenceLayout saved on lifeline ids applies', async ({ page, request })
       },
     })
     expect(res.ok(), await res.text()).toBeTruthy()
-    await openView(page, UNLOCK_VIEW)
+    await openSequenceView(page, UNLOCK_VIEW, 7)
     expect(await lifelineOrder(page)).toEqual(reversed)
   } finally {
     await resetSequenceLayout(request, id, UNLOCK_VIEW)
