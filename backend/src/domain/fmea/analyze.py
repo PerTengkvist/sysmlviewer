@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from domain.failure.model import Failure, FailureKind, Impact, ImpactGraph, Layer, Status
-from domain.failure.report import short_name
+from domain.failure.report import _tag_key, label, short_name
 from domain.failure.propagate import affected_nodes, chain, common_cause_targets, evaluate, failure_flags
 from domain.fmea.model import FmeaModel, ModeSpec, Unit
 from domain.fmea.severity import requirement_groups
@@ -26,6 +26,7 @@ class Effect:
     label: str
     layer: str  # Layer value
     status: Status
+    short_id: str | None = None
 
     @property
     def text(self) -> str:
@@ -95,12 +96,22 @@ def derived_occurrence(lambda_m: float, scale: Sequence) -> int:
 
 
 def _effects(graph: ImpactGraph, impacts: Mapping[str, Impact], layers: Sequence[Layer]) -> tuple[Effect, ...]:
+    """Affected nodes by layer. Use cases and requirements carry their tag (as in the failure
+    report) and are sorted by it; the other layers keep the engine's order."""
     out = []
     for layer in layers:
-        for nid in affected_nodes(graph, impacts, layer):
+        nodes = affected_nodes(graph, impacts, layer)
+        if layer in (Layer.USE_CASE, Layer.REQUIREMENT):
+            nodes = sorted(nodes, key=lambda n: _tag_key(graph, n))
+        for nid in nodes:
             node = graph.nodes[nid]
-            label = nid.split("::", 1)[1] if layer is Layer.USE_CASE and "::" in nid else node.name
-            out.append(Effect(nid, label, layer.value, impacts[nid].status))
+            tagged = layer in (Layer.USE_CASE, Layer.REQUIREMENT)
+            out.append(
+                Effect(
+                    nid, label(graph, nid) if tagged else node.name, layer.value,
+                    impacts[nid].status, node.short_id if tagged else None,
+                )
+            )
     return tuple(out)
 
 

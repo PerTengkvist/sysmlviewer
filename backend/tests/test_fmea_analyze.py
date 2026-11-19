@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import re
 
 import pytest
 
@@ -52,6 +53,10 @@ def fmea_a(sources):
 @pytest.fixture(scope="module")
 def fmeca_a(sources):
     return build(sources, "fmeca")[0]
+
+
+def next_higher_functions(r):
+    return [e for e in r.next_higher if e.layer == "function"]
 
 
 def row(analysis, mode_id):
@@ -121,6 +126,13 @@ def test_row_effect_columns(fmea_a):
     uc = [e for e in r.end_effect if e.layer == "useCase"]
     rq = [e for e in r.end_effect if e.layer == "requirement"]
     assert len(uc) == 9 and len(rq) == 8
+    # tagged like the failure report, sorted by tag
+    assert "REQ-SAFE-02 BrakingDistance LOST" in {e.text for e in rq}
+    assert re.fullmatch(r"UC\d{3} Accelerate LOST", next(e.text for e in uc if e.label.endswith("Accelerate")))
+    assert [e.label for e in uc] == sorted(e.label for e in uc)
+    assert [e.label for e in rq] == sorted(e.label for e in rq)
+    assert next(e for e in rq if e.label.endswith("BrakingDistance")).short_id == "REQ-SAFE-02"
+    assert next(e for e in next_higher_functions(r)).short_id is None
     assert r.chain[0].startswith("Requirements::") and r.chain[-1] == f"{PA}::driveEcu"
 
 
@@ -163,8 +175,8 @@ def test_architecture_change_recomputes(sources):
         sources, "fmea", replace={"#Indicate dependency from Lighting to Maneuvrability;": ""}
     )
     labels = lambda a: {e.label for e in row(a, "psu_dead").end_effect}
-    assert "NightVisibility" in labels(before)
-    assert "NightVisibility" not in labels(after)
+    assert "REQ-SAFE-07 NightVisibility" in labels(before)
+    assert "REQ-SAFE-07 NightVisibility" not in labels(after)
 
 
 def test_analyze_requires_valid_mode_data(sources):

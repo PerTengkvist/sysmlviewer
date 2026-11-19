@@ -99,7 +99,7 @@ def _spof_rows(analysis: Analysis, threshold: int) -> list[dict[str, str]]:
             "Failure mode": r.mode_id,
             "S": str(r.severity),
             "Lost functions": _join(_tail(f) for f in r.lost_functions),
-            "Requirements at risk": _join(_tail(q) for q in r.requirements_at_risk),
+            "Requirements at risk": _join(e.label for e in r.end_effect if e.layer == "requirement"),
         }
         for r in spof_modes(analysis.ranking, threshold)
     ]
@@ -119,6 +119,10 @@ def spof_to_json_list(analysis: Analysis, threshold: int) -> list[dict]:
             "item": f"{r.item_name}/{r.sru}" if r.sru else r.item_name,
             "itemId": r.item_id, "failureMode": r.mode_id, "severity": r.severity,
             "lostFunctions": list(r.lost_functions), "requirementsAtRisk": list(r.requirements_at_risk),
+            "requirements": [
+                {"id": e.id, "label": e.label, "shortId": e.short_id}
+                for e in r.end_effect if e.layer == "requirement"
+            ],
         }
         for r in spof_modes(analysis.ranking, threshold)
     ]
@@ -153,7 +157,10 @@ def to_json_dict(analysis: Analysis) -> dict:
     """The ranked rows as plain data; the caller serialises it."""
 
     def effects(items):
-        return [{"id": e.id, "layer": e.layer, "status": e.status.value} for e in items]
+        return [
+            {"id": e.id, "label": e.label, "shortId": e.short_id, "layer": e.layer, "status": e.status.value}
+            for e in items
+        ]
 
     return {
         "mode": analysis.mode,
