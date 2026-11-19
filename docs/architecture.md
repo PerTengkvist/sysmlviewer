@@ -43,9 +43,10 @@ Launchers: [`sysmlviewer.sh`](../sysmlviewer.sh) / [`sysmlviewer.bat`](../sysmlv
 ### SemanticElement
 
 - `id` — qualified name (`Package::Part::port`)
-- `kind` — `package` | `part` | `port` | `connection` | `view` | `attribute` | `interaction` | `lifeline` | `message` | `state` | `transition` | `action` | `succession`
+- `kind` — `package` | `part` | `port` | `connection` | `view` | `attribute` | `interaction` | `lifeline` | `message` | `occurrence` | `eventOccurrence` | `state` | `transition` | `action` | `succession`
 - `name`, `parentId`
 - `typeRef` (optional), `sourceId` / `targetId` for connections/messages/transitions/successions
+- `sourceEventId` / `targetEventId` — only on occurrence-form messages, and only when set: the event occurrence each end is drawn at (or `<lifeline>::<name>` when it does not resolve)
 - `exposeRef` — for view elements
 - `children` — child artifact ids
 - `fileId` — originating file
@@ -184,6 +185,12 @@ Supported textual constructs:
 - `attribute` / `attribute def`
 - `view name : GeneralView|SequenceView|StateTransitionView|ActionFlowView|TreeView { expose … }` is a diagram; `view def Name :> GeneralView { … }` defines a kind of view, and a usage typed by it takes its diagram type, `expose` and filters (`domain/view_usage.py`). A `view def` that no usage refers to is still shown as a diagram, with a warning.
 - `interaction def` / `lifeline` / `message … from … to …` / `then message …`
+- `occurrence def` / `occurrence u : S;` (kind `occurrence`) and `event occurrence e [: T];` (kind `eventOccurrence`, in a part def, a part or an occurrence part). A plain `event e;` is still skipped. Sequence diagrams can be written as an occurrence def, with the participants as part usages that messages refer to (`domain/occurrence.py`):
+  - Lifelines are not declared; they are the parts a message uses as an end. The forms are a typed instance (`part`/`ref part k : KeyFob;`), subsetting with a feature chain (`ref part k :> car.keyFob;`, stored with the target `Pkg::Car::keyFob`, the last real feature) or a qualified name, redefinition (`part a :>> partA;`, `part :>> d;`), type plus subsetting, and nested ends (`car.keyFob.pressed`). Targets after `:>`, `subsets`, `:>>` and `redefines` are read as feature chains everywhere; a chain written in an occurrence is kept as written in the relationship's `typeRef`. Parts of an occurrence copy nothing from their type.
+  - `[#Kw] [then] message [name] [of Type] from <end> to <end>;` — an end is `a`, `a.sent` or `car.keyFob.pressed`. Order is declaration order (`first … then …` is tolerated, not used). A named message has the id `<occ>::<name>` (anonymous: `<occ>::msgN`); `typeRef` / `typeTargetId` hold the payload type (any kind of definition). `sourceId` / `targetId` are the lifeline parts, the deepest part on the path; the event is found in the part, its type and generals, then through subsetting/redefinition targets. A feature a nested end passes through (`car.keyFob`) is created as `<occ>::car::keyFob` with a redefinition to the original (keyword `materialized`; the serializer leaves it out). What does not resolve is drawn on the part with a warning; a one-file parse stays quiet where another file may supply the type.
+  - Legacy `interaction def` / `lifeline` / `message payload from A to B` is unchanged.
+  - A one-file parse does not warn about a qualified type whose head the file does not declare, nor about any type when the file has an import; the project parse still does.
+  - Failure impact and FMEA ignore parts owned by an occurrence.
 - `state def` / nested `state` / `transition … from … to …`
 - `action def` / nested `action` / `succession … first … then …` / `first start; then a; then if g then b else c; then done;`
 - `abstract part def …` / `abstract action def …` (`isAbstract`, written only when true). `part def` sets `isDefinition` (also only when true), so an abstract definition shows «abstract part def» and an abstract usage «abstract part»; concrete parts keep «part».

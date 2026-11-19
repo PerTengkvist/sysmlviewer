@@ -10,6 +10,7 @@ from domain.failure.model import Failure, FailureKind, ImpactGraph, Layer, Statu
 from domain.failure.propagate import affected_nodes, evaluate, failure_flags
 from domain.models import ArtifactKind, SemanticElement
 from domain.name_resolution import NameResolver
+from domain.occurrence import in_occurrence
 
 
 class AmbiguousName(ValueError):
@@ -26,11 +27,13 @@ class UnknownName(ValueError):
         self.suggestions = suggestions
 
 
-def _is_candidate(el: SemanticElement) -> bool:
+def _is_candidate(el: SemanticElement, semantic: Mapping[str, SemanticElement]) -> bool:
+    """A part usage of the system. A part of an occurrence is a lifeline of a scenario."""
     return (
         el.kind == ArtifactKind.PART
         and not el.is_definition
         and "subject" not in (el.metadata_keywords or [])
+        and not in_occurrence(semantic, el.id)
     )
 
 
@@ -44,10 +47,10 @@ def resolve_failure_target(
     """
     res = resolver.resolve_feature_ref(ref, None, "")
     found = semantic.get(res.element_id) if res.element_id else None
-    if found is not None and _is_candidate(found):
+    if found is not None and _is_candidate(found, semantic):
         return found.id
     segments = [s for s in ref.replace(".", "::").split("::") if s]
-    candidates = {eid: el for eid, el in semantic.items() if _is_candidate(el)}
+    candidates = {eid: el for eid, el in semantic.items() if _is_candidate(el, semantic)}
     hits = sorted(
         eid for eid in candidates if segments and eid.split("::")[-len(segments):] == segments
     )

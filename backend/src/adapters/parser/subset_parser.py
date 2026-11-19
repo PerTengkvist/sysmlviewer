@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 
 from domain.models import ArtifactKind, SemanticElement
 from domain.name_resolution import ImportSpec, NameResolver, is_perform_stub
+from domain.occurrence import MATERIALIZED, FeatureIndex, in_occurrence, resolve_message_end
 from domain.perform import ref_leaf, resolve_perform_target
 from domain.type_resolution import specialized_def_ids
 from domain.expose import MEMBER as EXPOSE_MEMBER
@@ -103,6 +104,23 @@ class _PendingRef:
     resolved_id: str | None = None  # set by _link_references (None = unresolved)
     ambiguous: bool = False
     skipped: bool = False  # the element belongs to another file: not ours to write
+
+
+@dataclass
+class _PendingMessageEnd:
+    """An end of an occurrence-form message, resolved once every file is parsed."""
+
+    message_id: str
+    role: str  # "source" | "target"
+    path: str  # as written: `a`, `a.sent`, `car.keyFob.pressed`
+    occurrence_id: str
+    file_id: str
+    line: int
+
+
+def _ref_name(ref: str) -> str:
+    """A reference as part of a relationship's name: no `::` or `.`."""
+    return ref.replace("::", "_").replace(".", "_")
 
 
 def _legacy_ref(ref: str, scope: str | None) -> str:
@@ -217,6 +235,8 @@ class _ParserState:
     pending_refs: list[_PendingRef] = field(default_factory=list)
     # (file id, text) of warnings produced while linking references.
     ref_warnings: list[tuple[str, str]] = field(default_factory=list)
+    # Ends of occurrence-form messages, resolved by `_link_message_ends`.
+    pending_message_ends: list[_PendingMessageEnd] = field(default_factory=list)
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -296,6 +316,7 @@ class SubsetSysmlParser:
         all_imports: list[_ImportDecl] = []
         pending_exposes: list[tuple[str, str, str, str | None]] = []
         pending_refs: list[_PendingRef] = []
+        pending_message_ends: list[_PendingMessageEnd] = []
         perform_lines: dict[str, int] = {}
         element_lines: dict[str, int] = {}
         file_warnings: dict[str, list[str]] = {}
@@ -311,6 +332,7 @@ class SubsetSysmlParser:
             all_imports.extend(state.imports)
             pending_exposes.extend(state.pending_exposes)
             pending_refs.extend(state.pending_refs)
+            pending_message_ends.extend(state.pending_message_ends)
             perform_lines.update(state.perform_lines)
             element_lines.update(state.element_lines)
             for eid, element in state.elements.items():
@@ -324,7 +346,9 @@ class SubsetSysmlParser:
         link_state.perform_lines = perform_lines
         link_state.element_lines = element_lines
         link_state.pending_refs = pending_refs
+        link_state.pending_message_ends = pending_message_ends
         self._link_references(link_state)
+        self._link_occurrences(link_state)
         for fid, text in link_state.ref_warnings:
             warnings.append(text)
             file_warnings.setdefault(fid, []).append(text)
@@ -691,6 +715,7 @@ class SubsetSysmlParser:
             counter_attr: str,
             default_prefix: str,
             metadata_keywords: list[str] | None = None,
+            written_ref: str | None = None,
         ) -> None:
             local = kind in _LOCAL_RELATION_KINDS
             scope = state.current_parent()
@@ -717,6 +742,9 @@ class SubsetSysmlParser:
                 file_id=file_id,
                 metadata_keywords=list(metadata_keywords or []),
             )
+            # A feature chain (`car.keyFob`) is kept as written, for the serializer.
+            if written_ref and "." in written_ref:
+                el.type_ref = written_ref
             state.add_child(el.parent_id, element_id)
             state.elements[element_id] = el
             label = _RELATION_LABELS[kind]
@@ -750,6 +778,79 @@ class SubsetSysmlParser:
                 )
             return False
 
+        def parse_occurrence_message(
+            line: int, metadata_keywords: list[str]
+        ) -> None:
+            """`[name] [of Type] from <end> to <end>;` in an occurrence def.
+
+            The ends are resolved after parsing (`_link_message_ends`); until
+            then they point at the head part of each path.
+            """
+            occurrence_id = state.current_parent()
+            assert occurrence_id is not None
+            declared: str | None = None
+            if peek() and peek().kind == "ident" and peek().value not in {"from", "of"}:
+                declared = expect_ident()
+            type_ref: str | None = None
+            if peek() and peek().kind == "ident" and peek().value == "of":
+                take()
+                type_ref = expect_qualified_name()
+            if not (peek() and peek().value == "from"):
+                state.warnings.append(f"line {line}: message expected 'from'")
+                skip_until_semicolon_or_brace()
+                return
+            take()  # from
+            source_path = read_endpoint()
+            if not (peek() and peek().value == "to"):
+                state.warnings.append(f"line {line}: message expected 'to'")
+                skip_until_semicolon_or_brace()
+                return
+            take()  # to
+            target_path = read_endpoint()
+            if peek() and peek().value == ";":
+                take()
+            if declared:
+                name = declared
+                element_id = state.qualify(name)
+                if element_id in state.elements:
+                    state.warnings.append(
+                        f"line {line}: message name '{name}' already names a "
+                        f"member of '{occurrence_id}'"
+                    )
+                    element_id = _free_id([element_id], state.elements)
+            else:
+                name = state.next_anon_name("msg")
+                element_id = state.qualify(name)
+
+            def head(path: str | None) -> str | None:
+                return f"{occurrence_id}::{path.split('.')[0]}" if path else None
+
+            el = SemanticElement(
+                id=element_id,
+                kind=ArtifactKind.MESSAGE,
+                name=name,
+                parent_id=occurrence_id,
+                type_ref=type_ref,
+                source_id=head(source_path),
+                target_id=head(target_path),
+                file_id=file_id,
+                metadata_keywords=list(metadata_keywords),
+            )
+            state.add_child(occurrence_id, element_id)
+            state.elements[element_id] = el
+            for role, path in (("source", source_path), ("target", target_path)):
+                if path:
+                    state.pending_message_ends.append(
+                        _PendingMessageEnd(
+                            message_id=element_id,
+                            role=role,
+                            path=path,
+                            occurrence_id=occurrence_id,
+                            file_id=file_id,
+                            line=line,
+                        )
+                    )
+
         def parse_message_statement(
             line: int, metadata_keywords: list[str]
         ) -> None:
@@ -757,6 +858,12 @@ class SubsetSysmlParser:
 
             Shared by `message …`, `then message …` and `#reply message …`.
             """
+            scope_el = next(
+                (sc for sc in reversed(state.scopes) if sc.element_id), None
+            )
+            if scope_el is not None and scope_el.kind == ArtifactKind.OCCURRENCE:
+                parse_occurrence_message(line, metadata_keywords)
+                return
             payload_parts: list[str] = []
             if peek() and peek().kind == "ident" and peek().value != "from":
                 payload_parts.append(expect_ident() or "")
@@ -1025,7 +1132,14 @@ class SubsetSysmlParser:
                     take()
                     is_def = True
                 name = expect_ident()
-                if not name:
+                # `part :>> wheels;` — the redefining feature takes the name of its target.
+                unnamed_redefinition = (
+                    not name
+                    and not is_def
+                    and peek() is not None
+                    and peek().value in {":>>", "redefines"}
+                )
+                if not name and not unnamed_redefinition:
                     pending_metadata_keywords = []
                     state.warnings.append(f"line {tok.line}: part without name")
                     skip_until_semicolon_or_brace()
@@ -1041,7 +1155,11 @@ class SubsetSysmlParser:
                         is_specialization = True
                     if peek() and peek().value == "~":
                         take()
-                    type_ref = expect_qualified_name()
+                    # `part x :> a.b` subsets a feature chain; a def's `:> T` is a type.
+                    if op == ":>" and not is_def:
+                        type_ref = expect_feature_ref()
+                    else:
+                        type_ref = expect_qualified_name()
                 if multiplicity is None:
                     multiplicity = read_multiplicity()
                 subset_target: str | None = None
@@ -1054,16 +1172,27 @@ class SubsetSysmlParser:
                     and peek().value == ":>"
                 ):
                     take()
-                    subset_target = expect_qualified_name()
+                    subset_target = expect_feature_ref()
                 if peek() and peek().value == "subsets":
                     take()
-                    subset_target = expect_qualified_name()
+                    subset_target = expect_feature_ref()
                 elif peek() and peek().value == "redefines":
                     take()
-                    redefine_target = expect_qualified_name()
+                    redefine_target = expect_feature_ref()
                 elif peek() and peek().value == ":>>":
                     take()
-                    redefine_target = expect_qualified_name()
+                    redefine_target = expect_feature_ref()
+                if unnamed_redefinition:
+                    name = (
+                        re.split(r"::|\.", redefine_target)[-1]
+                        if redefine_target
+                        else None
+                    )
+                    if not name:
+                        pending_metadata_keywords = []
+                        state.warnings.append(f"line {tok.line}: part without name")
+                        skip_until_semicolon_or_brace()
+                        continue
                 element_id = state.qualify(name)
                 # Bare `part x :> Other` on usage → subsetting (not specialization)
                 if (not is_def) and is_specialization and type_ref and not subset_target:
@@ -1103,9 +1232,10 @@ class SubsetSysmlParser:
                         name,
                         subset_target,
                         tok.line,
-                        name=f"{name}_subsets_{subset_target.replace('::', '_')}",
+                        name=f"{name}_subsets_{_ref_name(subset_target)}",
                         counter_attr="anon_dependency",
                         default_prefix="subset",
+                        written_ref=subset_target,
                     )
                 if redefine_target:
                     add_relationship(
@@ -1113,9 +1243,10 @@ class SubsetSysmlParser:
                         name,
                         redefine_target,
                         tok.line,
-                        name=f"{name}_redefines_{redefine_target.replace('::', '_')}",
+                        name=f"{name}_redefines_{_ref_name(redefine_target)}",
                         counter_attr="anon_dependency",
                         default_prefix="redef",
+                        written_ref=redefine_target,
                     )
                 nxt = peek()
                 if nxt and nxt.value == "{":
@@ -1384,6 +1515,111 @@ class SubsetSysmlParser:
                     state.scopes.append(
                         _Scope(element_id=element_id, kind=ArtifactKind.VIEW, brace_depth=1)
                     )
+                continue
+
+            if tok.kind == "ident" and tok.value == "occurrence":
+                take()
+                is_def = False
+                if peek() and peek().value == "def":
+                    take()
+                    is_def = True
+                name = expect_ident()
+                if not name:
+                    state.warnings.append(f"line {tok.line}: occurrence without name")
+                    skip_until_semicolon_or_brace()
+                    continue
+                type_ref = None
+                general_op = None
+                if peek() and peek().value in {":", ":>"}:
+                    general_op = peek().value
+                    take()
+                    type_ref = expect_qualified_name()
+                element_id = state.qualify(name)
+                specialization = bool(is_def and general_op == ":>" and type_ref)
+                subsetting = bool(not is_def and general_op == ":>" and type_ref)
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.OCCURRENCE,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref if not subsetting else None,
+                    file_id=file_id,
+                    is_definition=is_def,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                if specialization or subsetting:
+                    assert type_ref is not None
+                    add_relationship(
+                        ArtifactKind.SPECIALIZATION
+                        if specialization
+                        else ArtifactKind.SUBSETTING,
+                        name,
+                        type_ref,
+                        tok.line,
+                        name=(
+                            f"{name}_{'specializes' if specialization else 'subsets'}_"
+                            f"{_ref_name(type_ref)}"
+                        ),
+                        counter_attr="anon_dependency",
+                        default_prefix="spec" if specialization else "subset",
+                    )
+                if peek() and peek().value == "{":
+                    take()
+                    state.scopes.append(
+                        _Scope(
+                            element_id=element_id,
+                            kind=ArtifactKind.OCCURRENCE,
+                            brace_depth=1,
+                        )
+                    )
+                elif peek() and peek().value == ";":
+                    take()
+                continue
+
+            # `event occurrence name [: T] { … } | ;` — a plain `event e;` is still skipped.
+            if (
+                tok.kind == "ident"
+                and tok.value == "event"
+                and peek(1)
+                and peek(1).kind == "ident"
+                and peek(1).value == "occurrence"
+            ):
+                take()
+                take()
+                name = expect_ident()
+                if not name:
+                    state.warnings.append(
+                        f"line {tok.line}: event occurrence without name"
+                    )
+                    skip_until_semicolon_or_brace()
+                    continue
+                type_ref = None
+                if peek() and peek().value == ":":
+                    take()
+                    type_ref = expect_qualified_name()
+                element_id = state.qualify(name)
+                el = SemanticElement(
+                    id=element_id,
+                    kind=ArtifactKind.EVENT_OCCURRENCE,
+                    name=name,
+                    parent_id=state.current_parent(),
+                    type_ref=type_ref,
+                    file_id=file_id,
+                )
+                state.add_child(el.parent_id, element_id)
+                state.elements[element_id] = el
+                if peek() and peek().value == "{":
+                    take()
+                    state.scopes.append(
+                        _Scope(
+                            element_id=element_id,
+                            kind=ArtifactKind.EVENT_OCCURRENCE,
+                            brace_depth=1,
+                        )
+                    )
+                elif peek() and peek().value == ";":
+                    take()
                 continue
 
             if tok.kind == "ident" and tok.value == "interaction":
@@ -2501,7 +2737,6 @@ class SubsetSysmlParser:
                     "private",
                     "public",
                     "alias",
-                    "occurrence",
                     "calc",
                     "assert",
                     "render",
@@ -2521,11 +2756,143 @@ class SubsetSysmlParser:
         if not state.defer_link:
             self._link_references(state)
             state.warnings.extend(text for _, text in state.ref_warnings)
+            seen_warnings = len(state.ref_warnings)
+            self._link_occurrences(state)
+            state.warnings.extend(
+                text for _, text in state.ref_warnings[seen_warnings:]
+            )
             self._inherit_features_onto_usages(state)
             state.warnings.extend(text for _, text in state.type_warnings)
             self._warn_unresolved_type_refs(state)
             self._link_performs(state)
         return state
+
+    @staticmethod
+    def _resolver(state: _ParserState) -> NameResolver:
+        return NameResolver(
+            state.elements,
+            [
+                ImportSpec(
+                    owner_id=imp.owner_id,
+                    file_id=imp.file_id,
+                    path=imp.path,
+                    visibility=imp.visibility,
+                    line=imp.line,
+                )
+                for imp in state.imports
+            ],
+        )
+
+    def _link_occurrences(self, state: _ParserState) -> None:
+        """Link what an occurrence def says: feature chains, message ends and types.
+
+        Runs after `_link_references` and before inheritance, which skips the
+        parts of an occurrence. A model without an occurrence def is untouched.
+        """
+        elements = state.elements
+        if not any(el.kind == ArtifactKind.OCCURRENCE for el in elements.values()):
+            return
+        resolver = self._resolver(state)
+        # Feature lookups follow types, so resolve those first (inheritance
+        # resolves them again for everything it copies).
+        for el in list(elements.values()):
+            if el.kind == ArtifactKind.PART and el.type_ref and not el.type_target_id:
+                type_def, _ = resolver.resolve_type_def(el)
+                el.type_target_id = type_def.id if type_def else None
+        index = FeatureIndex(elements)
+        # `ref part keyFob :> car.keyFob;` points at the last real feature
+        # (`Pkg::Car::keyFob`), not at a copy of it under `car`.
+        for el in list(elements.values()):
+            if (
+                el.kind in (ArtifactKind.SUBSETTING, ArtifactKind.REDEFINITION)
+                and el.type_ref
+                and "." in el.type_ref
+                and el.target_id not in elements
+                and in_occurrence(elements, el.id)
+            ):
+                end = index.chain_end(
+                    resolver, el.type_ref, el.parent_id, el.file_id or state.file_id
+                )
+                if end is not None:
+                    el.target_id = end
+        for pending in state.pending_message_ends:
+            msg = elements.get(pending.message_id)
+            if msg is None or msg.file_id != pending.file_id:
+                continue
+            end = resolve_message_end(
+                elements,
+                pending.occurrence_id,
+                pending.path,
+                message_name=msg.name,
+                quiet_if_foreign=not state.is_project,
+                index=index,
+            )
+            for new_id, original_id in end.materialize:
+                self._materialize_feature(state, index, new_id, original_id, msg.file_id)
+            if pending.role == "source":
+                msg.source_id, msg.source_event_id = end.part_id, end.event_id
+            else:
+                msg.target_id, msg.target_event_id = end.part_id, end.event_id
+            if end.warning:
+                state.ref_warnings.append(
+                    (pending.file_id, f"line {pending.line}: {end.warning}")
+                )
+        # Payload (`of T`) and event types may be any kind of definition.
+        for el in elements.values():
+            if not el.type_ref or el.type_target_id:
+                continue
+            if el.kind == ArtifactKind.EVENT_OCCURRENCE or (
+                el.kind == ArtifactKind.MESSAGE and in_occurrence(elements, el.id)
+            ):
+                res = resolver.resolve_name(
+                    el.type_ref, el.parent_id, el.file_id or state.file_id
+                )
+                if res.element_id in elements:
+                    el.type_target_id = res.element_id
+
+    @staticmethod
+    def _materialize_feature(
+        state: _ParserState,
+        index: FeatureIndex,
+        new_id: str,
+        original_id: str,
+        file_id: str | None,
+    ) -> None:
+        """Create `<part>::<feature>` for a feature a message end passes through.
+
+        It stands for the original feature in this instance, so it carries the
+        original's type and a redefinition back to it.
+        """
+        original = state.elements[original_id]
+        parent_id, name = new_id.rsplit("::", 1)
+        part = SemanticElement(
+            id=new_id,
+            kind=ArtifactKind.PART,
+            name=name,
+            parent_id=parent_id,
+            type_ref=original.type_ref,
+            type_target_id=original.type_target_id,
+            is_reference=original.is_reference,
+            multiplicity=original.multiplicity,
+            file_id=file_id,
+        )
+        state.elements[new_id] = part
+        state.add_child(parent_id, new_id)
+        rel_name = f"{name}_redefines_{_ref_name(original_id)}"
+        rel = SemanticElement(
+            id=f"{parent_id}::{rel_name}",
+            kind=ArtifactKind.REDEFINITION,
+            name=rel_name,
+            parent_id=parent_id,
+            source_id=new_id,
+            target_id=original_id,
+            file_id=file_id,
+            # Marks the part as made by the parser: the serializer leaves it out.
+            metadata_keywords=[MATERIALIZED],
+        )
+        state.elements[rel.id] = rel
+        state.add_child(parent_id, rel.id)
+        index.register(rel)
 
     def _apply_import_visibility(self, state: _ParserState) -> None:
         """
@@ -2595,8 +2962,13 @@ class SubsetSysmlParser:
         }
         names = {el.name for el in state.elements.values()} | known_library
         for el in state.elements.values():
+            if not state.is_project and el.type_ref and self._may_live_elsewhere(
+                state, el.type_ref, names
+            ):
+                continue
             if (
                 not el.type_ref
+                or el.kind in _LOCAL_RELATION_KINDS  # type_ref: the chain as written
                 or el.type_target_id
                 or el.type_ref in names
                 or el.id in state.type_warned
@@ -2608,6 +2980,17 @@ class SubsetSysmlParser:
                 f"Type reference '{el.type_ref}' for '{el.name}' could not be resolved "
                 f"in the semantic graph."
             )
+
+    @staticmethod
+    def _may_live_elsewhere(state: _ParserState, type_ref: str, names: set[str]) -> bool:
+        """In a one-file parse: could another file declare this type?
+
+        True for a qualified name whose head this file does not declare, and for
+        any name when the file imports something. The project parse decides.
+        """
+        if state.imports:
+            return True
+        return "::" in type_ref and type_ref.split("::")[0] not in names
 
     def _link_references(self, state: _ParserState) -> None:
         """Resolve pending relationship ends with namespace and import rules.
@@ -2762,8 +3145,13 @@ class SubsetSysmlParser:
             if cand.is_definition or cand.id in specialized:
                 defs_named.setdefault((cand.kind, cand.name), []).append(cand.id)
         for el in list(state.elements.values()):
-            if not el.type_ref:
+            if not el.type_ref or el.kind in _LOCAL_RELATION_KINDS:
                 continue
+            if el.type_target_id and el.kind in (
+                ArtifactKind.MESSAGE,
+                ArtifactKind.EVENT_OCCURRENCE,
+            ):
+                continue  # linked by `_link_occurrences` (any kind of definition)
             type_def, res = name_resolver.resolve_type_def(el)
             el.type_target_id = type_def.id if type_def else None
             if type_def is not None or is_perform_stub(el):
@@ -3024,6 +3412,9 @@ class SubsetSysmlParser:
         # pass that later usages need. Re-expand a usage only when its type
         # def has gained children since the last expansion.
         # Port usages typed by a port def gain nested ports the same way.
+        occurrence_ids = {
+            el.id for el in state.elements.values() if el.kind == ArtifactKind.OCCURRENCE
+        }
         expanded_child_count: dict[str, int] = {}
         expanded_port_child_count: dict[str, int] = {}
         for _ in range(32):
@@ -3039,10 +3430,14 @@ class SubsetSysmlParser:
                     continue
                 expand_port_usage(port_usage)
                 expanded_port_child_count[port_usage.id] = child_count
+            # The parts of an occurrence are instances of a scenario: they keep
+            # their type and copy nothing of its subtree.
             usages = [
                 el
                 for el in list(state.elements.values())
-                if el.kind == ArtifactKind.PART and el.type_ref
+                if el.kind == ArtifactKind.PART
+                and el.type_ref
+                and not (occurrence_ids and in_occurrence(state.elements, el.id))
             ]
             for usage in usages:
                 type_def = resolve_type_def(usage)

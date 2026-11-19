@@ -18,6 +18,7 @@ CASES = [
     ("interaction", "interaction def D;", "interaction u;"),
     ("interface", "interface def D;", "interface u;"),
     ("actor", "actor def D;", "actor u;"),
+    ("occurrence", "occurrence def D;", "occurrence u;"),
 ]
 
 
