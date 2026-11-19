@@ -1,0 +1,17 @@
+// FailureModel: reusable library for SysML Viewer's failure-impact and FMEA/FMECA toolbox.
+// Canonical copy: libraries/failure_model.sysml in the SysML Viewer repository.
+// To use it, copy this file anywhere below your project folder and import the package where
+// you use its keywords:
+//     private import FailureModel::*;
+// SysML imports name the package, not the file, so the folder inside the project does not matter.
+// Keep project copies identical to the canonical file (the repository tests check the Electric Car copy).
+
+package FailureModel {
+  doc /* Small reusable library for failure-impact analysis. A failure mode is a FailureKind. The metadata keywords tell the analysis how instances of a part combine: Single (all needed, the default), Pool (instance capacities add up, with a minimum required), Redundant (k of n, k given by the required attribute) and Soft (on a dependency: degrades the dependent function instead of losing it). */
+
+  enum def FailureKind { loss; degraded; erroneous; }
+  metadata def Single;             // default when nothing is said
+  metadata def Pool;               // instances add up capacity
+  metadata def Redundant;          // k-of-n, k given by attribute 'required'
+  metadata def Soft;               // on a dependency: degrades instead of loses
+}
