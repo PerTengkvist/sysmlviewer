@@ -53,12 +53,14 @@ CIRCUIT_1 = Failure(f"{PA}::brakeCircuits", FailureKind.LOSS, None, 1)
 INFOTAINMENT = Failure(f"{PA}::infotainmentEcu", FailureKind.LOSS)
 
 LOST_USE_CASES = [
-    "Accelerate", "Brake", "ChangeGear", "CleanWindshield", "Drive", "EmergencyStop",
-    "ToggleHeadlights", "TurnLeft", "TurnRight",
+    "UC003 ChangeGear", "UC004 TurnLeft", "UC005 TurnRight", "UC006 Brake", "UC007 Accelerate",
+    "UC008 EmergencyStop", "UC009 CleanWindshield", "UC010 ToggleHeadlights", "UC011 Drive",
 ]
 LOST_REQUIREMENTS = [
-    "Acceleration", "BrakingDistance", "DirectionalControl", "ForwardVisibility",
-    "NightVisibility", "PropulsionModes", "Range", "TopSpeed",
+    "REQ-PERF-01 Range", "REQ-PERF-02 Acceleration", "REQ-PERF-03 TopSpeed",
+    "REQ-PERF-05 PropulsionModes", "REQ-SAFE-02 BrakingDistance",
+    "REQ-SAFE-05 DirectionalControl", "REQ-SAFE-06 ForwardVisibility",
+    "REQ-SAFE-07 NightVisibility",
 ]
 
 
@@ -179,3 +181,27 @@ def test_json_warns_about_a_part_that_implements_nothing(graph):
     assert to_json_dict(graph, fs, impacts)["warnings"] == [
         "Spare::Kit::looseBolt implements nothing; it has no effect"
     ]
+
+
+def test_markdown_shows_tags(graph):
+    fs, impacts = _run(graph, MOTOR)
+    md = to_markdown(graph, fs, impacts)
+    assert "| LOST | UC006 Brake | 0 % |" in md
+    assert "| LOST | REQ-SAFE-02 BrakingDistance | 0 % |" in md
+
+
+def test_json_nodes_have_short_id(graph):
+    fs, impacts = _run(graph, MOTOR)
+    nodes = to_json_dict(graph, fs, impacts)["nodes"]
+    assert nodes["UseCases::Driving::Brake"]["shortId"] == "UC006"
+    assert nodes["Requirements::BrakingDistance"]["shortId"] == "REQ-SAFE-02"
+    assert nodes["Functions::SpeedControl"]["shortId"] is None
+
+
+def test_spof_requirements_are_tagged_and_sorted(graph):
+    rows = {r.part_id: r for r in spof(graph)}
+    cells = spof_to_markdown(graph, [rows[f"{PA}::lampUnits"]]).splitlines()[2].split("|")
+    assert cells[4].strip() == (
+        "REQ-PERF-01 Range, REQ-SAFE-02 BrakingDistance, REQ-SAFE-05 DirectionalControl, "
+        "REQ-SAFE-07 NightVisibility"
+    )

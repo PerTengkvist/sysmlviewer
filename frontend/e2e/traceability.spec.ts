@@ -32,7 +32,7 @@ test('double-click on a use case lists its requirements and opens one', async ({
   await openView(page, 'UseCases::UseCaseTraceabilityView')
   await fitView(page)
   await page.locator(nodeSel('UseCases::Driving::StartVehicle')).dblclick()
-  const dlg = page.getByRole('dialog', { name: 'Use case StartVehicle' })
+  const dlg = page.getByRole('dialog', { name: 'Use case UC001 StartVehicle' })
   await expect(dlg).toBeVisible()
   const reqs = dlg.locator('.usecase-flow-requirements')
   await expect(reqs).toContainText('«objective»')
@@ -51,7 +51,7 @@ test('double-click on a use case lists its requirements and opens one', async ({
 
   // And back: the use case at the far end opens the use case dialog again.
   await incoming.locator('[data-related-id="UseCases::Driving::StartVehicle"]').click()
-  await expect(page.getByRole('dialog', { name: 'Use case StartVehicle' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Use case UC001 StartVehicle' })).toBeVisible()
 })
 
 test('the requirement table names the use cases tracing to each requirement', async ({ page }) => {
@@ -69,7 +69,7 @@ test('the use case flow enters steps at the top and draws a loop on the right', 
   await openView(page, 'UseCases::VehicleUseCaseView')
   await fitView(page)
   await page.locator(nodeSel('UseCases::Managing::Charge')).dblclick()
-  const dlg = page.getByRole('dialog', { name: 'Use case Charge' })
+  const dlg = page.getByRole('dialog', { name: 'Use case UC021 Charge' })
   await expect(dlg).toBeVisible()
   const uc = 'UseCases::Managing::Charge'
   await expect(dlg.locator('.react-flow__edge')).toHaveCount(8)
@@ -116,7 +116,7 @@ test('every use case opens a flow from start to done in its dialog', async ({ pa
   test.setTimeout(300_000)
   const projectId = await openProject(page, exampleProjectFile('electric_car'))
   const res = await page.request.get(`/api/projects/${projectId}`)
-  type El = { id: string; kind: string; name: string; parentId: string | null; typeRef: string | null }
+  type El = { id: string; kind: string; name: string; shortId?: string; parentId: string | null; typeRef: string | null }
   const semantic = ((await res.json()) as { semantic: Record<string, El> }).semantic
   const useCases = Object.values(semantic).filter((e) => e.kind === 'useCase')
   expect(useCases).toHaveLength(21)
@@ -134,7 +134,7 @@ test('every use case opens a flow from start to done in its dialog', async ({ pa
     // An «include» label can sit on top of a node in the fitted view; the
     // dialog, not hit testing, is under test here.
     await page.locator(nodeSel(uc.id)).dispatchEvent('dblclick')
-    const dlg = page.getByRole('dialog', { name: `Use case ${uc.name}` })
+    const dlg = page.getByRole('dialog', { name: `Use case ${uc.shortId} ${uc.name}` })
     await expect(dlg).toBeVisible()
     await expect(dlg.locator(nodeSel(`${uc.id}::start`))).toBeVisible()
     await expect(dlg.locator(nodeSel(`${uc.id}::done`))).toBeVisible()

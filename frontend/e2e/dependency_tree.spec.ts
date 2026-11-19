@@ -87,12 +87,12 @@ test('clicking a branch opens that element', async ({ page }) => {
 
 test('the use case dialog opens the tree of its use case', async ({ page }) => {
   await page.locator(nodeSel(BRAKE)).dblclick()
-  const ucDialog = page.getByRole('dialog', { name: 'Use case Brake' })
+  const ucDialog = page.getByRole('dialog', { name: 'Use case UC006 Brake' })
   await expect(ucDialog).toBeVisible()
   await ucDialog.getByRole('button', { name: 'dependency tree' }).click()
   await expect(ucDialog).toBeHidden()
 
-  const dlg = page.getByRole('dialog', { name: 'Dependency tree Brake' })
+  const dlg = page.getByRole('dialog', { name: 'Dependency tree UC006 Brake' })
   await expect(dlg).toBeVisible()
   await expect(
     dlg.locator(`.dependency-tree-up [data-related-id="${REQ}"]`),

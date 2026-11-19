@@ -73,10 +73,10 @@ flowchart LR
 
 Use cases are typically defined on the system boundary. A use case captures the interaction between a user and the system, and it is triggered by the user or by an event. Describe each use case at least with text, and preferably with an activity flow with alternative paths where that applies.
 
-In `use_cases/use_cases.sysml` the Brake use case names its actor, the requirement it must fulfil (`objective`) and a short flow. Each step is declared as an action with its own `doc`, and the flow then orders the steps:
+In `use_cases/use_cases.sysml` the Brake use case has the short name `UC006` (written `<'UC006'>`, the same way requirements have `<'REQ-SAFE-02'>`), so it can be referred to by number; the use cases are numbered UC001 to UC021 in file order. It names its actor, the requirement it must fulfil (`objective`) and a short flow. Each step is declared as an action with its own `doc`, and the flow then orders the steps:
 
 ```sysml
-use case def Brake {
+use case def <'UC006'> Brake {
   actor Driver;
   objective Requirements::BrakingDistance;
   doc /* The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit. */
@@ -111,7 +111,7 @@ then if pluggedIn then transferEnergy else endSession;
 first endSession then done;
 ```
 
-Every use case in the example has such a flow. StartVehicle, for instance, has two decisions: without the brake held the car asks for the brake, and without an approved key it rejects the start. Double-click a use case in a diagram to see its flow.
+Every use case in the example has such a flow. StartVehicle (UC001), for instance, has two decisions: without the brake held the car asks for the brake, and without an approved key it rejects the start. Double-click a use case in a diagram to see its flow.
 
 A use case also refines the user story it serves:
 
@@ -294,7 +294,7 @@ Open **CarLogicalView**, select `frictionBrakes` and open its dependency tree. T
 ```mermaid
 flowchart TB
   S["requirement REQ-SAFE Safety"] -- "«refine»" --> B["requirement REQ-SAFE-02 BrakingDistance"]
-  B -- "«objective»" --> U["useCase Brake"]
+  B -- "«objective»" --> U["useCase UC006 Brake"]
   U -- "«refine»" --> F["part frictionBraking (function part)"]
   F -- "«allocate»" --> L["part frictionBrakes (logical part)"]
 ```
@@ -309,7 +309,7 @@ The same works from the physical side. Select `vehicleEcu` in **PhysicalView** a
 |------|---------|---------------------------|
 | 1 | requirement REQ-PERF Performance | «refine» |
 | 2 | requirement REQ-PERF-06 PowerModes | «objective» |
-| 3 | useCase StartVehicle | «refine» |
+| 3 | useCase UC001 StartVehicle | «refine» |
 | 4 | part authenticate (function part) | «allocate» |
 | 5 | part vehicleController (logical part) | «implements» |
 | 6 | part vehicleEcu (physical part, selected) | |
