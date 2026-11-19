@@ -7,8 +7,8 @@ from the Electric Car project (`examples/electric_car`).
 ## FMEA versus FMECA
 
 **FMEA** (failure mode and effects analysis) asks: *what can fail, what happens when it does, and
-how bad is that?* It is **qualitative**. Every failure mode gets three scores from 1 to 10 and
-their product is the risk priority number:
+how bad is that?* It is **qualitative**. Every failure mode gets three scores from 1 to 10, and
+their product is the **risk priority number (RPN)**, explained in its own section below:
 
 - **S**, severity of the end effect;
 - **O**, occurrence, how likely the failure mode is;
@@ -91,8 +91,41 @@ through a table in `severity.yaml` (the `occurrence_scale`).
 
 **Detection (D)** is always written: `detection: { method: ..., score: ... }`.
 
-**RPN = S x O x D.** For `winding_open` in the electric motor: S = 10 (the motor loss takes down
-`BrakingDistance`, a Safety requirement), O = 4, D = 5, so RPN = 200.
+### RPN: risk priority number
+
+**RPN** stands for **risk priority number**. It is one number per failure mode that combines the three
+scores, and it tells you **in which order to work on the failure modes**:
+
+**RPN = S x O x D**
+
+- S, O and D each run from 1 to 10, so the RPN runs from **1** (harmless, rare and always caught) to
+  **1000** (catastrophic, frequent and never caught).
+- A high RPN means the mode is serious, likely, hard to detect, or some mix of the three. Those modes are
+  the first candidates for an action. You can lower **S** with a design change, such as redundancy or a
+  fallback. You can lower **O** with a more reliable part, and you can lower **D** with better monitoring.
+  Each action lowers the RPN when you run the analysis again.
+- The FMEA table and the report sort failure modes by RPN, highest first.
+
+For `winding_open` in the electric motor, the scores are:
+- S = 10, because the motor loss takes down `BrakingDistance`, a Safety requirement;
+- O = 4;
+- D = 5.
+
+So RPN = 10 x 4 x 5 = 200, the highest in Electric Car.
+
+**Read the RPN as a ranking, not as a measure of risk.** The scores are ranks, not quantities, so an
+RPN of 200 is not "twice as risky" as 100. Very different modes can also end up with the same number.
+In Electric Car, `cell_short` in a battery module (S 6, O 5, D 3) and `soc_lockup` in the infotainment ECU
+(S 3, O 5, D 6) both have RPN 90, although one degrades driving and the other only the cabin. Use these rules
+alongside the ranking:
+
+- **Look at S first.** A mode with a high S needs attention whatever its RPN. The SPOF list
+  (`fmea-spof.csv`) collects the modes that on their own lose a function with S of at least the
+  `spof_severity_threshold` in `severity.yaml`, which is 8 in Electric Car.
+- **Compare RPNs within one analysis only.** The scales are agreed per project, here in `severity.yaml`.
+- **For numbers you can add up or compare across projects, use the FMECA** (below). It replaces the
+  judged O with failure rates. Newer FMEA handbooks, such as AIAG-VDA (2019), go a similar way and rank
+  by severity first ("action priority") instead of by the RPN product alone.
 
 ## Criticality
 
