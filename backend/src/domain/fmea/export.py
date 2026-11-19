@@ -121,3 +121,29 @@ def to_markdown_table(analysis: Analysis) -> str:
     lines = ["| " + " | ".join(columns) + " |", "|" + "|".join("---" for _ in columns) + "|"]
     lines += ["| " + " | ".join(_cell(r[c]) for c in columns) + " |" for r in rows]
     return "\n".join(lines) + "\n"
+
+
+def to_json_dict(analysis: Analysis) -> dict:
+    """The ranked rows as plain data; the caller serialises it."""
+
+    def effects(items):
+        return [{"id": e.id, "layer": e.layer, "status": e.status.value} for e in items]
+
+    return {
+        "mode": analysis.mode,
+        "missionTimeH": analysis.mission_time_h,
+        "rows": [
+            {
+                "itemId": r.item_id, "item": r.item_name, "qty": r.qty, "sru": r.sru,
+                "failureMode": r.mode_id, "localEffect": r.local_effect, "functions": list(r.functions),
+                "nextHigherEffect": effects(r.next_higher), "endEffect": effects(r.end_effect),
+                "chain": list(r.chain), "severity": r.severity, "occurrence": r.occurrence,
+                "detection": r.detection, "rpn": r.rpn, "rateFit": r.rate_fit,
+                "modeRatio": r.mode_ratio, "effectProbability": r.effect_probability,
+                "criticality": r.c_m, "severityClass": r.severity_class,
+                "probabilityLevel": r.probability_level, "flags": sorted(r.flags),
+                "detectionMethod": r.detection_method,
+            }
+            for r in analysis.ranking
+        ],
+    }
