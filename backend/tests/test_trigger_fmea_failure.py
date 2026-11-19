@@ -144,6 +144,134 @@ def test_state_json_restored(trigger, capsys, car):
     assert {p.name: p.read_bytes() for p in (car / "views").glob("*.json")} == views_before
 
 
+def test_real_project_service_between_apply_and_reset(trigger, capsys, car):
+    """The viewer's get_project saves project.json and state.json on every fetch."""
+    from adapters.parser.subset_parser import SubsetSysmlParser
+    from adapters.persistence.workspace_repo import WorkspaceProjectRepository
+    from application.project_service import ProjectService
+
+    original = snapshot(car)
+    apply(trigger, capsys, car)
+    repo = WorkspaceProjectRepository(car)
+    project = repo.get_open()
+    ProjectService(repo=repo, parser=SubsetSysmlParser()).get_project(project.id)
+    touched = [n for n in ("project.json", "state.json") if (car / n).read_bytes() != original[n]]
+    assert touched, "the service did not rewrite anything, so this test would prove nothing"
+    code, out, err = reset(trigger, capsys, car)
+    assert code == 0, err
+    assert snapshot(car) == original
+    for name in touched:
+        assert name in out  # says what it restored
+    assert not (car / ".sysmlviewer").exists() or not (car / MARKER).exists()
+
+
+def test_reset_says_restored_only_when_it_restored(trigger, capsys, car):
+    apply(trigger, capsys, car)
+    _, out, _ = reset(trigger, capsys, car)
+    assert "Restored byte for byte" not in out and "state.json restored" not in out
+
+
+def test_state_json_created_after_apply_is_left_alone(trigger, capsys, car):
+    (car / "state.json").unlink()
+    apply(trigger, capsys, car)
+    (car / "state.json").write_text("{}", encoding="utf-8")
+    code, out, _ = reset(trigger, capsys, car)
+    assert code == 0
+    assert (car / "state.json").read_text(encoding="utf-8") == "{}"
+    assert "state.json did not exist when the trigger was applied" in out
+
+
+def test_reset_refuses_if_the_fmea_data_was_updated(trigger, fmea_cli, capsys, car):
+    """Fix 1 of the error message (update the data) must not be undone by reset."""
+    apply(trigger, capsys, car)
+    lib = car / "fmea" / "library" / "battery_module.yaml"
+    lib.write_text(
+        lib.read_text(encoding="utf-8").replace("PhysicalArchitecture::BatteryModule", "PhysicalArchitecture::BatteryCellModule"),
+        encoding="utf-8",
+    )
+    assert run(fmea_cli, capsys, "validate", car)[0] == 0  # the user's fix works
+    before = snapshot(car)
+    code, out, err = reset(trigger, capsys, car)
+    assert code == 1
+    assert "fmea/library/battery_module.yaml changed after apply" in err
+    assert "you updated the FMEA data to the new name" in err
+    assert "revert fmea/library/battery_module.yaml" in err
+    assert snapshot(car) == before and (car / MARKER).exists()
+    # following the advice works
+    lib.write_text(lib.read_text(encoding="utf-8").replace("BatteryCellModule", "BatteryModule"), encoding="utf-8")
+    assert reset(trigger, capsys, car)[0] == 0
+
+
+def test_refusals_say_how_to_get_back(trigger, capsys, car):
+    apply(trigger, capsys, car)
+    f = car / SYSML
+    f.write_bytes(f.read_bytes() + b"// mine\n")
+    code, _, err = reset(trigger, capsys, car)
+    assert code == 1
+    assert "To get back" in err and "rename BatteryCellModule back to BatteryModule" in err
+    assert "delete .sysmlviewer/fmea_trigger.json" in err
+
+
+def test_apply_with_marker_but_edited_file_says_what_holds(trigger, capsys, car):
+    apply(trigger, capsys, car)
+    f = car / SYSML
+    f.write_bytes(f.read_bytes() + b"// mine\n")
+    code, out, err = apply(trigger, capsys, car)
+    assert code == 1 and "Already applied" not in out
+    assert "marker .sysmlviewer/fmea_trigger.json exists" in err and "changed after apply" in err
+
+
+def test_apply_with_marker_but_original_file(trigger, capsys, car):
+    original = (car / SYSML).read_bytes()
+    apply(trigger, capsys, car)
+    (car / SYSML).write_bytes(original)  # e.g. a git checkout of the file
+    code, out, err = apply(trigger, capsys, car)
+    assert code == 1 and "is back to its original content" in err and "run reset" in err.lower()
+
+
+@pytest.mark.parametrize("content", ["not json", "{}", '{"version": 2, "sysml": {"sha256_before": 1}}', "[]"])
+def test_broken_marker_is_refused_without_a_traceback(trigger, capsys, car, content):
+    (car / ".sysmlviewer").mkdir()
+    (car / MARKER).write_text(content, encoding="utf-8")
+    before = snapshot(car)
+    for command in (apply, reset):
+        code, out, err = command(trigger, capsys, car)
+        assert code == 1, command
+        assert "fmea_trigger.json" in err and "Traceback" not in err
+    assert snapshot(car) == before
+
+
+def test_missing_sysml_file_is_refused_without_a_traceback(trigger, capsys, car):
+    apply(trigger, capsys, car)
+    (car / SYSML).unlink()
+    code, _, err = reset(trigger, capsys, car)
+    assert code == 1 and SYSML in err and "Traceback" not in err
+    code, _, err = apply(trigger, capsys, car)
+    assert code == 1 and SYSML in err
+
+
+def test_apply_counts_the_name_in_every_sysml_file(trigger, capsys, car):
+    other = car / "logical_architecture" / "extra.sysml"
+    other.write_text("package X { part def Y { part m : BatteryModule; } }\n", encoding="utf-8")
+    before = snapshot(car)
+    code, _, err = apply(trigger, capsys, car)
+    assert code == 1 and "logical_architecture/extra.sysml" in err
+    assert snapshot(car) == before and not (car / MARKER).exists()
+
+
+def test_names_that_merely_start_with_the_old_name_are_left_alone(trigger, capsys, car):
+    f = car / SYSML
+    text = f.read_text(encoding="utf-8").replace(
+        "  part def BatteryModule {", "  part def BatteryModuleExtra { }\n  part def BatteryModule {", 1
+    )
+    f.write_text(text, encoding="utf-8")
+    assert apply(trigger, capsys, car)[0] == 0
+    applied = f.read_text(encoding="utf-8")
+    assert "part def BatteryModuleExtra" in applied and "part def BatteryCellModule {" in applied
+    assert reset(trigger, capsys, car)[0] == 0
+    assert f.read_text(encoding="utf-8") == text
+
+
 def test_views_are_never_written(trigger, capsys, car):
     apply(trigger, capsys, car)
     view = next((car / "views").glob("*.json"))

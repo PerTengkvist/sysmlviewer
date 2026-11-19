@@ -42,12 +42,21 @@ VALIDATE = "backend/.venv/bin/python scripts/fmea.py validate"
 SELF = "backend/.venv/bin/python scripts/electric_car_trigger_fmea_failure.py"
 
 _WORD = re.compile(rb"\b" + OLD.encode() + rb"\b")
-_DECL = b"part def " + OLD.encode()
-_USE = b": " + OLD.encode()
+_DECL = re.compile(rb"part def " + OLD.encode() + rb"\b")
+_USE = re.compile(rb"(?<!:): " + OLD.encode() + rb"\b")
+LIBRARY = "fmea/library/battery_module.yaml"
+REVERT_HINT = (
+    f"To get back: rename {NEW} back to {OLD} in {SYSML} by hand and delete .sysmlviewer/fmea_trigger.json. "
+    "The original file is stored in that marker (original_b64, base64)."
+)
 
 
 def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _b64(data: bytes) -> str:
+    return base64.b64encode(data).decode("ascii")
 
 
 def _write_atomic(path: Path, data: bytes) -> None:
@@ -68,11 +77,19 @@ class _Refuse(Exception):
     pass
 
 
+def _read(path: Path, rel: str) -> bytes:
+    try:
+        return path.read_bytes()
+    except OSError:
+        raise _Refuse(f"{rel} cannot be read ({path}).")
+
+
 class _Project:
     def __init__(self, path: Path) -> None:
         self.root = path
-        self.shown = "examples/electric_car" if path.resolve() == DEFAULT_PROJECT.resolve() else str(path)
-        self.flag = "" if path.resolve() == DEFAULT_PROJECT.resolve() else f" --project {path}"
+        default = path.resolve() == DEFAULT_PROJECT.resolve()
+        self.shown = "examples/electric_car" if default else str(path)
+        self.flag = "" if default else f" --project {path}"
 
     @property
     def sysml(self) -> Path:
@@ -89,58 +106,107 @@ class _Project:
 def _check_project(p: _Project) -> None:
     try:
         manifest = json.loads((p.root / "project.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        name = manifest.get("projektnamn") or manifest.get("name")
+    except (OSError, ValueError, AttributeError):
         raise _Refuse(f"{p.root} has no readable project.json; this script only works on the {PROJECT_NAME} example.")
-    name = manifest.get("projektnamn") or manifest.get("name")
     if name != PROJECT_NAME:
         raise _Refuse(f"the project is named {name!r}; this script only works on the {PROJECT_NAME} example.")
-    if not p.sysml.is_file():
-        raise _Refuse(f"{SYSML} does not exist in {p.root}.")
+    for rel in (SYSML, LIBRARY):
+        if not (p.root / rel).is_file():
+            raise _Refuse(f"{rel} does not exist in {p.root}; this script needs the {PROJECT_NAME} example.")
+
+
+def _project_files(p: _Project, suffixes: tuple[str, ...], top: str | None = None):
+    for f in sorted(p.root.rglob("*")):
+        rel = f.relative_to(p.root)
+        if not f.is_file() or ".sysmlviewer" in rel.parts or "docs" in rel.parts or f.suffix not in suffixes:
+            continue
+        if top is None or rel.parts[0] == top:
+            yield f, rel.as_posix()
 
 
 def _mentions_new_name(p: _Project) -> list[str]:
     hits = []
-    for f in sorted(p.root.rglob("*")):
-        rel = f.relative_to(p.root)
-        if not f.is_file() or ".sysmlviewer" in rel.parts or "docs" in rel.parts:
-            continue
-        if f.suffix == ".sysml" or (rel.parts[0] == "fmea" and f.suffix in (".yaml", ".yml")):
-            if NEW.encode() in f.read_bytes():
-                hits.append(rel.as_posix())
+    for suffixes, top in (((".sysml",), None), (((".yaml", ".yml")), "fmea")):
+        hits += [rel for f, rel in _project_files(p, suffixes, top) if NEW.encode() in f.read_bytes()]
     return hits
+
+
+def _load_marker(p: _Project) -> dict:
+    """The marker, or a _Refuse that says it is unusable (never a traceback)."""
+    try:
+        marker = json.loads(p.marker.read_text(encoding="utf-8"))
+        info = marker["sysml"]
+        for key in ("sha256_before", "sha256_after"):
+            if not isinstance(info[key], str):
+                raise TypeError(key)
+        base64.b64decode(info["original_b64"], validate=True)
+        for key in ("state", "project"):
+            if marker[key] is not None:
+                base64.b64decode(marker[key]["content_b64"], validate=True)
+                str(marker[key]["sha256"])
+        str(marker["library_sha256"])
+        dict(marker["views_sha256"])
+        if marker["version"] != 2:
+            raise ValueError("version")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        raise _Refuse(
+            f"the marker .sysmlviewer/fmea_trigger.json is unreadable or incomplete. {REVERT_HINT}"
+        ) from None
+    return marker
+
+
+def _file_record(path: Path) -> dict | None:
+    if not path.is_file():
+        return None
+    data = path.read_bytes()
+    return {"sha256": _sha(data), "content_b64": _b64(data)}
 
 
 def apply(p: _Project) -> int:
     if p.marker.exists():
-        print("Already applied (marker .sysmlviewer/fmea_trigger.json). Nothing changed. Run 'reset' to undo.")
-        return 0
+        marker = _load_marker(p)
+        now = _sha(_read(p.sysml, SYSML))
+        if now == marker["sysml"]["sha256_after"]:
+            print("Already applied (marker .sysmlviewer/fmea_trigger.json). Nothing changed. Run 'reset' to undo.")
+            return 0
+        if now == marker["sysml"]["sha256_before"]:
+            raise _Refuse(
+                f"the marker .sysmlviewer/fmea_trigger.json exists, but {SYSML} is back to its original content "
+                "(an interrupted apply, or you restored the file). Run reset to remove the marker, then apply again."
+            )
+        raise _Refuse(
+            f"the marker .sysmlviewer/fmea_trigger.json exists, but {SYSML} changed after apply, so it is neither "
+            f"the original nor the applied state. {REVERT_HINT}"
+        )
     _check_project(p)
-    original = p.sysml.read_bytes()
+    original = _read(p.sysml, SYSML)
     problems = []
     found = len(_WORD.findall(original))
-    if found != 2 or original.count(_DECL) != 1 or original.count(_USE) != 1:
+    if found != 2 or len(_DECL.findall(original)) != 1 or len(_USE.findall(original)) != 1:
         problems.append(
             f"{SYSML} mentions {OLD} {found} time(s); expected exactly 2 "
             f"(one 'part def {OLD}' and one ': {OLD}')."
         )
+    for f, rel in _project_files(p, (".sysml",)):
+        if rel != SYSML and _WORD.search(f.read_bytes()):
+            problems.append(f"{rel} also mentions {OLD}; renaming only {SYSML} would break the model.")
     problems += [f"{NEW} already exists in {h}." for h in _mentions_new_name(p)]
     if problems:
         raise _Refuse("\n".join(problems))
-    changed = original.replace(_DECL, b"part def " + NEW.encode()).replace(_USE, b": " + NEW.encode())
-    state_file = p.root / "state.json"
+    changed = _USE.sub(b": " + NEW.encode(), _DECL.sub(b"part def " + NEW.encode(), original))
     marker = {
-        "version": 1,
+        "version": 2,
         "rename": {"from": OLD_ID, "to": f"PhysicalArchitecture::{NEW}"},
         "sysml": {
             "path": SYSML,
             "sha256_before": _sha(original),
             "sha256_after": _sha(changed),
-            "original_b64": base64.b64encode(original).decode("ascii"),
+            "original_b64": _b64(original),
         },
-        "state": (
-            {"sha256": _sha(state_file.read_bytes()), "content_b64": base64.b64encode(state_file.read_bytes()).decode("ascii")}
-            if state_file.is_file() else None
-        ),
+        "state": _file_record(p.root / "state.json"),
+        "project": _file_record(p.root / "project.json"),
+        "library_sha256": _sha((p.root / LIBRARY).read_bytes()),
         "views_sha256": p.views(),
     }
     _write_atomic(p.marker, (json.dumps(marker, indent=2) + "\n").encode("utf-8"))
@@ -157,6 +223,23 @@ def apply(p: _Project) -> int:
     return 0
 
 
+def _restore(p: _Project, name: str, record: dict | None, notes: list[str], restored: list[str]) -> None:
+    """Put back project.json or state.json byte for byte; keep a changed state.json aside."""
+    path = p.root / name
+    if record is None:
+        if path.is_file():
+            notes.append(f"{name} did not exist when the trigger was applied and was created since; left as it is.")
+        return
+    current = path.read_bytes() if path.is_file() else None
+    if current is not None and _sha(current) == record["sha256"]:
+        return
+    if current is not None and name == "state.json":
+        _write_atomic(p.root / DURING, current)
+        notes.append(f"state.json changed while the trigger was applied; your version is saved in {DURING}.")
+    _write_atomic(path, base64.b64decode(record["content_b64"]))
+    restored.append(name)
+
+
 def reset(p: _Project) -> int:
     if not p.marker.exists():
         if p.sysml.is_file() and NEW.encode() in p.sysml.read_bytes():
@@ -166,27 +249,29 @@ def reset(p: _Project) -> int:
             )
         print("Nothing to reset: the model is in its original state.")
         return 0
-    marker = json.loads(p.marker.read_text(encoding="utf-8"))
+    marker = _load_marker(p)
     info = marker["sysml"]
-    current = p.sysml.read_bytes()
-    now = _sha(current)
+    now = _sha(_read(p.sysml, SYSML))
     if now not in (info["sha256_after"], info["sha256_before"]):
         raise _Refuse(
             f"{Path(SYSML).name} changed after apply; not overwriting your edits. "
-            "The original is stored in .sysmlviewer/fmea_trigger.json."
+            f"The original is stored in .sysmlviewer/fmea_trigger.json. {REVERT_HINT}"
         )
-    notes = []
+    library = p.root / LIBRARY
+    if not library.is_file() or _sha(library.read_bytes()) != marker["library_sha256"]:
+        raise _Refuse(
+            f"{LIBRARY} changed after apply: you updated the FMEA data to the new name. Reset would rename the "
+            f"part def back to {OLD} and leave the data pointing at {NEW}, which breaks the FMEA again. "
+            f"Either revert {LIBRARY} (set part_def back to {OLD_ID}) and run reset again, "
+            f"or keep your fix and delete .sysmlviewer/fmea_trigger.json."
+        )
+    notes: list[str] = []
+    restored: list[str] = []
     if now == info["sha256_after"]:
         _write_atomic(p.sysml, base64.b64decode(info["original_b64"]))
-    state = marker.get("state")
-    state_file = p.root / "state.json"
-    if state is not None:
-        if not state_file.is_file() or _sha(state_file.read_bytes()) != state["sha256"]:
-            if state_file.is_file():
-                _write_atomic(p.root / DURING, state_file.read_bytes())
-                notes.append(f"state.json changed while the trigger was applied; your version is saved in {DURING}.")
-            _write_atomic(state_file, base64.b64decode(state["content_b64"]))
-    drifted = [n for n, h in marker.get("views_sha256", {}).items() if p.views().get(n) != h]
+    _restore(p, "state.json", marker["state"], notes, restored)
+    _restore(p, "project.json", marker["project"], notes, restored)
+    drifted = [n for n, h in marker["views_sha256"].items() if p.views().get(n) != h]
     if drifted:
         notes.append(
             "warning: views/" + ", views/".join(drifted) + " changed since apply (a save in the viewer?). "
@@ -197,7 +282,9 @@ def reset(p: _Project) -> int:
         p.marker.parent.rmdir()
     except OSError:
         pass  # other files live there
-    print(f"Reset: renamed part def {NEW} back to {OLD} in {SYSML}; state.json restored.")
+    print(f"Reset: renamed part def {NEW} back to {OLD} in {SYSML}.")
+    if restored:
+        print(f"  Restored byte for byte: {', '.join(restored)} (the viewer rewrites them while the project is open).")
     for n in notes:
         print(f"  {n}")
     print(f"Next:\n  {VALIDATE} {p.shown}   # expected to pass")
