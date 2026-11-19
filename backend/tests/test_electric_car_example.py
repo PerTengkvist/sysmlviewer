@@ -1357,3 +1357,14 @@ def test_a_physical_part_climbs_through_implements_to_the_logical_part():
         "Functions::Security::authenticate",
         f"{CAR}::vehicleController",
     ]
+
+
+def test_use_cases_have_running_unique_short_ids():
+    use_cases = [
+        e for e in _load().elements.values()
+        if e.kind == ArtifactKind.USE_CASE and e.is_definition
+    ]
+    assert len(use_cases) == 21
+    tags = [e.short_id for e in use_cases]
+    assert tags == [f"UC{n:03d}" for n in range(1, 22)]
+    assert next(e for e in use_cases if e.name == "Brake").short_id == "UC006"
