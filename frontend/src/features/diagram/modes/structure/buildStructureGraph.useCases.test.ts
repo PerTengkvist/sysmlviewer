@@ -42,7 +42,7 @@ function fixture(
     }),
     'P::U::s::motor': el('P::U::s::motor', 'part', 'P::U::s'),
     'P::U::a': el('P::U::a', 'actor', 'P::U'),
-    'P::V': el('P::V', 'useCase', 'P'),
+    'P::V': el('P::V', 'useCase', 'P', { shortId: 'UC002' }),
     'P::R': el('P::R', 'requirement', 'P', { shortId: 'R-1' }),
   }
   for (const r of relations) semantic[r.id] = r
@@ -104,6 +104,13 @@ describe('use cases in a general view', () => {
     const u = nodes.find((n) => n.id === 'P::U')!
     expect(u.type).toBe('useCase')
     expect(u.style?.background).not.toBe('transparent')
+  })
+
+  it('labels a use case with its short id and name', () => {
+    const { nodes } = build(fixture())
+    const label = (id: string) => (nodes.find((n) => n.id === id)!.data as { label: string }).label
+    expect(label('P::V')).toBe('UC002 V')
+    expect(label('P::U')).toBe('U')
   })
 
   it('sizes every use case like the use case view, whatever was saved', () => {

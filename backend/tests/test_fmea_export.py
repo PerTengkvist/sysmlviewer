@@ -17,6 +17,7 @@ from domain.fmea.export import (
     coverage_to_csv,
     spof_to_csv,
     to_csv,
+    to_json_dict,
     to_markdown_table,
 )
 from domain.fmea.load import load_fmea
@@ -75,6 +76,26 @@ def test_spof_csv(env):
     assert names == ["Item", "Failure mode", "S", "Lost functions", "Requirements at risk"]
     assert [r["Failure mode"] for r in rows] == ["winding_open", "can_babbling", "psu_dead"]
     assert "SpeedControl" in rows[0]["Lost functions"]
+    assert "REQ-SAFE-02 BrakingDistance" in rows[0]["Requirements at risk"]
+    assert "Requirements::" not in rows[0]["Requirements at risk"]
+
+
+def test_end_effect_is_tagged_in_every_format(env):
+    import re
+
+    _, rows = parse(to_csv(env["fmeca"]))
+    motor = next(r for r in rows if r["Failure mode"] == "winding_open")
+    assert "REQ-SAFE-02 BrakingDistance LOST" in motor["End effect"]
+    assert re.search(r"UC\d{3} Accelerate LOST", motor["End effect"])
+    assert "Driving::" not in motor["End effect"]
+    assert "Next higher effect" in motor and "REQ-" not in motor["Next higher effect"]
+    assert "UC" not in motor["Next higher effect"].replace("Lighting", "")
+    assert "REQ-SAFE-02 BrakingDistance LOST" in to_markdown_table(env["fmea"])
+    data = to_json_dict(env["fmea"])
+    effects = data["rows"][0]["endEffect"]
+    tagged = next(e for e in effects if e["id"] == "Requirements::BrakingDistance")
+    assert tagged["shortId"] == "REQ-SAFE-02" and tagged["label"] == "REQ-SAFE-02 BrakingDistance"
+    assert all("shortId" in e for e in effects)
 
 
 def test_coverage_csv(env):

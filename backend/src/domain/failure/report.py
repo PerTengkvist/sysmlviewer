@@ -32,6 +32,18 @@ def short_name(graph: ImpactGraph, nid: str) -> str:
     return ".".join(reversed(names))
 
 
+def label(graph: ImpactGraph, nid: str) -> str:
+    """`<tag> <name>` when the element has a short name, else the name."""
+    node = graph.nodes[nid]
+    return f"{node.short_id} {node.name}" if node.short_id else node.name
+
+
+def _tag_key(graph: ImpactGraph, nid: str) -> tuple[int, str, str]:
+    """Tagged elements by tag, untagged ones after them by name."""
+    node = graph.nodes[nid]
+    return (0, node.short_id, node.name) if node.short_id else (1, "", node.name)
+
+
 def _tail_id(nid: str) -> str:
     return nid.split("::", 1)[1] if "::" in nid else nid
 
@@ -145,9 +157,9 @@ def _listing(graph: ImpactGraph, impacts: Mapping[str, Impact], layer: Layer, st
     items = []
     for n in sorted(
         (n for n in affected_nodes(graph, impacts, layer) if impacts[n].status is status),
-        key=lambda n: graph.nodes[n].name,
+        key=lambda n: _tag_key(graph, n),
     ):
-        name = graph.nodes[n].name
+        name = label(graph, n)
         items.append(name if status is Status.LOST else f"{name} ({_percent(impacts[n].capability)})")
     return ", ".join(items)
 
@@ -212,12 +224,17 @@ def to_markdown(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mappin
     )
     for title, column, layer, with_cause in sections:
         out += ["", f"## {title}", ""]
-        nodes = affected_nodes(graph, impacts, layer)
+        nodes = sorted(
+            affected_nodes(graph, impacts, layer),
+            key=lambda n: (impacts[n].status is not Status.LOST, _tag_key(graph, n))
+            if layer is not Layer.FUNCTION
+            else (0, (0, "", "")),
+        )
         if with_cause:
             rows = [
                 [
                     impacts[n].status.value,
-                    graph.nodes[n].name,
+                    label(graph, n),
                     _percent(impacts[n].capability),
                     _chain_text(graph, failures, impacts, n),
                 ]
@@ -226,7 +243,7 @@ def to_markdown(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mappin
             out += _table(["Status", column, "Capability", "Cause"], rows)
         else:
             rows = [
-                [impacts[n].status.value, graph.nodes[n].name, _percent(impacts[n].capability)]
+                [impacts[n].status.value, label(graph, n), _percent(impacts[n].capability)]
                 for n in nodes
             ]
             out += _table(["Status", column, "Capability"], rows)
@@ -256,6 +273,7 @@ def to_json_dict(
     nodes = {
         nid: {
             "layer": graph.nodes[nid].layer.value,
+            "shortId": graph.nodes[nid].short_id,
             "capability": impact.capability,
             "status": impact.status.value,
             "limitedBy": (
@@ -294,13 +312,13 @@ _SPOF_HEADER = ["Part", "Lost functions", "Degraded functions", "Requirements at
 
 def _spof_cells(graph: ImpactGraph, row: SpofRow) -> list[str]:
     def names(ids: Sequence[str]) -> str:
-        return ", ".join(graph.nodes[i].name for i in ids)
+        return ", ".join(label(graph, i) for i in ids)
 
     return [
         _tail_id(row.part_id),
         names(row.lost_functions),
         names(row.degraded_functions),
-        names(row.requirements_at_risk),
+        names(sorted(row.requirements_at_risk, key=lambda i: _tag_key(graph, i))),
         ", ".join(_flag_text(f) for f in sorted(row.flags)),
     ]
 

@@ -185,6 +185,8 @@ def test_spof_respects_format(cli, capsys):
     code, out, _ = run(cli, capsys, "analyze", CAR, "--spof", "--format", "json")
     rows = json.loads(out)
     assert code == 0 and [r["failureMode"] for r in rows] == ["winding_open", "can_babbling", "psu_dead"]
+    brake = next(q for q in rows[0]["requirements"] if q["id"] == "Requirements::BrakingDistance")
+    assert brake == {"id": "Requirements::BrakingDistance", "label": "REQ-SAFE-02 BrakingDistance", "shortId": "REQ-SAFE-02"}
 
 
 def test_analyze_shows_short_reference_warnings(cli, capsys, copy):

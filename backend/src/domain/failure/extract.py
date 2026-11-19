@@ -284,7 +284,7 @@ class _Extractor:
             if layer is None:
                 continue
             gate = self._gate(eid) if layer == Layer.PHYSICAL else None
-            nodes[eid] = Node(eid, el.name, layer, gate)
+            nodes[eid] = Node(eid, el.name, layer, gate, el.short_id)
         parent = {
             eid: self.sem[eid].parent_id
             for eid, node in nodes.items()

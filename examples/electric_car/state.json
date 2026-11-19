@@ -27102,7 +27102,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. Starting is where the immobilizer requirement is met: the car becomes Ready only once the key has been approved. Without the brake held, or without an approved key in the cabin, the car stays Off and tells the driver why.",
-      "shortId": null,
+      "shortId": "UC001",
       "children": [
         "UseCases::Driving::StartVehicle::Driver",
         "UseCases::Driving::StartVehicle::objective_1",
@@ -27590,7 +27590,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "With the car in Park the driver presses the start button again. The car opens the high-voltage contactor, re-arms the immobilizer and shows Off. In any other gear the car stays Ready and asks for park.",
-      "shortId": null,
+      "shortId": "UC002",
       "children": [
         "UseCases::Driving::StopVehicle::Driver",
         "UseCases::Driving::StopVehicle::objective_3",
@@ -27908,7 +27908,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear. An unsafe change is refused and the gear stays as it was.",
-      "shortId": null,
+      "shortId": "UC003",
       "children": [
         "UseCases::Driving::ChangeGear::Driver",
         "UseCases::Driving::ChangeGear::objective_4",
@@ -28226,7 +28226,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver turns the steering wheel left and the car follows.",
-      "shortId": null,
+      "shortId": "UC004",
       "children": [
         "UseCases::Driving::TurnLeft::Driver",
         "UseCases::Driving::TurnLeft::objective_5",
@@ -28439,7 +28439,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver turns the steering wheel right and the car follows.",
-      "shortId": null,
+      "shortId": "UC005",
       "children": [
         "UseCases::Driving::TurnRight::Driver",
         "UseCases::Driving::TurnRight::objective_6",
@@ -28652,7 +28652,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit.",
-      "shortId": null,
+      "shortId": "UC006",
       "children": [
         "UseCases::Driving::Brake::Driver",
         "UseCases::Driving::Brake::objective_7",
@@ -28907,7 +28907,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses the accelerator and the motor delivers torque within the battery's limit. The same use case carries the car up to its top speed, so it pursues both the acceleration and the top-speed requirement. With a cold or nearly empty battery the car delivers less torque and says so.",
-      "shortId": null,
+      "shortId": "UC007",
       "children": [
         "UseCases::Driving::Accelerate::Driver",
         "UseCases::Driving::Accelerate::objective_8",
@@ -29290,7 +29290,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver brakes hard from speed. Extends Brake with maximum deceleration, anti-lock modulation and hazard lights.",
-      "shortId": null,
+      "shortId": "UC008",
       "children": [
         "UseCases::Driving::EmergencyStop::Driver",
         "UseCases::Driving::EmergencyStop::objective_10",
@@ -29545,7 +29545,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver starts the wipers and washer and the windshield is cleared.",
-      "shortId": null,
+      "shortId": "UC009",
       "children": [
         "UseCases::Driving::CleanWindshield::Driver",
         "UseCases::Driving::CleanWindshield::objective_11",
@@ -29905,7 +29905,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver switches the headlamps on or off, or between low and high beam.",
-      "shortId": null,
+      "shortId": "UC010",
       "children": [
         "UseCases::Driving::ToggleHeadlights::Driver",
         "UseCases::Driving::ToggleHeadlights::objective_12",
@@ -30265,7 +30265,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver takes the car from origin to destination. Includes starting, gear selection, speed control and steering. The passenger rides along. Speed control and steering repeat until the car has arrived.",
-      "shortId": null,
+      "shortId": "UC011",
       "children": [
         "UseCases::Driving::Drive::Driver",
         "UseCases::Driving::Drive::Passenger",
@@ -30916,7 +30916,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock.",
-      "shortId": null,
+      "shortId": "UC012",
       "children": [
         "UseCases::Driving::Park::Driver",
         "UseCases::Driving::Park::objective_14",
@@ -31587,7 +31587,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses unlock on the key fob. The car authenticates the credential, releases the latches, flashes the indicators and wakes the cabin. A key the car does not recognise is rejected and the car stays locked.",
-      "shortId": null,
+      "shortId": "UC013",
       "children": [
         "UseCases::Managing::Unlock::Driver",
         "UseCases::Managing::Unlock::Passenger",
@@ -31968,7 +31968,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses lock on the key fob. The car checks that all doors are closed, engages the latches and flashes the indicators as confirmation. With a door open the car stays unlocked and gives no confirmation.",
-      "shortId": null,
+      "shortId": "UC014",
       "children": [
         "UseCases::Managing::Lock::Driver",
         "UseCases::Managing::Lock::Passenger",
@@ -32307,7 +32307,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant pulls a door handle and the door releases. The inside handle always opens the door, so nobody can be shut in; the outside handle opens it only on an unlocked car.",
-      "shortId": null,
+      "shortId": "UC015",
       "children": [
         "UseCases::Managing::OpenDoor::Driver",
         "UseCases::Managing::OpenDoor::Passenger",
@@ -32646,7 +32646,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant closes a door; the latch engages and the door-ajar warning clears. A door that is not pushed fully shut keeps the warning on.",
-      "shortId": null,
+      "shortId": "UC016",
       "children": [
         "UseCases::Managing::CloseDoor::Driver",
         "UseCases::Managing::CloseDoor::Passenger",
@@ -32985,7 +32985,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant presses the window switch down and the window lowers.",
-      "shortId": null,
+      "shortId": "UC017",
       "children": [
         "UseCases::Managing::OpenWindow::Driver",
         "UseCases::Managing::OpenWindow::Passenger",
@@ -33219,7 +33219,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant presses the window switch up and the window rises, backing off if something is caught in the gap.",
-      "shortId": null,
+      "shortId": "UC018",
       "children": [
         "UseCases::Managing::CloseWindow::Driver",
         "UseCases::Managing::CloseWindow::Passenger",
@@ -33600,7 +33600,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver or a passenger sets cabin temperature and airflow.",
-      "shortId": null,
+      "shortId": "UC019",
       "children": [
         "UseCases::Managing::AdjustClimate::Driver",
         "UseCases::Managing::AdjustClimate::Passenger",
@@ -33876,7 +33876,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver or a passenger plays audio or video on the cabin system.",
-      "shortId": null,
+      "shortId": "UC020",
       "children": [
         "UseCases::Managing::PlayMedia::Driver",
         "UseCases::Managing::PlayMedia::Passenger",
@@ -34215,7 +34215,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver connects a home or fast charger. The car and the charger negotiate a session, the battery takes energy and the state of charge is reported until the driver unplugs.",
-      "shortId": null,
+      "shortId": "UC021",
       "children": [
         "UseCases::Managing::Charge::Driver",
         "UseCases::Managing::Charge::Charger",
