@@ -8,6 +8,7 @@ come from a finite set, so the iteration terminates even with cycles.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping, Sequence
 
 from domain.failure.model import (
@@ -214,44 +215,65 @@ def evaluate(graph: ImpactGraph, failures: Iterable[Failure]) -> dict[str, Impac
             if cap[nid] < 1 - EPS:
                 flags[nid].add("cycle")
 
+    limits = _limits(graph, order, cap, own, own_label)
     result: dict[str, Impact] = {}
     for nid in order:
         result[nid] = Impact(
-            cap[nid],
-            status_of(cap[nid]),
-            _limited_by(graph, nid, cap, own, own_label),
-            frozenset(flags[nid]),
+            cap[nid], status_of(cap[nid]), limits[nid], frozenset(flags[nid])
         )
     return {nid: result[nid] for nid in graph.nodes}
 
 
-def _limited_by(
+def _limits(
     graph: ImpactGraph,
-    nid: str,
+    order: Sequence[str],
     cap: Mapping[str, float],
     own: Mapping[str, float],
     own_label: Mapping[str, str],
-) -> tuple[str, str] | None:
-    value = cap[nid]
-    if value >= 1 - EPS:
-        return None
-    candidates: list[tuple[float, str, str]] = []
-    if nid in own and own[nid] < 1 - EPS:
-        candidates.append((own[nid], nid, own_label[nid]))
-    parent = graph.parent.get(nid)
-    if parent is not None:
-        candidates.append((cap[parent], parent, "contained in"))
-    for edge in graph.inputs.get(nid, ()):
-        x = cap[edge.source]
-        if edge.soft and x < SOFT_FLOOR:
-            x = SOFT_FLOOR
-        candidates.append((x, edge.source, edge.label))
-    eligible = [c for c in candidates if c[0] <= value + EPS]
-    for _, src, label in eligible:
-        if src in own and own[src] < 1 - EPS:
-            return (src, label)
-    _, src, label = eligible[0]
-    return (src, label)
+) -> dict[str, tuple[str, str] | None]:
+    """The input that limits each node.
+
+    Among inputs that give the minimum, the one closest to a failed part wins
+    (distance along limiting inputs), then model order. That keeps a cycle from
+    pointing round and round without ever reaching the failure.
+    """
+    eligible: dict[str, list[tuple[str, str]]] = {}
+    dist: dict[str, float] = {}
+    for nid in order:
+        value = cap[nid]
+        if value >= 1 - EPS:
+            continue
+        cands: list[tuple[float, str, str]] = []
+        if nid in own and own[nid] < 1 - EPS:
+            cands.append((own[nid], nid, own_label[nid]))
+        parent = graph.parent.get(nid)
+        if parent is not None:
+            cands.append((cap[parent], parent, "contained in"))
+        for edge in graph.inputs.get(nid, ()):
+            x = cap[edge.source]
+            if edge.soft and x < SOFT_FLOOR:
+                x = SOFT_FLOOR
+            cands.append((x, edge.source, edge.label))
+        eligible[nid] = [(src, label) for x, src, label in cands if x <= value + EPS]
+        own_limits = bool(eligible[nid]) and eligible[nid][0][0] == nid
+        dist[nid] = 0 if own_limits else math.inf
+    changed = True
+    while changed:
+        changed = False
+        for nid, cands in eligible.items():
+            for src, _ in cands:
+                if src != nid and dist.get(src, math.inf) + 1 < dist[nid]:
+                    dist[nid] = dist[src] + 1
+                    changed = True
+    result: dict[str, tuple[str, str] | None] = {}
+    for nid in order:
+        cands = eligible.get(nid)
+        if not cands:
+            result[nid] = None
+            continue
+        best = min(range(len(cands)), key=lambda k: (dist.get(cands[k][0], math.inf), k))
+        result[nid] = cands[best]
+    return result
 
 
 def chain(impacts: Mapping[str, Impact], node_id: str) -> list[str]:
