@@ -61,6 +61,7 @@ class Row:
     severity_class: str | None = None
     probability_level: str | None = None
     mission_time_h: float | None = None
+    chain_status: tuple[str, ...] = ()  # status of every node in `chain`, same order
 
     @property
     def key(self) -> tuple[str, str, str]:
@@ -191,6 +192,7 @@ def _row(fmea, graph, groups, part_id, name, qty, unit: Unit, m: ModeSpec, failu
         fns = [e for e in next_higher if e.layer == Layer.FUNCTION.value]
         target = fns[0].id if fns else None
     path = (target, *chain(impacts, target)) if target else ()
+    path_status = tuple(impacts[n].status.value for n in path)
     flags = failure_flags(graph, failure)
     if part_id in impacts:
         flags = flags | impacts[part_id].flags
@@ -199,7 +201,7 @@ def _row(fmea, graph, groups, part_id, name, qty, unit: Unit, m: ModeSpec, failu
     base = dict(
         item_id=part_id, item_name=name, qty=qty, sru=unit.sru, mode_id=m.id, description=m.description,
         local_effect=_local_effect(m), functions=functions, next_higher=next_higher, end_effect=end_effect,
-        chain=path, lost_functions=lost,
+        chain=path, chain_status=path_status, lost_functions=lost,
         requirements_at_risk=tuple(e.id for e in end_effect if e.layer == Layer.REQUIREMENT.value),
         flags=frozenset(flags), detection_method=m.detection_method, severity=severity,
         rate_fit=unit.rate_fit, mode_ratio=m.mode_ratio, effect_probability=m.effect_probability,

@@ -9,13 +9,13 @@
 
 ## Top risks
 
-| Item | Failure mode | S | O | D | RPN |
-|---|---|---|---|---|---|
-| electricMotor | winding_open | 10 | 4 | 5 | 200 |
-| driveEcu | can_babbling | 10 | 3 | 4 | 120 |
-| batteryPack.modules | cell_short | 6 | 5 | 3 | 90 |
-| infotainmentEcu | soc_lockup | 3 | 5 | 6 | 90 |
-| batteryPack.modules | capacity_fade | 6 | 6 | 2 | 72 |
+| Item | Qty | Failure mode | S | O | D | RPN |
+|---|---|---|---|---|---|---|
+| electricMotor | 1 | winding_open | 10 | 4 | 5 | 200 |
+| driveEcu | 1 | can_babbling | 10 | 3 | 4 | 120 |
+| batteryPack.modules | 8 | cell_short | 6 | 5 | 3 | 90 |
+| infotainmentEcu | 1 | soc_lockup | 3 | 5 | 6 | 90 |
+| batteryPack.modules | 8 | capacity_fade | 6 | 6 | 2 | 72 |
 
 ## Single points of failure
 
@@ -43,9 +43,9 @@ Severity (S) by occurrence (O):
 ```mermaid
 flowchart LR
     m_winding_open["winding_open<br/>loss"]
-    n0_electricMotor["electricMotor"]
+    n0_electricMotor["electricMotor<br/>LOST"]
     n1_engine["engine<br/>LOST"]
-    n2_tractionDrive["tractionDrive"]
+    n2_tractionDrive["tractionDrive<br/>LOST"]
     n3_SpeedControl["SpeedControl<br/>LOST"]
     n4_Brake["Brake<br/>LOST"]
     n5_BrakingDistance["BrakingDistance<br/>LOST"]
@@ -62,9 +62,9 @@ flowchart LR
 ```mermaid
 flowchart LR
     m_can_babbling["can_babbling<br/>erroneous"]
-    n0_driveEcu["driveEcu"]
+    n0_driveEcu["driveEcu<br/>LOST"]
     n1_driveController["driveController<br/>LOST"]
-    n2_torqueArbitration["torqueArbitration"]
+    n2_torqueArbitration["torqueArbitration<br/>LOST"]
     n3_Brake["Brake<br/>LOST"]
     n4_BrakingDistance["BrakingDistance<br/>LOST"]
     m_can_babbling -->|fails| n0_driveEcu
@@ -79,9 +79,9 @@ flowchart LR
 ```mermaid
 flowchart LR
     m_psu_dead["psu_dead<br/>loss"]
-    n0_driveEcu["driveEcu"]
+    n0_driveEcu["driveEcu<br/>LOST"]
     n1_driveController["driveController<br/>LOST"]
-    n2_torqueArbitration["torqueArbitration"]
+    n2_torqueArbitration["torqueArbitration<br/>LOST"]
     n3_Brake["Brake<br/>LOST"]
     n4_BrakingDistance["BrakingDistance<br/>LOST"]
     m_psu_dead -->|fails| n0_driveEcu
@@ -132,6 +132,8 @@ Physical parts without failure modes:
 
 ## Files
 
-- [fmea-table.csv](fmea-table.csv)
-- [spof.csv](spof.csv)
-- [coverage.csv](coverage.csv)
+The data of this report, in the same folder next to this report. They are plain files, not links: open them in your editor (the viewer cannot show CSV).
+
+- `fmea-table.csv`
+- `fmea-spof.csv`
+- `coverage.csv`

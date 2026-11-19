@@ -1,0 +1,4 @@
+Item,Failure mode,S,Lost functions,Requirements at risk
+electricMotor,winding_open,10,"Lighting; Maneuvrability; SpeedControl; WindshieldCleaning","Acceleration; BrakingDistance; DirectionalControl; ForwardVisibility; NightVisibility; PropulsionModes; Range; TopSpeed"
+driveEcu/canTransceiver,can_babbling,10,"Lighting; Maneuvrability; SpeedControl; WindshieldCleaning","Acceleration; BrakingDistance; DirectionalControl; ForwardVisibility; NightVisibility; PropulsionModes; Range; TopSpeed"
+driveEcu/powerSupply,psu_dead,10,"Lighting; Maneuvrability; SpeedControl; WindshieldCleaning","Acceleration; BrakingDistance; DirectionalControl; ForwardVisibility; NightVisibility; PropulsionModes; Range; TopSpeed"

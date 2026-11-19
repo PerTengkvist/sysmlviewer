@@ -137,14 +137,18 @@ def coverage_to_csv(cov: Coverage) -> str:
     return _csv(COVERAGE_COLUMNS, rows)
 
 
+def _md_table(columns: Sequence[str], rows: Sequence[dict[str, str]]) -> list[str]:
+    lines = ["| " + " | ".join(columns) + " |", "|" + "|".join("---" for _ in columns) + "|"]
+    lines += ["| " + " | ".join(_cell(r[c]) for c in columns) + " |" for r in rows]
+    return lines
+
+
 def _cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
-def _markdown(columns: list[str], rows: list[dict[str, str]]) -> str:
-    lines = ["| " + " | ".join(columns) + " |", "|" + "|".join("---" for _ in columns) + "|"]
-    lines += ["| " + " | ".join(_cell(r[c]) for c in columns) + " |" for r in rows]
-    return "\n".join(lines) + "\n"
+def _markdown(columns: Sequence[str], rows: Sequence[dict[str, str]]) -> str:
+    return "\n".join(_md_table(columns, rows)) + "\n"
 
 
 FMECA_NOTE = "C_m and C_r are per instance; for a group usage multiply by Qty."
@@ -229,19 +233,14 @@ class SimInfo:
 _LOG_MIN, _LOG_MAX = -5, 0  # C_m axis of the quadrant chart: 1e-5 .. 1
 
 
-def _md_table(columns: Sequence[str], rows: Sequence[dict[str, str]]) -> list[str]:
-    lines = ["| " + " | ".join(columns) + " |", "|" + "|".join("---" for _ in columns) + "|"]
-    lines += ["| " + " | ".join(_cell(r[c]) for c in columns) + " |" for r in rows]
-    return lines
-
-
 def _mid(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "_", text)
 
 
-def _coord(v: float) -> str:
-    """mermaid's quadrant lexer accepts 1 but not 1.0 or 1.000."""
-    return "1" if v >= 1 else f"{v:.3f}"
+def quadrant_coord(v: float) -> str:
+    """A quadrant coordinate in [0, 1]. mermaid's lexer accepts `1` and `0.xxx` but not `1.000`."""
+    text = f"{min(1.0, max(0.0, v)):.3f}"
+    return {"1.000": "1", "0.000": "0"}.get(text, text)
 
 
 def _quadrant(analysis: Analysis) -> list[str]:
@@ -260,7 +259,7 @@ def _quadrant(analysis: Analysis) -> list[str]:
         x = (math.log10(max(r.c_m or 0.0, 1e-300)) - _LOG_MIN) / (_LOG_MAX - _LOG_MIN)
         x = min(1.0, max(0.0, x))
         # mermaid's quadrant lexer rejects "_" in point names
-        lines.append(f"    {r.mode_id.replace('_', ' ')}: [{_coord(x)}, {_coord(r.severity / 10)}]")
+        lines.append(f"    {r.mode_id.replace('_', ' ')}: [{quadrant_coord(x)}, {quadrant_coord(r.severity / 10)}]")
     return lines + ["```"]
 
 
@@ -282,22 +281,37 @@ def _matrix(analysis: Analysis, cfg: SeverityConfig) -> list[str]:
 
 
 def _chain_block(r: Row, graph: ImpactGraph) -> list[str]:
-    effects = {e.id: e for e in (*r.next_higher, *r.end_effect)}
     path = list(reversed(r.chain))  # failed part first, requirement last
+    status = list(reversed(r.chain_status))
     mode_id = "m_" + _mid(r.mode_id)
     lines = ["```mermaid", "flowchart LR", f'    {mode_id}["{r.mode_id}<br/>{r.local_effect}"]']
     ids = []
     for i, nid in enumerate(path):
         name = r.item_name if i == 0 else graph.nodes[nid].name
-        status = effects[nid].status.value if nid in effects else None
-        label = f"{name}<br/>{status}" if status else name
         ids.append(f"n{i}_{_mid(name)}")
-        lines.append(f'    {ids[-1]}["{label}"]')
+        lines.append(f'    {ids[-1]}["{name}<br/>{status[i]}"]')
     lines.append(f"    {mode_id} -->|fails| {ids[0]}")
     for i in range(1, len(path)):
         label = next(e.label for e in graph.inputs[path[i]] if e.source == path[i - 1])
         lines.append(f"    {ids[i - 1]} -->|{label.lstrip('#')}| {ids[i]}")
     return lines + ["```"]
+
+
+def _item_criticality(analysis: Analysis, cfg: SeverityConfig) -> list[str]:
+    """C_r: the sum of C_m of an item's modes per severity class (MIL-STD-1629A)."""
+    totals: dict[tuple[str, str], float] = {}
+    for r in analysis.rows:
+        key = (r.item_name, r.severity_class or "")
+        totals[key] = totals.get(key, 0.0) + (r.c_m or 0.0)
+    order = {c.label: i for i, c in enumerate(cfg.severity_classes)}
+    rows = [
+        {"Item": item, "Severity class": cls, "C_r": f"{total:.1e}"}
+        for (item, cls), total in sorted(totals.items(), key=lambda kv: (order[kv[0][1]], -kv[1], kv[0][0]))
+    ]
+    return [
+        "C_r is the sum of C_m over the failure modes of one item in one severity class, per instance.",
+        "",
+    ] + _md_table(["Item", "Severity class", "C_r"], rows)
 
 
 def _short(item_id: str) -> str:
@@ -317,18 +331,17 @@ def to_report_markdown(
 ) -> str:
     """One self-contained markdown report; deterministic (no timestamp)."""
     kind = analysis.mode.upper()
-    columns, table = _table(analysis)
     spof = _spof_rows(analysis, cfg.spof_severity_threshold)
     n_items = len({r.item_id for r in analysis.rows})
     with_modes = physical_total - len(cov.parts_without_modes)
     if analysis.mode == "fmea":
         worst = max(analysis.rows, key=lambda r: r.rpn or 0)
         peak = f"Highest RPN: {worst.rpn} ({worst.mode_id})"
-        top_cols = ["Item", "Failure mode", "S", "O", "D", "RPN"]
+        top_cols = ["Item", "Qty", "Failure mode", "S", "O", "D", "RPN"]
     else:
         worst = max(analysis.rows, key=lambda r: r.c_m or 0.0)
         peak = f"Highest criticality C_m: {worst.c_m:.1e} ({worst.mode_id})"
-        top_cols = ["Item", "Failure mode", "S", "Criticality", "Severity class", "Probability level"]
+        top_cols = ["Item", "Qty", "Failure mode", "S", "Criticality", "Severity class", "Probability level"]
     out = [
         f"# {kind} report: {project_name}", "",
         "## Summary", "",
@@ -340,11 +353,14 @@ def to_report_markdown(
     ]
     top = [{**_common(r), **(_fmea(r) if analysis.mode == "fmea" else _fmeca(r))} for r in analysis.ranking[:5]]
     out += _md_table(top_cols, top)
+    if analysis.mode == "fmeca":
+        out += ["", FMECA_NOTE]
     out += ["", "## Single points of failure", ""]
     out += _md_table(SPOF_COLUMNS, spof) if spof else ["None."]
     out += ["", "## Criticality matrix", ""] + _matrix(analysis, cfg) + [""]
     if analysis.mode == "fmeca":
-        out += _quadrant(analysis) + [""]
+        out += [FMECA_NOTE, ""] + _quadrant(analysis) + [""]
+        out += ["## Item criticality", ""] + _item_criticality(analysis, cfg) + [""]
     out += ["## Effect chains", ""]
     severe = [r for r in analysis.ranking if r.severity >= cfg.spof_severity_threshold and r.chain]
     for r in severe:
@@ -365,8 +381,17 @@ def to_report_markdown(
         out += [
             "## Simulation", "",
             f"{sim.trials} trials, seed {sim.seed}, mission time {sim.mission_time_h:g} h. "
-            "Nodes that are never affected are left out; see simulation.csv for all.", "",
+            "Nodes that are never affected are left out; see `simulation.csv` for all.", "",
         ]
         out += _md_table(SIM_COLUMNS, _sim_cells(shown)) + [""]
-    out += ["## Files", ""] + [f"- [{f}]({f})" for f in files] + [""]
+    elif analysis.mode == "fmeca":
+        out += [
+            "## Simulation", "",
+            "Not run for this report. Add `--trials N` to the `analyze` command to simulate.", "",
+        ]
+    out += [
+        "## Files", "",
+        "The data of this report, in the same folder next to this report. They are plain files, not links: open them in your "
+        "editor (the viewer cannot show CSV).", "",
+    ] + [f"- `{f}`" for f in files] + [""]
     return "\n".join(out)

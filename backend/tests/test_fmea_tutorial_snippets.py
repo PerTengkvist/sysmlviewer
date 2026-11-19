@@ -11,6 +11,7 @@ import pytest
 from mermaid_check import check_mermaid, mermaid_blocks
 
 from adapters.api.static_paths import resolve_repo_root
+from helpers import car_ignore
 
 REPO = resolve_repo_root()
 CAR = REPO / "examples" / "electric_car"
@@ -42,7 +43,7 @@ def trigger():
 @pytest.fixture()
 def car(tmp_path):
     dst = tmp_path / "electric_car"
-    shutil.copytree(CAR, dst, ignore=shutil.ignore_patterns("icons", "docs", ".sysmlviewer"))
+    shutil.copytree(CAR, dst, ignore=car_ignore("icons", ".sysmlviewer"))
     return dst
 
 

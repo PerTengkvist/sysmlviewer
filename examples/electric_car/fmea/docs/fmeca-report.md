@@ -9,13 +9,15 @@
 
 ## Top risks
 
-| Item | Failure mode | S | Criticality | Severity class | Probability level |
-|---|---|---|---|---|---|
-| electricMotor | winding_open | 10 | 8.0e-04 | I | E |
-| driveEcu | psu_dead | 10 | 5.0e-04 | I | E |
-| driveEcu | can_babbling | 10 | 1.0e-04 | I | E |
-| batteryPack.modules | capacity_fade | 6 | 3.8e-03 | III | D |
-| batteryPack.modules | cell_short | 6 | 1.3e-03 | III | D |
+| Item | Qty | Failure mode | S | Criticality | Severity class | Probability level |
+|---|---|---|---|---|---|---|
+| electricMotor | 1 | winding_open | 10 | 8.0e-04 | I | E |
+| driveEcu | 1 | psu_dead | 10 | 5.0e-04 | I | E |
+| driveEcu | 1 | can_babbling | 10 | 1.0e-04 | I | E |
+| batteryPack.modules | 8 | capacity_fade | 6 | 3.8e-03 | III | D |
+| batteryPack.modules | 8 | cell_short | 6 | 1.3e-03 | III | D |
+
+C_m and C_r are per instance; for a group usage multiply by Qty.
 
 ## Single points of failure
 
@@ -36,6 +38,8 @@ Severity class:
 | III |  |  |  | capacity_fade, cell_short |  |
 | IV |  |  |  | soc_lockup | hydraulic_leak |
 
+C_m and C_r are per instance; for a group usage multiply by Qty.
+
 ```mermaid
 quadrantChart
     title Failure modes by criticality and severity
@@ -54,6 +58,18 @@ quadrantChart
     hydraulic leak: [0.295, 0.100]
 ```
 
+## Item criticality
+
+C_r is the sum of C_m over the failure modes of one item in one severity class, per instance.
+
+| Item | Severity class | C_r |
+|---|---|---|
+| electricMotor | I | 8.0e-04 |
+| driveEcu | I | 6.0e-04 |
+| batteryPack.modules | III | 5.0e-03 |
+| infotainmentEcu | IV | 2.0e-03 |
+| brakeCircuits | IV | 3.0e-04 |
+
 ## Effect chains
 
 ### electricMotor: winding_open (S = 10)
@@ -61,9 +77,9 @@ quadrantChart
 ```mermaid
 flowchart LR
     m_winding_open["winding_open<br/>loss"]
-    n0_electricMotor["electricMotor"]
+    n0_electricMotor["electricMotor<br/>LOST"]
     n1_engine["engine<br/>LOST"]
-    n2_tractionDrive["tractionDrive"]
+    n2_tractionDrive["tractionDrive<br/>LOST"]
     n3_SpeedControl["SpeedControl<br/>LOST"]
     n4_Brake["Brake<br/>LOST"]
     n5_BrakingDistance["BrakingDistance<br/>LOST"]
@@ -80,9 +96,9 @@ flowchart LR
 ```mermaid
 flowchart LR
     m_psu_dead["psu_dead<br/>loss"]
-    n0_driveEcu["driveEcu"]
+    n0_driveEcu["driveEcu<br/>LOST"]
     n1_driveController["driveController<br/>LOST"]
-    n2_torqueArbitration["torqueArbitration"]
+    n2_torqueArbitration["torqueArbitration<br/>LOST"]
     n3_Brake["Brake<br/>LOST"]
     n4_BrakingDistance["BrakingDistance<br/>LOST"]
     m_psu_dead -->|fails| n0_driveEcu
@@ -97,9 +113,9 @@ flowchart LR
 ```mermaid
 flowchart LR
     m_can_babbling["can_babbling<br/>erroneous"]
-    n0_driveEcu["driveEcu"]
+    n0_driveEcu["driveEcu<br/>LOST"]
     n1_driveController["driveController<br/>LOST"]
-    n2_torqueArbitration["torqueArbitration"]
+    n2_torqueArbitration["torqueArbitration<br/>LOST"]
     n3_Brake["Brake<br/>LOST"]
     n4_BrakingDistance["BrakingDistance<br/>LOST"]
     m_can_babbling -->|fails| n0_driveEcu
@@ -150,7 +166,7 @@ Physical parts without failure modes:
 
 ## Simulation
 
-2000 trials, seed 1, mission time 10000 h. Nodes that are never affected are left out; see simulation.csv for all.
+2000 trials, seed 1, mission time 10000 h. Nodes that are never affected are left out; see `simulation.csv` for all.
 
 | Node | Layer | P(LOST) | P(DEGRADED) |
 |---|---|---|---|
@@ -187,7 +203,9 @@ Physical parts without failure modes:
 
 ## Files
 
-- [fmeca-table.csv](fmeca-table.csv)
-- [spof.csv](spof.csv)
-- [coverage.csv](coverage.csv)
-- [simulation.csv](simulation.csv)
+The data of this report, in the same folder next to this report. They are plain files, not links: open them in your editor (the viewer cannot show CSV).
+
+- `fmeca-table.csv`
+- `fmeca-spof.csv`
+- `coverage.csv`
+- `simulation.csv`

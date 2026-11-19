@@ -34,7 +34,7 @@ def test_rejects_bad_id_unbalanced_and_unknown_type():
 def test_rejects_quadrant_out_of_range_and_missing_axis():
     src = "quadrantChart\n    x-axis a --> b\n    m1: [1.2, 0.5]"
     problems = check_mermaid(src)
-    assert any("y-axis" in p for p in problems) and any("outside" in p for p in problems)
+    assert any("y-axis" in p for p in problems) and any("bad quadrant coordinate" in p for p in problems)
 
 
 def test_rejects_underscore_in_quadrant_point_name():
@@ -43,8 +43,12 @@ def test_rejects_underscore_in_quadrant_point_name():
 
 
 def test_rejects_one_point_zero_in_quadrant_point():
-    src = "quadrantChart\n    x-axis a --> b\n    y-axis a --> b\n    m a: [0.1, 1.000]"
-    assert any("write 1" in p for p in check_mermaid(src))
+    for bad in ("[0.1, 1.000]", "[1.0, 0.5]", "[0.1, 1.5]", "[00.1, 0.5]", "[0.1, 2]"):
+        src = f"quadrantChart\n    x-axis a --> b\n    y-axis a --> b\n    m a: {bad}"
+        assert check_mermaid(src), bad
+    for good in ("[0, 1]", "[0.250, 1]", "[1, 0]", "[0.999, 0.001]"):
+        src = f"quadrantChart\n    x-axis a --> b\n    y-axis a --> b\n    m a: {good}"
+        assert check_mermaid(src) == [], good
 
 
 def test_mermaid_blocks_extracts_in_order():
