@@ -17,9 +17,10 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator('.left-sidebar .tree-row.is-doc').first()).toBeVisible({ timeout: 60_000 })
 })
 
-for (const [file, title] of [
-  ['fmea-report.md', 'FMEA report: Electric Car'],
-  ['fmeca-report.md', 'FMECA report: Electric Car'],
+// The diagrams in each report: one effect chain per severe mode (3), plus the quadrant chart for FMECA.
+for (const [file, title, diagrams] of [
+  ['fmea-report.md', 'FMEA report: Electric Car', 3],
+  ['fmeca-report.md', 'FMECA report: Electric Car', 4],
 ] as const) {
   test(`${file} opens from the Files tab and renders its mermaid`, async ({ page }) => {
     const doc = page.locator(`.left-sidebar button[title="fmea/docs/${file}"]`)
@@ -32,9 +33,10 @@ for (const [file, title] of [
     await doc.click()
     const canvas = page.locator('.markdown-canvas')
     await expect(canvas).toContainText(title, { timeout: 30_000 })
-    await expect(canvas.locator('.mermaid-diagram svg').first()).toBeVisible({ timeout: 60_000 })
+    // Wait until every diagram has finished rendering, then check all of them rendered.
+    await expect(canvas.locator('.mermaid-diagram-loading')).toHaveCount(0, { timeout: 60_000 })
     await expect(canvas.locator('.mermaid-diagram-error')).toHaveCount(0)
-    await expect(canvas.locator('.mermaid-diagram-loading')).toHaveCount(0)
+    await expect(canvas.locator('.mermaid-diagram svg')).toHaveCount(diagrams)
   })
 }
 

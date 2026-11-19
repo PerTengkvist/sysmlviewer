@@ -54,6 +54,55 @@ def contains_lines(source: str, block: str) -> bool:
     return any(textwrap.dedent("\n".join(lines[i : i + n])) == want for i in range(len(lines) - n + 1))
 
 
+SOURCE_LANGS = ("sysml", "yaml", "yml", "markdown")
+OTHER_LANGS = ("bash", "text", "diff", "mermaid")
+
+
+def test_every_code_block_has_a_known_language_and_the_right_marker():
+    for b in BLOCKS:
+        first = b["body"].split("\n", 1)[0]
+        assert b["lang"] in SOURCE_LANGS + OTHER_LANGS, f"block without a known language: {first!r}"
+        tag = b["tag"] or ""
+        if b["lang"] in SOURCE_LANGS:
+            assert tag.startswith(("source: ", "illustration")), f"{b['lang']} block without a marker: {first!r}"
+        if b["lang"] == "text":
+            assert tag.startswith("output: "), f"text block without an output marker: {first!r}"
+        if b["lang"] == "diff":
+            assert tag.startswith("illustration"), first
+
+
+def test_bash_blocks_run_real_scripts_and_subcommands():
+    subcommands = {"validate", "coverage", "analyze", "simulate", "schema"}
+    seen = 0
+    for b in BLOCKS:
+        if b["lang"] != "bash":
+            continue
+        for line in filter(None, (ln.strip() for ln in b["body"].split("\n"))):
+            m = re.match(r"backend/\.venv/bin/python (scripts/\S+\.py) (\S+)", line)
+            assert m, f"bash line that is not a project script call: {line!r}"
+            assert (REPO / m.group(1)).is_file(), m.group(1)
+            if m.group(1) == "scripts/fmea.py":
+                assert m.group(2) in subcommands, line
+            seen += 1
+    assert seen >= 8
+
+
+def test_report_excerpt_comes_from_the_committed_report():
+    excerpts = [b for b in BLOCKS if (b["tag"] or "").endswith("fmea/docs/fmeca-report.md)") or
+                (b["tag"] or "") == "source: examples/electric_car/fmea/docs/fmeca-report.md"]
+    assert excerpts, "the tutorial should show an excerpt of the committed FMECA report"
+
+
+def test_tutorial_wording_required_by_review():
+    for phrase in (
+        "Rainbow CSV", "Edit CSV", "Markdown Preview Mermaid Support",
+        "renders them directly", "Swedish", "import",
+        "undoes alternative 2",
+    ):
+        assert phrase in TEXT, phrase
+    assert "spof.csv" not in re.sub(r"(fmea|fmeca|<mode>)-spof\.csv", "", TEXT)
+
+
 def test_tutorial_has_blocks():
     assert any(b["lang"] == "sysml" for b in BLOCKS) and any(b["lang"] == "yaml" for b in BLOCKS)
 
@@ -61,7 +110,7 @@ def test_tutorial_has_blocks():
 def test_fmea_tutorial_snippets_match_sources():
     checked = 0
     for b in BLOCKS:
-        if b["lang"] not in ("sysml", "yaml"):
+        if b["lang"] not in SOURCE_LANGS:
             continue
         tag = b["tag"] or ""
         first = b["body"].split("\n", 1)[0]

@@ -22,7 +22,7 @@ a judged O it uses failure rates, and it ranks modes by severity class and calcu
 | Question | Which modes are the riskiest? | How much risk does each mode contribute during the mission? |
 | Per failure mode | `occurrence` (or a rate that is translated) and `detection.score` | `mode_ratio` and `effect_probability` |
 | Per item or sub-unit | nothing | `rate_fit`, the failure rate in FIT (failures per 10^9 hours) |
-| Result | S, O, D and RPN = S x O x D | C_m, C_r, severity class and probability level |
+| Result | S, O, D and RPN = S x O x D | C_m, C_r (per item and class), severity class and probability level |
 | Ranking | RPN, highest first | Severity class (I first), then C_m |
 
 Use the **FMEA** early, when you have no rate data and want to find the worst problems by judgement.
@@ -67,7 +67,9 @@ FMECA works with rates. For one failure mode:
 - t is the **mission time** in hours.
 
 **C_m = lambda_p x alpha x beta x t** (with lambda_p in failures per hour, so FIT x 10^-9). For
-`winding_open`: 100 FIT x 0.8 x 1.0 x 10 000 h = 8.0e-4. **C_r** is the sum of the C_m of an item.
+`winding_open`: 100 FIT x 0.8 x 1.0 x 10 000 h = 8.0e-4. **C_r** is the sum of the C_m of an item's failure modes within one severity class (MIL-STD-1629A); the
+FMECA report has a table with C_r per item and class. Both C_m and C_r are per instance: for a group such as the
+eight battery modules (`Qty` 8), multiply by `Qty`.
 
 Two classifications place each mode in a matrix:
 
@@ -302,7 +304,7 @@ backend/.venv/bin/python scripts/failure_impact.py examples/electric_car --spof 
 | `validate [--mode fmea\|fmeca\|both] [--notes]` | Checks the data against the model and the mode's required fields. |
 | `coverage` | Lists physical parts without failure modes, modes without a trace, requirements without a group. It also warns about short references (a `part` or `part_def` that is not fully qualified) and about libraries that no longer apply to any part (`unused-library`). |
 | `analyze --mode fmea\|fmeca [--format markdown\|csv\|json] [--spof]` | The table, or only the single points of failure. |
-| `analyze ... --out [DIR]` | Writes the table, `spof.csv`, `coverage.csv` and the markdown report to a folder (default `<project>/fmea/docs/`). |
+| `analyze ... --out [DIR]` | Writes `<mode>-table.csv`, `<mode>-spof.csv`, `coverage.csv` and `<mode>-report.md` to a folder (default `<project>/fmea/docs/`). |
 | `analyze --mode fmeca --out --trials N --seed S` | The same, plus a Monte Carlo simulation (`simulation.csv` and a report section). |
 | `simulate [--trials N] [--seed S] [--mission-time H]` | Probability that functions, use cases and requirements are LOST or DEGRADED within the mission time. |
 | `schema [--write]` | The JSON Schemas of the data files. |
@@ -321,17 +323,40 @@ command gives the same numbers.
 
 Pick the format that suits what you want to do.
 
-**Tables: CSV.** `fmea-table.csv`, `fmeca-table.csv`, `spof.csv`, `coverage.csv` and `simulation.csv` open
-as tables straight in Cursor or VS Code (a CSV viewer extension gives sorting and filters) and import into
-a spreadsheet without conversion.
+**Tables: CSV.** `fmea-table.csv`, `fmeca-table.csv`, `fmea-spof.csv`, `fmeca-spof.csv`, `coverage.csv` and
+`simulation.csv` are plain CSV. The SPOF files differ per mode because the ranking does (RPN or C_m); `coverage.csv`
+is the same for both. Cursor and VS Code show a `.csv` as text. To see a table, install an extension such as
+**Rainbow CSV** (colours the columns, with an "align" command) or **Edit CSV** (a spreadsheet-like editor).
+In Excel with a Swedish locale (semicolon as list separator) do not double-click the file; use Data, From Text/CSV
+and choose comma as delimiter, otherwise everything lands in one column. In other spreadsheets use the same kind of import.
 
 **Text and pictures: markdown with mermaid.** `fmea-report.md` and `fmeca-report.md` contain a summary, the
 top risks, the single points of failure, the criticality matrix, one effect-chain diagram per severe mode,
-the coverage and, when simulated, the simulation. Any markdown preview that renders mermaid shows the diagrams.
+the coverage and, for the FMECA, the item criticality and the simulation. The built-in markdown preview of Cursor and
+VS Code does not render mermaid; add the extension **Markdown Preview Mermaid Support**. An excerpt of
+`fmeca-report.md`:
+
+[//]: # (source: examples/electric_car/fmea/docs/fmeca-report.md)
+```markdown
+## Summary
+
+- Mode: fmeca
+- Items: 5, failure modes: 7, single points of failure: 3
+- Highest criticality C_m: 3.8e-03 (capacity_fade)
+- Coverage: 5 of 39 physical parts have failure modes
+
+## Top risks
+
+| Item | Qty | Failure mode | S | Criticality | Severity class | Probability level |
+|---|---|---|---|---|---|---|
+| electricMotor | 1 | winding_open | 10 | 8.0e-04 | I | E |
+| driveEcu | 1 | psu_dead | 10 | 5.0e-04 | I | E |
+```
 
 **In SysML Viewer.** The reports are written to `fmea/docs/`. A folder called `docs` is project documentation
-to the viewer, so the reports appear in the **Files** tab under `fmea/docs/` and open on the canvas with the
-diagrams rendered. The list is read when the project is opened, so reopen the project after generating new reports.
+to the viewer, so the reports appear in the **Files** tab under `fmea/docs/` and the viewer renders them directly,
+mermaid included, with no extension. The CSV files are not shown there, so the report names them as code, not as links.
+The list is read when the project is opened, so reopen the project after generating new reports.
 
 The reports for Electric Car are committed. A test fails when they no longer match the model and the data, and
 tells you the commands to regenerate them:
@@ -388,6 +413,10 @@ the file, the line, the likely new name and two ways out:
 1. **Update the data.** Change `part_def:` in `fmea/library/battery_module.yaml` to `PhysicalArchitecture::BatteryCellModule`, and run `validate` again.
 2. **Undo the model change.** Rename the part definition back in SysML.
 
+`reset` undoes alternative 2: it renames the part definition back in SysML. If you already took alternative 1 and
+updated the data to `BatteryCellModule`, `reset` refuses, because it would break the FMEA again. It says so and
+tells you to revert `fmea/library/battery_module.yaml` first (or to keep your fix and delete the marker).
+
 For the demo, undo it with `reset`:
 
 ```bash
@@ -396,7 +425,7 @@ backend/.venv/bin/python scripts/electric_car_trigger_fmea_failure.py reset
 
 [//]: # (output: trigger reset)
 ```text
-Reset: renamed part def BatteryCellModule back to BatteryModule in physical_architecture/vehicle_physical.sysml; state.json restored.
+Reset: renamed part def BatteryCellModule back to BatteryModule in physical_architecture/vehicle_physical.sysml.
 Next:
   backend/.venv/bin/python scripts/fmea.py validate examples/electric_car   # expected to pass
 ```
@@ -404,6 +433,6 @@ Next:
 How the demo stays safe:
 
 - It does not use version control. The original bytes and checksums are kept in `.sysmlviewer/fmea_trigger.json`, a folder that is ignored.
-- `reset` restores the `.sysml` file and `state.json` byte for byte, and never writes in `views/`. If you edited the `.sysml` file after `apply`, it refuses and keeps your edits.
+- `reset` restores the `.sysml` file, `state.json` and `project.json` byte for byte (the viewer rewrites the last two whenever it fetches the project), and never writes in `views/`. If you edited the `.sysml` file or the FMEA library after `apply`, it refuses, keeps your edits and says how to get back.
 - Running `apply` twice, or `reset` without `apply`, changes nothing and says so.
 - The reports in `fmea/docs/` are not regenerated by it, so while the demo is applied they are out of date. That is intended.
