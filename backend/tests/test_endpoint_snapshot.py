@@ -155,6 +155,83 @@ ACCEPTED_DIFFS.add(
     "file:examples/electric_car/failure_model/failure_model.sysml: key added"
 )
 
+# examples/diagrams/occurrence_sequences.sysml: a new example file (SysML v2
+# sequence diagrams as `occurrence def`, every form of lifeline). Purely
+# additive: nothing existing changes and nothing is removed. The ids that are
+# not written in the source are the relations `a_redefines_partA`,
+# `ctrl_subsets_plant_controller` and the like (one per `:>`/`:>>`), and the
+# part `SequenceC::plant::actuator` with its redefinition: the parser creates
+# it for the nested message end `plant.actuator.moved` (a feature of the type
+# of `plant`). All seven messages are relations. Only the element ids and
+# relations are listed; no `typeTargetId` or `warning` line is produced.
+_OCCURRENCE_EXAMPLE_ADDED = [
+    "OccurrenceSequences",
+    "OccurrenceSequences::Controller",
+    "OccurrenceSequences::Controller::commandReceived",
+    "OccurrenceSequences::Greeting",
+    "OccurrenceSequences::PartA",
+    "OccurrenceSequences::PartA::ackReceived",
+    "OccurrenceSequences::PartA::sent",
+    "OccurrenceSequences::PartB",
+    "OccurrenceSequences::PartB::received",
+    "OccurrenceSequences::Plant",
+    "OccurrenceSequences::Plant::actuator",
+    "OccurrenceSequences::Plant::actuator::moved",
+    "OccurrenceSequences::Plant::controller",
+    "OccurrenceSequences::SequenceA",
+    "OccurrenceSequences::SequenceA::a",
+    "OccurrenceSequences::SequenceA::a_redefines_partA",
+    "OccurrenceSequences::SequenceA::ack",
+    "OccurrenceSequences::SequenceA::b",
+    "OccurrenceSequences::SequenceA::b_redefines_partB",
+    "OccurrenceSequences::SequenceA::c",
+    "OccurrenceSequences::SequenceA::msg",
+    "OccurrenceSequences::SequenceAView",
+    "OccurrenceSequences::SequenceB",
+    "OccurrenceSequences::SequenceB::a",
+    "OccurrenceSequences::SequenceB::a::ping",
+    "OccurrenceSequences::SequenceB::b",
+    "OccurrenceSequences::SequenceB::bye",
+    "OccurrenceSequences::SequenceB::hello",
+    "OccurrenceSequences::SequenceBView",
+    "OccurrenceSequences::SequenceC",
+    "OccurrenceSequences::SequenceC::command",
+    "OccurrenceSequences::SequenceC::ctrl",
+    "OccurrenceSequences::SequenceC::ctrl_subsets_plant_controller",
+    "OccurrenceSequences::SequenceC::listener",
+    "OccurrenceSequences::SequenceC::listener_subsets_OccurrenceSequences_partB",
+    "OccurrenceSequences::SequenceC::move",
+    "OccurrenceSequences::SequenceC::notify",
+    "OccurrenceSequences::SequenceC::operator",
+    "OccurrenceSequences::SequenceC::plant",
+    "OccurrenceSequences::SequenceC::plant::actuator",
+    "OccurrenceSequences::SequenceC::plant::actuator_redefines_OccurrenceSequences_Plant_actuator",
+    "OccurrenceSequences::SequenceCView",
+    "OccurrenceSequences::partA",
+    "OccurrenceSequences::partB",
+]
+
+_OCCURRENCE_EXAMPLE_RELATIONS = [
+    "OccurrenceSequences::SequenceA::a_redefines_partA",
+    "OccurrenceSequences::SequenceA::ack",
+    "OccurrenceSequences::SequenceA::b_redefines_partB",
+    "OccurrenceSequences::SequenceA::msg",
+    "OccurrenceSequences::SequenceB::bye",
+    "OccurrenceSequences::SequenceB::hello",
+    "OccurrenceSequences::SequenceC::command",
+    "OccurrenceSequences::SequenceC::ctrl_subsets_plant_controller",
+    "OccurrenceSequences::SequenceC::listener_subsets_OccurrenceSequences_partB",
+    "OccurrenceSequences::SequenceC::move",
+    "OccurrenceSequences::SequenceC::notify",
+    "OccurrenceSequences::SequenceC::plant::actuator_redefines_OccurrenceSequences_Plant_actuator",
+]
+_OCCURRENCE_FILE = "file:examples/diagrams/occurrence_sequences.sysml"
+for _id in _OCCURRENCE_EXAMPLE_ADDED:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: element id added {_id!r}")
+for _id in _OCCURRENCE_EXAMPLE_RELATIONS:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: relation added {_id!r}")
+ACCEPTED_DIFFS.add(f"{_OCCURRENCE_FILE}: key added")
+
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 
 

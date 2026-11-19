@@ -177,6 +177,7 @@ NODE_KINDS = {
     ArtifactKind.PART,
     ArtifactKind.PORT,
     ArtifactKind.INTERACTION,
+    ArtifactKind.OCCURRENCE,
     ArtifactKind.LIFELINE,
     ArtifactKind.STATE,
     ArtifactKind.ACTION,
@@ -261,7 +262,7 @@ def _default_node(
             height=DEFAULT_USE_CASE_HEIGHT,
             symbol_ref="default-part",
         )
-    if element.kind == ArtifactKind.INTERACTION:
+    if element.kind in {ArtifactKind.INTERACTION, ArtifactKind.OCCURRENCE}:
         return VisualizationNode(
             artifact_id=element.id,
             x=40.0,
@@ -300,6 +301,7 @@ def merge_visualization(
             ArtifactKind.STATE,
             ArtifactKind.ACTION,
             ArtifactKind.INTERACTION,
+            ArtifactKind.OCCURRENCE,
             ArtifactKind.REQUIREMENT,
             ArtifactKind.USE_CASE,
     ArtifactKind.CASE,

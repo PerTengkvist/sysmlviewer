@@ -34,7 +34,7 @@ def resolve_diagram_mode(view: ViewDef, root: SemanticElement) -> str:
 def expected_root_kinds(diagram_mode: str) -> set[ArtifactKind] | None:
     """Kinds required as expose target for a mode, or None if any kind is ok."""
     if diagram_mode == "sequence":
-        return {ArtifactKind.INTERACTION}
+        return {ArtifactKind.INTERACTION, ArtifactKind.OCCURRENCE}
     if diagram_mode == "state":
         return {ArtifactKind.STATE}
     if diagram_mode == "actionFlow":
