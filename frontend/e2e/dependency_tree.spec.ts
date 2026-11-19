@@ -92,7 +92,7 @@ test('the use case dialog opens the tree of its use case', async ({ page }) => {
   await ucDialog.getByRole('button', { name: 'dependency tree' }).click()
   await expect(ucDialog).toBeHidden()
 
-  const dlg = page.getByRole('dialog', { name: 'Dependency tree Brake' })
+  const dlg = page.getByRole('dialog', { name: 'Dependency tree UC006 Brake' })
   await expect(dlg).toBeVisible()
   await expect(
     dlg.locator(`.dependency-tree-up [data-related-id="${REQ}"]`),
