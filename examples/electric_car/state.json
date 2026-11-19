@@ -7,6 +7,12 @@
       "warnings": []
     },
     {
+      "id": "failure_model/failure_model.sysml",
+      "name": "failure_model.sysml",
+      "path": "failure_model/failure_model.sysml",
+      "warnings": []
+    },
+    {
       "id": "functions/functions.sysml",
       "name": "functions.sysml",
       "path": "functions/functions.sysml",
@@ -9080,6 +9086,26 @@
       "shortId": null,
       "children": [],
       "fileId": "dynamics/sequences.sysml"
+    },
+    "FailureModel": {
+      "id": "FailureModel",
+      "kind": "package",
+      "name": "FailureModel",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "Small reusable library for failure-impact analysis. A failure mode is a FailureKind. The metadata keywords tell the analysis how instances of a part combine: Single (all needed, the default), Pool (instance capacities add up, with a minimum required), Redundant (k of n, k given by the required attribute) and Soft (on a dependency: degrades the dependent function instead of losing it).",
+      "shortId": null,
+      "children": [],
+      "fileId": "failure_model/failure_model.sysml"
     },
     "Functions": {
       "id": "Functions",
@@ -19644,6 +19670,8 @@
         "PhysicalArchitecture::EnergySupply",
         "PhysicalArchitecture::ChargeFeed",
         "PhysicalArchitecture::WindshieldClear",
+        "PhysicalArchitecture::BatteryModule",
+        "PhysicalArchitecture::BrakeCircuit",
         "PhysicalArchitecture::VehiclePhysical",
         "PhysicalArchitecture::PhysicalView",
         "PhysicalArchitecture::PhysicalDependenciesView",
@@ -20029,6 +20057,70 @@
       "fileId": "physical_architecture/vehicle_physical.sysml",
       "isDefinition": true
     },
+    "PhysicalArchitecture::BatteryModule": {
+      "id": "PhysicalArchitecture::BatteryModule",
+      "kind": "part",
+      "name": "BatteryModule",
+      "parentId": "PhysicalArchitecture",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "One battery module of the pack. Its capacity is inherited by every module instance in the pool.",
+      "shortId": null,
+      "children": [
+        "PhysicalArchitecture::BatteryModule::capacityKWh"
+      ],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
+    },
+    "PhysicalArchitecture::BatteryModule::capacityKWh": {
+      "id": "PhysicalArchitecture::BatteryModule::capacityKWh",
+      "kind": "attribute",
+      "name": "capacityKWh",
+      "parentId": "PhysicalArchitecture::BatteryModule",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "7.5",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::BrakeCircuit": {
+      "id": "PhysicalArchitecture::BrakeCircuit",
+      "kind": "part",
+      "name": "BrakeCircuit",
+      "parentId": "PhysicalArchitecture",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": "One hydraulic brake circuit. The car has two independent circuits, one of which is enough to brake.",
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "isDefinition": true
+    },
     "PhysicalArchitecture::VehiclePhysical": {
       "id": "PhysicalArchitecture::VehiclePhysical",
       "kind": "part",
@@ -20067,6 +20159,8 @@
         "PhysicalArchitecture::VehiclePhysical::chassisFrame",
         "PhysicalArchitecture::VehiclePhysical::wheelSet",
         "PhysicalArchitecture::VehiclePhysical::brakeCaliperAsm",
+        "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+        "PhysicalArchitecture::VehiclePhysical::brakeCircuitsRequired",
         "PhysicalArchitecture::VehiclePhysical::suspensionAsm",
         "PhysicalArchitecture::VehiclePhysical::doorAsm",
         "PhysicalArchitecture::VehiclePhysical::windowAsm",
@@ -20117,6 +20211,8 @@
         "PhysicalArchitecture::VehiclePhysical::dep38",
         "PhysicalArchitecture::VehiclePhysical::dep39",
         "PhysicalArchitecture::VehiclePhysical::dep40",
+        "PhysicalArchitecture::VehiclePhysical::dep41",
+        "PhysicalArchitecture::VehiclePhysical::dep42",
         "PhysicalArchitecture::VehiclePhysical::bind1",
         "PhysicalArchitecture::VehiclePhysical::bind2",
         "PhysicalArchitecture::VehiclePhysical::bind3",
@@ -21870,7 +21966,9 @@
       "documentation": "Mechanical battery pack. Implements the logical battery. The battery computer manages it.",
       "shortId": null,
       "children": [
-        "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body"
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::_icon_body",
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::required"
       ],
       "fileId": "physical_architecture/vehicle_physical.sysml"
     },
@@ -21886,6 +21984,51 @@
       "exposeRefs": [],
       "viewFilters": [],
       "defaultValue": "\"iconmind/battery\"",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::modules": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+      "kind": "part",
+      "name": "modules",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack",
+      "typeRef": "BatteryModule",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": "8",
+      "isReference": false,
+      "metadataKeywords": [
+        "Pool"
+      ],
+      "documentation": "Eight battery modules. Their capacities add up to 60 kWh, and the pack counts as available while at least 45 kWh survive.",
+      "shortId": null,
+      "children": [
+        "PhysicalArchitecture::VehiclePhysical::batteryPack::modules::capacityKWh"
+      ],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "typeTargetId": "PhysicalArchitecture::BatteryModule"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::required": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::required",
+      "kind": "attribute",
+      "name": "required",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "45",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -22011,6 +22154,49 @@
       "exposeRefs": [],
       "viewFilters": [],
       "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::brakeCircuits": {
+      "id": "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+      "kind": "part",
+      "name": "brakeCircuits",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": "BrakeCircuit",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": "2",
+      "isReference": false,
+      "metadataKeywords": [
+        "Redundant"
+      ],
+      "documentation": "Two brake circuits. One of them is enough to brake, so the set tolerates a single failure.",
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml",
+      "typeTargetId": "PhysicalArchitecture::BrakeCircuit"
+    },
+    "PhysicalArchitecture::VehiclePhysical::brakeCircuitsRequired": {
+      "id": "PhysicalArchitecture::VehiclePhysical::brakeCircuitsRequired",
+      "kind": "attribute",
+      "name": "brakeCircuitsRequired",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "1",
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
@@ -23302,6 +23488,50 @@
       "typeRef": null,
       "sourceId": "PhysicalArchitecture::VehiclePhysical::chargeInletMech",
       "targetId": "LogicalArchitecture::Car::chargeInlet",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "implements"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::dep41": {
+      "id": "PhysicalArchitecture::VehiclePhysical::dep41",
+      "kind": "dependency",
+      "name": "dep41",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+      "targetId": "LogicalArchitecture::Car::battery",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "implements"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::dep42": {
+      "id": "PhysicalArchitecture::VehiclePhysical::dep42",
+      "kind": "dependency",
+      "name": "dep42",
+      "parentId": "PhysicalArchitecture::VehiclePhysical",
+      "typeRef": null,
+      "sourceId": "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+      "targetId": "LogicalArchitecture::Car::frictionBrakes",
       "exposeRef": null,
       "exposeRefs": [],
       "viewFilters": [],
@@ -26872,7 +27102,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. Starting is where the immobilizer requirement is met: the car becomes Ready only once the key has been approved. Without the brake held, or without an approved key in the cabin, the car stays Off and tells the driver why.",
-      "shortId": null,
+      "shortId": "UC001",
       "children": [
         "UseCases::Driving::StartVehicle::Driver",
         "UseCases::Driving::StartVehicle::objective_1",
@@ -27360,7 +27590,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "With the car in Park the driver presses the start button again. The car opens the high-voltage contactor, re-arms the immobilizer and shows Off. In any other gear the car stays Ready and asks for park.",
-      "shortId": null,
+      "shortId": "UC002",
       "children": [
         "UseCases::Driving::StopVehicle::Driver",
         "UseCases::Driving::StopVehicle::objective_3",
@@ -27678,7 +27908,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear. An unsafe change is refused and the gear stays as it was.",
-      "shortId": null,
+      "shortId": "UC003",
       "children": [
         "UseCases::Driving::ChangeGear::Driver",
         "UseCases::Driving::ChangeGear::objective_4",
@@ -27996,7 +28226,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver turns the steering wheel left and the car follows.",
-      "shortId": null,
+      "shortId": "UC004",
       "children": [
         "UseCases::Driving::TurnLeft::Driver",
         "UseCases::Driving::TurnLeft::objective_5",
@@ -28209,7 +28439,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver turns the steering wheel right and the car follows.",
-      "shortId": null,
+      "shortId": "UC005",
       "children": [
         "UseCases::Driving::TurnRight::Driver",
         "UseCases::Driving::TurnRight::objective_6",
@@ -28422,7 +28652,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit.",
-      "shortId": null,
+      "shortId": "UC006",
       "children": [
         "UseCases::Driving::Brake::Driver",
         "UseCases::Driving::Brake::objective_7",
@@ -28677,7 +28907,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses the accelerator and the motor delivers torque within the battery's limit. The same use case carries the car up to its top speed, so it pursues both the acceleration and the top-speed requirement. With a cold or nearly empty battery the car delivers less torque and says so.",
-      "shortId": null,
+      "shortId": "UC007",
       "children": [
         "UseCases::Driving::Accelerate::Driver",
         "UseCases::Driving::Accelerate::objective_8",
@@ -29060,7 +29290,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver brakes hard from speed. Extends Brake with maximum deceleration, anti-lock modulation and hazard lights.",
-      "shortId": null,
+      "shortId": "UC008",
       "children": [
         "UseCases::Driving::EmergencyStop::Driver",
         "UseCases::Driving::EmergencyStop::objective_10",
@@ -29315,7 +29545,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver starts the wipers and washer and the windshield is cleared.",
-      "shortId": null,
+      "shortId": "UC009",
       "children": [
         "UseCases::Driving::CleanWindshield::Driver",
         "UseCases::Driving::CleanWindshield::objective_11",
@@ -29675,7 +29905,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver switches the headlamps on or off, or between low and high beam.",
-      "shortId": null,
+      "shortId": "UC010",
       "children": [
         "UseCases::Driving::ToggleHeadlights::Driver",
         "UseCases::Driving::ToggleHeadlights::objective_12",
@@ -30035,7 +30265,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver takes the car from origin to destination. Includes starting, gear selection, speed control and steering. The passenger rides along. Speed control and steering repeat until the car has arrived.",
-      "shortId": null,
+      "shortId": "UC011",
       "children": [
         "UseCases::Driving::Drive::Driver",
         "UseCases::Driving::Drive::Passenger",
@@ -30686,7 +30916,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock.",
-      "shortId": null,
+      "shortId": "UC012",
       "children": [
         "UseCases::Driving::Park::Driver",
         "UseCases::Driving::Park::objective_14",
@@ -31357,7 +31587,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses unlock on the key fob. The car authenticates the credential, releases the latches, flashes the indicators and wakes the cabin. A key the car does not recognise is rejected and the car stays locked.",
-      "shortId": null,
+      "shortId": "UC013",
       "children": [
         "UseCases::Managing::Unlock::Driver",
         "UseCases::Managing::Unlock::Passenger",
@@ -31738,7 +31968,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver presses lock on the key fob. The car checks that all doors are closed, engages the latches and flashes the indicators as confirmation. With a door open the car stays unlocked and gives no confirmation.",
-      "shortId": null,
+      "shortId": "UC014",
       "children": [
         "UseCases::Managing::Lock::Driver",
         "UseCases::Managing::Lock::Passenger",
@@ -32077,7 +32307,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant pulls a door handle and the door releases. The inside handle always opens the door, so nobody can be shut in; the outside handle opens it only on an unlocked car.",
-      "shortId": null,
+      "shortId": "UC015",
       "children": [
         "UseCases::Managing::OpenDoor::Driver",
         "UseCases::Managing::OpenDoor::Passenger",
@@ -32416,7 +32646,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant closes a door; the latch engages and the door-ajar warning clears. A door that is not pushed fully shut keeps the warning on.",
-      "shortId": null,
+      "shortId": "UC016",
       "children": [
         "UseCases::Managing::CloseDoor::Driver",
         "UseCases::Managing::CloseDoor::Passenger",
@@ -32755,7 +32985,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant presses the window switch down and the window lowers.",
-      "shortId": null,
+      "shortId": "UC017",
       "children": [
         "UseCases::Managing::OpenWindow::Driver",
         "UseCases::Managing::OpenWindow::Passenger",
@@ -32989,7 +33219,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "An occupant presses the window switch up and the window rises, backing off if something is caught in the gap.",
-      "shortId": null,
+      "shortId": "UC018",
       "children": [
         "UseCases::Managing::CloseWindow::Driver",
         "UseCases::Managing::CloseWindow::Passenger",
@@ -33370,7 +33600,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver or a passenger sets cabin temperature and airflow.",
-      "shortId": null,
+      "shortId": "UC019",
       "children": [
         "UseCases::Managing::AdjustClimate::Driver",
         "UseCases::Managing::AdjustClimate::Passenger",
@@ -33646,7 +33876,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver or a passenger plays audio or video on the cabin system.",
-      "shortId": null,
+      "shortId": "UC020",
       "children": [
         "UseCases::Managing::PlayMedia::Driver",
         "UseCases::Managing::PlayMedia::Passenger",
@@ -33985,7 +34215,7 @@
       "isReference": false,
       "metadataKeywords": [],
       "documentation": "The driver connects a home or fast charger. The car and the charger negotiate a session, the battery takes energy and the state of charge is reported until the driver unplugs.",
-      "shortId": null,
+      "shortId": "UC021",
       "children": [
         "UseCases::Managing::Charge::Driver",
         "UseCases::Managing::Charge::Charger",
@@ -34680,6 +34910,26 @@
       "shortId": null,
       "children": [],
       "fileId": "use_cases/use_cases.sysml"
+    },
+    "PhysicalArchitecture::VehiclePhysical::batteryPack::modules::capacityKWh": {
+      "id": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules::capacityKWh",
+      "kind": "attribute",
+      "name": "capacityKWh",
+      "parentId": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": "7.5",
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "physical_architecture/vehicle_physical.sysml"
     }
   },
   "visualization": {
@@ -36511,6 +36761,16 @@
         "width": 120.0,
         "height": 48.0,
         "symbolRef": "default-lifeline",
+        "side": null,
+        "offset": null
+      },
+      "FailureModel": {
+        "artifactId": "FailureModel",
+        "x": 80.0,
+        "y": 11060.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
         "side": null,
         "offset": null
       },
@@ -39014,6 +39274,26 @@
         "side": null,
         "offset": null
       },
+      "PhysicalArchitecture::BatteryModule": {
+        "artifactId": "PhysicalArchitecture::BatteryModule",
+        "x": 80.0,
+        "y": 21320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "PhysicalArchitecture::BrakeCircuit": {
+        "artifactId": "PhysicalArchitecture::BrakeCircuit",
+        "x": 360.0,
+        "y": 21320.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "PhysicalArchitecture::VehiclePhysical": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical",
         "x": 360.0,
@@ -39804,6 +40084,16 @@
         "side": null,
         "offset": null
       },
+      "PhysicalArchitecture::VehiclePhysical::batteryPack::modules": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::batteryPack::modules",
+        "x": 80.0,
+        "y": 22940.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "PhysicalArchitecture::VehiclePhysical::chassisFrame": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::chassisFrame",
         "x": 360.0,
@@ -39853,6 +40143,16 @@
         "symbolRef": "default-port",
         "side": "left",
         "offset": 0.685
+      },
+      "PhysicalArchitecture::VehiclePhysical::brakeCircuits": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::brakeCircuits",
+        "x": 360.0,
+        "y": 23120.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
       },
       "PhysicalArchitecture::VehiclePhysical::suspensionAsm": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::suspensionAsm",
@@ -48729,6 +49029,44 @@
       },
       "PhysicalArchitecture::VehiclePhysical::dep40": {
         "artifactId": "PhysicalArchitecture::VehiclePhysical::dep40",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::dep41": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::dep41",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "PhysicalArchitecture::VehiclePhysical::dep42": {
+        "artifactId": "PhysicalArchitecture::VehiclePhysical::dep42",
         "routing": "direct",
         "waypoints": [],
         "labelOffset": {

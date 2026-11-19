@@ -10,7 +10,7 @@ package UseCases {
   package Driving {
     doc /* Use cases performed from the driver's seat with the car Ready or Driving: start and stop, gear, speed, steering, visibility and parking. */
 
-    use case def StartVehicle {
+    use case def <'UC001'> StartVehicle {
       actor Driver;
       objective Requirements::PowerModes;
       objective Requirements::Immobilizer;
@@ -41,7 +41,7 @@ package UseCases {
       first askForBrake then done;
     }
 
-    use case def StopVehicle {
+    use case def <'UC002'> StopVehicle {
       actor Driver;
       objective Requirements::PowerModes;
       doc /* With the car in Park the driver presses the start button again. The car opens the high-voltage contactor, re-arms the immobilizer and shows Off. In any other gear the car stays Ready and asks for park. */
@@ -62,7 +62,7 @@ package UseCases {
       first askForPark then done;
     }
 
-    use case def ChangeGear {
+    use case def <'UC003'> ChangeGear {
       actor Driver;
       objective Requirements::PropulsionModes;
       doc /* The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear. An unsafe change is refused and the gear stays as it was. */
@@ -83,7 +83,7 @@ package UseCases {
       first refuseGear then done;
     }
 
-    use case def TurnLeft {
+    use case def <'UC004'> TurnLeft {
       actor Driver;
       objective Requirements::DirectionalControl;
       doc /* The driver turns the steering wheel left and the car follows. */
@@ -100,7 +100,7 @@ package UseCases {
       then done;
     }
 
-    use case def TurnRight {
+    use case def <'UC005'> TurnRight {
       actor Driver;
       objective Requirements::DirectionalControl;
       doc /* The driver turns the steering wheel right and the car follows. */
@@ -117,7 +117,7 @@ package UseCases {
       then done;
     }
 
-    use case def Brake {
+    use case def <'UC006'> Brake {
       actor Driver;
       objective Requirements::BrakingDistance;
       doc /* The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit. */
@@ -138,7 +138,7 @@ package UseCases {
       then done;
     }
 
-    use case def Accelerate {
+    use case def <'UC007'> Accelerate {
       actor Driver;
       objective Requirements::Acceleration;
       objective Requirements::TopSpeed;
@@ -163,7 +163,7 @@ package UseCases {
       then done;
     }
 
-    use case def EmergencyStop {
+    use case def <'UC008'> EmergencyStop {
       actor Driver;
       objective Requirements::BrakingDistance;
       doc /* The driver brakes hard from speed. Extends Brake with maximum deceleration, anti-lock modulation and hazard lights. */
@@ -184,7 +184,7 @@ package UseCases {
       then done;
     }
 
-    use case def CleanWindshield {
+    use case def <'UC009'> CleanWindshield {
       actor Driver;
       objective Requirements::ForwardVisibility;
       doc /* The driver starts the wipers and washer and the windshield is cleared. */
@@ -209,7 +209,7 @@ package UseCases {
       then done;
     }
 
-    use case def ToggleHeadlights {
+    use case def <'UC010'> ToggleHeadlights {
       actor Driver;
       objective Requirements::NightVisibility;
       doc /* The driver switches the headlamps on or off, or between low and high beam. */
@@ -233,7 +233,7 @@ package UseCases {
       then done;
     }
 
-    use case def Drive {
+    use case def <'UC011'> Drive {
       actor Driver;
       actor Passenger;
       objective Requirements::Range;
@@ -260,7 +260,7 @@ package UseCases {
       first arrive then done;
     }
 
-    use case def Park {
+    use case def <'UC012'> Park {
       actor Driver;
       objective Requirements::LockIndication;
       include use case StopVehicle;
@@ -300,7 +300,7 @@ package UseCases {
   package Managing {
     doc /* Use cases performed with the car standing still: access, doors and windows, cabin comfort, media and charging. Driver and passenger share most of them. */
 
-    use case def Unlock {
+    use case def <'UC013'> Unlock {
       actor Driver;
       actor Passenger;
       objective Requirements::AccessControl;
@@ -326,7 +326,7 @@ package UseCases {
       first rejectKey then done;
     }
 
-    use case def Lock {
+    use case def <'UC014'> Lock {
       actor Driver;
       actor Passenger;
       objective Requirements::LockIndication;
@@ -348,7 +348,7 @@ package UseCases {
       first stayUnlocked then done;
     }
 
-    use case def OpenDoor {
+    use case def <'UC015'> OpenDoor {
       actor Driver;
       actor Passenger;
       objective Requirements::CabinAccess;
@@ -370,7 +370,7 @@ package UseCases {
       first stayLatched then done;
     }
 
-    use case def CloseDoor {
+    use case def <'UC016'> CloseDoor {
       actor Driver;
       actor Passenger;
       objective Requirements::CabinAccess;
@@ -392,7 +392,7 @@ package UseCases {
       first keepDoorWarning then done;
     }
 
-    use case def OpenWindow {
+    use case def <'UC017'> OpenWindow {
       actor Driver;
       actor Passenger;
       objective Requirements::CabinAccess;
@@ -410,7 +410,7 @@ package UseCases {
       then done;
     }
 
-    use case def CloseWindow {
+    use case def <'UC018'> CloseWindow {
       actor Driver;
       actor Passenger;
       objective Requirements::CabinAccess;
@@ -435,7 +435,7 @@ package UseCases {
       then done;
     }
 
-    use case def AdjustClimate {
+    use case def <'UC019'> AdjustClimate {
       actor Driver;
       actor Passenger;
       objective Requirements::CabinClimate;
@@ -457,7 +457,7 @@ package UseCases {
       then done;
     }
 
-    use case def PlayMedia {
+    use case def <'UC020'> PlayMedia {
       actor Driver;
       actor Passenger;
       objective Requirements::CabinMedia;
@@ -480,7 +480,7 @@ package UseCases {
       first stopPlayback then done;
     }
 
-    use case def Charge {
+    use case def <'UC021'> Charge {
       actor Driver;
       actor Charger;
       objective Requirements::ChargeTime;

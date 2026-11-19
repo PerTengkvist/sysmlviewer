@@ -49,6 +49,7 @@ import {
 } from '../../layout/portPlacement'
 import { resolveNestedPartPosition } from '../../nestedPartPosition'
 import { USE_CASE_H, USE_CASE_W } from '../useCase/useCaseSize'
+import { useCaseLabel } from '../useCase/useCaseLabel'
 
 function nodeBox(
   node: Node,
@@ -893,7 +894,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
             }
           : nodeType === 'useCase'
             ? {
-                label: el.name,
+                label: useCaseLabel(el),
                 artifactId: id,
                 formatStyle: formatFor(id),
                 viewMode,
@@ -992,7 +993,7 @@ export function buildStructureGraph(opts: StructureBuildOpts): {
               }
             : nodeType === 'useCase'
               ? {
-                  label: el.name,
+                  label: useCaseLabel(el),
                   artifactId: id,
                   formatStyle: formatFor(id),
                   viewMode,

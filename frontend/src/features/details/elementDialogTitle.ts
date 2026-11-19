@@ -27,5 +27,8 @@ export function elementDialogTitle(
     )
     return { kind: el.kind, name: header || el.name || elementId }
   }
+  if (el.kind === 'useCase' && el.shortId) {
+    return { kind: el.kind, name: `${el.shortId} ${el.name}` }
+  }
   return { kind: el.kind, name: el.name || elementId }
 }

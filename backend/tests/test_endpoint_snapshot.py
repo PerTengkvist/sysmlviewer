@@ -124,6 +124,37 @@ for _usage, (_old, _new) in _TYPE_TARGET_CHANGES.items():
         f"project:examples/diagrams: {_usage} typeTargetId {_old!r} -> {_new!r}"
     )
 
+# Failure-impact showcase in electric_car (pool of battery modules, redundant brake
+# circuits and the FailureModel library). Purely additive: no existing id and no
+# relation end changes. The two new «implements» dependencies are numbered after
+# the 40 existing anonymous dependencies of vehicle_physical.sysml (dep<N>).
+_PA = "PhysicalArchitecture::VehiclePhysical"
+_FAILURE_MODEL_ADDED = [
+    "PhysicalArchitecture::BatteryModule",
+    "PhysicalArchitecture::BatteryModule::capacityKWh",
+    "PhysicalArchitecture::BrakeCircuit",
+    f"{_PA}::batteryPack::modules",
+    f"{_PA}::batteryPack::modules::capacityKWh",
+    f"{_PA}::batteryPack::required",
+    f"{_PA}::brakeCircuits",
+    f"{_PA}::brakeCircuitsRequired",
+]
+_FAILURE_MODEL_NEW_DEPS = [f"{_PA}::dep41", f"{_PA}::dep42"]
+_PHYSICAL_FILE = (
+    "file:examples/electric_car/physical_architecture/vehicle_physical.sysml"
+)
+for _id in ["FailureModel", *_FAILURE_MODEL_ADDED, *_FAILURE_MODEL_NEW_DEPS]:
+    ACCEPTED_DIFFS.add(f"project:examples/electric_car: element id added {_id!r}")
+for _id in _FAILURE_MODEL_ADDED:
+    ACCEPTED_DIFFS.add(f"{_PHYSICAL_FILE}: element id added {_id!r}")
+for _id in _FAILURE_MODEL_NEW_DEPS:
+    ACCEPTED_DIFFS.add(f"project:examples/electric_car: relation added {_id!r}")
+    ACCEPTED_DIFFS.add(f"{_PHYSICAL_FILE}: element id added {_id!r}")
+    ACCEPTED_DIFFS.add(f"{_PHYSICAL_FILE}: relation added {_id!r}")
+ACCEPTED_DIFFS.add(
+    "file:examples/electric_car/failure_model/failure_model.sysml: key added"
+)
+
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 
 
@@ -189,3 +220,9 @@ def test_examples_add_no_warnings(current, key):
     accepted = {normalize([n]).pop() for _, n in _OLD_NEW_WARNINGS}
     added = normalize(new["warnings"]) - normalize(old["warnings"]) - accepted
     assert added == set()
+
+
+def test_new_snapshot_keys_are_accepted(current):
+    """The parametrised tests only walk the fixture's keys; a new file needs a line."""
+    new_keys = set(current) - set(load_fixture())
+    assert {f"{k}: key added" for k in new_keys} - ACCEPTED_DIFFS == set()

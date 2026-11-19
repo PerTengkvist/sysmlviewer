@@ -43,6 +43,7 @@ def test_electric_car_parses_without_warnings():
         "LogicalArchitecture",
         "Dynamics",
         "PhysicalArchitecture",
+        "FailureModel",
     }
     # «implements» points straight at the logical parts; no copies of them.
     assert "PhysicalArchitecture::LogicalCounterparts" not in result.elements
@@ -215,6 +216,42 @@ def test_user_stories_are_typed():
 
 
 
+def _implements(elements, source, target):
+    return any(
+        e.kind == ArtifactKind.DEPENDENCY
+        and "implements" in (e.metadata_keywords or [])
+        and e.source_id == source
+        and e.target_id == target
+        for e in elements.values()
+    )
+
+
+def test_battery_pool_declared():
+    elements = _load().elements
+    pa = "PhysicalArchitecture::VehiclePhysical"
+    modules = elements[f"{pa}::batteryPack::modules"]
+    assert modules.metadata_keywords == ["Pool"]
+    assert modules.multiplicity == "8"
+    assert modules.type_target_id == "PhysicalArchitecture::BatteryModule"
+    assert elements[f"{pa}::batteryPack::modules::capacityKWh"].default_value == "7.5"
+    assert elements[f"{pa}::batteryPack::required"].default_value == "45"
+    assert _implements(
+        elements, f"{pa}::batteryPack::modules", "LogicalArchitecture::Car::battery"
+    )
+
+
+def test_brake_circuits_redundant_declared():
+    elements = _load().elements
+    pa = "PhysicalArchitecture::VehiclePhysical"
+    circuits = elements[f"{pa}::brakeCircuits"]
+    assert circuits.metadata_keywords == ["Redundant"]
+    assert circuits.multiplicity == "2"
+    assert elements[f"{pa}::brakeCircuitsRequired"].default_value == "1"
+    assert _implements(
+        elements, f"{pa}::brakeCircuits", "LogicalArchitecture::Car::frictionBrakes"
+    )
+
+
 def test_documentation_files_match_artifacts():
     elements = _load().elements
     documented = {
@@ -287,7 +324,7 @@ def test_shipped_views_render_requested_diagrams():
             if e["kind"] == "dependency"
             and "implements" in (e.get("metadataKeywords") or [])
         )
-        == 40
+        == 42
     )
     # The logical ends of «implements» show as plain nodes, not the logical
     # architecture with its ports and connections.
@@ -1320,3 +1357,14 @@ def test_a_physical_part_climbs_through_implements_to_the_logical_part():
         "Functions::Security::authenticate",
         f"{CAR}::vehicleController",
     ]
+
+
+def test_use_cases_have_running_unique_short_ids():
+    use_cases = [
+        e for e in _load().elements.values()
+        if e.kind == ArtifactKind.USE_CASE and e.is_definition
+    ]
+    assert len(use_cases) == 21
+    tags = [e.short_id for e in use_cases]
+    assert tags == [f"UC{n:03d}" for n in range(1, 22)]
+    assert next(e for e in use_cases if e.name == "Brake").short_id == "UC006"

@@ -1,4 +1,6 @@
 package PhysicalArchitecture {
+  private import FailureModel::*;
+
   doc /* Physical architecture of the electric car. Software components run on embedded controllers. The three logical controllers each get their own computer: vehicleEcu, driveEcu and bodyEcu. Climate and entertainment share the infotainment computer. The engine and the battery each have their own. Everything else is mechanical. Every physical part has an «implements» dependency to the logical part it realizes. The same interface contracts as the logical architecture are realized here: a provider port (Out) and a consumer port (In) on the physical parts that play those roles. Each «implements» points straight at the part of the logical Car it realizes, and VehiclePhysical as a whole implements the logical Car definition. */
 
   interface def DirectionCommand {
@@ -54,6 +56,15 @@ package PhysicalArchitecture {
   }
   interface def WindshieldClear {
     doc /* Wiping action, same contract as the logical architecture. The wiper assembly provides it and the windshield consumes it. */
+  }
+
+  part def BatteryModule {
+    doc /* One battery module of the pack. Its capacity is inherited by every module instance in the pool. */
+    attribute capacityKWh = 7.5;
+  }
+
+  part def BrakeCircuit {
+    doc /* One hydraulic brake circuit. The car has two independent circuits, one of which is enough to brake. */
   }
 
   part def VehiclePhysical {
@@ -204,6 +215,10 @@ package PhysicalArchitecture {
     part batteryPack {
       attribute _icon_body = "iconmind/battery";
       doc /* Mechanical battery pack. Implements the logical battery. The battery computer manages it. */
+      #Pool part modules[8] : BatteryModule {
+        doc /* Eight battery modules. Their capacities add up to 60 kWh, and the pack counts as available while at least 45 kWh survive. */
+      }
+      attribute required = 45;
     }
 
     part chassisFrame {
@@ -220,6 +235,11 @@ package PhysicalArchitecture {
       doc /* Hydraulic calipers, discs and the brake actuator. Consume BrakeCommand from the drive computer. */
       port brakeCommandIn : BrakeCommand;
     }
+
+    #Redundant part brakeCircuits[2] : BrakeCircuit {
+      doc /* Two brake circuits. One of them is enough to brake, so the set tolerates a single failure. */
+    }
+    attribute brakeCircuitsRequired = 1;
 
     part suspensionAsm {
       doc /* Mechanical suspension. Implements the logical suspension. */
@@ -309,6 +329,8 @@ package PhysicalArchitecture {
     #implements dependency from doorLockAsm to LogicalArchitecture::Car::locks;
     #implements dependency from lampUnits to LogicalArchitecture::Car::lamps;
     #implements dependency from chargeInletMech to LogicalArchitecture::Car::chargeInlet;
+    #implements dependency from batteryPack.modules to LogicalArchitecture::Car::battery;
+    #implements dependency from brakeCircuits to LogicalArchitecture::Car::frictionBrakes;
 
     // Internal ECU↔SW bindings (proxy faces on the parent).
     bind vehicleEcu.credentialIn = vehicleEcu.vehicleControlSw.credentialIn;

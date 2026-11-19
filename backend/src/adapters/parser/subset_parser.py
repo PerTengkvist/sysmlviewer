@@ -207,6 +207,8 @@ class _ParserState:
     element_lines: dict[str, int] = field(default_factory=dict)
     # (file id, text) of warnings about type references, filed under the usage's file.
     type_warnings: list[tuple[str, str]] = field(default_factory=list)
+    # (file id, text) for import checks in project mode, filed under the importing file.
+    import_warnings: list[tuple[str, str]] = field(default_factory=list)
     # Usages that already got an ambiguity or visibility warning.
     type_warned: set[str] = field(default_factory=set)
     # Source line of each `perform` element, for warnings after linking.
@@ -327,6 +329,9 @@ class SubsetSysmlParser:
             warnings.append(text)
             file_warnings.setdefault(fid, []).append(text)
         self._apply_import_visibility(link_state)
+        for fid, text in link_state.import_warnings:
+            warnings.append(text)
+            file_warnings.setdefault(fid, []).append(text)
         self._inherit_features_onto_usages(link_state)
         for fid, text in link_state.type_warnings:
             warnings.append(text)
@@ -2544,8 +2549,8 @@ class SubsetSysmlParser:
                         if e.kind == ArtifactKind.PACKAGE and e.name == pkg.split("::")[-1]
                     ]
                     if not matches:
-                        state.warnings.append(
-                            f"line {imp.line}: import '{imp.path}' — package not found"
+                        self._import_warning(
+                            state, imp, f"line {imp.line}: import '{imp.path}' — package not found"
                         )
                     continue
                 # Wildcard import succeeds if package exists
@@ -2556,9 +2561,15 @@ class SubsetSysmlParser:
             simple = path.split("::")[-1]
             if any(e.name == simple for e in state.elements.values()):
                 continue
-            state.warnings.append(
-                f"line {imp.line}: import '{imp.path}' — symbol not found"
-            )
+            self._import_warning(state, imp, f"line {imp.line}: import '{imp.path}' — symbol not found")
+
+    @staticmethod
+    def _import_warning(state: _ParserState, imp: _ImportDecl, text: str) -> None:
+        """In a project parse, file the warning under the file that holds the import."""
+        if state.is_project:
+            state.import_warnings.append((imp.file_id, text))
+        else:
+            state.warnings.append(text)
 
     def _warn_unresolved_type_refs(self, state: _ParserState) -> None:
         """Flag type references that do not match any element name in the graph.

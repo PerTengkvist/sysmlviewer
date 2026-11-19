@@ -160,6 +160,11 @@ describe('buildUseCaseFlow', () => {
     }),
   }
 
+  it('puts the short id in the title when the use case has one', () => {
+    const tagged = { ...semantic, 'P::Pay': { ...semantic['P::Pay'], shortId: 'UC042' } }
+    expect(buildUseCaseFlow('P::Pay', tagged).params.title).toBe('UC042 Pay')
+  })
+
   it('exposes title, actors, subject and objective on the left', () => {
     const { params } = buildUseCaseFlow('P::Pay', semantic)
     expect(params.title).toBe('Pay')

@@ -1,3 +1,4 @@
+import { useCaseLabel } from './useCaseLabel'
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
 import type { SemanticElement } from '../../../../api'
@@ -104,7 +105,7 @@ export function buildUseCaseFlow(
     ''
 
   const params: UseCaseFlowParams = {
-    title: uc?.name || useCaseId,
+    title: uc ? useCaseLabel(uc) : useCaseId,
     actors,
     subjects,
     objective,

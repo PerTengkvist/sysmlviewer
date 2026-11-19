@@ -23,6 +23,17 @@ class ImportSpec:
     visibility: str  # "public" | "private"
     line: int
 
+    @classmethod
+    def from_dict(cls, d: Mapping[str, object]) -> ImportSpec:
+        """Build from a `ParseResult.imports` entry."""
+        return cls(
+            owner_id=d.get("ownerId"),  # type: ignore[arg-type]
+            file_id=str(d["fileId"]),
+            path=str(d["path"]),
+            visibility=str(d["visibility"]),
+            line=int(d["line"]),  # type: ignore[call-overload]
+        )
+
 
 @dataclass(frozen=True)
 class Resolution:
