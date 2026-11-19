@@ -65,6 +65,7 @@ class Node:
     name: str
     layer: Layer
     gate: Gate | None = None
+    short_id: str | None = None  # SysML short name, e.g. UC006 or REQ-SAFE-02
 
 
 @dataclass
