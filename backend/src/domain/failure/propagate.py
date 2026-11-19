@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable, Mapping, Sequence
+from typing import NamedTuple
 
 from domain.failure.model import (
     EPS,
@@ -66,32 +67,41 @@ def instance_vector(
     return tuple(vector)
 
 
-def _gate_value(graph: ImpactGraph, part_id: str, vector: Sequence[float]) -> tuple[float, str, frozenset[str]]:
-    """(capability, limiting label, flags) of a part from its instance vector."""
+class GateResult(NamedTuple):
+    capability: float
+    label: str  # what limits the part: "failure", "pool" or "kofn"
+    flags: frozenset[str]
+    surviving: float  # surviving capacity (pool) or instance count
+    alive: int  # instances that still work
+
+
+def gate_result(graph: ImpactGraph, part_id: str, vector: Sequence[float]) -> GateResult:
+    """Capability, label, flags and survivors of a part from its instance vector."""
     gate = graph.nodes[part_id].gate
+    alive = sum(1 for v in vector if v > EPS)
     if gate is None or gate.kind is GateKind.AND:
-        return min(vector), "failure", frozenset()
+        return GateResult(min(vector), "failure", frozenset(), sum(vector), alive)
     if gate.kind is GateKind.POOL:
         surviving = sum(c * v for c, v in zip(gate.capacities, vector))
         total = sum(gate.capacities)
         if surviving < gate.required - EPS:
-            return 0.0, "pool", frozenset()
+            return GateResult(0.0, "pool", frozenset(), surviving, alive)
         flags = (
             frozenset({"pool_at_minimum"})
             if gate.required > 0 and abs(surviving - gate.required) <= EPS
             else frozenset()
         )
-        return (surviving / total if total else 0.0), "pool", flags
+        return GateResult((surviving / total if total else 0.0), "pool", flags, surviving, alive)
     k = int(round(gate.required))
     ordered = sorted(vector, reverse=True)
     if k < 1:
-        return 1.0, "kofn", frozenset()
+        return GateResult(1.0, "kofn", frozenset(), float(alive), alive)
     if k > len(ordered):
-        return 0.0, "kofn", frozenset()
+        return GateResult(0.0, "kofn", frozenset(), float(alive), alive)
     value = ordered[k - 1]
-    survivors = sum(1 for v in vector if v > EPS)
-    exhausted = survivors == k or (survivors > k and value < 1 - EPS)
-    return value, "kofn", frozenset({"redundancy_exhausted"}) if exhausted else frozenset()
+    exhausted = alive == k or (alive > k and value < 1 - EPS)
+    flags = frozenset({"redundancy_exhausted"}) if exhausted else frozenset()
+    return GateResult(value, "kofn", flags, float(alive), alive)
 
 
 def _order(graph: ImpactGraph) -> list[str]:
@@ -169,7 +179,7 @@ def evaluate(graph: ImpactGraph, failures: Iterable[Failure]) -> dict[str, Impac
         if part_id not in graph.nodes:
             continue  # implements nothing: no effect
         vector = instance_vector(graph, failures, part_id)
-        value, label, gate_flags = _gate_value(graph, part_id, vector)
+        value, label, gate_flags, _, _ = gate_result(graph, part_id, vector)
         own[part_id] = value
         own_label[part_id] = label
         flags[part_id] |= gate_flags

@@ -163,3 +163,19 @@ def test_spof_text_and_json(graph):
     assert len(data) == 39
     assert {"partId", "lostFunctions", "degradedFunctions", "requirementsAtRisk", "flags"} <= set(data[0])
     json.dumps(data)
+
+
+def test_json_failure_flags_include_gate_flags(graph):
+    fs, impacts = _run(graph, CIRCUIT_1)
+    data = to_json_dict(graph, fs, impacts)
+    assert data["failures"][0]["flags"] == ["redundancy_exhausted"]
+    fs, impacts = _run(graph, INFOTAINMENT)
+    assert to_json_dict(graph, fs, impacts)["failures"][0]["flags"] == ["common_cause"]
+
+
+def test_json_warns_about_a_part_that_implements_nothing(graph):
+    bolt = Failure("Spare::Kit::looseBolt", FailureKind.LOSS)
+    fs, impacts = _run(graph, bolt)
+    assert to_json_dict(graph, fs, impacts)["warnings"] == [
+        "Spare::Kit::looseBolt implements nothing; it has no effect"
+    ]

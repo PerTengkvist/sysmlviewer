@@ -10,7 +10,7 @@ from adapters.api.static_paths import resolve_repo_root
 from adapters.parser.subset_parser import SubsetSysmlParser
 from domain.failure.extract import build_impact_graph
 from domain.failure.model import EPS, Failure, FailureKind, Layer, Status
-from domain.failure.propagate import evaluate
+from domain.failure.propagate import evaluate, failure_flags
 from domain.failure.scenarios import spof
 from domain.models import SysmlFile
 
@@ -112,7 +112,7 @@ def test_spof_matches_single_runs(graph):
         assert set(row.requirements_at_risk) == (
             ids(Layer.REQUIREMENT, Status.LOST) | ids(Layer.REQUIREMENT, Status.DEGRADED)
         )
-        assert impacts[row.part_id].flags <= row.flags
+        assert row.flags == failure_flags(graph, row.failure) | impacts[row.part_id].flags
 
 
 @pytest.mark.parametrize("seed", range(10))
