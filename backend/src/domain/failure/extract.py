@@ -90,11 +90,24 @@ class _Extractor:
         self._roles()
         for rel in self.relations:
             self._edges(rel)
+        self._warn_definition_only()
         return self._finish()
+
+    def _warn_definition_only(self) -> None:
+        """A logical part with function nodes whose only implementers are definitions."""
+        for tgt, defs in self._by_definition.items():
+            has_usage_input = any(e.label == "implements" for e in self.inputs.get(tgt, ()))
+            if tgt in self._allocated and not has_usage_input:
+                self.warnings.append(
+                    f"logical part {tgt!r} is implemented only by definition {defs[0]!r}; "
+                    "no part usage implements it, so no failure reaches it"
+                )
 
     def _roles(self) -> None:
         """Physical parts, function nodes, functions and logical parts."""
         self._implemented: dict[str, list[str]] = {}  # relation id -> edge sources
+        self._by_definition: dict[str, list[str]] = {}  # logical part -> implementing defs
+        self._allocated: set[str] = set()  # logical parts with function nodes
         for rel in self.relations:
             kws = rel.metadata_keywords or []
             if rel.kind == ArtifactKind.DEPENDENCY and "implements" in kws:
@@ -108,6 +121,7 @@ class _Extractor:
                     members, sources = [src, *self._descendant_usages(src)], [src]
                 elif self.sem[src].is_definition and self.sem[src].kind == ArtifactKind.PART:
                     members, sources = self._descendant_usages(src), []
+                    self._by_definition.setdefault(tgt, []).append(src)
                 else:
                     continue
                 for pid in members:
@@ -122,6 +136,7 @@ class _Extractor:
                 if self._kind(src) != ArtifactKind.PART or self._kind(tgt) != ArtifactKind.PART:
                     continue
                 self.layers[src] = Layer.FUNCTION_NODE
+                self._allocated.add(tgt)
                 self.layers.setdefault(tgt, Layer.LOGICAL)
                 owner = self.sem[src].parent_id
                 if owner in self.sem:
@@ -168,6 +183,14 @@ class _Extractor:
                 labels = [k for k in rel.metadata_keywords if k != "Soft" and k not in _TRACE_KEYWORDS]
                 if labels:
                     self._add(src, Edge(tgt, f"#{labels[0]}", soft="Soft" in kws))
+            else:
+                labels = [k for k in rel.metadata_keywords if k != "Soft" and k not in _TRACE_KEYWORDS]
+                touched = {layers.get(src), layers.get(tgt)} & {Layer.FUNCTION, Layer.FUNCTION_NODE}
+                if labels and touched:
+                    self.warnings.append(
+                        f"dependency {rel.id!r} (#{labels[0]}) from {src!r} to {tgt!r} is not "
+                        "between two functions; dependencies on function nodes are not supported yet"
+                    )
 
     # -- gates ---------------------------------------------------------
 
@@ -189,43 +212,68 @@ class _Extractor:
             n = int(upper)
         capacity = self._capacity(eid)
         capacities = (capacity,) * n
+        if group is None:
+            return Gate(GateKind.AND, n, float(n), capacities)
+        required, problem = self._required(eid)
+        default = 1.0 if group == "Redundant" else 0.0
+        if problem:
+            self.warnings.append(f"{problem}; using {default:g}")
+            required = default
         if group == "Pool":
-            return Gate(GateKind.POOL, n, self._required(eid) or 0.0, capacities)
-        if group == "Redundant":
-            k = self._required(eid)
-            if k is None:
+            required = default if required is None else required
+            total = sum(capacities)
+            if required > total + 1e-9:
                 self.warnings.append(
-                    f"redundant {eid!r} has no required attribute; using 1"
+                    f"pool {eid!r}: required {required:g} exceeds its total capacity {total:g}"
                 )
-                k = 1.0
-            return Gate(GateKind.KOFN, n, k, capacities)
-        return Gate(GateKind.AND, n, float(n), capacities)
+            return Gate(GateKind.POOL, n, required, capacities)
+        if required is None:
+            self.warnings.append(f"redundant {eid!r} has no required attribute; using 1")
+            required = 1.0
+        if required > n:
+            self.warnings.append(
+                f"redundant {eid!r}: required {required:g} exceeds its {n} instances"
+            )
+        return Gate(GateKind.KOFN, n, required, capacities)
 
     def _capacity(self, eid: str) -> float:
-        for child in self.children.get(eid, []):
-            c = self.sem[child]
-            if c.kind == ArtifactKind.ATTRIBUTE and c.name.startswith("capacity"):
-                value = _number(c.default_value)
-                if value is not None:
-                    return value
-        return 1.0
+        found = [
+            self.sem[c]
+            for c in self.children.get(eid, [])
+            if self.sem[c].kind == ArtifactKind.ATTRIBUTE
+            and self.sem[c].name.startswith("capacity")
+            and _number(self.sem[c].default_value) is not None
+        ]
+        if len(found) > 1:
+            self.warnings.append(
+                f"{eid!r} has several capacity attributes "
+                f"({', '.join(a.name for a in found)}); using {found[0].name}"
+            )
+        return _number(found[0].default_value) if found else 1.0  # type: ignore[return-value]
 
-    def _required(self, eid: str) -> float | None:
+    def _required(self, eid: str) -> tuple[float | None, str | None]:
+        """(value, problem). A required attribute that is not a number is a problem."""
         el = self.sem[eid]
         owner = el.parent_id
-        if not owner:
-            return None
-        named = self.sem.get(f"{owner}::{el.name}Required")
-        if named is not None:
-            return _number(named.default_value)
-        groups = [
-            c for c in self.children.get(owner, [])
-            if self._is_usage(c) and {"Pool", "Redundant"} & set(self.sem[c].metadata_keywords or [])
-        ]
-        plain = self.sem.get(f"{owner}::required")
-        if len(groups) == 1 and plain is not None:
-            return _number(plain.default_value)
-        return None
+        attr = None
+        if owner:
+            attr = self.sem.get(f"{owner}::{el.name}Required")
+            if attr is None:
+                groups = [
+                    c for c in self.children.get(owner, [])
+                    if self._is_usage(c)
+                    and {"Pool", "Redundant"} & set(self.sem[c].metadata_keywords or [])
+                ]
+                if len(groups) == 1:
+                    attr = self.sem.get(f"{owner}::required")
+        if attr is None:
+            return None, None
+        value = _number(attr.default_value)
+        if value is None:
+            return None, (
+                f"required attribute of {eid!r} is not numeric ({attr.default_value!r})"
+            )
+        return value, None
 
     # -- result --------------------------------------------------------
 

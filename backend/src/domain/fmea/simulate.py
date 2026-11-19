@@ -7,13 +7,16 @@ with T <= t applies (competing risks); SRU modes strike the LRU instance and an
 erroneous mode counts as loss. All times are drawn before they are compared with t,
 so one seed gives the same sample for every t (common random numbers). The effect of
 a failure set is computed by the trace engine and cached per set; beta is not used.
+
+Limitation (competing risks): only the first failure of an instance counts. After it
+has struck, later modes of the same instance are ignored, so a degraded mode that
+comes first hides a later loss of that instance.
 """
 
 from __future__ import annotations
 
 import math
 import random
-from collections.abc import Mapping
 from dataclasses import dataclass
 
 from domain.failure.model import Failure, ImpactGraph, Status

@@ -120,7 +120,8 @@ class _Context:
 
 
 def _find_line(ctx: _Context, f: Finding) -> str:
-    out = f"{ctx.shown(f.file)}:{f.line or 1}  {f.path}: {f.ref if f.ref else f.message}"
+    where = f"{ctx.shown(f.file)}:{f.line}" if f.line else ctx.shown(f.file)
+    out = f"{where}  {f.path}: {f.ref if f.ref else f.message}"
     if f.ref:
         out += f"\n  {f.message}"
         if f.suggestions:
@@ -144,8 +145,10 @@ def _error_block(ctx: _Context, errors: list[Finding], mode: str) -> str:
     noun = "error" if n == 1 else "errors"
     if any(e.code in _DRIFT_CODES for e in errors):
         head = f"FMEA is out of sync with the SysML model: {n} {noun}"
-    else:
+    elif all(e.code == "missing-field" for e in errors):
         head = f"FMEA data is incomplete for --mode {mode}: {n} {noun}"
+    else:
+        head = f"FMEA data has {n} {noun}"
     body = "\n\n".join(_find_line(ctx, e) for e in errors)
     return (
         f"{head}\n\n{body}\n\nNothing was analysed. After fixing, run:\n"
@@ -170,10 +173,16 @@ def _prepare(ctx: _Context, mode: str):
     try:
         fmea = load_fmea(read_fmea_dir(ctx.fmea_dir), semantic, resolver)
     except FmeaLoadError as exc:
-        text = str(exc).replace(exc.file, ctx.shown(exc.file), 1)
+        text = "\n".join(
+            ctx.shown(l) if l.startswith(f"{exc.file}:") else l for l in str(exc).splitlines()
+        )
         return None, _fail(f"FMEA data cannot be read\n\n{text}", 1)
     graph = build_impact_graph(semantic)
-    findings = validate(fmea, semantic, graph, mode)
+    for w in graph.warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    if graph.warnings and not args.allow_warnings:
+        return None, _fail("error: the failure engine warns about the model (use --allow-warnings)", 1)
+    findings = validate(fmea, semantic, mode)
     if findings.errors:
         return None, _fail(_error_block(ctx, findings.errors, mode), 1)
     return (fmea, semantic, graph, findings), None
@@ -194,11 +203,18 @@ def _cmd_validate(ctx: _Context) -> int:
     return 0
 
 
+def _warn(ctx: _Context, findings) -> None:
+    """Warnings go to stderr for the commands whose stdout is data."""
+    for w in findings.warnings:
+        print(f"warning: {_find_line(ctx, w)}", file=sys.stderr)
+
+
 def _cmd_coverage(ctx: _Context) -> int:
     state, code = _prepare(ctx, "both")
     if state is None:
         return code
-    fmea, semantic, graph, _ = state
+    fmea, semantic, graph, findings = state
+    _warn(ctx, findings)
     print(export.coverage_to_csv(coverage(fmea, semantic, graph)), end="")
     return 0
 
@@ -258,13 +274,20 @@ def _cmd_analyze(ctx: _Context) -> int:
     state, code = _prepare(ctx, args.mode)
     if state is None:
         return code
-    fmea, semantic, graph, _ = state
-    analysis = analyze(fmea, graph, semantic, args.mode)
+    fmea, semantic, graph, findings = state
+    _warn(ctx, findings)
+    analysis = analyze(fmea, semantic, graph, args.mode)
     if args.out is not None:
         _write_reports(ctx, fmea, semantic, graph, analysis)
         return 0
     if args.spof:
-        print(export.spof_to_csv(analysis, fmea.severity.spof_severity_threshold), end="")
+        threshold = fmea.severity.spof_severity_threshold
+        if args.format == "csv":
+            print(export.spof_to_csv(analysis, threshold), end="")
+        elif args.format == "json":
+            print(json.dumps(export.spof_to_json_list(analysis, threshold), indent=2, ensure_ascii=False))
+        else:
+            print(export.spof_to_markdown(analysis, threshold), end="")
     elif args.format == "csv":
         print(export.to_csv(analysis), end="")
     elif args.format == "json":
@@ -305,7 +328,8 @@ def _cmd_simulate(ctx: _Context) -> int:
     state, code = _prepare(ctx, "fmeca")
     if state is None:
         return code
-    fmea, _, graph, _ = state
+    fmea, _, graph, findings = state
+    _warn(ctx, findings)
     t, result, rows = _simulation(ctx, fmea, graph, args.trials, args.seed, args.mission_time)
     if args.out is not None:
         _write(_out_dir(ctx), "simulation.csv", export.simulation_to_csv(rows))

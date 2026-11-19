@@ -9,7 +9,7 @@ The models take already parsed mappings: reading YAML is an adapter's job.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -21,7 +21,6 @@ from pydantic import (
 )
 
 ID_PATTERN = r"^[a-z][a-z0-9_]*$"
-RATIO_EPS = 1e-9
 
 _RATE = "failure rate in FIT (failures per 1e9 h)."
 _FMECA = "Needed for --mode fmeca."
@@ -96,17 +95,7 @@ def _check_modes(modes: list[FailureMode]) -> list[FailureMode]:
         if mode.id in seen:
             raise ValueError(f"duplicate failure mode id '{mode.id}'")
         seen.add(mode.id)
-    total = sum(m.mode_ratio or 0.0 for m in modes)
-    if total > 1 + RATIO_EPS:
-        raise ValueError(f"mode ratios sum to {total:g}, which is more than 1")
     return modes
-
-
-def _ratio_warning(label: str, modes: list[FailureMode]) -> list[str]:
-    if not modes or any(m.mode_ratio is None for m in modes):
-        return []
-    total = sum(m.mode_ratio for m in modes if m.mode_ratio is not None)
-    return [f"{label}: mode ratios sum to {total:g}"] if total < 1 - RATIO_EPS else []
 
 
 class Sru(_Strict):
@@ -124,9 +113,6 @@ class PartLibrary(_Strict):
 
     _modes = field_validator("failure_modes")(_check_modes)
 
-    def warnings(self) -> list[str]:
-        return _ratio_warning(self.part_def, self.failure_modes)
-
 
 class InstanceEntry(_Strict):
     part: str = Field(description="Qualified name of a part usage (an LRU, or any part with its own data).")
@@ -140,12 +126,6 @@ class InstanceEntry(_Strict):
     )
 
     _modes = field_validator("failure_modes")(_check_modes)
-
-    def warnings(self) -> list[str]:
-        out = _ratio_warning(self.part, self.failure_modes)
-        for sru in self.srus:
-            out += _ratio_warning(f"{self.part}/{sru.id}", sru.failure_modes)
-        return out
 
 
 class ScaleStep(_Strict):
@@ -174,12 +154,17 @@ def _default_probability_levels() -> list[ProbabilityLevel]:
     ]
 
 
+class StatusFactor(_Strict):
+    LOST: float = Field(ge=0, le=1)
+    DEGRADED: float = Field(ge=0, le=1)
+
+
 class SeverityConfig(_Strict):
-    requirement_groups: dict[str, int] = Field(
+    requirement_groups: dict[str, Annotated[int, Field(ge=1, le=10)]] = Field(
         description="Severity score 1-10 per requirement group (the 'Type' of a requirement). Needed in both modes."
     )
-    status_factor: dict[str, float] = Field(
-        description="Factor per status, 'LOST' and 'DEGRADED'. Needed in both modes."
+    status_factor: StatusFactor = Field(
+        description="Factor per status, 'LOST' and 'DEGRADED', each in [0, 1]. Needed in both modes."
     )
     default_group_score: int = Field(default=1, ge=1, le=10, description="Score of a requirement without group.")
     spof_severity_threshold: int = Field(default=8, ge=1, le=10, description="Smallest S of a single point of failure.")
@@ -199,25 +184,6 @@ class SeverityConfig(_Strict):
         default_factory=_default_probability_levels,
         description="Probability levels for --mode fmeca, from the most probable, by smallest C_m.",
     )
-
-    @field_validator("requirement_groups")
-    @classmethod
-    def _groups(cls, value: dict[str, int]) -> dict[str, int]:
-        for name, score in value.items():
-            if not 1 <= score <= 10:
-                raise ValueError(f"group '{name}': score {score} is not in 1-10")
-        return value
-
-    @field_validator("status_factor")
-    @classmethod
-    def _factors(cls, value: dict[str, float]) -> dict[str, float]:
-        for key in ("LOST", "DEGRADED"):
-            if key not in value:
-                raise ValueError(f"status_factor needs '{key}'")
-        unknown = sorted(set(value) - {"LOST", "DEGRADED"})
-        if unknown:
-            raise ValueError(f"status_factor has unknown keys {unknown}")
-        return value
 
     @field_validator("occurrence_scale")
     @classmethod

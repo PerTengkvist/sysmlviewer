@@ -83,15 +83,13 @@ flowchart LR
     n0_driveEcu["driveEcu"]
     n1_driveController["driveController<br/>LOST"]
     n2_torqueArbitration["torqueArbitration"]
-    n3_SpeedControl["SpeedControl<br/>LOST"]
-    n4_Brake["Brake<br/>LOST"]
-    n5_BrakingDistance["BrakingDistance<br/>LOST"]
+    n3_Brake["Brake<br/>LOST"]
+    n4_BrakingDistance["BrakingDistance<br/>LOST"]
     m_psu_dead -->|fails| n0_driveEcu
     n0_driveEcu -->|implements| n1_driveController
     n1_driveController -->|allocate| n2_torqueArbitration
-    n2_torqueArbitration -->|node| n3_SpeedControl
-    n3_SpeedControl -->|refine| n4_Brake
-    n4_Brake -->|objective| n5_BrakingDistance
+    n2_torqueArbitration -->|refine| n3_Brake
+    n3_Brake -->|objective| n4_BrakingDistance
 ```
 
 ### driveEcu: can_babbling (S = 10)
@@ -102,15 +100,13 @@ flowchart LR
     n0_driveEcu["driveEcu"]
     n1_driveController["driveController<br/>LOST"]
     n2_torqueArbitration["torqueArbitration"]
-    n3_SpeedControl["SpeedControl<br/>LOST"]
-    n4_Brake["Brake<br/>LOST"]
-    n5_BrakingDistance["BrakingDistance<br/>LOST"]
+    n3_Brake["Brake<br/>LOST"]
+    n4_BrakingDistance["BrakingDistance<br/>LOST"]
     m_can_babbling -->|fails| n0_driveEcu
     n0_driveEcu -->|implements| n1_driveController
     n1_driveController -->|allocate| n2_torqueArbitration
-    n2_torqueArbitration -->|node| n3_SpeedControl
-    n3_SpeedControl -->|refine| n4_Brake
-    n4_Brake -->|objective| n5_BrakingDistance
+    n2_torqueArbitration -->|refine| n3_Brake
+    n3_Brake -->|objective| n4_BrakingDistance
 ```
 
 ## Coverage

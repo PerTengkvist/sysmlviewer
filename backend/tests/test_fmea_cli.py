@@ -140,3 +140,81 @@ def test_fmea_dir_option(cli, capsys, copy, tmp_path):
 def test_usage_errors(cli, capsys, tmp_path):
     code, _, err = run(cli, capsys, "validate", tmp_path / "nope")
     assert code == 2 and "not a folder" in err
+
+
+def test_engine_warnings_stop_the_run(cli, capsys, tmp_path):
+    extra = tmp_path / "warn.sysml"
+    extra.write_text(
+        "package Warn { part def L { part l; } part def V { #Redundant part x[2]; "
+        "#implements dependency from V::x to L::l; } }",
+        encoding="utf-8",
+    )
+    code, out, err = run(cli, capsys, "validate", CAR, "--extra", extra)
+    assert code == 1 and out == ""
+    assert "has no required attribute" in err and "--allow-warnings" in err
+    code, out, err = run(cli, capsys, "validate", CAR, "--extra", extra, "--allow-warnings")
+    assert code == 0 and "has no required attribute" in err
+
+
+def test_load_error_lines_all_have_the_directory_prefix(cli, capsys, copy):
+    (copy / "fmea" / "severity.yaml").write_text(
+        "requirement_groups: { Safety: 11 }\nstatus_factor: { LOST: 2, DEGRADED: 2 }\n", encoding="utf-8"
+    )
+    code, _, err = run(cli, capsys, "validate", copy)
+    assert code == 1
+    lines = [l for l in err.splitlines() if "severity.yaml" in l]
+    assert len(lines) >= 3 and all(l.startswith("fmea/severity.yaml:") for l in lines)
+
+
+def test_unknown_line_number_is_left_out(cli, capsys, copy):
+    sev = copy / "fmea" / "severity.yaml"
+    sev.write_text(
+        "\n".join(l for l in sev.read_text(encoding="utf-8").splitlines() if "mission_time_h" not in l) + "\n",
+        encoding="utf-8",
+    )
+    code, _, err = run(cli, capsys, "analyze", copy, "--mode", "fmeca")
+    assert code == 1
+    assert "fmea/severity.yaml  mission_time_h: 'mission_time_h' is required for --mode fmeca" in err
+    assert ":None" not in err and "severity.yaml:1" not in err
+
+
+def test_spof_respects_format(cli, capsys):
+    code, out, _ = run(cli, capsys, "analyze", CAR, "--spof", "--format", "markdown")
+    assert code == 0 and out.startswith("| Item | Failure mode | S |") and len(out.strip().splitlines()) == 5
+    code, out, _ = run(cli, capsys, "analyze", CAR, "--spof", "--format", "json")
+    rows = json.loads(out)
+    assert code == 0 and [r["failureMode"] for r in rows] == ["winding_open", "can_babbling", "psu_dead"]
+
+
+def test_analyze_shows_short_reference_warnings(cli, capsys, copy):
+    inst = copy / "fmea" / "instances.yaml"
+    inst.write_text(
+        inst.read_text(encoding="utf-8").replace(
+            "PhysicalArchitecture::VehiclePhysical::electricMotor", "electricMotor"
+        ),
+        encoding="utf-8",
+    )
+    code, out, err = run(cli, capsys, "analyze", copy, "--format", "csv")
+    assert code == 0
+    assert "use the qualified name PhysicalArchitecture::VehiclePhysical::electricMotor" in err
+    assert "use the qualified name" not in out
+
+
+def test_fmeca_markdown_notes_per_instance(cli, capsys):
+    code, out, _ = run(cli, capsys, "analyze", CAR, "--mode", "fmeca")
+    assert code == 0 and "per instance" in out.splitlines()[-1]
+    code, out, _ = run(cli, capsys, "analyze", CAR, "--mode", "fmea")
+    assert "per instance" not in out
+
+
+def test_duplicate_part_message(cli, capsys, copy):
+    inst = copy / "fmea" / "instances.yaml"
+    inst.write_text(
+        inst.read_text(encoding="utf-8")
+        + "- part: electricMotor\n  failure_modes:\n    - id: bearing\n      local_effect: { kind: loss }\n",
+        encoding="utf-8",
+    )
+    code, _, err = run(cli, capsys, "validate", copy)
+    assert code == 1
+    assert "is also described at instances.yaml:" in err
+    assert err.count("fmea/instances.yaml:") >= 2

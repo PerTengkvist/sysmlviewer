@@ -123,3 +123,16 @@ def test_cli_smoke_subprocess():
     )
     assert proc.returncode == 0, proc.stderr
     assert "SpeedControl" in proc.stdout
+
+
+def test_cli_allow_warnings_still_prints_them(cli, capsys, tmp_path):
+    (tmp_path / "bad.sysml").write_text("package P { use case; }", encoding="utf-8")
+    code, _, err = _run(cli, capsys, str(tmp_path), "--spof", "--allow-warnings")
+    assert code == 0
+    assert "use case without name" in err
+
+
+def test_cli_missing_extra_file_exit_2(cli, capsys, tmp_path):
+    code, _, err = _run(cli, capsys, CAR, "--spof", "--extra", str(tmp_path / "nope.sysml"))
+    assert code == 2
+    assert "nope.sysml" in err and "Traceback" not in err

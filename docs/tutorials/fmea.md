@@ -300,7 +300,7 @@ backend/.venv/bin/python scripts/failure_impact.py examples/electric_car --spof 
 | Command | What it does |
 |---|---|
 | `validate [--mode fmea\|fmeca\|both] [--notes]` | Checks the data against the model and the mode's required fields. |
-| `coverage` | Lists physical parts without failure modes, modes without a trace, requirements without a group. |
+| `coverage` | Lists physical parts without failure modes, modes without a trace, requirements without a group. It also warns about short references (a `part` or `part_def` that is not fully qualified) and about libraries that no longer apply to any part (`unused-library`). |
 | `analyze --mode fmea\|fmeca [--format markdown\|csv\|json] [--spof]` | The table, or only the single points of failure. |
 | `analyze ... --out [DIR]` | Writes the table, `spof.csv`, `coverage.csv` and the markdown report to a folder (default `<project>/fmea/docs/`). |
 | `analyze --mode fmeca --out --trials N --seed S` | The same, plus a Monte Carlo simulation (`simulation.csv` and a report section). |

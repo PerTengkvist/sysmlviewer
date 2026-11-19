@@ -7,7 +7,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from domain.failure.model import ImpactGraph
+from domain.failure.model import ImpactGraph, Status
 from domain.fmea.analyze import Analysis, Row, spof_modes
 from domain.fmea.schema import SeverityConfig
 from domain.fmea.validate import Coverage
@@ -98,7 +98,7 @@ def to_csv(analysis: Analysis) -> str:
     return _csv(*_table(analysis))
 
 
-def spof_rows(analysis: Analysis, threshold: int) -> list[dict[str, str]]:
+def _spof_rows(analysis: Analysis, threshold: int) -> list[dict[str, str]]:
     return [
         {
             "Item": f"{r.item_name}/{r.sru}" if r.sru else r.item_name,
@@ -112,7 +112,22 @@ def spof_rows(analysis: Analysis, threshold: int) -> list[dict[str, str]]:
 
 
 def spof_to_csv(analysis: Analysis, threshold: int) -> str:
-    return _csv(SPOF_COLUMNS, spof_rows(analysis, threshold))
+    return _csv(SPOF_COLUMNS, _spof_rows(analysis, threshold))
+
+
+def spof_to_markdown(analysis: Analysis, threshold: int) -> str:
+    return _markdown(SPOF_COLUMNS, _spof_rows(analysis, threshold))
+
+
+def spof_to_json_list(analysis: Analysis, threshold: int) -> list[dict]:
+    return [
+        {
+            "item": f"{r.item_name}/{r.sru}" if r.sru else r.item_name,
+            "itemId": r.item_id, "failureMode": r.mode_id, "severity": r.severity,
+            "lostFunctions": list(r.lost_functions), "requirementsAtRisk": list(r.requirements_at_risk),
+        }
+        for r in spof_modes(analysis.ranking, threshold)
+    ]
 
 
 def coverage_to_csv(cov: Coverage) -> str:
@@ -126,11 +141,18 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
-def to_markdown_table(analysis: Analysis) -> str:
-    columns, rows = _table(analysis)
+def _markdown(columns: list[str], rows: list[dict[str, str]]) -> str:
     lines = ["| " + " | ".join(columns) + " |", "|" + "|".join("---" for _ in columns) + "|"]
     lines += ["| " + " | ".join(_cell(r[c]) for c in columns) + " |" for r in rows]
     return "\n".join(lines) + "\n"
+
+
+FMECA_NOTE = "C_m and C_r are per instance; for a group usage multiply by Qty."
+
+
+def to_markdown_table(analysis: Analysis) -> str:
+    text = _markdown(*_table(analysis))
+    return text + f"\n{FMECA_NOTE}\n" if analysis.mode == "fmeca" else text
 
 
 def to_json_dict(analysis: Analysis) -> dict:
@@ -165,8 +187,6 @@ _SIM_LAYERS = ("function", "useCase", "requirement")
 
 def simulation_rows(graph, result) -> list[dict]:
     """Functions, use cases and requirements, by layer and id."""
-    from domain.failure.model import Status
-
     rows = []
     for layer in _SIM_LAYERS:
         for nid in sorted(n for n, node in graph.nodes.items() if node.layer.value == layer):
@@ -298,7 +318,7 @@ def to_report_markdown(
     """One self-contained markdown report; deterministic (no timestamp)."""
     kind = analysis.mode.upper()
     columns, table = _table(analysis)
-    spof = spof_rows(analysis, cfg.spof_severity_threshold)
+    spof = _spof_rows(analysis, cfg.spof_severity_threshold)
     n_items = len({r.item_id for r in analysis.rows})
     with_modes = physical_total - len(cov.parts_without_modes)
     if analysis.mode == "fmea":

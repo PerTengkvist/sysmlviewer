@@ -17,13 +17,15 @@ CAR = resolve_repo_root() / "examples" / "electric_car"
 PA = "PhysicalArchitecture::VehiclePhysical"
 
 
-def parse_model(extra: str | None = None, replace: dict[str, str] | None = None):
+def parse_model(extra: str | None = None, replace: dict[str, str] | None = None, transform=None):
     files = []
     for path in sorted(CAR.rglob("*.sysml")):
         rel = path.relative_to(CAR).as_posix()
         text = path.read_text(encoding="utf-8")
         for old, new in (replace or {}).items():
             text = text.replace(old, new)
+        if transform is not None:
+            text = transform(text)
         files.append(SysmlFile(id=rel, name=path.name, content=text, path=rel))
     if extra:
         files.append(SysmlFile(id="spare.sysml", name="spare.sysml", content=extra, path="spare.sysml"))

@@ -8,12 +8,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from domain.failure.model import EPS, Failure, FailureKind, GateKind, Impact, ImpactGraph, Layer, Status
+from domain.failure.model import Failure, FailureKind, GateKind, Impact, ImpactGraph, Layer, Status
 from domain.failure.propagate import (
     affected_nodes,
     chain,
     common_cause_targets,
     failure_flags,
+    gate_result,
     instance_vector,
 )
 from domain.failure.scenarios import SpofRow
@@ -67,15 +68,13 @@ def _gate_suffix(
     gate = graph.nodes[nid].gate
     if gate is None or limit is None or limit != (nid, limit[1]) or limit[1] not in ("pool", "kofn"):
         return ""
-    vector = instance_vector(graph, failures, nid)
-    alive = sum(1 for v in vector if v > EPS)
+    result = gate_result(graph, nid, instance_vector(graph, failures, nid))
     if gate.kind is GateKind.POOL:
-        surviving = sum(c * v for c, v in zip(gate.capacities, vector))
         return (
-            f" pool {alive}/{gate.n} "
-            f"({_num(surviving)} of {_num(sum(gate.capacities))}, required {_num(gate.required)})"
+            f" pool {result.alive}/{gate.n} ({_num(result.surviving)} of "
+            f"{_num(sum(gate.capacities))}, required {_num(gate.required)})"
         )
-    return f" kofn {alive}/{gate.n} (required {_num(gate.required)})"
+    return f" kofn {result.alive}/{gate.n} (required {_num(gate.required)})"
 
 
 def _chain_text(
@@ -110,18 +109,17 @@ def _flag_lines(
         flags = impacts[part].flags
         if gate is None:
             continue
-        vector = instance_vector(graph, failures, part)
-        alive = sum(1 for v in vector if v > EPS)
+        result = gate_result(graph, part, instance_vector(graph, failures, part))
+        alive = result.alive
         if "redundancy_exhausted" in flags:
             lines.append(
                 f"FLAGS     redundancy exhausted: {_tail_id(part)} "
                 f"({alive} of {gate.n}, required {_num(gate.required)})"
             )
         if "pool_at_minimum" in flags:
-            surviving = sum(c * v for c, v in zip(gate.capacities, vector))
             lines.append(
                 f"FLAGS     pool at minimum: {_tail_id(part)} "
-                f"({alive} of {gate.n}, {_num(surviving)} of {_num(sum(gate.capacities))}, "
+                f"({alive} of {gate.n}, {_num(result.surviving)} of {_num(sum(gate.capacities))}, "
                 f"required {_num(gate.required)})"
             )
     erroneous = [f for f in failures if f.kind is FailureKind.ERRONEOUS]
@@ -202,7 +200,7 @@ def to_markdown(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mappin
             [
                 f"`{f.part_id}`",
                 _failure_text(graph, f),
-                ", ".join(_flag_text(x) for x in sorted(failure_flags(graph, f) | impacts.get(f.part_id, Impact(1, Status.OK, None, frozenset())).flags)),
+                ", ".join(_flag_text(x) for x in sorted(_run_flags(graph, impacts, f))),
             ]
             for f in failures
         ],
@@ -235,6 +233,20 @@ def to_markdown(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mappin
     return "\n".join(out) + "\n"
 
 
+def _run_flags(graph: ImpactGraph, impacts: Mapping[str, Impact], f: Failure) -> frozenset[str]:
+    """Flags of a failure: common cause plus the gate flags of the failed part."""
+    own = impacts[f.part_id].flags if f.part_id in impacts else frozenset()
+    return failure_flags(graph, f) | own
+
+
+def _no_effect_notes(graph: ImpactGraph, failures: Sequence[Failure]) -> list[str]:
+    return [
+        f"{f.part_id} implements nothing; it has no effect"
+        for f in failures
+        if f.part_id not in graph.nodes
+    ]
+
+
 # -- json ----------------------------------------------------------------
 
 
@@ -263,7 +275,7 @@ def to_json_dict(
                 "kind": f.kind.value,
                 "fraction": f.fraction,
                 "instances": f.instances,
-                "flags": sorted(failure_flags(graph, f)),
+                "flags": sorted(_run_flags(graph, impacts, f)),
             }
             for f in failures
         ],
@@ -271,7 +283,7 @@ def to_json_dict(
         "functions": affected_nodes(graph, impacts, Layer.FUNCTION),
         "useCases": affected_nodes(graph, impacts, Layer.USE_CASE),
         "requirements": affected_nodes(graph, impacts, Layer.REQUIREMENT),
-        "warnings": list(graph.warnings),
+        "warnings": [*graph.warnings, *_no_effect_notes(graph, failures)],
     }
 
 

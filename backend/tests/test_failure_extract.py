@@ -186,3 +186,97 @@ def test_pool_without_capacity_counts_instances():
 def test_bounded_range_uses_upper_bound():
     g = _graph(_gate_model("part x[1..3];"))
     assert g.nodes["P::V::x"].gate.n == 3
+
+
+def test_only_a_definition_implements_warns_when_nodes_depend_on_it():
+    g = _graph(
+        """package P {
+          part def Ecu {}
+          part def Car { part ecu : Ecu; }
+          part def Log { part ctrl; }
+          part def F { part n; }
+          #implements dependency from Ecu to Log::ctrl;
+          allocate F::n to Log::ctrl;
+        }"""
+    )
+    assert g.warnings == [
+        "logical part 'P::Log::ctrl' is implemented only by definition 'P::Ecu'; "
+        "no part usage implements it, so no failure reaches it"
+    ]
+
+
+def test_definition_only_implementer_without_dependents_is_silent():
+    g = _graph(
+        """package P {
+          part def Ecu {}
+          part def Log { part ctrl; }
+          #implements dependency from Ecu to Log::ctrl;
+        }"""
+    )
+    assert g.warnings == []
+
+
+def test_function_node_dependency_warns():
+    g = _graph(
+        _FUNCS % "#Energy dependency from F to G::m;"
+    )
+    assert g.warnings == [
+        "dependency 'P::dep1' (#Energy) from 'P::F' to 'P::G::m' is not between two "
+        "functions; dependencies on function nodes are not supported yet"
+    ]
+
+
+def test_logical_dependency_is_silent():
+    g = _graph(
+        """package P {
+          part def Log { part a; part b; }
+          part def Phys { part x; }
+          #implements dependency from Phys::x to Log::a;
+          #Command dependency from Log::a to Log::b;
+        }"""
+    )
+    assert g.warnings == []
+
+
+def _warnings(usage: str, extra: str = "") -> list[str]:
+    files = [SysmlFile("f.sysml", "f.sysml", _gate_model(usage, extra), path="f.sysml")]
+    return build_impact_graph(SubsetSysmlParser().parse_project(files).elements).warnings
+
+
+def test_pool_required_above_total_capacity_warns():
+    assert _warnings("#Pool part x[4];", "attribute required = 9;") == [
+        "pool 'P::V::x': required 9 exceeds its total capacity 4"
+    ]
+
+
+def test_kofn_k_above_n_warns():
+    assert _warnings("#Redundant part x[2] : B;", "attribute xRequired = 3;") == [
+        "redundant 'P::V::x': required 3 exceeds its 2 instances"
+    ]
+
+
+def test_non_numeric_required_warns_with_the_real_reason():
+    assert _warnings("#Redundant part x[2] : B;", 'attribute xRequired = "many";') == [
+        "required attribute of 'P::V::x' is not numeric ('\"many\"'); using 1"
+    ]
+    assert _warnings("#Pool part x[4];", 'attribute required = "many";') == [
+        "required attribute of 'P::V::x' is not numeric ('\"many\"'); using 0"
+    ]
+
+
+def test_several_capacity_attributes_warn():
+    files = [
+        SysmlFile(
+            "f.sysml", "f.sysml",
+            """package P {
+              part def M { attribute capacityKWh = 7.5; attribute capacityAh = 3; }
+              part def L { part l; }
+              part def V { #Pool part x[2] : M; #implements dependency from V::x to L::l; }
+            }""",
+            path="f.sysml",
+        )
+    ]
+    g = build_impact_graph(SubsetSysmlParser().parse_project(files).elements)
+    assert g.warnings == [
+        "'P::V::x' has several capacity attributes (capacityKWh, capacityAh); using capacityKWh"
+    ]

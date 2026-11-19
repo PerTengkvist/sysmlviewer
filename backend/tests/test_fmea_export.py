@@ -30,8 +30,8 @@ def env():
     fmea = load_fmea(read_fmea_dir(CAR / "fmea"), semantic, resolver)
     graph = build_impact_graph(semantic)
     return {
-        "fmea": analyze(fmea, graph, semantic, "fmea"),
-        "fmeca": analyze(fmea, graph, semantic, "fmeca"),
+        "fmea": analyze(fmea, semantic, graph, "fmea"),
+        "fmeca": analyze(fmea, semantic, graph, "fmeca"),
         "coverage": coverage(fmea, semantic, graph),
         "threshold": fmea.severity.spof_severity_threshold,
     }
@@ -97,7 +97,7 @@ def test_csv_dialect(env):
 
 def test_markdown_tables(env):
     for key, extra in (("fmea", FMEA_COLUMNS), ("fmeca", FMECA_COLUMNS)):
-        lines = to_markdown_table(env[key]).strip().splitlines()
+        lines = to_markdown_table(env[key]).split("\n\n")[0].strip().splitlines()
         header = [c.strip() for c in lines[0].strip("|").split("|")]
         assert header == COMMON_COLUMNS + extra
         assert len(lines) == 2 + 7

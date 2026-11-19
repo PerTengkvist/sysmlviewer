@@ -26,7 +26,7 @@ def env():
     return {
         "fmea": fmea,
         "graph": graph,
-        "analysis": {m: analyze(fmea, graph, semantic, m) for m in ("fmea", "fmeca")},
+        "analysis": {m: analyze(fmea, semantic, graph, m) for m in ("fmea", "fmeca")},
         "coverage": coverage(fmea, semantic, graph),
         "sim": SimInfo(200, 1, fmea.severity.mission_time_h, simulation_rows(graph, sim)),
     }
