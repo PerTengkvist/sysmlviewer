@@ -34,7 +34,7 @@ def run(cli, capsys, *argv):
 @pytest.fixture()
 def copy(tmp_path):
     dst = tmp_path / "electric_car"
-    shutil.copytree(CAR, dst, ignore=shutil.ignore_patterns("icons", "views", "state.json"))
+    shutil.copytree(CAR, dst, ignore=shutil.ignore_patterns("icons", "views", "state.json", "docs"))
     return dst
 
 
