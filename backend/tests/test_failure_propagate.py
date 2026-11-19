@@ -283,3 +283,27 @@ def test_two_failures_on_single_part_take_the_minimum():
     assert result[A].capability == 0.4
     result = evaluate(_graph(CHAIN), [degraded(A, 0.7), loss(A)])
     assert result[A].capability == 0.0
+
+
+def test_chain_in_a_cycle_reaches_the_failure():
+    # The cycle edges come first in model order, so a naive tie-break would
+    # send F -> G -> F and never reach the failed part.
+    g = _graph(
+        """package P {
+          part def Phys { part a; part g; }
+          part def Log { part l; part k; }
+          part def F { part n; }
+          part def G { part m; }
+          #X dependency from F to G;
+          #Y dependency from G to F;
+          allocate F::n to Log::l;
+          allocate G::m to Log::k;
+          #implements dependency from Phys::a to Log::l;
+          #implements dependency from Phys::g to Log::k;
+        }"""
+    )
+    result = evaluate(g, [loss("P::Phys::a")])
+    assert result["P::F"].limited_by == ("P::F::n", "node")
+    assert result["P::G"].limited_by == ("P::F", "#Y")
+    assert chain(result, "P::G") == ["P::F", "P::F::n", "P::Log::l", "P::Phys::a"]
+    assert chain(result, "P::F")[-1] == "P::Phys::a"

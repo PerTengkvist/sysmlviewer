@@ -85,6 +85,8 @@ def _load(root: Path, extra: list[str]) -> list[SysmlFile]:
         for f in sorted(root.rglob("*.sysml"))
     ]
     for path in map(Path, extra):
+        if not path.is_file():
+            raise FileNotFoundError(f"--extra file not found: {path}")
         files.append(
             SysmlFile(id=path.name, name=path.name, content=path.read_text(encoding="utf-8"), path=path.name)
         )
@@ -104,10 +106,14 @@ def main(argv: list[str] | None = None) -> int:
     if not root.is_dir():
         return _fail(f"error: not a folder: {args.project_dir}")
 
-    result = SubsetSysmlParser().parse_project(_load(root, args.extra))
+    try:
+        files = _load(root, args.extra)
+    except OSError as exc:
+        return _fail(f"error: {exc}")
+    result = SubsetSysmlParser().parse_project(files)
+    for w in result.warnings:
+        print(f"warning: {w}", file=sys.stderr)
     if result.warnings and not args.allow_warnings:
-        for w in result.warnings:
-            print(f"warning: {w}", file=sys.stderr)
         print("error: the model has parser warnings (use --allow-warnings)", file=sys.stderr)
         return 1
     graph = build_impact_graph(result.elements)
