@@ -304,10 +304,11 @@ def spof_to_markdown(graph: ImpactGraph, rows: Sequence[SpofRow]) -> str:
 
 
 def spof_to_text(graph: ImpactGraph, rows: Sequence[SpofRow]) -> str:
+    """One line per part; only the part column is aligned, the lists can be long."""
     cells = [_SPOF_HEADER] + [_spof_cells(graph, r) for r in _spof_order(rows)]
-    widths = [max(len(c[i]) for c in cells) for i in range(len(_SPOF_HEADER))]
+    width = max(len(c[0]) for c in cells)
     return "\n".join(
-        "  ".join(cell.ljust(w) for cell, w in zip(row, widths)).rstrip() for row in cells
+        (row[0].ljust(width) + "  " + " | ".join(row[1:])).rstrip() for row in cells
     ) + "\n"
 
 
