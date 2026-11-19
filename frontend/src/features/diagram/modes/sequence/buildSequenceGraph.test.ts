@@ -218,6 +218,95 @@ describe('buildSequenceGraph', () => {
   })
 })
 
+function occurrenceFixture(): ViewPayload {
+  const base = seqFixture()
+  const el = (
+    id: string,
+    kind: ViewPayload['semantic'][string]['kind'],
+    extra: Partial<ViewPayload['semantic'][string]> = {},
+  ) => ({
+    id,
+    kind,
+    name: id.split('::').pop()!,
+    parentId: 'P::S',
+    typeRef: null,
+    sourceId: null,
+    targetId: null,
+    children: [],
+    fileId: 'f',
+    ...extra,
+  })
+  const list = [
+    el('P::S', 'occurrence', { parentId: 'P' }),
+    el('P::S::a', 'part', { isReference: true }),
+    el('P::S::b', 'part'),
+    el('P::S::unused', 'part'),
+    el('P::PartA::sent', 'eventOccurrence', { parentId: 'P::PartA' }),
+    el('P::S::m1', 'message', {
+      sourceId: 'P::S::a',
+      targetId: 'P::S::b',
+      sourceEventId: 'P::PartA::sent',
+      targetEventId: 'P::PartB::received',
+    }),
+    el('P::S::m2', 'message', {
+      sourceId: 'P::S::b',
+      targetId: 'P::S::a',
+      metadataKeywords: ['Reply'],
+    }),
+  ]
+  return {
+    ...base,
+    view: { ...base.view, rootArtifactId: 'P::S' },
+    semantic: Object.fromEntries(list.map((e) => [e.id, e])),
+  }
+}
+
+describe('buildSequenceGraph under an occurrence', () => {
+  it('draws parts referenced by messages as lifelines', () => {
+    const { nodes, edges } = buildSequenceGraph(occurrenceFixture(), 'light')
+    expect(nodes.map((n) => n.id)).toEqual(['P::S::a', 'P::S::b'])
+    expect(nodes.every((n) => n.type === 'lifeline')).toBe(true)
+    expect(edges.map((e) => e.id)).toEqual(['P::S::m1', 'P::S::m2'])
+    expect(edges[0].source).toBe('P::S::a')
+    expect(edges[0].target).toBe('P::S::b')
+  })
+
+  it('does not draw unreferenced parts', () => {
+    const { nodes } = buildSequenceGraph(occurrenceFixture(), 'light')
+    expect(nodes.map((n) => n.id)).not.toContain('P::S::unused')
+  })
+
+  it('applies a saved sequenceLayout keyed on part ids', () => {
+    const fixture = occurrenceFixture()
+    fixture.sequenceLayout = { order: ['P::S::b', 'P::S::a'], widths: { 'P::S::a': 240 } }
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    expect(nodes.map((n) => n.id)).toEqual(['P::S::b', 'P::S::a'])
+    expect(nodes[1].style?.width).toBe(240)
+  })
+
+  it('dashes #Reply and #reply messages', () => {
+    const fixture = occurrenceFixture()
+    fixture.semantic['P::S::m1'].metadataKeywords = ['reply']
+    const { edges } = buildSequenceGraph(fixture, 'light')
+    expect(edges[0].style?.strokeDasharray).toBe('8 4')
+    expect(edges[1].style?.strokeDasharray).toBe('8 4')
+  })
+
+  it('labels a message with its name only', () => {
+    const { edges } = buildSequenceGraph(occurrenceFixture(), 'light')
+    expect(edges[0].label).toBe('m1')
+  })
+
+  it('passes event names on edge data', () => {
+    const { edges } = buildSequenceGraph(occurrenceFixture(), 'light')
+    const data = edges[0].data as { sourceEvent?: string; targetEvent?: string }
+    expect(data.sourceEvent).toBe('sent')
+    // not in the payload: the last id segment
+    expect(data.targetEvent).toBe('received')
+    expect((edges[1].data as { sourceEvent?: string }).sourceEvent).toBeUndefined()
+  })
+})
+
 function vizNode(id: string) {
   return {
     artifactId: id,

@@ -5,6 +5,7 @@ import type { ViewMode } from '../../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { strokeDasharray } from '../../relationshipStyle'
 import type { LifelineNodeData } from './LifelineNode'
+import { eventName, isReplyMessage, sequenceParticipants } from './sequenceParticipants'
 import {
   LIFELINE_TOP,
   minLifelineWidth,
@@ -28,14 +29,9 @@ export function buildSequenceGraph(
     highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
-  // `semantic` is in declaration order (the API keeps it), so lifelines and
-  // messages are used as they come; ids such as msg10 must not be re-sorted.
-  const lifelines = Object.values(semantic).filter(
-    (e) => e.kind === 'lifeline' && e.parentId === rootId,
-  )
-  const messages = Object.values(semantic).filter(
-    (e) => e.kind === 'message' && e.parentId === rootId,
-  )
+  // Lifeline elements under an interaction, parts that messages use under an
+  // occurrence; both go through the same layout below.
+  const { lifelines, messages } = sequenceParticipants(semantic, rootId)
 
   const lineHeight = Math.max(180, 80 + messages.length * MSG_GAP)
   // Stored x/y/width are not read: they are global defaults that cannot be
@@ -83,8 +79,8 @@ export function buildSequenceGraph(
       const tgt = msg.targetId || ''
       if (!llIndex.has(src) || !llIndex.has(tgt)) return null
       const stroke = edgeStrokeStyle(visualization.edges[msg.id]?.style, viewMode)
-      // `#reply message` acknowledgements render dashed unless a format style says otherwise.
-      const isReply = (msg.metadataKeywords ?? []).includes('reply')
+      // `#Reply message` acknowledgements render dashed unless a format style says otherwise.
+      const isReply = isReplyMessage(msg)
       const dash = stroke.strokeDasharray ?? (isReply ? strokeDasharray('dashed') : undefined)
       return {
         id: msg.id,
@@ -98,6 +94,8 @@ export function buildSequenceGraph(
           label: msg.name,
           sequenceIndex: index,
           isReply,
+          sourceEvent: eventName(semantic, msg.sourceEventId),
+          targetEvent: eventName(semantic, msg.targetEventId),
           selectedColor: selectedConnectionColor,
           selectedFactor: selectedConnectionLinewidthFactor,
         },

@@ -20,6 +20,7 @@ const SKIP_KINDS = new Set([
   'transition',
   'succession',
   'view',
+  'eventOccurrence',
 ])
 
 function showInTree(el: {
