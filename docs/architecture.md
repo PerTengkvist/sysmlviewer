@@ -191,6 +191,7 @@ Supported textual constructs:
   - Legacy `interaction def` / `lifeline` / `message payload from A to B` is unchanged.
   - A one-file parse does not warn about a qualified type whose head the file does not declare, nor about any type when the file has an import; the project parse still does.
   - Failure impact and FMEA ignore parts owned by an occurrence.
+  - Known limits: an occurrence def with several generals keeps only the first; `doc` inside a message body is not read; a message that shares its name with a part keeps the name for the part and moves to `<occ>::name#2`; a written `message msgN` out of the anonymous numbering keeps its name, one in sequence round-trips as anonymous.
 - `state def` / nested `state` / `transition … from … to …`
 - `action def` / nested `action` / `succession … first … then …` / `first start; then a; then if g then b else c; then done;`
 - `abstract part def …` / `abstract action def …` (`isAbstract`, written only when true). `part def` sets `isDefinition` (also only when true), so an abstract definition shows «abstract part def» and an abstract usage «abstract part»; concrete parts keep «part».

@@ -256,7 +256,7 @@ def _emit_element(
     if el.kind == ArtifactKind.MESSAGE and _occurrence_message(semantic, el):
         occ_id = el.parent_id or ""
         prefix = "".join(f"#{kw} " for kw in (el.metadata_keywords or []))
-        name = "" if re.fullmatch(r"msg\d+", el.name) else f" {el.name}"
+        name = "" if el.id in _anonymous_messages(semantic, occ_id) else f" {el.name}"
         payload = f" of {el.type_ref}" if el.type_ref else ""
         src = _message_end(occ_id, el.source_id, el.source_event_id)
         tgt = _message_end(occ_id, el.target_id, el.target_event_id)
@@ -366,6 +366,20 @@ def _feature_links(semantic: dict[str, SemanticElement], part: SemanticElement) 
             target = target[len(prefix) :] if target.startswith(prefix) else target.lstrip("?")
         op = ":>" if rel.kind == ArtifactKind.SUBSETTING else ":>>"
         out += f" {op} {target}"
+    return out
+
+
+def _anonymous_messages(semantic: dict[str, SemanticElement], occ_id: str) -> set[str]:
+    """Messages the parser would number itself: `msgN` in order, N counting up from 1.
+    A written `message msg5 …` out of that sequence keeps its name."""
+    occ = semantic.get(occ_id)
+    out: set[str] = set()
+    counter = 1
+    for cid in occ.children if occ else []:
+        msg = semantic.get(cid)
+        if msg is not None and msg.kind == ArtifactKind.MESSAGE and msg.name == f"msg{counter}":
+            out.add(cid)
+            counter += 1
     return out
 
 

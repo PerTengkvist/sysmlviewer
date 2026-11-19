@@ -115,26 +115,6 @@ class FeatureIndex:
         return current
 
 
-def feature_chain_end(
-    semantic: Mapping[str, SemanticElement],
-    resolver: NameResolver,
-    ref: str,
-    scope_id: str | None,
-    file_id: str,
-) -> str | None:
-    """`car.keyFob` written in `scope_id`: the id of the last real feature
-    (`Pkg::Car::keyFob`), or None when the chain cannot be followed."""
-    return FeatureIndex(semantic).chain_end(resolver, ref, scope_id, file_id)
-
-
-def resolve_event(
-    semantic: Mapping[str, SemanticElement], part_id: str, name: str
-) -> str | None:
-    """The event occurrence `name` of a part: its own, its type's (and the
-    type's generals), then through subsetting and redefinition targets."""
-    return FeatureIndex(semantic).member(part_id, name, _EVENT)
-
-
 @dataclass(frozen=True)
 class MessageEnd:
     part_id: str  # the lifeline (or the fallback `<occ>::<head>`)
@@ -183,7 +163,9 @@ def resolve_message_end(
             lookup_owner = child_id
             current = child_id
             continue
+        idx.foreign = False
         inherited = idx.member(lookup_owner, seg, _PART) if local is None else None
+        part_foreign = idx.foreign
         if inherited is not None:
             materialize.append((child_id, inherited))
             lookup_owner = inherited
@@ -195,9 +177,10 @@ def resolve_message_end(
                 f"message '{message_name}' end '{path}': '{seg}' is not a part of "
                 f"'{label}'; drawn on '{label}'"
             )
-            if idx.foreign and quiet_if_foreign:
+            if part_foreign and quiet_if_foreign:
                 warning = None
             return MessageEnd(current, None, warning, tuple(materialize))
+        idx.foreign = False
         event = idx.member(lookup_owner, seg, _EVENT)
         if event is not None:
             return MessageEnd(current, event, None, tuple(materialize))

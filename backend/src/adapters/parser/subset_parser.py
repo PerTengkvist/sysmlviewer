@@ -237,6 +237,8 @@ class _ParserState:
     ref_warnings: list[tuple[str, str]] = field(default_factory=list)
     # Ends of occurrence-form messages, resolved by `_link_message_ends`.
     pending_message_ends: list[_PendingMessageEnd] = field(default_factory=list)
+    # Parts `_link_occurrences` made for features a message end passes through.
+    materialized_ids: set[str] = field(default_factory=set)
 
     def current_parent(self) -> str | None:
         for scope in reversed(self.scopes):
@@ -778,6 +780,32 @@ class SubsetSysmlParser:
                 )
             return False
 
+        def displace_message(element_id: str, line: int) -> None:
+            """A part declared after a message of the same name takes the name; the
+            message moves to a free id (`<occ>::a#2`) and keeps its ends."""
+            clash = state.elements.get(element_id)
+            if (
+                clash is None
+                or clash.kind != ArtifactKind.MESSAGE
+                or clash.parent_id != state.current_parent()
+                or clash.parent_id not in state.elements
+                or state.elements[clash.parent_id].kind != ArtifactKind.OCCURRENCE
+            ):
+                return
+            new_id = _free_id([element_id], state.elements)
+            clash.id = new_id
+            del state.elements[element_id]
+            state.elements[new_id] = clash
+            owner = state.elements[clash.parent_id]
+            owner.children[owner.children.index(element_id)] = new_id
+            for pending in state.pending_message_ends:
+                if pending.message_id == element_id:
+                    pending.message_id = new_id
+            state.warnings.append(
+                f"line {line}: message name '{clash.name}' already names a "
+                f"member of '{clash.parent_id}'"
+            )
+
         def parse_occurrence_message(
             line: int, metadata_keywords: list[str]
         ) -> None:
@@ -820,6 +848,8 @@ class SubsetSysmlParser:
                     element_id = _free_id([element_id], state.elements)
             else:
                 name = state.next_anon_name("msg")
+                while state.qualify(name) in state.elements:
+                    name = state.next_anon_name("msg")
                 element_id = state.qualify(name)
 
             def head(path: str | None) -> str | None:
@@ -1214,6 +1244,7 @@ class SubsetSysmlParser:
                 )
                 pending_metadata_keywords = []
                 pending_abstract = False
+                displace_message(element_id, tok.line)
                 state.add_child(el.parent_id, element_id)
                 state.elements[element_id] = el
                 if is_def and is_specialization and type_ref:
@@ -2809,6 +2840,7 @@ class SubsetSysmlParser:
                 and "." in el.type_ref
                 and el.target_id not in elements
                 and in_occurrence(elements, el.id)
+                and self._under_occurrence_part(elements, el.target_id)
             ):
                 end = index.chain_end(
                     resolver, el.type_ref, el.parent_id, el.file_id or state.file_id
@@ -2838,6 +2870,7 @@ class SubsetSysmlParser:
                     (pending.file_id, f"line {pending.line}: {end.warning}")
                 )
         # Payload (`of T`) and event types may be any kind of definition.
+        specialized = specialized_def_ids(elements)
         for el in elements.values():
             if not el.type_ref or el.type_target_id:
                 continue
@@ -2847,8 +2880,31 @@ class SubsetSysmlParser:
                 res = resolver.resolve_name(
                     el.type_ref, el.parent_id, el.file_id or state.file_id
                 )
-                if res.element_id in elements:
-                    el.type_target_id = res.element_id
+                target = elements.get(res.element_id) if res.element_id else None
+                if target is None:
+                    continue
+                if target.is_definition or target.id in specialized:
+                    el.type_target_id = target.id
+                else:
+                    line = state.element_lines.get(el.id)
+                    prefix = f"line {line}: " if line is not None else ""
+                    what = "payload type" if el.kind == ArtifactKind.MESSAGE else "type"
+                    state.ref_warnings.append(
+                        (
+                            el.file_id or state.file_id,
+                            f"{prefix}{el.kind.value} '{el.name}' {what} "
+                            f"'{el.type_ref}' is not a definition",
+                        )
+                    )
+
+    @staticmethod
+    def _under_occurrence_part(elements: dict[str, SemanticElement], target_id: str) -> bool:
+        """Does the missing `target_id` lie under a part of an occurrence? Those get
+        no inherited copies; under any other part the copy is made later."""
+        owner = target_id.rsplit("::", 1)[0] if "::" in target_id else ""
+        while owner and owner not in elements:
+            owner = owner.rsplit("::", 1)[0] if "::" in owner else ""
+        return bool(owner) and in_occurrence(elements, owner)
 
     @staticmethod
     def _materialize_feature(
@@ -2877,6 +2933,7 @@ class SubsetSysmlParser:
             file_id=file_id,
         )
         state.elements[new_id] = part
+        state.materialized_ids.add(new_id)
         state.add_child(parent_id, new_id)
         rel_name = f"{name}_redefines_{_ref_name(original_id)}"
         rel = SemanticElement(
@@ -2969,6 +3026,7 @@ class SubsetSysmlParser:
             if (
                 not el.type_ref
                 or el.kind in _LOCAL_RELATION_KINDS  # type_ref: the chain as written
+                or el.id in state.materialized_ids
                 or el.type_target_id
                 or el.type_ref in names
                 or el.id in state.type_warned
@@ -3147,11 +3205,11 @@ class SubsetSysmlParser:
         for el in list(state.elements.values()):
             if not el.type_ref or el.kind in _LOCAL_RELATION_KINDS:
                 continue
-            if el.type_target_id and el.kind in (
-                ArtifactKind.MESSAGE,
-                ArtifactKind.EVENT_OCCURRENCE,
+            if el.id in state.materialized_ids or (
+                el.type_target_id
+                and el.kind in (ArtifactKind.MESSAGE, ArtifactKind.EVENT_OCCURRENCE)
             ):
-                continue  # linked by `_link_occurrences` (any kind of definition)
+                continue  # linked by `_link_occurrences`; the type is the original's
             type_def, res = name_resolver.resolve_type_def(el)
             el.type_target_id = type_def.id if type_def else None
             if type_def is not None or is_perform_stub(el):
