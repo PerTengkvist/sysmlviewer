@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
-import { exampleProjectFile, fitView, openProject, openView } from './helpers/diagram'
+import { exampleProjectFile, fitView, openProject } from './helpers/diagram'
 import {
   dragLifelineOver,
   lifelineOrder,
   nodeSel,
+  openSequenceView,
   resetSequenceLayout,
   sequenceLayoutOf,
 } from './helpers/sequence'
@@ -40,7 +41,7 @@ function detail(page: Page, label: string) {
 test('redefinition form (SequenceA): the parts are lifelines, an unused part is not', async ({
   page,
 }) => {
-  await openView(page, `${P}SequenceAView`)
+  await openSequenceView(page, `${P}SequenceAView`, 2)
   await expect(page.locator(nodeSel(`${A}::a`))).toBeVisible()
   await expect(page.locator(nodeSel(`${A}::b`))).toBeVisible()
   await expect(page.locator(nodeSel(`${A}::c`))).toHaveCount(0)
@@ -61,7 +62,7 @@ test('redefinition form (SequenceA): the parts are lifelines, an unused part is 
 })
 
 test('typed form (SequenceB): two lifelines, type and reference in Details', async ({ page }) => {
-  await openView(page, `${P}SequenceBView`)
+  await openSequenceView(page, `${P}SequenceBView`, 2)
   await expect(page.locator('.react-flow__node-lifeline')).toHaveCount(2)
   await selectNode(page, `${B}::a`)
   await expect(detail(page, 'Type')).toContainText('PartA')
@@ -72,9 +73,9 @@ test('typed form (SequenceB): two lifelines, type and reference in Details', asy
 })
 
 test('chain subsetting and nested end (SequenceC)', async ({ page }) => {
-  await openView(page, `${P}SequenceCView`)
+  await openSequenceView(page, `${P}SequenceCView`, 4)
   await expect(page.locator(nodeSel(`${C}::plant`))).toHaveCount(0)
-  expect(await lifelineOrder(page)).toEqual([
+  await expect.poll(() => lifelineOrder(page)).toEqual([
     `${C}::operator`,
     `${C}::ctrl`,
     `${C}::plant::actuator`,
@@ -97,7 +98,7 @@ test('chain subsetting and nested end (SequenceC)', async ({ page }) => {
 })
 
 test('selecting a message shows its events', async ({ page }) => {
-  await openView(page, `${P}SequenceAView`)
+  await openSequenceView(page, `${P}SequenceAView`, 2)
   await fitView(page)
   await page.locator(edgeSel(`${A}::msg`)).locator('path').first().click({ force: true })
   await expect(detail(page, 'From')).toHaveText('a.sent')
@@ -107,22 +108,21 @@ test('selecting a message shows its events', async ({ page }) => {
 test('a saved lifeline order survives a reload', async ({ page, request }) => {
   const view = `${P}SequenceAView`
   try {
-    await openView(page, view)
-    expect(await lifelineOrder(page)).toEqual([`${A}::a`, `${A}::b`])
+    await openSequenceView(page, view, 2)
+    await expect.poll(() => lifelineOrder(page)).toEqual([`${A}::a`, `${A}::b`])
     await dragLifelineOver(page, `${A}::a`, `${A}::b`)
-    expect(await lifelineOrder(page)).toEqual([`${A}::b`, `${A}::a`])
+    await expect.poll(() => lifelineOrder(page)).toEqual([`${A}::b`, `${A}::a`])
     await expect
       .poll(async () => (await sequenceLayoutOf(request, projectId, view))?.order)
       .toEqual([`${A}::b`, `${A}::a`])
-    await openView(page, view)
-    expect(await lifelineOrder(page)).toEqual([`${A}::b`, `${A}::a`])
+    await openSequenceView(page, view, 2)
+    await expect.poll(() => lifelineOrder(page)).toEqual([`${A}::b`, `${A}::a`])
   } finally {
     await resetSequenceLayout(request, projectId, view)
   }
 })
 
 test('the legacy interaction still renders', async ({ page }) => {
-  await openView(page, 'hbox::HBoxEventView')
-  await expect(page.locator('.react-flow__node-lifeline')).toHaveCount(4)
+  await openSequenceView(page, 'hbox::HBoxEventView', 4)
   await expect(page.locator('.react-flow__edge')).not.toHaveCount(0)
 })

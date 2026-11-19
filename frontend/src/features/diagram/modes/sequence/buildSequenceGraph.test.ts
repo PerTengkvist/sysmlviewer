@@ -257,7 +257,14 @@ function occurrenceFixture(): ViewPayload {
   return {
     ...base,
     view: { ...base.view, rootArtifactId: 'P::S' },
-    semantic: Object.fromEntries(list.map((e) => [e.id, e])),
+    semantic: Object.fromEntries(
+      list.map((e) => [
+        e.id,
+        e.id === 'P::S'
+          ? { ...e, children: list.filter((c) => c.parentId === 'P::S').map((c) => c.id) }
+          : e,
+      ]),
+    ),
   }
 }
 
@@ -295,6 +302,40 @@ describe('buildSequenceGraph under an occurrence', () => {
   it('labels a message with its name only', () => {
     const { edges } = buildSequenceGraph(occurrenceFixture(), 'light')
     expect(edges[0].label).toBe('m1')
+  })
+
+  it('numbers only the drawn messages and keeps declaration order', () => {
+    const fixture = occurrenceFixture()
+    fixture.semantic['P::S::m3'] = {
+      ...fixture.semantic['P::S::m1'],
+      id: 'P::S::m3',
+      name: 'm3',
+      targetId: 'P::S::nowhere',
+    }
+    fixture.semantic['P::S::m4'] = { ...fixture.semantic['P::S::m1'], id: 'P::S::m4', name: 'm4' }
+    fixture.semantic['P::S'].children = ['P::S::m1', 'P::S::m3', 'P::S::m4', 'P::S::m2']
+    const { edges } = buildSequenceGraph(fixture, 'light')
+    expect(edges.map((e) => e.id)).toEqual(['P::S::m1', 'P::S::m4', 'P::S::m2'])
+    expect(edges.map((e) => (e.data as { sequenceIndex: number }).sequenceIndex)).toEqual([0, 1, 2])
+  })
+
+  it('labels a nested lifeline with its path', () => {
+    const fixture = occurrenceFixture()
+    for (const [id, parent] of [
+      ['P::S::car', 'P::S'],
+      ['P::S::car::keyFob', 'P::S::car'],
+    ] as const) {
+      fixture.semantic[id] = { ...fixture.semantic['P::S::b'], id, name: id.split('::').pop()!, parentId: parent }
+    }
+    fixture.semantic['P::S::m5'] = {
+      ...fixture.semantic['P::S::m1'],
+      id: 'P::S::m5',
+      targetId: 'P::S::car::keyFob',
+    }
+    fixture.semantic['P::S'].children = ['P::S::m1', 'P::S::m5']
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    const labels = nodes.map((n) => (n.data as { label: string }).label)
+    expect(labels).toEqual(['a', 'b', 'car.keyFob'])
   })
 
   it('passes event names on edge data', () => {

@@ -30,6 +30,8 @@ package P {
   view SView : SequenceView { expose S; }
   view PlainView : SequenceView { expose Plain; }
   view BadView : SequenceView { expose NotASequence; }
+  occurrence run : S;
+  view RunView : SequenceView { expose run; }
   view TreeV : TreeView { expose S; }
 }
 """
@@ -218,3 +220,11 @@ def test_diagrams_occurrence_lifelines():
         p + "SequenceC::plant::actuator",
         p + "SequenceC::listener",
     ]
+
+
+def test_occurrence_usage_root_gives_a_clear_mode_error(tmp_path: Path):
+    client, pid = _client(tmp_path)
+    payload = _view(client, pid, "P::RunView")
+    assert payload["modeError"] == (
+        "SequenceView draws an occurrence def; 'run' is an occurrence usage"
+    )

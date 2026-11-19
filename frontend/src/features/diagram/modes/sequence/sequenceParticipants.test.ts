@@ -23,7 +23,14 @@ function occurrence(): Record<string, SemanticElement> {
     el({ id: 'P::S::unused', kind: 'part', parentId: 'P::S' }),
     el({ id: 'P::S::m1', kind: 'message', parentId: 'P::S', sourceId: 'P::S::b', targetId: 'P::S::a' }),
   ]
+  list[0].children = list.slice(1).map((e) => e.id)
   return Object.fromEntries(list.map((e) => [e.id, e]))
+}
+
+/** Add elements under the occurrence root and list them as its children. */
+function addToRoot(semantic: Record<string, SemanticElement>, ...els: SemanticElement[]) {
+  for (const e of els) semantic[e.id] = e
+  semantic['P::S'] = { ...semantic['P::S'], children: [...semantic['P::S'].children, ...els.map((e) => e.id)] }
 }
 
 describe('sequenceParticipants', () => {
@@ -50,7 +57,8 @@ describe('sequenceParticipants', () => {
 
   it('accepts nested and materialized parts as lifelines', () => {
     const semantic = occurrence()
-    for (const e of [
+    addToRoot(
+      semantic,
       el({ id: 'P::S::plant', kind: 'part', parentId: 'P::S' }),
       el({ id: 'P::S::plant::actuator', kind: 'part', parentId: 'P::S::plant' }),
       el({
@@ -60,22 +68,23 @@ describe('sequenceParticipants', () => {
         sourceId: 'P::S::a',
         targetId: 'P::S::plant::actuator',
       }),
-    ]) {
-      semantic[e.id] = e
-    }
+    )
     const { lifelines } = sequenceParticipants(semantic, 'P::S')
     expect(lifelines.map((l) => l.id)).toEqual(['P::S::b', 'P::S::a', 'P::S::plant::actuator'])
   })
 
   it('ignores ends that are not parts in the payload', () => {
     const semantic = occurrence()
-    semantic['P::S::m2'] = el({
-      id: 'P::S::m2',
-      kind: 'message',
-      parentId: 'P::S',
-      sourceId: 'P::S::zz',
-      targetId: 'P::S::m1',
-    })
+    addToRoot(
+      semantic,
+      el({
+        id: 'P::S::m2',
+        kind: 'message',
+        parentId: 'P::S',
+        sourceId: 'P::S::zz',
+        targetId: 'P::S::m1',
+      }),
+    )
     const { lifelines } = sequenceParticipants(semantic, 'P::S')
     expect(lifelines.map((l) => l.id)).toEqual(['P::S::b', 'P::S::a'])
   })
@@ -83,18 +92,33 @@ describe('sequenceParticipants', () => {
   it('keeps messages in declaration order (m10 after m9)', () => {
     const semantic = occurrence()
     for (let i = 2; i <= 11; i++) {
-      semantic[`P::S::m${i}`] = el({
-        id: `P::S::m${i}`,
-        kind: 'message',
-        parentId: 'P::S',
-        sourceId: 'P::S::a',
-        targetId: 'P::S::b',
-      })
+      addToRoot(
+        semantic,
+        el({
+          id: `P::S::m${i}`,
+          kind: 'message',
+          parentId: 'P::S',
+          sourceId: 'P::S::a',
+          targetId: 'P::S::b',
+        }),
+      )
     }
     const { messages } = sequenceParticipants(semantic, 'P::S')
     expect(messages.map((m) => m.name)).toEqual(
       Array.from({ length: 11 }, (_, i) => `m${i + 1}`),
     )
+  })
+
+  it('orders occurrence messages by the root children, not by dict order', () => {
+    const semantic = occurrence()
+    // a#2 is declared before z but sits after it in the dict
+    const z = el({ id: 'P::S::z', kind: 'message', parentId: 'P::S', sourceId: 'P::S::a', targetId: 'P::S::b' })
+    const a2 = el({ id: 'P::S::a#2', kind: 'message', name: 'a', parentId: 'P::S', sourceId: 'P::S::a', targetId: 'P::S::b' })
+    semantic['P::S::z'] = z
+    semantic['P::S::a#2'] = a2
+    semantic['P::S'] = { ...semantic['P::S'], children: ['P::S::m1', 'P::S::a#2', 'P::S::z'] }
+    const { messages } = sequenceParticipants(semantic, 'P::S')
+    expect(messages.map((m) => m.id)).toEqual(['P::S::m1', 'P::S::a#2', 'P::S::z'])
   })
 })
 

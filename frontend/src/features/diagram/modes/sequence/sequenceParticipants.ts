@@ -22,10 +22,17 @@ export function sequenceParticipants(
   semantic: Record<string, SemanticElement>,
   rootId: string,
 ): SequenceParticipants {
-  const messages = Object.values(semantic).filter(
-    (e) => e.kind === 'message' && e.parentId === rootId,
-  )
-  if (semantic[rootId]?.kind !== 'occurrence') {
+  const root = semantic[rootId]
+  // An occurrence lists its messages in declaration order in `children`; the
+  // order of the `semantic` dict is not relied on there (a message that was
+  // displaced by a name clash is re-inserted at the end of the dict).
+  const messages =
+    root?.kind === 'occurrence'
+      ? (root.children ?? [])
+          .map((id) => semantic[id])
+          .filter((e): e is SemanticElement => e?.kind === 'message')
+      : Object.values(semantic).filter((e) => e.kind === 'message' && e.parentId === rootId)
+  if (root?.kind !== 'occurrence') {
     const lifelines = Object.values(semantic).filter(
       (e) => e.kind === 'lifeline' && e.parentId === rootId,
     )

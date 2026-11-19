@@ -41,4 +41,3 @@ frontend/e2e/*
 !frontend/e2e/activity_diagram_polish.spec.ts
 !frontend/e2e/occurrence_sequence.spec.ts
 !frontend/e2e/sequence_layout.spec.ts
-!frontend/e2e/helpers/sequence.ts

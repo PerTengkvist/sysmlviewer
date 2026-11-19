@@ -1927,6 +1927,17 @@ class ProjectService:
                 f"{', '.join(sorted(k.value for k in expected))}; got '{root.kind.value}'"
             )
 
+        if (
+            mode_error is None
+            and diagram_mode == "sequence"
+            and root.kind == ArtifactKind.OCCURRENCE
+            and not root.is_definition
+        ):
+            mode_error = (
+                f"{view.type_ref or diagram_mode} draws an occurrence def; "
+                f"'{root.name}' is an occurrence usage"
+            )
+
         artifact_ids: set[str] = set()
         lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:

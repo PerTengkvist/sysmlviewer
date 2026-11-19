@@ -4,6 +4,7 @@ export const nodeSel = (id: string) => `.react-flow__node[data-id="${id}"]`
 
 /** Lifeline node ids from left to right, as drawn. */
 export async function lifelineOrder(page: Page): Promise<string[]> {
+  // The count settles once the view has been built from the payload.
   const nodes = page.locator('.react-flow__node-lifeline')
   const boxes: { id: string; x: number }[] = []
   for (let i = 0; i < (await nodes.count()); i++) {
@@ -51,7 +52,7 @@ export async function dragLifelineOver(page: Page, id: string, target: string): 
   await page.mouse.move(from.x + from.width / 2 + 20, y, { steps: 4 })
   await page.mouse.move(to.x + to.width / 2 + 40, y, { steps: 12 })
   await page.mouse.up()
-  await page.waitForTimeout(500)
+  // Callers poll for the result (`expect.poll(() => lifelineOrder(page))`).
 }
 
 /** Select the lifeline and drag its right-hand width handle by `dx` screen pixels. */
@@ -67,5 +68,25 @@ export async function resizeLifeline(page: Page, id: string, dx: number): Promis
   await page.mouse.move(x + dx / 2, y, { steps: 4 })
   await page.mouse.move(x + dx, y, { steps: 8 })
   await page.mouse.up()
-  await page.waitForTimeout(500)
+}
+
+/** Open a sequence view and wait until its lifelines are on screen and have stopped moving. */
+export async function openSequenceView(page: Page, viewId: string, lifelines: number): Promise<void> {
+  await page.goto(`/?view=${encodeURIComponent(viewId)}`)
+  await expect(page.locator('.react-flow__node-lifeline')).toHaveCount(lifelines, { timeout: 60_000 })
+  let previous = ''
+  await expect
+    .poll(async () => {
+      const now = JSON.stringify(await lifelineOrder(page)) + (await lifelineXs(page))
+      const settled = now === previous
+      previous = now
+      return settled
+    })
+    .toBe(true)
+}
+
+async function lifelineXs(page: Page): Promise<string> {
+  return page
+    .locator('.react-flow__node-lifeline')
+    .evaluateAll((els) => els.map((e) => (e as HTMLElement).style.transform).join('|'))
 }

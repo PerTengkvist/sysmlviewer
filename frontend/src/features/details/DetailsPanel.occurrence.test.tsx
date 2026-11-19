@@ -148,6 +148,19 @@ describe('DetailsPanel for sequence parts and messages in an occurrence', () => 
     expect(html).not.toContain('<dt>Reference</dt>')
   })
 
+  it('shows no Type row for a subsetting relation', () => {
+    const p = project()
+    p.semantic['D::S::keyFob_subsets_car_keyFob'].typeRef = 'car.keyFob'
+    const html = renderToStaticMarkup(
+      createElement(DetailsPanel, {
+        project: p,
+        selectedId: 'D::S::keyFob_subsets_car_keyFob',
+        onRoutingChange: noop,
+      }),
+    )
+    expect(html).not.toContain('<dt>Type</dt>')
+  })
+
   it('does not add lifeline rows to parts outside an occurrence', () => {
     const html = render('LA::Car::keyFob')
     expect(html).not.toContain('<dt>Reference</dt>')

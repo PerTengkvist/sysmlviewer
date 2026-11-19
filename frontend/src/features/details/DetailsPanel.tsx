@@ -1119,6 +1119,8 @@ export function DetailsPanel({
           </>
         )}
         {el.typeRef &&
+          el.kind !== 'subsetting' &&
+          el.kind !== 'redefinition' &&
           !isInterfaceUsage &&
           el.kind !== 'connection' &&
           el.kind !== 'binding' && (

@@ -1,6 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import { MarkerType } from '@xyflow/react'
-import type { ViewPayload } from '../../../../api'
+import type { SemanticElement, ViewPayload } from '../../../../api'
+import { occurrencePath } from '../../../details/elementRelations'
 import type { ViewMode } from '../../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { strokeDasharray } from '../../relationshipStyle'
@@ -31,13 +32,28 @@ export function buildSequenceGraph(
   const rootId = view.view.rootArtifactId
   // Lifeline elements under an interaction, parts that messages use under an
   // occurrence; both go through the same layout below.
-  const { lifelines, messages } = sequenceParticipants(semantic, rootId)
+  const participants = sequenceParticipants(semantic, rootId)
+  const { lifelines } = participants
+  // Only messages with both ends on a lifeline are drawn, and only they are
+  // numbered, so the labels never skip a number.
+  const lifelineIds = new Set(lifelines.map((ll) => ll.id))
+  const messages = participants.messages.filter(
+    (m) => lifelineIds.has(m.sourceId || '') && lifelineIds.has(m.targetId || ''),
+  )
+  const isOccurrence = semantic[rootId]?.kind === 'occurrence'
+  // A part nested below the first level is labelled with its path (`car.keyFob`),
+  // so it is not mistaken for a local part of the same name.
+  const labelOf = (ll: SemanticElement): string => {
+    if (!isOccurrence) return ll.name
+    const path = occurrencePath(semantic, ll.id)
+    return path && path.includes('.') ? path : ll.name
+  }
 
   const lineHeight = Math.max(180, 80 + messages.length * MSG_GAP)
   // Stored x/y/width are not read: they are global defaults that cannot be
   // told apart from user choices. The user's choices live in sequenceLayout.
   const geometry = sequenceGeometry(
-    lifelines.map((ll) => ({ id: ll.id, name: ll.name })),
+    lifelines.map((ll) => ({ id: ll.id, name: labelOf(ll) })),
     messages.map((m) => ({
       sourceId: m.sourceId || '',
       targetId: m.targetId || '',
@@ -53,14 +69,14 @@ export function buildSequenceGraph(
     const ll = byId.get(id)!
     const viz = visualization.nodes[ll.id]
     const data: LifelineNodeData = {
-      label: ll.name,
+      label: labelOf(ll),
       artifactId: ll.id,
       formatStyle: viz?.style,
       viewMode,
       lineHeight,
       headerHeight,
       messageCount: messages.length,
-      minWidth: minLifelineWidth(ll.name),
+      minWidth: minLifelineWidth(labelOf(ll)),
     }
     return {
       id: ll.id,
