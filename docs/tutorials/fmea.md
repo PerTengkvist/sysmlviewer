@@ -233,6 +233,42 @@ attribute required = 45;
 attribute brakeCircuitsRequired = 1;
 ```
 
+### The FailureModel library
+
+`#Pool`, `#Redundant`, `#Single` and `#Soft` are metadata keywords from a small library package,
+`FailureModel`. Its canonical file is `libraries/failure_model.sysml` in the repository, and
+`libraries/README.md` lists what it contains. The keywords themselves are plain SysML v2 metadata:
+
+[//]: # (source: examples/electric_car/failure_model/failure_model.sysml)
+```sysml
+package FailureModel {
+  doc /* Small reusable library for failure-impact analysis. A failure mode is a FailureKind. The metadata keywords tell the analysis how instances of a part combine: Single (all needed, the default), Pool (instance capacities add up, with a minimum required), Redundant (k of n, k given by the required attribute) and Soft (on a dependency: degrades the dependent function instead of losing it). */
+
+  enum def FailureKind { loss; degraded; erroneous; }
+  metadata def Single;             // default when nothing is said
+  metadata def Pool;               // instances add up capacity
+  metadata def Redundant;          // k-of-n, k given by attribute 'required'
+  metadata def Soft;               // on a dependency: degrades instead of loses
+}
+```
+
+A project only reads the `.sysml` files below its own folder. To use the library in your own project:
+1. **Copy** `libraries/failure_model.sysml` into the project folder. Any subfolder works.
+2. **Import** the package in the files that use the keywords:
+
+[//]: # (source: examples/electric_car/physical_architecture/vehicle_physical.sysml)
+```sysml
+  private import FailureModel::*;
+```
+
+The import names the **package**, not the file, so it does not matter where in the project the copy
+lies. Electric Car keeps its copy in `failure_model/failure_model.sysml`, and a repository test keeps
+that copy identical to the canonical file.
+
+If the copy is missing, the import fails with the warning `import 'FailureModel::*' — package not found`,
+filed under the file that holds the import, and `failure_impact.py` and `fmea.py` stop until the copy is back
+(or `--allow-warnings` is given).
+
 The `#implements` dependencies tie the groups to the logical architecture, which is how a module
 failure reaches the functions:
 
