@@ -150,6 +150,33 @@ def test_fmea_tutorial_output_matches_cli(fmea_cli, trigger, capsys, car):
     )
 
 
+def test_severity_downgrade_example_matches_cli(fmea_cli, capsys, car):
+    """The mixed requirement chain in the tutorial gives exactly the quoted warning, and exit 0."""
+    (car / "requirements" / "mixed.sysml").write_text(
+        block("illustration: a requirement chain that mixes levels") + "\n", encoding="utf-8"
+    )
+    assert fmea_cli.main(["validate", str(car)]) == 0
+    out = capsys.readouterr().out
+    assert out.replace(str(car), "examples/electric_car").rstrip("\n") == block(
+        "output: fmea validate with a mixed requirement chain"
+    )
+
+
+def test_electric_car_follows_the_requirement_rule(fmea_cli, capsys):
+    assert fmea_cli.main(["validate", str(CAR)]) == 0
+    assert "0 errors, 0 warnings" in capsys.readouterr().out
+    assert "0 warnings" in TEXT  # the tutorial says so too
+
+
+def test_severity_section_explains_the_rule():
+    section = TEXT.split("## Severity, occurrence, detection and RPN")[1].split("## Criticality")[0]
+    for phrase in (
+        "group score", "status factor", "own `Type` wins", "do not mix requirement levels",
+        "severity-downgrade", "does not change S", "Electric Car follows the rule",
+    ):
+        assert phrase in section, phrase
+
+
 def test_fmea_tutorial_mermaid_valid():
     blocks = mermaid_blocks(TEXT)
     assert blocks

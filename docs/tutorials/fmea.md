@@ -49,6 +49,43 @@ of the requirement's group (`Safety` is 10, `Performance` 6, ...) and multiplies
 status (`LOST` is 1.0, `DEGRADED` is 0.6). S is the highest result, rounded half up and limited to 1-10.
 A mode that endangers no requirement has S = 1.
 
+In short: **S = group score x status factor**, taken for the worst requirement the failure reaches.
+For `winding_open`, `BrakingDistance` is LOST. It belongs to the group `Safety` (score 10), and LOST has
+status factor 1.0, so 10 x 1.0 = 10. If it were only DEGRADED, the result would be 10 x 0.6 = 6.
+
+**Where a requirement gets its group.** The group is the requirement's `Type` attribute, when that is one
+of the groups in `severity.yaml` (`Safety`, `Performance`, ...). A requirement's **own `Type` wins**: the tool
+uses it and stops looking. Only a requirement without a configured `Type` of its own looks upwards along
+`#refine` and takes the best group it finds there (in Electric Car, `BrakingDistance` refines the group
+requirement `Safety`). A requirement that finds no group at all gets the `default_group_score`.
+
+**The requirement rule: do not mix requirement levels in one refine chain.** A requirement that refines
+another one should have the same priority. Requirements with different priorities rarely belong together:
+a Comfort requirement that refines a Safety requirement is either in the wrong chain or has the wrong `Type`.
+Because the own `Type` wins, such a requirement is scored with its own, lower group, so a failure that hits
+it looks harmless while the Safety requirement above it may be at risk too.
+
+The warning `severity-downgrade` exists to catch breaks of this rule. It appears when a requirement with its own
+`Type` has an ancestor in its `#refine` chain with a higher group score. This model breaks the rule on purpose:
+
+[//]: # (illustration: a requirement chain that mixes levels)
+```sysml
+package Mixed {
+  requirement def R { attribute Type = "Comfort"; }
+  #refine dependency from R to Requirements::Safety;
+}
+```
+
+[//]: # (output: fmea validate with a mixed requirement chain)
+```text
+warning: Mixed::R: requirement 'Mixed::R' has Type 'Comfort' (score 3), but 'Requirements::Safety' higher up its #refine chain has Type 'Safety' (score 10). S follows the requirement's own Type, so it is scored 3. Check whether mixing requirement levels in one chain is intended.
+0 errors, 1 warning (mode: both)
+```
+
+It is only a warning: it does not change S and does not stop `analyze` or `simulate`. The message names both
+requirements and both scores, so you can decide whether to move the requirement, correct its `Type`, or accept
+the lower score. Electric Car follows the rule, so `fmea.py validate examples/electric_car` gives 0 warnings.
+
 **Occurrence (O)** is either written directly (`occurrence: 4`) or derived from the mode's failure rate
 through a table in `severity.yaml` (the `occurrence_scale`).
 
