@@ -12,6 +12,7 @@ TUTORIAL_FILES = (
     "cheatsheet.md",
     "use-cases-and-scenarios.md",
     "mbse.md",
+    "fmea.md",
 )
 
 TUTORIAL_TITLES = {
@@ -20,6 +21,7 @@ TUTORIAL_TITLES = {
     "cheatsheet": "SysML v2 cheatsheet",
     "use-cases-and-scenarios": "Use cases and scenarios",
     "mbse": "MBSE introduction",
+    "fmea": "FMEA and FMECA",
 }
 
 
