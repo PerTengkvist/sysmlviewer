@@ -15,6 +15,9 @@ def test_list_and_get_tutorials():
     assert "use-cases-and-scenarios" in ids
     assert "mbse" in ids
     assert "sysmlviewer" in ids
+    assert "fmea" in ids
+    assert items[-1] == {"id": "fmea", "title": "FMEA and FMECA", "filename": "fmea.md"}
+    assert "# FMEA and FMECA" in client.get("/tutorials/fmea").json()["content"]
     assert items[0] == {
         "id": "sysmlviewer",
         "title": "Using SysML Viewer",

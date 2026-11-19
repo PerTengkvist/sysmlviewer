@@ -58,6 +58,21 @@ TUTORIALS = {
         "What happens when you save",
         "The examples",
     ],
+    "fmea.md": [
+        "# FMEA and FMECA",
+        "FMEA versus FMECA",
+        "Effect levels",
+        "Severity, occurrence, detection and RPN",
+        "Criticality",
+        "Why link the FMEA to the model",
+        "What lives in SysML and what lives in YAML",
+        "How effects propagate",
+        "The data format",
+        "Adding a failure mode",
+        "Command line",
+        "Viewing the results",
+        "When the FMEA drifts from the model",
+    ],
 }
 
 

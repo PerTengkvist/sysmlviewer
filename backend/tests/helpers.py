@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -63,3 +64,19 @@ def add_content_file(
     )
     assert res.status_code == 200, res.text
     return res.json()
+
+
+def car_ignore(*names: str):
+    """`shutil.copytree(ignore=...)`: skip `names` anywhere, and the generated reports in fmea/docs.
+
+    A plain "docs" pattern would also drop the element docs of every package folder.
+    """
+    base = shutil.ignore_patterns(*names)
+
+    def ignore(directory, entries):
+        skipped = set(base(directory, entries))
+        if Path(directory).name == "fmea" and "docs" in entries:
+            skipped.add("docs")
+        return skipped
+
+    return ignore

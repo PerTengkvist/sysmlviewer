@@ -67,14 +67,22 @@ def _parser() -> argparse.ArgumentParser:
     a = sub.add_parser("analyze", help="the FMEA or FMECA table")
     project(a)
     a.add_argument("--mode", choices=("fmea", "fmeca"), default="fmea")
-    a.add_argument("--format", choices=("markdown", "csv", "json"), default="markdown")
+    a.add_argument("--format", choices=("markdown", "csv", "json"), help="print format (default markdown)")
     a.add_argument("--spof", action="store_true", help="only the single points of failure")
+    a.add_argument("--out", nargs="?", const="", metavar="DIR",
+                   help="write <mode>-table.csv, <mode>-spof.csv, coverage.csv and <mode>-report.md to DIR "
+                        "(default <fmea dir>/docs) instead of printing")
+    a.add_argument("--trials", type=int, metavar="N",
+                   help="with --mode fmeca and --out: also simulate N trials and add them to the report")
+    a.add_argument("--seed", type=int, help="seed for --trials (default 1)")
     s = sub.add_parser("simulate", help="Monte Carlo over the mission time")
     project(s)
     s.add_argument("--trials", type=int, default=5000)
     s.add_argument("--seed", type=int, default=1)
     s.add_argument("--mission-time", type=float, help="hours; overrides severity.yaml")
     s.add_argument("--format", choices=("markdown", "csv", "json"), default="markdown")
+    s.add_argument("--out", nargs="?", const="", metavar="DIR",
+                   help="write simulation.csv to DIR (default <fmea dir>/docs) instead of printing")
     sc = sub.add_parser("schema", help="the JSON Schemas of the data files")
     sc.add_argument("--write", action="store_true", help="write the files instead of printing")
     sc.add_argument("--out", default=str(REPO / "docs" / "schemas"))
@@ -213,14 +221,81 @@ def _cmd_coverage(ctx: _Context) -> int:
     return 0
 
 
+def _out_dir(ctx: _Context) -> Path:
+    return Path(ctx.args.out) if ctx.args.out else ctx.fmea_dir / "docs"
+
+
+def _out_problem(ctx: _Context) -> str | None:
+    out = _out_dir(ctx)
+    if out.exists() and not out.is_dir():
+        return f"error: --out is not a folder: {out}"
+    return None
+
+
+def _write(folder: Path, name: str, text: str) -> None:
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / name).write_bytes(text.encode("utf-8"))  # LF on every platform: reports are committed
+    print(f"wrote {folder / name}")
+
+
+def _project_name(ctx: _Context) -> str:
+    try:
+        manifest = json.loads((ctx.root / "project.json").read_text(encoding="utf-8"))
+        return str(manifest.get("projektnamn") or manifest["name"])  # "projektnamn" is the on-disk key
+    except (OSError, ValueError, KeyError):
+        return ctx.root.name
+
+
+def _simulation(ctx: _Context, fmea, graph, trials: int, seed: int, mission: float | None = None):
+    t = mission if mission is not None else fmea.severity.mission_time_h
+    result = simulate(fmea, graph, trials=trials, seed=seed, mission_time_h=t)
+    return t, result, export.simulation_rows(graph, result)
+
+
+def _write_reports(ctx: _Context, fmea, semantic, graph, analysis) -> None:
+    args = ctx.args
+    out = _out_dir(ctx)
+    mode = args.mode
+    files = [f"{mode}-table.csv", f"{mode}-spof.csv", "coverage.csv"]
+    sim = None
+    if args.trials is not None:
+        files.append("simulation.csv")
+        seed = 1 if args.seed is None else args.seed
+        t, _, rows = _simulation(ctx, fmea, graph, args.trials, seed)
+        sim = export.SimInfo(args.trials, seed, t, rows)
+    cov = coverage(fmea, semantic, graph)
+    physical = sum(1 for n in graph.nodes.values() if n.layer.value == "physical")
+    _write(out, files[0], export.to_csv(analysis))
+    _write(out, f"{mode}-spof.csv", export.spof_to_csv(analysis, fmea.severity.spof_severity_threshold))
+    _write(out, "coverage.csv", export.coverage_to_csv(cov))
+    if sim is not None:
+        _write(out, "simulation.csv", export.simulation_to_csv(sim.rows))
+    report = export.to_report_markdown(
+        analysis, graph, fmea.severity, cov, project_name=_project_name(ctx), files=files,
+        physical_total=physical, sim=sim,
+    )
+    _write(out, f"{mode}-report.md", report)
+
+
 def _cmd_analyze(ctx: _Context) -> int:
     args = ctx.args
+    if args.trials is not None and (args.out is None or args.mode != "fmeca" or args.trials < 1):
+        return _fail("error: --trials needs --mode fmeca and --out, and at least 1 trial")
+    if args.seed is not None and args.trials is None:
+        return _fail("error: --seed only applies together with --trials")
+    if args.out is not None and (args.spof or args.format is not None):
+        return _fail("error: --out writes fixed files; --spof and --format only apply when printing")
+    if args.out is not None and (problem := _out_problem(ctx)):
+        return _fail(problem)
     state, code = _prepare(ctx, args.mode)
     if state is None:
         return code
     fmea, semantic, graph, findings = state
     _warn(ctx, findings)
     analysis = analyze(fmea, semantic, graph, args.mode)
+    if args.out is not None:
+        _write_reports(ctx, fmea, semantic, graph, analysis)
+        return 0
     if args.spof:
         threshold = fmea.severity.spof_severity_threshold
         if args.format == "csv":
@@ -266,14 +341,17 @@ def _cmd_simulate(ctx: _Context) -> int:
     args = ctx.args
     if args.trials < 1:
         return _fail("error: --trials must be at least 1")
+    if args.out is not None and (problem := _out_problem(ctx)):
+        return _fail(problem)
     state, code = _prepare(ctx, "fmeca")
     if state is None:
         return code
     fmea, _, graph, findings = state
     _warn(ctx, findings)
-    t = args.mission_time if args.mission_time is not None else fmea.severity.mission_time_h
-    result = simulate(fmea, graph, trials=args.trials, seed=args.seed, mission_time_h=t)
-    rows = export.simulation_rows(graph, result)
+    t, result, rows = _simulation(ctx, fmea, graph, args.trials, args.seed, args.mission_time)
+    if args.out is not None:
+        _write(_out_dir(ctx), "simulation.csv", export.simulation_to_csv(rows))
+        return 0
     if args.format == "csv":
         print(export.simulation_to_csv(rows), end="")
     elif args.format == "json":

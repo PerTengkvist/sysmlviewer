@@ -114,7 +114,8 @@ def _assert_example_docs_qualified(root: Path):
     flat_leftovers = sorted(
         p
         for p in docs - expected
-        if not any(Path(p).name.startswith(f"{pkg}.") for pkg in packages)
+        if not p.startswith("fmea/docs/")  # generated FMEA reports, not element docs
+        and not any(Path(p).name.startswith(f"{pkg}.") for pkg in packages)
     )
     assert flat_leftovers == [], f"docs not following <Package>.<name>.md: {flat_leftovers}"
 

@@ -61,7 +61,7 @@ def test_read_fmea_dir(sources, tmp_path):
         "severity.yaml",
     }
     shutil.copytree(CAR / "fmea", tmp_path / "fmea")
-    (tmp_path / "fmea" / "docs").mkdir()
+    (tmp_path / "fmea" / "docs").mkdir(exist_ok=True)
     (tmp_path / "fmea" / "docs" / "report.yaml").write_text("not: [a library", encoding="utf-8")
     assert "docs/report.yaml" not in read_fmea_dir(tmp_path / "fmea").data
 
