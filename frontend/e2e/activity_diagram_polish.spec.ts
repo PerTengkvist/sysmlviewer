@@ -19,7 +19,7 @@ async function openCharge(page: Page): Promise<Locator> {
   await openView(page, 'UseCases::VehicleUseCaseView')
   await fitView(page)
   await page.locator(nodeSel(UC)).dblclick()
-  const dlg = page.getByRole('dialog', { name: 'Use case Charge' })
+  const dlg = page.getByRole('dialog', { name: 'Use case UC021 Charge' })
   await expect(dlg.locator('.react-flow__edge')).toHaveCount(8)
   return dlg
 }
