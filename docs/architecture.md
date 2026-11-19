@@ -90,6 +90,36 @@ An `actionFlow` payload also has `performers: {actionId: [partId]}`: the parts t
 3. Remove viz entries with no matching semantic element.
 4. Same for edges keyed by connection artifact ids.
 
+### Failure impact (toolbox)
+
+`scripts/failure_impact.py` answers "what does it do to the functions, use cases and requirements if this part fails?". The logic is pure domain code in `backend/src/domain/failure/` (`model`, `extract`, `propagate`, `scenarios`, `report`); it imports no adapter, FastAPI, JSON or YAML (`tests/test_domain_purity.py` checks this). The script only parses the project through the parser adapter and prints. No API endpoint, no stored data and no viewer change: the model is read, never written.
+
+**Layers.** `extract.build_impact_graph(semantic)` derives the roles from relations, not names:
+
+| Layer | Definition |
+|---|---|
+| physical part | part usage that is the source of `#implements`, or has an ancestor that is. A `part def` that implements makes its parts physical but adds no input to the logical part (the whole is not a common cause of it) |
+| logical part | target of `#implements` or `allocate`, or the source of `satisfy` |
+| function node | source of an `allocate` to a logical part |
+| function | owner of a function node |
+| use case | target of `#refine` from a function or function node, source of `objective`, or an end of `include` |
+| requirement | target of `objective` from a use case, or of `satisfy` from a logical part |
+
+A function dependency is a `dependency` between two functions with a metadata keyword that is not a trace keyword (`refine`, `derive`, `objective`, `implements`, `extend`), for example `#Energy`. `#Soft` before the keyword makes it soft.
+
+**Rules.** Capability `c` is in [0, 1]: 1 is OK, 0 is LOST, otherwise DEGRADED. A node's value is the minimum of its own failure, its owner part (containment, downwards only), and all its inputs: implementers of a logical part, allocations of a function node, nodes and hard dependencies of a function, functions and nodes that refine a use case, included use cases, and use cases (`objective`) and logical parts (`satisfy`) of a requirement. A soft dependency contributes `max(c, 0.5)`. The minimum is evaluated as a fixpoint, so dependency cycles terminate; nodes on a cycle get the flag `cycle`. A requirement is at risk when `c < 1`. `erroneous` is treated as loss and flagged `erroneous_as_loss`. Each node keeps the input that limited it (`limited_by`, ties: own failure first, then model order), which gives the causal chain back to the failed part. Flags (`pool_at_minimum`, `redundancy_exhausted`, `erroneous_as_loss`) spread downstream; `common_cause` marks a failure whose part and its children implement at least two logical parts.
+
+**Modelling conventions** (kept in the SysML model, library `FailureModel` in `examples/electric_car/failure_model/`):
+
+- A part usage with a multiplicity (`part x[8]`) is a group of instances. With no keyword all instances are needed (and-gate).
+- `#Pool`: capacities add up. `c` is surviving capacity divided by total capacity, and the pool is LOST when the surviving capacity is below `required`.
+- `#Redundant`: k of n, `c` is the k-th best instance. With exactly k survivors `redundancy_exhausted` is set.
+- Capacity per instance is the one numeric attribute (own or inherited) whose name starts with `capacity` (`capacityKWh = 7.5`); without one every instance counts as 1.
+- `required` is read from `<usage>Required` in the owner (`brakeCircuitsRequired = 1`), otherwise from `required` in the owner when it holds exactly one `#Pool`/`#Redundant` usage (`batteryPack::required`). A `#Redundant` without it uses 1 and warns; a `#Pool` without it uses 0.
+- A multiplicity that cannot be evaluated (`*`, `0..*`) warns and the usage counts as one instance. Values in `@Meta { ... }` bodies are not parsed, hence the naming conventions.
+
+**Command line.** `--fail <name>:<kind>[:<fraction>][:<count>]` (repeatable) or `--spof` (every physical part lost in turn, one instance of a group), `--format text|markdown|json`. Names are resolved first with `NameResolver`, then as a suffix of whole segments (`.` counts as `::`); an ambiguous name lists its candidates and an unknown name suggests close matches (exit 2). Parser warnings stop the run (exit 1) unless `--allow-warnings` is given. The JSON output has `failures`, `nodes` (per id: `layer`, `capability`, `status`, `limitedBy`, `flags`, `chain`), `functions`, `useCases`, `requirements` (the ones that are not OK, LOST first) and `warnings`.
+
 ## Parser subset
 
 Supported textual constructs:
