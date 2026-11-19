@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from domain.failure.model import ImpactGraph, Layer
 from domain.fmea.model import FmeaModel, Loc
-from domain.fmea.severity import model_groups, requirement_groups
+from domain.fmea.severity import model_groups, requirement_groups, severity_downgrades
 from domain.models import SemanticElement
 
 MODES = ("fmea", "fmeca", "both")
@@ -156,6 +156,16 @@ def group_findings(fmea: FmeaModel, semantic: Mapping[str, SemanticElement]) -> 
             Finding(
                 "unknown-group", loc.file, loc.path, fmea.line(loc),
                 f"requirements of group '{name}' are not scored; default_group_score applies", name,
+            )
+        )
+    for d in severity_downgrades(semantic, fmea.severity.requirement_groups):
+        out.append(
+            Finding(
+                "severity-downgrade", "", d.req_id, None,
+                f"requirement '{d.req_id}' has Type '{d.own_type}' (score {d.own_score}), but "
+                f"'{d.ancestor_id}' higher up its #refine chain has Type '{d.ancestor_type}' "
+                f"(score {d.ancestor_score}). S follows the requirement's own Type, so it is "
+                f"scored {d.own_score}. Check whether mixing requirement levels in one chain is intended.",
             )
         )
     return out
