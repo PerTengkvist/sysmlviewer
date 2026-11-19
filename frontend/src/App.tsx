@@ -837,6 +837,25 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
+  const onSequenceLayoutChange = useCallback(
+    async (layout: import('./api').SequenceLayout | null) => {
+      if (!project || !activeViewId) return
+      try {
+        await patchVisualization(project.id, {
+          viewId: activeViewId,
+          sequenceLayout: layout,
+          structureNotation,
+        })
+        setViewPayload((prev) =>
+          prev ? { ...prev, sequenceLayout: layout } : prev,
+        )
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
   const onPortsMoved = useCallback(
     async (
       moves: { portId: string; side: PortSide; offset: number }[],
@@ -2031,6 +2050,9 @@ export default function App() {
                   void eventLog.report({ message, viewId })
                 }
                 onLayoutScopesChange={(scopes) => void onLayoutScopesChange(scopes)}
+                onSequenceLayoutChange={(layout) =>
+                  void onSequenceLayoutChange(layout)
+                }
                 onAutoLayoutEdgeKindsChange={(kinds) =>
                   void onAutoLayoutEdgeKindsChange(kinds)
                 }

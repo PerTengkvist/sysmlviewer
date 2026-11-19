@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildSequenceGraph } from './buildSequenceGraph'
 import type { ViewPayload } from '../../../../api'
+import { LIFELINE_LEFT, LIFELINE_TOP } from './sequenceLayout'
 
 function seqFixture(): ViewPayload {
   return {
@@ -69,8 +70,10 @@ describe('buildSequenceGraph', () => {
     const { nodes, edges } = buildSequenceGraph(seqFixture(), 'light')
     expect(nodes).toHaveLength(2)
     expect(nodes.every((n) => n.type === 'lifeline')).toBe(true)
-    expect(nodes[0].position.x).toBe(60)
-    expect(nodes[1].position.x).toBe(220)
+    expect(nodes[0].position.x).toBe(LIFELINE_LEFT)
+    expect(nodes[1].position.x).toBeGreaterThan(
+      nodes[0].position.x + Number(nodes[0].style?.width),
+    )
     expect(edges).toHaveLength(1)
     expect(edges[0].source).toBe('P::I::A')
     expect(edges[0].target).toBe('P::I::B')
@@ -93,6 +96,8 @@ describe('buildSequenceGraph', () => {
   it('uses one taller header when a camelCase lifeline name wraps', () => {
     const fixture = seqFixture()
     fixture.semantic['P::I::A'].name = 'ManeuvrabilityController'
+    // Narrowed by the user; by default the header is as wide as the name.
+    fixture.sequenceLayout = { widths: { 'P::I::A': 120 } }
     const { nodes } = buildSequenceGraph(fixture, 'light')
     const headers = nodes.map(
       (node) => (node.data as { headerHeight: number }).headerHeight,
@@ -100,6 +105,13 @@ describe('buildSequenceGraph', () => {
     expect(headers[0]).toBeGreaterThan(48)
     expect(headers[1]).toBe(headers[0])
     expect(nodes[0].style?.height).toBe(nodes[1].style?.height)
+  })
+
+  it('keeps the header one line high at the default width', () => {
+    const fixture = seqFixture()
+    fixture.semantic['P::I::A'].name = 'ManeuvrabilityController'
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    expect((nodes[0].data as { headerHeight: number }).headerHeight).toBe(48)
   })
 
   it('marks reply messages dashed and leaves requests solid', () => {
@@ -145,7 +157,76 @@ describe('buildSequenceGraph', () => {
       },
     }
     const { nodes } = buildSequenceGraph(fixture, 'light')
-    expect(nodes[0].position.x).toBe(60)
-    expect(nodes[1].position.x).toBe(220)
+    expect(nodes[0].position.x).toBe(LIFELINE_LEFT)
+    expect(nodes[1].position.x).toBeGreaterThan(nodes[0].position.x)
+  })
+
+  it('ignores stored x, y and width so lifelines always share one line', () => {
+    const fixture = seqFixture()
+    fixture.visualization.nodes = {
+      'P::I::A': { ...vizNode('P::I::A'), x: 300, y: 500, width: 400 },
+      'P::I::B': { ...vizNode('P::I::B'), x: 310, y: 10, width: 300 },
+    }
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    expect(nodes[0].position.y).toBe(LIFELINE_TOP)
+    expect(nodes[1].position.y).toBe(LIFELINE_TOP)
+    const [a, b] = nodes
+    expect(b.position.x).toBeGreaterThanOrEqual(a.position.x + Number(a.style?.width))
+    expect(Number(a.style?.width)).toBeLessThan(200)
+  })
+
+  it('orders lifelines by first message, not by id', () => {
+    const fixture = seqFixture()
+    fixture.semantic['P::I::msg1'].sourceId = 'P::I::B'
+    fixture.semantic['P::I::msg1'].targetId = 'P::I::A'
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    expect(nodes.map((n) => n.id)).toEqual(['P::I::B', 'P::I::A'])
+    expect(nodes[0].position.x).toBeLessThan(nodes[1].position.x)
+  })
+
+  it('keeps messages in declaration order (msg10 after msg9)', () => {
+    const fixture = seqFixture()
+    delete fixture.semantic['P::I::msg1']
+    for (let i = 1; i <= 11; i++) {
+      fixture.semantic[`P::I::msg${i}`] = {
+        ...seqFixture().semantic['P::I::A'],
+        id: `P::I::msg${i}`,
+        kind: 'message',
+        name: `m${i}`,
+        sourceId: 'P::I::A',
+        targetId: 'P::I::B',
+      }
+    }
+    const { edges } = buildSequenceGraph(fixture, 'light')
+    expect(edges.map((e) => e.id.split('::').pop())).toEqual(
+      Array.from({ length: 11 }, (_, i) => `msg${i + 1}`),
+    )
+    expect(edges[10].sourceHandle).toBe('msg-10-out')
+  })
+
+  it('applies saved order and widths (clamped) from sequenceLayout', () => {
+    const fixture = seqFixture()
+    fixture.sequenceLayout = {
+      order: ['P::I::B', 'P::I::A'],
+      widths: { 'P::I::A': 260, 'P::I::B': 1 },
+    }
+    const { nodes } = buildSequenceGraph(fixture, 'light')
+    expect(nodes.map((n) => n.id)).toEqual(['P::I::B', 'P::I::A'])
+    expect(nodes[1].style?.width).toBe(260)
+    expect(Number(nodes[0].style?.width)).toBeGreaterThanOrEqual(56)
+    expect((nodes[1].data as { minWidth: number }).minWidth).toBeGreaterThan(0)
   })
 })
+
+function vizNode(id: string) {
+  return {
+    artifactId: id,
+    x: 0,
+    y: 0,
+    width: 120,
+    height: 48,
+    symbolRef: 'default-lifeline',
+    side: null,
+    offset: null,
+  }
+}

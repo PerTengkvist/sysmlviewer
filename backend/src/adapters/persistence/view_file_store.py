@@ -106,6 +106,8 @@ def layout_document(
         doc["layoutScopes"] = [dict(s) for s in layout.layout_scopes]
     if layout.auto_layout_edge_kinds is not None:
         doc["autoLayoutEdgeKinds"] = dict(layout.auto_layout_edge_kinds)
+    if layout.sequence_layout is not None:
+        doc["sequenceLayout"] = layout.to_dict()["sequenceLayout"]
     return doc
 
 
@@ -285,6 +287,7 @@ def read_all(
                     }
                 ),
                 "autoLayoutEdgeKinds": doc.get("autoLayoutEdgeKinds"),
+                "sequenceLayout": doc.get("sequenceLayout"),
             }
         )
     return ViewLayouts(by_view=by_view)

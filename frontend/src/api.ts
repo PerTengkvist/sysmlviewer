@@ -322,6 +322,14 @@ export interface LayoutRuleRow {
 }
 
 /** Which edges AutoLayout uses to place nodes. */
+/** Per-view sequence diagram layout: only what the user changed. */
+export type SequenceLayout = {
+  /** Lifeline ids, left to right. */
+  order?: string[]
+  /** Header width per lifeline id, in px. */
+  widths?: Record<string, number>
+}
+
 export type AutoLayoutEdgeKinds = {
   connections: boolean
   bindings: boolean
@@ -353,6 +361,8 @@ export interface ViewPayload {
   layoutScopes?: LayoutScope[]
   /** AutoLayout "Place by" choice saved for this view; null when never set. */
   autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
+  /** Sequence diagrams: saved lifeline order / header widths; null when never set. */
+  sequenceLayout?: SequenceLayout | null
   modeError?: string | null
   /**
    * actionFlow only: the parts that perform each step (`perform flow.step;`
@@ -601,6 +611,8 @@ export const api = {
       layoutScopes?: LayoutScope[]
       /** AutoLayout "Place by" choice; null clears. */
       autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
+      /** Sequence lifeline order / widths; null clears. */
+      sequenceLayout?: SequenceLayout | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {

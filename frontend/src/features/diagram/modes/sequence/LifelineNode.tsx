@@ -1,4 +1,10 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react'
+import {
+  Handle,
+  NodeResizeControl,
+  Position,
+  ResizeControlVariant,
+  type NodeProps,
+} from '@xyflow/react'
 import { memo, type CSSProperties } from 'react'
 import type { ElementStyle } from '../../../../api'
 import type { ViewMode } from '../../../../settings'
@@ -15,6 +21,8 @@ export type LifelineNodeData = {
   /** Shared header box so wrapped names stay above the message rows */
   headerHeight: number
   messageCount?: number
+  /** Narrowest header width the resizer allows (widest camelCase segment). */
+  minWidth?: number
 }
 
 /** Center of the lifeline node — messages attach on the vertical axis. */
@@ -40,6 +48,15 @@ function LifelineNodeInner({ data, selected }: NodeProps) {
       className={`lifeline-node${selected ? ' selected' : ''}${isDark ? ' theme-dark' : ' theme-light'}`}
       style={{ ...base, height: '100%' }}
     >
+      {/* Width only: the height follows from the messages and the wrapped name. */}
+      <NodeResizeControl
+        position="right"
+        resizeDirection="horizontal"
+        variant={ResizeControlVariant.Handle}
+        minWidth={d.minWidth ?? 56}
+        className="lifeline-resize-handle"
+        style={{ top: headerHeight / 2, display: selected ? undefined : 'none' }}
+      />
       <div
         className="lifeline-header"
         style={{

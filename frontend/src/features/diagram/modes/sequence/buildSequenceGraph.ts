@@ -4,15 +4,14 @@ import type { ViewPayload } from '../../../../api'
 import type { ViewMode } from '../../../../settings'
 import { edgeStrokeStyle } from '../../elementStyle'
 import { strokeDasharray } from '../../relationshipStyle'
-import { lifelineHeaderHeight } from './camelWrap'
 import type { LifelineNodeData } from './LifelineNode'
+import {
+  LIFELINE_TOP,
+  minLifelineWidth,
+  sequenceGeometry,
+} from './sequenceLayout'
 
-const COL_GAP = 160
 const MSG_GAP = 56
-const TOP = 40
-const LEFT = 60
-/** Stored x beyond this is treated as merge-index garbage and re-laid out. */
-const MAX_TRUSTED_X = 720
 
 export type HighlightOpts = {
   selectedConnectionColor?: string
@@ -29,32 +28,34 @@ export function buildSequenceGraph(
     highlight.selectedConnectionLinewidthFactor ?? 3
   const { semantic, visualization } = view
   const rootId = view.view.rootArtifactId
-  const lifelines = Object.values(semantic)
-    .filter((e) => e.kind === 'lifeline' && e.parentId === rootId)
-    .sort((a, b) => a.id.localeCompare(b.id))
-
-  const messages = Object.values(semantic)
-    .filter((e) => e.kind === 'message' && e.parentId === rootId)
-    .sort((a, b) => a.id.localeCompare(b.id))
+  // `semantic` is in declaration order (the API keeps it), so lifelines and
+  // messages are used as they come; ids such as msg10 must not be re-sorted.
+  const lifelines = Object.values(semantic).filter(
+    (e) => e.kind === 'lifeline' && e.parentId === rootId,
+  )
+  const messages = Object.values(semantic).filter(
+    (e) => e.kind === 'message' && e.parentId === rootId,
+  )
 
   const lineHeight = Math.max(180, 80 + messages.length * MSG_GAP)
-  const headerHeight = lifelines.reduce((tallest, ll) => {
-    const viz = visualization.nodes[ll.id]
-    const width = viz?.width && viz.width >= 80 ? viz.width : 120
-    return Math.max(tallest, lifelineHeaderHeight(ll.name, width))
-  }, 48)
+  // Stored x/y/width are not read: they are global defaults that cannot be
+  // told apart from user choices. The user's choices live in sequenceLayout.
+  const geometry = sequenceGeometry(
+    lifelines.map((ll) => ({ id: ll.id, name: ll.name })),
+    messages.map((m) => ({
+      sourceId: m.sourceId || '',
+      targetId: m.targetId || '',
+      label: m.name,
+    })),
+    view.sequenceLayout,
+  )
+  const { headerHeight } = geometry
   const totalH = headerHeight + lineHeight
 
-  // If any lifeline was placed with a global merge index (far right), re-layout all.
-  const trustStored = lifelines.every((ll) => {
+  const byId = new Map(lifelines.map((ll) => [ll.id, ll]))
+  const nodes: Node[] = geometry.order.map((id) => {
+    const ll = byId.get(id)!
     const viz = visualization.nodes[ll.id]
-    return !viz || (Number.isFinite(viz.x) && viz.x >= 0 && viz.x <= MAX_TRUSTED_X)
-  })
-
-  const nodes: Node[] = lifelines.map((ll, index) => {
-    const viz = visualization.nodes[ll.id]
-    const defaultX = LEFT + index * COL_GAP
-    const defaultY = TOP
     const data: LifelineNodeData = {
       label: ll.name,
       artifactId: ll.id,
@@ -63,18 +64,13 @@ export function buildSequenceGraph(
       lineHeight,
       headerHeight,
       messageCount: messages.length,
+      minWidth: minLifelineWidth(ll.name),
     }
     return {
       id: ll.id,
       type: 'lifeline',
-      position: {
-        x: trustStored && viz ? viz.x : defaultX,
-        y: trustStored && viz && Number.isFinite(viz.y) ? viz.y : defaultY,
-      },
-      style: {
-        width: viz?.width && viz.width >= 80 ? viz.width : 120,
-        height: totalH,
-      },
+      position: { x: geometry.xs[ll.id], y: LIFELINE_TOP },
+      style: { width: geometry.widths[ll.id], height: totalH },
       data,
     }
   })
