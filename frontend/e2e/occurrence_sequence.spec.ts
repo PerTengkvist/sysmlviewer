@@ -207,3 +207,11 @@ test('CarLogicalTree still renders all 27 parts, labelled by name', async ({ pag
   // The new part defs live in LogicalArchitecture::Types and are not under Car.
   await expect(page.locator(nodeSel('LogicalArchitecture::Types::KeyFob'))).toHaveCount(0)
 })
+
+test('a logical Car part is tagged by its type name, not the package', async ({ page }) => {
+  await openProject(page, exampleProjectFile('electric_car'))
+  await openView(page, 'LogicalArchitecture::CarLogicalView')
+  const key = page.locator(nodeSel('LogicalArchitecture::Car::keyFob'))
+  await expect(key.locator('.stereotype.type')).toHaveText('«KF»')
+  await expect(key.locator('.stereotype.type')).toHaveAttribute('title', 'KeyFob')
+})

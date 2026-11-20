@@ -208,3 +208,15 @@ def test_reply_is_capitalised_with_a_metadata_def(elements, fixture):
     assert "metadata def Reply;" in text
     assert "#reply" not in text and "interaction def" not in text and "lifeline " not in text
     assert "then message" not in text and "then #" not in text
+
+
+def test_type_stub_docs_point_to_the_car_part_docs():
+    """A lifeline's docs fall back to its type's doc; the stub says where the real one is."""
+    docs = EXAMPLE / "logical_architecture" / "docs"
+    stubs = sorted(docs.glob("LogicalArchitecture.Types.*.md"))
+    assert len(stubs) == 27
+    for stub in stubs:
+        name = stub.name.removeprefix("LogicalArchitecture.Types.").removesuffix(".md")
+        target = f"LogicalArchitecture.{name[0].lower()}{name[1:]}.md"
+        assert (docs / target).is_file(), target
+        assert f"({target})" in stub.read_text(encoding="utf-8"), stub.name

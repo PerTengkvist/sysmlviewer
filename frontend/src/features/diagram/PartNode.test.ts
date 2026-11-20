@@ -9,6 +9,7 @@ import {
   partBodyIconMaxPx,
   partStereotypeKeyword,
   resolvePartIconPlacement,
+  typeShortTag,
 } from './PartNode'
 
 describe('isPortMultiSelectGesture', () => {
@@ -173,5 +174,18 @@ describe('resolvePartIconPlacement', () => {
         iconBodyName: 'cloud',
       }),
     ).toEqual({ headerIcon: null, bodyIcon: 'cloud' })
+  })
+})
+
+describe('typeShortTag', () => {
+  it('uses the capitals of the type name', () => {
+    expect(typeShortTag('KeyFob')).toBe('KF')
+    expect(typeShortTag('BatteryModule')).toBe('BM')
+    expect(typeShortTag('Credential')).toBe('CRE')
+  })
+  it('ignores the qualifier', () => {
+    expect(typeShortTag('Types::KeyFob')).toBe('KF')
+    expect(typeShortTag('LogicalArchitecture::Types::Battery')).toBe('BAT')
+    expect(typeShortTag('PhysicalArchitecture::BatteryModule')).toBe('BM')
   })
 })
