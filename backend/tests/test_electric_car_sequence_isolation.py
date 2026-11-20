@@ -82,3 +82,15 @@ def test_suggestions_fall_back_to_every_package():
     defs = [_def("Physical::Engine"), _def("Logical::Types::Battery")]
     assert _suggest("Physical::BatteryModule", defs) == ("Logical::Types::Battery",)
     assert _suggest("BatteryModule", defs) == ("Logical::Types::Battery",)
+
+
+def test_suggestions_put_an_exact_name_in_another_package_first():
+    defs = [
+        _def("Physical::BatteryModule"),
+        _def("Logical::Types::Battery"),
+        _def("Logical::BatteryMod"),
+    ]
+    got = _suggest("Logical::BatteryModule", defs)
+    assert got[0] == "Physical::BatteryModule"
+    assert "Logical::BatteryMod" in got
+    assert len(got) == len(set(got))

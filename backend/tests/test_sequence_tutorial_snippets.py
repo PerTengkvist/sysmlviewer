@@ -69,13 +69,59 @@ def test_sequence_snippets_parse_clean(name, tag, body):
     assert result.warnings == []
 
 
+OCCURRENCE_HEAD = re.compile(r"^occurrence def (\w+)")
+
+
+def _in_order(wanted: list[str], available: list[str]) -> list[str]:
+    it = iter(available)
+    return [ln for ln in wanted if ln not in it]
+
+
+def missing_lines(body: str, source_text: str) -> list[str]:
+    """Lines of the snippet that the source does not have, in order. What comes
+    before the snippet's `occurrence def` must precede that def in the source; the def
+    itself is compared only with the same def in the source, up to its closing brace
+    (so lines of another sequence cannot stand in for it)."""
+    wanted, source = _significant(body), _significant(source_text)
+    head = next((i for i, ln in enumerate(wanted) if OCCURRENCE_HEAD.match(ln)), None)
+    if head is None:
+        return _in_order(wanted, source)
+    name = OCCURRENCE_HEAD.match(wanted[head])[1]
+    start = next((i for i, ln in enumerate(source) if OCCURRENCE_HEAD.match(ln) and f"def {name} " in ln + " "), None)
+    if start is None:
+        return wanted[head:]
+    depth, end = 0, len(source)
+    for i in range(start, len(source)):
+        depth += source[i].count("{") - source[i].count("}")
+        if depth <= 0:
+            end = i + 1
+            break
+    return _in_order(wanted[:head], source[:start]) + _in_order(wanted[head:], source[start:end])
+
+
 @pytest.mark.parametrize("name,tag,body", [b for b in BLOCKS if b.values[1]])
 def test_sequence_snippets_follow_source(name, tag, body):
     assert tag.startswith("source: "), tag
-    source = _significant((REPO / tag[len("source: ") :]).read_text(encoding="utf-8"))
-    it = iter(source)
-    missing = [ln for ln in _significant(body) if ln not in it]
-    assert missing == [], "lines not found, in order, in the source"
+    source = (REPO / tag[len("source: ") :]).read_text(encoding="utf-8")
+    assert missing_lines(body, source) == [], "lines not found, in order, in the same def of the source"
+
+
+def test_snippet_check_ignores_lines_of_other_sequences():
+    path = REPO / "examples" / "electric_car" / "dynamics" / "sequences.sysml"
+    source = path.read_text(encoding="utf-8")
+    snippet = next(b.values[2] for b in BLOCKS if "BrakeSequence" in b.values[2])
+    assert missing_lines(snippet, source) == []
+    # EmergencyStopSequence has the same message lines; they must not satisfy BrakeSequence.
+    head = source.index("occurrence def BrakeSequence")
+    end = source.index("\n  }", head)
+    mutated = source[:head] + "\n".join(
+        ln
+        for ln in source[head:end].split("\n")
+        if "message frictionPressure" not in ln and "message wheelSpeed" not in ln and "#Reply message wheelSpeed" not in ln
+    ) + source[end:]
+    assert "frictionPressure" in mutated
+    assert any("frictionPressure" in ln for ln in missing_lines(snippet, mutated))
+    assert any("wheelSpeed" in ln for ln in missing_lines(snippet, mutated))
 
 
 def test_no_tutorial_teaches_lifeline_as_primary():
