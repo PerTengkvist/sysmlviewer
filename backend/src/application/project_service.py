@@ -2126,13 +2126,18 @@ class ProjectService:
                 project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
         chain_view = False
+        realization: Realization | None = None  # derived once, for the mode and the chain
         if view.type_ref == "AllocationView":
             # The chain or the allocation, by everything the view exposes: all the way down,
             # after the view's filters, whatever the diagram levels or the order of the exposes.
-            from domain.view_filter import apply_view_filters, parse_stored_filters
+            from domain.view_filter import (
+                apply_view_filters,
+                element_matches_filters,
+                parse_stored_filters,
+            )
 
             alloc_filters = parse_stored_filters(stored_filters)
-            exposed_content: list[tuple[str, set[str]]] = []
+            exposed_content: list[tuple[str, set[str], bool]] = []
             for eroot in expose_roots:
                 ids = collect_exposed(
                     project.semantic,
@@ -2148,10 +2153,11 @@ class ProjectService:
                         root_id=root.id,
                         root_ids=set(expose_root_ids),
                     )
-                exposed_content.append((eroot.id, ids))
-            chain_view = is_chain_view(
-                project.semantic, derive_realization(project.semantic), exposed_content
-            )
+                exposed_content.append(
+                    (eroot.id, ids, element_matches_filters(eroot, alloc_filters))
+                )
+            realization = derive_realization(project.semantic)
+            chain_view = is_chain_view(project.semantic, realization, exposed_content)
         diagram_mode = resolve_diagram_mode(
             view, root, exposed_kinds, chain_view
         )
@@ -2237,7 +2243,7 @@ class ProjectService:
         elif diagram_mode == "realizationChain":
             chain = build_chain(
                 project.semantic,
-                derive_realization(project.semantic),
+                realization or derive_realization(project.semantic),
                 [r.id for r in expose_roots],
             )
             artifact_ids |= set(chain.ids)

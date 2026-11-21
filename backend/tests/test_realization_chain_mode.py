@@ -354,7 +354,7 @@ MIXED_VIEWS = """package V {
   view PartThenUc : AllocationView { expose RealizationProbe::L; expose RealizationProbe::UC::Start; }
   view UcAndFn : AllocationView { expose RealizationProbe::UC::Lock; expose RealizationProbe::F::Security; }
   view NoUc : AllocationView { expose RealizationProbe::UC; filter @SysML::PartUsage; }
-  view Hidden : AllocationView { expose RealizationProbe::UC::Start; filter name.startsWith("a"); }
+  view Hidden : AllocationView { expose RealizationProbe::UC::Start; filter name.startsWith("S"); }
 }"""
 
 
@@ -373,7 +373,7 @@ def test_chain_payload_only_names_what_the_view_shows(tmp_path: Path):
     out = _modes(tmp_path, PROBE, MIXED_VIEWS, ["Hidden"])["Hidden"]
     assert out["diagramMode"] == "realizationChain"
     shown = set(out["semantic"])
-    assert f"{SEC}::auth" in shown and SEC not in shown
+    assert SEC in shown and f"{SEC}::auth" not in shown
     assert set(out["chainRoles"]) <= shown
     assert all(e["source"] in shown and e["target"] in shown for e in out["chainEdges"])
     assert set(out["chainLabels"]) <= shown
@@ -399,3 +399,49 @@ def test_allocate_edge_has_the_precision_of_its_node(tmp_path: Path):
     by = {(e["source"], e["target"], e["kind"]): e["precision"] for e in out["chainEdges"]}
     assert by[("Q::F::n1", "Q::logical::lp", "allocate")] == "step"
     assert by[("Q::F::n2", "Q::logical::lp", "allocate")] == "explicit"
+
+
+FN_ALLOC = """package Fa {
+  part def Vehicle {
+    part logical { part ctrl { perform operate.start; } }
+    part physical { part ecu; }
+    allocate logical::ctrl to physical::ecu;
+    action operate { action start; action stop; first start; then start; then stop; then done; }
+  }
+  use case def U { action go; }
+  #refine dependency from Vehicle::operate::start to U::go;
+}"""
+
+
+def test_function_that_allocates_stays_an_allocation_view(tmp_path: Path):
+    """A function that takes part in the realization but owns allocations is an allocation view."""
+    out = _modes(
+        tmp_path, FN_ALLOC, "package V { view VA : AllocationView { expose Fa::Vehicle; } }", ["VA"]
+    )["VA"]
+    assert out["diagramMode"] == "allocation"
+    assert "chainEdges" not in out
+
+
+def test_filter_that_does_not_match_the_use_case_root_gives_allocation(tmp_path: Path):
+    """A filter cannot remove an expose root, but one that says 'no use cases' is read as such."""
+    views = """package V {
+  view Cut : AllocationView { expose RealizationProbe::UC::Start; filter @SysML::PartUsage; }
+  view Kept : AllocationView { expose RealizationProbe::UC::Start; filter @SysML::UseCaseUsage or @SysML::PartUsage; }
+  view FnCut : AllocationView { expose RealizationProbe::F::Security; filter @SysML::UseCaseUsage; }
+}"""
+    out = _modes(tmp_path, PROBE, views, ["Cut", "Kept", "FnCut"])
+    assert out["Cut"]["diagramMode"] == "allocation"
+    assert out["Kept"]["diagramMode"] == "realizationChain"
+    assert out["FnCut"]["diagramMode"] == "allocation"
+
+
+def test_the_realization_is_derived_once_per_chain_view(tmp_path: Path, monkeypatch):
+    import application.project_service as service
+
+    calls = []
+    real = service.derive_realization
+    monkeypatch.setattr(service, "derive_realization", lambda *a, **k: calls.append(1) or real(*a, **k))
+    client, pid = _client(tmp_path)
+    calls.clear()
+    assert _view(client, pid, "StartChain")["diagramMode"] == "realizationChain"
+    assert len(calls) == 1

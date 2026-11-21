@@ -95,31 +95,34 @@ def _allocates(semantic: Mapping[str, SemanticElement], content: Iterable[str]) 
 def is_chain_view(
     semantic: Mapping[str, SemanticElement],
     realization: Realization,
-    exposed: Iterable[tuple[str, Iterable[str]]],
+    exposed: Iterable[tuple[str, Iterable[str], bool]],
 ) -> bool:
     """Whether an AllocationView draws the realization chain instead of the allocation (B6).
 
     `exposed` is each exposed root with the ids it puts in the view, after the view's filters
-    and whatever the diagram levels. Every root has to vote for the chain, so the order of the
-    exposes does not matter: a use case; a function that takes part in the realization; or a
-    package whose content has use cases and allocates nothing. Anything else (a part with a
-    logical/physical split, a package that allocates, a filter that left no use case) keeps the
-    allocation view, which is what an AllocationView was before.
+    and whatever the diagram levels, and whether the root itself passes the filters (a filter
+    never removes an expose root, so that is what tells that it asked for something else).
+    Every root has to vote for the chain, so the order of the exposes does not matter. A root
+    votes for it when its content allocates nothing and it is a use case or a function that
+    takes part in the realization (and passes the filters), or a package whose content has
+    use cases. Anything else (a part with a logical/physical split, a function or package that
+    allocates, a filter that left no use case) keeps the allocation view, which is what an
+    AllocationView was before.
     """
     realized = realized_functions(semantic, realization)
     votes = 0
-    for root_id, content in exposed:
+    for root_id, content, passes_filters in exposed:
         root = semantic.get(root_id)
         ids = set(content)
-        if root is None:
+        if root is None or _allocates(semantic, ids):
             return False
         if root.kind == ArtifactKind.USE_CASE or root.id in realized:
-            pass
-        elif root.kind == ArtifactKind.PACKAGE and any(
-            semantic[i].kind == ArtifactKind.USE_CASE for i in ids if i in semantic
-        ) and not _allocates(semantic, ids):
-            pass
-        else:
+            if not passes_filters:
+                return False
+        elif not (
+            root.kind == ArtifactKind.PACKAGE
+            and any(semantic[i].kind == ArtifactKind.USE_CASE for i in ids if i in semantic)
+        ):
             return False
         votes += 1
     return votes > 0
