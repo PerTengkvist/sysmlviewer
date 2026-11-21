@@ -113,13 +113,15 @@ The view type in the SysML file decides the diagram type. The diagram's name and
 | `GeneralView` with a package or other elements exposed | Structure: parts, requirements and the relations between them |
 | `SequenceView` | Sequence |
 | `StateTransitionView` | State |
-| `ActionFlowView` | Action flow |
+| `ActionFlowView` | Action flow, or the swimlane activity of a use case (see below) when the view exposes one use case |
 | `TreeView` | Tree |
-| `AllocationView` | Allocation |
+| `AllocationView` | Allocation, or the realization chain (use case, function, function node, logical part in four columns) when the view exposes a use case, a package with use cases or a function |
 | `GridView` | Requirements table, or the realization matrix when the view exposes use cases and no requirements |
 | `UseCaseView` | Use case |
 
 The requirements table has its own toolbar buttons, **Flat** and **Hierarchical**. Hierarchical nests the requirements along their «refine» relations. Double-click a row to open the requirement's dialog.
+
+**Use case swimlanes.** An `ActionFlowView` that exposes one use case draws its activity on lanes. A switch in the toolbar picks the lanes: **Black box** (the actors and the system), **White box** (one lane per function node, framed by its function; each system step that function steps realize is replaced by them in the order of their flow) and **Logical** (one lane per logical part, by `allocate`). A step no function step realizes gets a red frame and a warning, a step a whole flow realizes a dashed frame, a step in several lanes a `+n` badge, and an included use case is a call node (double-click opens its view). Drag a lane by its header to change the order, drag its right edge to change the width; both are saved per mode with the view, and **Redraw** forgets them. The steps themselves cannot be moved.
 
 ### What a diagram shows
 

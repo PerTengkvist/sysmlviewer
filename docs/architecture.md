@@ -62,8 +62,20 @@ Logical service/control interfaces follow an S_entity / U_entity naming policy (
 | GeneralView / null | `whitebox` or `structure` by root kind |
 | SequenceView | `sequence` |
 | StateTransitionView | `state` |
-| ActionFlowView | `actionFlow` |
+| ActionFlowView | `actionFlow`; `useCaseRealization` when what it exposes is use cases and no action |
 | TreeView | `tree` |
+| UseCaseView | `useCase` |
+| AllocationView | `allocation` (logical -> physical); `realizationChain` when it exposes a use case, a package with use cases or a function |
+| GridView | `requirementTable`; `realizationMatrix` when what it exposes (after the view's filters, all the way down, whatever the diagram levels) has use cases and no requirements |
+
+The three realization modes read one derivation, `domain/realization.py` (`derive_realization`); the clients never work out the realization themselves. The mode is chosen in `project_service.get_view` from the content of the view, not from its first expose. Labels come from one rule, `domain/realization_labels.py` (`unambiguous_labels`).
+
+- `realizationMatrix`: `realization`, `matrixColumns`, `matrixLabels`, and the saved choice `realizationMatrix` (rows / columns).
+- `realizationChain`: `chainEdges` (`refine` / `owns` / `allocate` with precision), `chainRoles` (the four columns), `chainLabels`. Nodes without a saved position carry no coordinates and are laid out by the client.
+- `useCaseRealization` (the white-box activity with swimlanes of one use case; a view that exposes several use cases gets a `modeError`):
+  - `flowRealization`: the slice for the use case: `actors`, `actorSteps`, `systemSteps`, `unrealizedSteps` (only when the use case has step links), `coarseSteps`, `stepRealizers`, `realizerNodes`, `realizerFunctions`, `nodeFunctions`, `functionNodes` / `functionParts` (what a function that refines the use case as a whole stands for), and `calls` (included use cases, each with the `viewId` to open);
+  - `laneTargets` (function node -> its `allocate` targets) and `realizationLabels`;
+  - `useCaseRealizationLayout`: `{lanes: blackbox | whitebox | logical, order: {mode: [laneId]}, widths: {laneId: px}}`, saved with `PATCH .../visualization` (the field replaces the whole value, `null` clears it). The steps are placed by the client, so the mode has no node geometry to save or compare.
 
 Frontend `DiagramCanvas` dispatches to mode-specific React Flow builders under `features/diagram/modes/`.
 

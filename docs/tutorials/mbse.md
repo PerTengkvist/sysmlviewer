@@ -73,6 +73,8 @@ flowchart LR
 
 Use cases are typically defined on the system boundary. A use case captures the interaction between a user and the system, and it is triggered by the user or by an event. Describe each use case at least with text, and preferably with an activity flow with alternative paths where that applies.
 
+A use case is realized step by step: a function step refines the use case step it carries out (`#refine`), and the viewer derives the function, the function nodes and the logical parts from it. The realization matrix, the realization chain and the swimlane activity of a use case (white box) show the result; see the tutorial *Use cases and scenarios*.
+
 In `use_cases/use_cases.sysml` the Brake use case has the short name `UC006` (written `<'UC006'>`, the same way requirements have `<'REQ-SAFE-02'>`), so it can be referred to by number; the use cases are numbered UC001 to UC021 in file order. It names its actor, the requirement it must fulfil (`objective`) and a short flow. Each step is declared as an action with its own `doc`, and the flow then orders the steps:
 
 ```sysml
