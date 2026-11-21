@@ -255,6 +255,7 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
         | set(realization.uc_parts)
         | set(realization.via_include)
         | set(realization.uc_function_nodes)
+        | set(realization.uc_function_parts)
         | {uc for uc, _ in realization.declared}
     )
     for uc in by_model(ucs):
@@ -266,6 +267,7 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
             "declared": by_model(e for u, e in realization.declared if u == uc),
             "origin": {e: r for (u, e), r in realization.origin.items() if u == uc},
             "functionNodes": dict(realization.uc_function_nodes.get(uc, {})),
+            "functionParts": dict(realization.uc_function_parts.get(uc, {})),
             "nodeFunctions": {
                 n: list(f) for n, f in realization.uc_node_functions.get(uc, {}).items()
             },
@@ -289,7 +291,12 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
         "useCases": use_cases,
         "inScope": by_model(realization.in_scope),
         "findings": [
-            {"code": f.code, "elementId": f.element_id, "message": f.message}
+            {
+                "code": f.code,
+                "elementId": f.element_id,
+                "message": f.message,
+                "useCaseId": f.use_case_id,
+            }
             for f in realization.findings
         ],
     }
@@ -313,7 +320,10 @@ def _matrix_realization(full: dict, semantic: dict[str, SemanticElement], rows: 
     for info in use_cases.values():
         related |= set(info["functions"]) | set(info["nodes"]) | set(info["functionNodes"])
 
-    def keep_finding(eid: str) -> bool:
+    def keep_finding(finding: dict) -> bool:
+        if finding["useCaseId"] is not None:
+            return finding["useCaseId"] in ucs  # one finding per use case
+        eid = finding["elementId"]
         if keep(eid) or eid in related:
             return True
         el = semantic.get(eid)
@@ -335,7 +345,7 @@ def _matrix_realization(full: dict, semantic: dict[str, SemanticElement], rows: 
         "nodeParts": dict(full["nodeParts"]),
         "useCases": use_cases,
         "inScope": [u for u in full["inScope"] if u in ucs],
-        "findings": [f for f in full["findings"] if keep_finding(f["elementId"])],
+        "findings": [f for f in full["findings"] if keep_finding(f)],
     }
 
 
