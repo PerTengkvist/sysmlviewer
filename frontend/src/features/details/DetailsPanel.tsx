@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import type {
   ElementStyle,
   ElementStyleMode,
@@ -23,7 +23,14 @@ import {
 } from './interfaceLocate'
 import { findPortDefId } from './portLocate'
 import { nestedPortsOf } from './nestedPorts'
-import { elementDisplayName, elementRelations } from './elementRelations'
+import {
+  elementDisplayName,
+  elementRelations,
+  featureLabel,
+  featureTargets,
+  occurrencePath,
+  owningOccurrenceId,
+} from './elementRelations'
 import { DependencyTreeButton } from '../dependencyTree/DependencyTreeButton'
 import { sizeFieldChange } from '../diagram/partSizeLimits'
 import {
@@ -343,15 +350,20 @@ function RelationsList({
   semantic,
   elementId,
   onOpenRelated,
+  exclude,
 }: {
   semantic: Record<string, SemanticElement>
   elementId: string
   onOpenRelated?: (artifactId: string) => void
+  /** Relation ids shown elsewhere (the Lifeline rows). */
+  exclude?: ReadonlySet<string>
 }) {
-  const items = elementRelations(semantic, elementId)
+  const items = elementRelations(semantic, elementId).filter(
+    (r) => !exclude?.has(r.relationId),
+  )
   if (!items.length) return null
   const name = (id: string | null) =>
-    id ? elementDisplayName(semantic[id], id) : '—'
+    id ? elementDisplayName(semantic[id], id, semantic) : '—'
   return (
     <div className="children relations-list">
       <h3>Relations</h3>
@@ -897,6 +909,42 @@ export function DetailsPanel({
     el.kind === 'transition' ||
     el.kind === 'succession'
 
+  // A part inside an `occurrence def` is a lifeline of its sequence diagram:
+  // its type, subsetted or redefined feature and the events of its messages
+  // are links, not plain text.
+  const isSequencePart =
+    el.kind === 'part' && owningOccurrenceId(project.semantic, el.id) !== null
+  const featureLinks = isSequencePart ? featureTargets(project.semantic, el.id) : []
+  const typeLinkId =
+    isSequencePart && el.typeTargetId && project.semantic[el.typeTargetId]
+      ? el.typeTargetId
+      : null
+  const isOccurrenceMessage =
+    el.kind === 'message' &&
+    !!el.parentId &&
+    project.semantic[el.parentId]?.kind === 'occurrence'
+  const messageEnd = (partId: string | null, eventId: string | null | undefined) => {
+    if (!partId) return '—'
+    const part = occurrencePath(project.semantic, partId) ?? project.semantic[partId]?.name ?? partId
+    if (!eventId) return part
+    const event = project.semantic[eventId]?.name ?? eventId.split('::').pop()
+    return `${part}.${event}`
+  }
+  const relatedLink = (id: string, label: string) =>
+    onOpenRelated && project.semantic[id] ? (
+      <button
+        type="button"
+        className="link-button"
+        data-related-id={id}
+        title={`Open ${label}`}
+        onClick={() => onOpenRelated(id)}
+      >
+        {label}
+      </button>
+    ) : (
+      <span>{label}</span>
+    )
+
   const canOpenDependencyTree =
     !!onOpenDependencyTree && !isRelationElement(el) && !isEdgeKind
 
@@ -1071,6 +1119,8 @@ export function DetailsPanel({
           </>
         )}
         {el.typeRef &&
+          el.kind !== 'subsetting' &&
+          el.kind !== 'redefinition' &&
           !isInterfaceUsage &&
           el.kind !== 'connection' &&
           el.kind !== 'binding' && (
@@ -1108,10 +1158,32 @@ export function DetailsPanel({
                     </span>
                   )
                 })()
+              ) : typeLinkId ? (
+                relatedLink(typeLinkId, el.typeRef)
               ) : (
                 el.typeRef
               )}
             </dd>
+          </>
+        )}
+        {isSequencePart && (
+          <>
+            {featureLinks.map((t) => (
+              <Fragment key={t.relationId}>
+                <dt>{t.label}</dt>
+                <dd>{relatedLink(t.targetId, featureLabel(project.semantic, t.targetId))}</dd>
+              </Fragment>
+            ))}
+            <dt>Reference</dt>
+            <dd>{el.isReference ? 'yes' : 'no'}</dd>
+          </>
+        )}
+        {isOccurrenceMessage && (
+          <>
+            <dt>From</dt>
+            <dd className="mono">{messageEnd(el.sourceId, el.sourceEventId)}</dd>
+            <dt>To</dt>
+            <dd className="mono">{messageEnd(el.targetId, el.targetEventId)}</dd>
           </>
         )}
         {el.exposeRef && (
@@ -1451,6 +1523,7 @@ export function DetailsPanel({
         semantic={project.semantic}
         elementId={el.id}
         onOpenRelated={onOpenRelated}
+        exclude={new Set(featureLinks.map((t) => t.relationId))}
       />
 
       {editorMode && el.kind === 'part' && (

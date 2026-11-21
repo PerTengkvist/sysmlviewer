@@ -46,7 +46,13 @@ def test_example_projects_use_repo_root_not_cwd(tmp_path: Path, monkeypatch):
 def test_session_open_example_diagrams_from_other_workspace(tmp_path: Path):
     from adapters.api.example_projects import list_example_projects
 
-    diagrams = next(p for p in list_example_projects() if p["id"] == "examples/diagrams")
+    import shutil
+
+    listed = next(p for p in list_example_projects() if p["id"] == "examples/diagrams")
+    # Opening saves project.json and state.json: open a copy, never the repo's folder.
+    copy = tmp_path / "diagrams_copy"
+    shutil.copytree(listed["folder"], copy)
+    diagrams = {**listed, "folder": str(copy)}
     app = create_app(workspace=tmp_path)
     client = TestClient(app)
     assert client.get(api_url("/session")).json()["project"] is None

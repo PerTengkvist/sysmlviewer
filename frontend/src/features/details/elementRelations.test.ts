@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../api'
 import {
+  elementDisplayName,
   elementRelations,
+  featureLabel,
+  featureTargets,
+  occurrencePath,
+  owningOccurrenceId,
   relationLabel,
   requirementUseCaseLinks,
   useCaseRequirementLinks,
@@ -151,5 +156,62 @@ describe('requirementUseCaseLinks', () => {
     expect(requirementUseCaseLinks(semantic, 'R::PowerModes')).toEqual([
       { useCaseId: 'UC::Start', label: 'objective' },
     ])
+  })
+})
+
+describe('parts inside an occurrence', () => {
+  const m = model(
+    el('D::UnlockSequence', 'occurrence', { parentId: 'D' }),
+    el('D::UnlockSequence::keyFob', 'part', { parentId: 'D::UnlockSequence' }),
+    el('D::UnlockSequence::car', 'part', { parentId: 'D::UnlockSequence' }),
+    el('D::UnlockSequence::car::locks', 'part', { parentId: 'D::UnlockSequence::car' }),
+    el('L::Car', 'part', { parentId: 'L' }),
+    el('L::Car::keyFob', 'part', { parentId: 'L::Car' }),
+    el('D::UnlockSequence::keyFob_subsets_car_keyFob', 'subsetting', {
+      parentId: 'D::UnlockSequence',
+      sourceId: 'D::UnlockSequence::keyFob',
+      targetId: 'L::Car::keyFob',
+    }),
+    el('D::UnlockSequence::car::locks_redefines_L_Car_locks', 'redefinition', {
+      parentId: 'D::UnlockSequence::car',
+      sourceId: 'D::UnlockSequence::car::locks',
+      targetId: 'L::Car::locks',
+    }),
+  )
+
+  it('names ends inside an occurrence with the occurrence', () => {
+    expect(elementDisplayName(m['D::UnlockSequence::keyFob'], 'D::UnlockSequence::keyFob', m)).toBe(
+      'UnlockSequence.keyFob',
+    )
+    expect(
+      elementDisplayName(
+        m['D::UnlockSequence::car::locks'],
+        'D::UnlockSequence::car::locks',
+        m,
+      ),
+    ).toBe('UnlockSequence.car.locks')
+    // outside an occurrence, or without the model, the name is unchanged
+    expect(elementDisplayName(m['L::Car::keyFob'], 'L::Car::keyFob', m)).toBe('keyFob')
+    expect(elementDisplayName(m['D::UnlockSequence::keyFob'], 'x')).toBe('keyFob')
+  })
+
+  it('finds the owning occurrence and the path below it', () => {
+    expect(owningOccurrenceId(m, 'D::UnlockSequence::car::locks')).toBe('D::UnlockSequence')
+    expect(owningOccurrenceId(m, 'L::Car::keyFob')).toBeNull()
+    expect(owningOccurrenceId(m, 'D::UnlockSequence')).toBeNull()
+    expect(occurrencePath(m, 'D::UnlockSequence::car::locks')).toBe('car.locks')
+  })
+
+  it('lists what a part subsets or redefines', () => {
+    expect(featureTargets(m, 'D::UnlockSequence::keyFob')).toEqual([
+      {
+        label: 'Subsets',
+        relationId: 'D::UnlockSequence::keyFob_subsets_car_keyFob',
+        targetId: 'L::Car::keyFob',
+      },
+    ])
+    expect(featureTargets(m, 'D::UnlockSequence::car::locks')[0].label).toBe('Redefines')
+    expect(featureTargets(m, 'L::Car::keyFob')).toEqual([])
+    expect(featureLabel(m, 'L::Car::keyFob')).toBe('keyFob (Car)')
   })
 })

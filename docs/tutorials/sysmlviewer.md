@@ -342,6 +342,6 @@ part batteryPack {
 **Examples…** in the header opens the example projects that ship with the viewer:
 
 - **Electric Car** (`examples/electric_car`) is a complete MBSE model of a small battery-electric car: requirements and user stories, use cases, functions with their flows, the logical architecture, sequences and a state machine, and the physical architecture, with a markdown documentation file for each element. It is the running example of the tutorial *MBSE introduction*.
-- **Diagrams** (`examples/diagrams`) has one small model per diagram type: action flow, interconnection, sequence, hierarchical parts and nested ports, part relationships, state machine, requirements graph and table, trees and use cases.
+- **Diagrams** (`examples/diagrams`) has one small model per diagram type: action flow, interconnection, sequence (`interaction def`), sequence as SysML v2 `occurrence def` (`occurrence_sequences.sysml`, every way to declare a lifeline), hierarchical parts and nested ports, part relationships, state machine, requirements graph and table, trees and use cases.
 
 The examples open from the `examples/` folder of the viewer's installation, so layout changes are saved into those files. Copy an example folder and open the copy if you want to experiment without changing the original.

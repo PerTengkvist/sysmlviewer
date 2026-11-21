@@ -87,6 +87,25 @@ function treeFixture(): ViewPayload {
 }
 
 describe('buildTreeGraph', () => {
+  it('skips event occurrences', () => {
+    const fixture = treeFixture()
+    fixture.semantic['P::Root'].children.push('P::Root::sent')
+    fixture.semantic['P::Root::sent'] = {
+      id: 'P::Root::sent',
+      kind: 'eventOccurrence',
+      name: 'sent',
+      parentId: 'P::Root',
+      typeRef: null,
+      sourceId: null,
+      targetId: null,
+      children: [],
+      fileId: 'f',
+    }
+    const { nodes } = buildTreeGraph(fixture, 'light', new Set(), () => {})
+    expect(nodes.map((n) => n.id)).not.toContain('P::Root::sent')
+    expect(nodes).toHaveLength(4)
+  })
+
   it('lays out containment and hides collapsed descendants', () => {
     const full = buildTreeGraph(treeFixture(), 'light', new Set(), () => {})
     expect(full.nodes.map((n) => n.id).sort()).toEqual([

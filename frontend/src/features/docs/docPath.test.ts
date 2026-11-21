@@ -295,3 +295,71 @@ describe('docPathForArtifact type-def fallback', () => {
     )
   })
 })
+
+describe('docPathForArtifact in an occurrence', () => {
+  const F = 'dyn/seq.sysml'
+  const L = 'logical/car.sysml'
+  const m: Record<string, SemanticElement> = {
+    Dyn: el({ id: 'Dyn', kind: 'package', name: 'Dyn', fileId: F }),
+    'Dyn::Seq': el({ id: 'Dyn::Seq', kind: 'occurrence', name: 'Seq', parentId: 'Dyn', fileId: F }),
+    'Dyn::Seq::keyFob': el({
+      id: 'Dyn::Seq::keyFob',
+      kind: 'part',
+      name: 'keyFob',
+      parentId: 'Dyn::Seq',
+      typeRef: 'KeyFob',
+      fileId: F,
+    }),
+    'Dyn::Seq::keyFob_subsets_car_keyFob': el({
+      id: 'Dyn::Seq::keyFob_subsets_car_keyFob',
+      kind: 'subsetting',
+      name: 'keyFob_subsets_car_keyFob',
+      parentId: 'Dyn::Seq',
+      sourceId: 'Dyn::Seq::keyFob',
+      targetId: 'LA::Car::keyFob',
+      fileId: F,
+    }),
+    LA: el({ id: 'LA', kind: 'package', name: 'LA', fileId: L }),
+    'LA::Car': el({ id: 'LA::Car', kind: 'part', name: 'Car', parentId: 'LA', fileId: L }),
+    'LA::Car::keyFob': el({
+      id: 'LA::Car::keyFob',
+      kind: 'part',
+      name: 'keyFob',
+      parentId: 'LA::Car',
+      fileId: L,
+    }),
+    'LA::KeyFob': el({ id: 'LA::KeyFob', kind: 'part', name: 'KeyFob', parentId: 'LA', fileId: L }),
+  }
+
+  it('documents occurrence defs', () => {
+    expect(docPathCandidates(m['Dyn::Seq'], m)).toEqual([
+      'dyn/docs/Dyn.Seq.md',
+      'dyn/docs/Seq.md',
+    ])
+  })
+
+  it("falls back to the subsetted or redefined feature's doc for a sequence part", () => {
+    expect(
+      docPathForArtifact(m['Dyn::Seq::keyFob'], m, [
+        'logical/docs/LA.keyFob.md',
+        'logical/docs/LA.KeyFob.md',
+      ]),
+    ).toBe('logical/docs/LA.keyFob.md')
+  })
+
+  it("falls back to the type def's doc for a typed sequence part", () => {
+    expect(docPathForArtifact(m['Dyn::Seq::keyFob'], m, ['logical/docs/LA.KeyFob.md'])).toBe(
+      'logical/docs/LA.KeyFob.md',
+    )
+  })
+
+  it('prefers its own doc over the target and the type', () => {
+    expect(
+      docPathForArtifact(m['Dyn::Seq::keyFob'], m, [
+        'dyn/docs/Dyn.keyFob.md',
+        'logical/docs/LA.Car.keyFob.md',
+        'logical/docs/LA.KeyFob.md',
+      ]),
+    ).toBe('dyn/docs/Dyn.keyFob.md')
+  })
+})

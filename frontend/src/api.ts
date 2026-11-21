@@ -13,6 +13,8 @@ export type ArtifactKind =
   | 'view'
   | 'attribute'
   | 'interaction'
+  | 'occurrence'
+  | 'eventOccurrence'
   | 'lifeline'
   | 'message'
   | 'state'
@@ -45,6 +47,8 @@ export interface SemanticElement {
   name: string
   parentId: string | null
   typeRef: string | null
+  /** Id of the definition `typeRef` resolves to. Absent when it does not resolve. */
+  typeTargetId?: string | null
   sourceId: string | null
   targetId: string | null
   exposeRef?: string | null
@@ -67,6 +71,13 @@ export interface SemanticElement {
   documentation?: string | null
   /** Short name from `<'R-01'>` on a declaration. */
   shortId?: string | null
+  /**
+   * Message in an `occurrence def`: the `event occurrence` its source / target
+   * end names (`from a.sent to b.received`). Absent for an end without event
+   * and for legacy `interaction` messages.
+   */
+  sourceEventId?: string | null
+  targetEventId?: string | null
   children: string[]
   fileId: string | null
 }

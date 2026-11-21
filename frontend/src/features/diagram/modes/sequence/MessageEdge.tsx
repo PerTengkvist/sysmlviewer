@@ -12,6 +12,9 @@ export type MessageEdgeData = {
   sequenceIndex?: number
   /** `#reply message` acknowledgement; drawn dashed via style.strokeDasharray. */
   isReply?: boolean
+  /** Event names at the ends of an occurrence message (`a.sent` -> `sent`). */
+  sourceEvent?: string
+  targetEvent?: string
   artifactId?: string
   selectedColor?: string
   selectedFactor?: number

@@ -31,10 +31,88 @@ export function relationLabel(rel: SemanticElement): string {
   return keyword || rel.kind
 }
 
-/** `REQ-PERF-06 PowerModes` when the element has a short id. */
-export function elementDisplayName(el: SemanticElement | undefined, id: string): string {
+/** Nearest ancestor of kind `occurrence` (an `occurrence def`), or null. */
+export function owningOccurrenceId(
+  semantic: Record<string, SemanticElement>,
+  id: string,
+): string | null {
+  const seen = new Set<string>()
+  let cur = semantic[id]?.parentId ?? null
+  while (cur && !seen.has(cur)) {
+    seen.add(cur)
+    const el = semantic[cur]
+    if (!el) return null
+    if (el.kind === 'occurrence') return cur
+    cur = el.parentId ?? null
+  }
+  return null
+}
+
+/** Names from the occurrence down to the element: `plant.actuator`. */
+export function occurrencePath(
+  semantic: Record<string, SemanticElement>,
+  id: string,
+): string | null {
+  const occ = owningOccurrenceId(semantic, id)
+  if (!occ) return null
+  const names: string[] = []
+  let cur: SemanticElement | undefined = semantic[id]
+  while (cur && cur.id !== occ) {
+    names.unshift(cur.name)
+    cur = cur.parentId ? semantic[cur.parentId] : undefined
+  }
+  return names.join('.')
+}
+
+/**
+ * `REQ-PERF-06 PowerModes` when the element has a short id. With the model, a
+ * part inside an occurrence is named with it: `UnlockSequence.keyFob`.
+ */
+export function elementDisplayName(
+  el: SemanticElement | undefined,
+  id: string,
+  semantic?: Record<string, SemanticElement>,
+): string {
   if (!el) return id
+  if (semantic) {
+    const occ = owningOccurrenceId(semantic, id)
+    if (occ) return `${semantic[occ].name}.${occurrencePath(semantic, id)}`
+  }
   return el.shortId ? `${el.shortId} ${el.name}` : el.name
+}
+
+export type FeatureTarget = {
+  label: 'Subsets' | 'Redefines'
+  relationId: string
+  targetId: string
+}
+
+/** What a part subsets (`:>`) or redefines (`:>>`), from its relations. */
+export function featureTargets(
+  semantic: Record<string, SemanticElement>,
+  id: string,
+): FeatureTarget[] {
+  const out: FeatureTarget[] = []
+  for (const rel of Object.values(semantic)) {
+    if (rel.sourceId !== id || !rel.targetId) continue
+    if (rel.kind === 'subsetting') {
+      out.push({ label: 'Subsets', relationId: rel.id, targetId: rel.targetId })
+    } else if (rel.kind === 'redefinition') {
+      out.push({ label: 'Redefines', relationId: rel.id, targetId: rel.targetId })
+    }
+  }
+  return out
+}
+
+/** `keyFob (Car)`: a feature with the type or package that owns it. */
+export function featureLabel(
+  semantic: Record<string, SemanticElement>,
+  id: string,
+): string {
+  const el = semantic[id]
+  if (!el) return id
+  const owner = el.parentId ? semantic[el.parentId] : undefined
+  return owner ? `${el.name} (${owner.name})` : el.name
 }
 
 /**

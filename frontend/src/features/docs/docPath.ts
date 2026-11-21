@@ -1,4 +1,5 @@
 import type { SemanticElement } from '../../api'
+import { featureTargets, owningOccurrenceId } from '../details/elementRelations'
 
 const DOCUMENTED_KINDS = new Set([
   'package',
@@ -9,6 +10,7 @@ const DOCUMENTED_KINDS = new Set([
   'useCase',
   'actor',
   'interaction',
+  'occurrence',
 ])
 
 type Semantic = Record<string, SemanticElement | undefined>
@@ -117,6 +119,16 @@ export function docPathForArtifact(
     const known = new Set(docPaths)
     const hit = candidates.find((c) => known.has(c))
     if (hit) return hit
+    // A part in an `occurrence def` (a lifeline) is documented where it comes
+    // from: the feature it subsets or redefines, then its type.
+    if (el && semantic && owningOccurrenceId(semantic, el.id)) {
+      for (const target of featureTargets(semantic, el.id)) {
+        const hit = docPathCandidates(semantic[target.targetId], semantic).find((c) =>
+          known.has(c),
+        )
+        if (hit) return hit
+      }
+    }
     if (el && semantic && isPartUsage(el, semantic)) {
       const typeDef = findPartTypeDef(semantic, el.typeRef)
       if (typeDef) {

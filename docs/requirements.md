@@ -25,8 +25,8 @@ A web service that visualizes SysMLv2 files and projects, with a separate *seman
 | FR-14 | Right sidebar shows details for the selected artifact |
 | FR-14a | Double-click on a part, interface, package, view or requirement (diagram node, requirement-table row or model-tree row) opens a Details + Documentation dialog |
 | FR-15 | Canvas can show text content of a selected `.sysml` file (read-only in alpha) |
-| FR-16 | Canvas supports diagram modes: interconnection (`whitebox`/`structure`), Sequence, State Transition, Action Flow, Tree — selected via SysML `view : TypeRef` |
-| FR-17 | Sequence/State/Action/Tree views are viewer-first: parse, render, select, persist layout |
+| FR-16 | Canvas supports diagram modes: interconnection (`whitebox`/`structure`), Sequence, State Transition, Action Flow, Tree — selected via SysML `view : TypeRef`. A sequence is an `interaction def` (older dialect) or a SysML v2 `occurrence def` whose parts are the lifelines |
+| FR-17 | Sequence/State/Action/Tree views are viewer-first: parse, render, select, persist layout (a sequence keeps its lifeline order and widths per view, for `interaction def` and `occurrence def` alike) |
 
 ## Non-functional requirements
 

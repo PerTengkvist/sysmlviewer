@@ -119,6 +119,27 @@ _LIFTABLE_RELATION_KINDS = {
 }
 
 
+def _occurrence_sequence_ids(
+    semantic: dict[str, SemanticElement], occurrence_id: str
+) -> set[str]:
+    """What a sequence view of an `occurrence def` sends: the whole subtree
+    (parts, nested and materialised parts, messages) and the events the
+    messages refer to, which live in part defs outside the occurrence."""
+    ids: set[str] = set()
+    stack = [occurrence_id]
+    while stack:
+        el = semantic.get(stack.pop())
+        if el is None or el.id in ids:
+            continue
+        ids.add(el.id)
+        stack.extend(el.children)
+        if el.kind == ArtifactKind.MESSAGE:
+            for event_id in (el.source_event_id, el.target_event_id):
+                if event_id and event_id in semantic:
+                    ids.add(event_id)
+    return ids
+
+
 def _use_case_member_relations(
     semantic: dict[str, SemanticElement], artifact_ids: set[str]
 ) -> set[str]:
@@ -1903,7 +1924,18 @@ class ProjectService:
         if expected is not None and root.kind not in expected:
             mode_error = (
                 f"{view.type_ref or diagram_mode} requires expose of kind "
-                f"{', '.join(k.value for k in expected)}; got '{root.kind.value}'"
+                f"{', '.join(sorted(k.value for k in expected))}; got '{root.kind.value}'"
+            )
+
+        if (
+            mode_error is None
+            and diagram_mode == "sequence"
+            and root.kind == ArtifactKind.OCCURRENCE
+            and not root.is_definition
+        ):
+            mode_error = (
+                f"{view.type_ref or diagram_mode} draws an occurrence def; "
+                f"'{root.name}' is an occurrence usage"
             )
 
         artifact_ids: set[str] = set()
@@ -1912,6 +1944,9 @@ class ProjectService:
             # Root + direct children (lifelines/messages, states/transitions, …)
             for eroot in expose_roots:
                 artifact_ids.add(eroot.id)
+                if eroot.kind == ArtifactKind.OCCURRENCE:
+                    artifact_ids |= _occurrence_sequence_ids(project.semantic, eroot.id)
+                    continue
                 for cid in eroot.children:
                     artifact_ids.add(cid)
                     child = project.semantic.get(cid)
@@ -1941,6 +1976,7 @@ class ProjectService:
                         ArtifactKind.MESSAGE,
                         ArtifactKind.TRANSITION,
                         ArtifactKind.SUCCESSION,
+                        ArtifactKind.EVENT_OCCURRENCE,
                     }:
                         extra.add(cid)
             artifact_ids |= extra
