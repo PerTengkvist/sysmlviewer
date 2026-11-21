@@ -263,6 +263,7 @@ Unknown constructs emit warnings and are skipped when possible.
 | GET | `/projects/{id}/views/{viewId}` | Get view payload |
 | POST | `/projects/{id}/views/{viewId}/export` | Export open view layout JSON (Save As or `{ path }`) |
 | GET | `/projects/{id}/dependency-tree/{elementId}` | `{root, up, down, truncated}`: one chain up to the more abstract element, a labelled tree down (`domain/dependency_tree.py`) |
+| GET | `/projects/{id}/realization` | `{links, actorSteps, systemSteps, stepRealizers, coarseRealizers, useCases: {uc: {functions, nodes, parts, viaInclude, declared, origin}}, inScope, findings}`: how functions, function nodes and logical parts realize each use case (`domain/realization.py`; cached per project until the model changes) |
 
 ### Dependency tree
 

@@ -3,6 +3,7 @@ import type {
   ElementStyle,
   ElementStyleMode,
   Project,
+  Realization,
   RoutingType,
   SemanticElement,
   ViewFilterRow,
@@ -22,6 +23,8 @@ import {
   interfaceUsageKindLabel,
 } from './interfaceLocate'
 import { findPortDefId } from './portLocate'
+import { RealizationSections } from './RealizationSections'
+import { elementRealization } from './realizationLinks'
 import { nestedPortsOf } from './nestedPorts'
 import {
   relatedElementLabel,
@@ -98,6 +101,8 @@ type Props = {
   onOpenRelated?: (artifactId: string) => void
   /** Open the dependency tree of an element (not offered for relations). */
   onOpenDependencyTree?: (artifactId: string) => void
+  /** Use case realization of the project; shown as Realized by / Realizes. */
+  realization?: Realization | null
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -633,6 +638,7 @@ export function DetailsPanel({
   onLocateInModelView,
   onOpenRelated,
   onOpenDependencyTree,
+  realization,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const unlocked = elementUnlocked(viewVisualization, selectedId)
@@ -1538,6 +1544,11 @@ export function DetailsPanel({
         elementId={el.id}
         onOpenRelated={onOpenRelated}
         exclude={new Set(featureLinks.map((t) => t.relationId))}
+      />
+      <RealizationSections
+        info={elementRealization(realization, project.semantic, el.id)}
+        semantic={project.semantic}
+        onOpenRelated={onOpenRelated}
       />
 
       {editorMode && el.kind === 'part' && (
