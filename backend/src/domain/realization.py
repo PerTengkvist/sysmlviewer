@@ -74,6 +74,8 @@ class Realization:
     via_include: dict[str, set[str]] = field(default_factory=dict)
     # (uc, function | node | part) pairs a `#refine` declares directly, whatever wins
     declared: set[tuple[str, str]] = field(default_factory=set)
+    # (uc, function | node | part) -> the `#refine` that gave the winning precision
+    origin: dict[tuple[str, str], str] = field(default_factory=dict)
     in_scope: set[str] = field(default_factory=set)
     findings: list[Finding] = field(default_factory=list)
 
@@ -87,10 +89,19 @@ def derive_realization(
     return _Deriver(semantic, performers).run()
 
 
-def _put(target: dict[str, Precision], key: str, precision: Precision) -> None:
+def _put(
+    target: dict[str, Precision],
+    key: str,
+    precision: Precision,
+    origin: dict[tuple[str, str], str] | None = None,
+    uc: str = "",
+    refine_id: str = "",
+) -> None:
     current = target.get(key)
     if current is None or _RANK[precision] < _RANK[current]:
         target[key] = precision
+        if origin is not None:
+            origin[(uc, key)] = refine_id
 
 
 class _Deriver:
@@ -262,10 +273,10 @@ class _Deriver:
         self.out.links.append(RealizationLink(rel.id, src, tgt, precision))
         out = self.out
         if s_role == "function":
-            _put(out.uc_functions.setdefault(uc, {}), src, precision)
+            _put(out.uc_functions.setdefault(uc, {}), src, precision, out.origin, uc, rel.id)
             out.declared.add((uc, src))
         elif s_role == "node":
-            self._add_node(uc, src, precision)
+            self._add_node(uc, src, precision, rel.id)
             out.declared.add((uc, src))
             for part in self.allocated_to.get(src, []):
                 out.declared.add((uc, part))
@@ -280,15 +291,16 @@ class _Deriver:
             if src not in realizers:
                 realizers.append(src)
             if function:
-                _put(out.uc_functions.setdefault(uc, {}), function, precision)
+                _put(out.uc_functions.setdefault(uc, {}), function, precision, out.origin, uc, rel.id)
             for step in steps:
                 for node in self._function_nodes(step):
-                    self._add_node(uc, node, precision)
+                    self._add_node(uc, node, precision, rel.id)
 
-    def _add_node(self, uc: str, node: str, precision: Precision) -> None:
-        _put(self.out.uc_nodes.setdefault(uc, {}), node, precision)
+    def _add_node(self, uc: str, node: str, precision: Precision, refine_id: str) -> None:
+        out = self.out
+        _put(out.uc_nodes.setdefault(uc, {}), node, precision, out.origin, uc, refine_id)
         for part in self.allocated_to.get(node, []):
-            _put(self.out.uc_parts.setdefault(uc, {}), part, precision)
+            _put(out.uc_parts.setdefault(uc, {}), part, precision, out.origin, uc, refine_id)
 
     def _include_union(self) -> None:
         out = self.out
