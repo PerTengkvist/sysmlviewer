@@ -7,7 +7,12 @@ deriving) down to one use case and lists the model elements the client needs to 
   steps they perform, its subject and the use cases it includes (call nodes);
 - for each step that a function step or flow realizes: the realizer, its flow (the
   successions give the order of the steps), the function and the function nodes that perform
-  it, and the logical parts those nodes are allocated to.
+  it, and the logical parts those nodes are allocated to;
+- the function nodes and logical parts the use case reaches without a step: by a `#refine`
+  from the node itself (`explicitNodes`, `explicitParts`, with their precision) or through a
+  function that refines the use case as a whole (`functionNodes`, `functionParts`). They get
+  lanes without steps. These are the sets of the realization endpoint, which the matrix, the
+  chain and Details read.
 
 Nothing is derived here beyond choosing what to show; the client only reads the slice.
 Pure domain logic: no I/O.
@@ -21,23 +26,51 @@ from typing import Any
 
 from domain.models import ArtifactKind, SemanticElement, ViewDef
 from domain.perform import is_perform, resolve_perform_target
-from domain.realization import Realization
+from domain.realization import UNREALIZED_SYSTEM_STEP, Realization, function_ids
 from domain.realization_labels import unambiguous_labels
-
-_MARKERS = frozenset({"start", "done", "decide", "decision", "condition"})
 
 
 @dataclass
 class RealizationFlow:
-    use_case_id: str
     ids: list[str] = field(default_factory=list)  # semantic ids to send, unordered
     realization: dict[str, Any] = field(default_factory=dict)
     lane_targets: dict[str, list[str]] = field(default_factory=dict)  # node -> logical parts
     labels: dict[str, str] = field(default_factory=dict)
 
-
-def _is_step(el: SemanticElement) -> bool:
-    return el.kind == ArtifactKind.ACTION and not is_perform(el) and (el.type_ref or "") not in _MARKERS
+    def restricted_to(self, shown: set[str]) -> RealizationFlow:
+        """The flow without what the view's filters hide (the slice, lane targets, labels)."""
+        keep = lambda ids: [i for i in ids if i in shown]  # noqa: E731
+        real = self.realization
+        actor_steps = {s: a for s, a in real["actorSteps"].items() if s in shown and a in shown}
+        coarse = {s: keep(rs) for s, rs in real["coarseSteps"].items() if s in shown}
+        step_real = {s: keep(rs) for s, rs in real["stepRealizers"].items() if s in shown}
+        sliced = dict(real)
+        sliced.update(
+            actors=[a for a in real["actors"] if a in set(actor_steps.values())],
+            actorSteps=actor_steps,
+            systemSteps=keep(real["systemSteps"]),
+            unrealizedSteps=keep(real["unrealizedSteps"]),
+            coarseSteps={s: rs for s, rs in coarse.items() if rs},
+            stepRealizers={s: rs for s, rs in step_real.items() if rs},
+            realizerNodes={f: keep(ns) for f, ns in real["realizerNodes"].items() if f in shown},
+            realizerFunctions={
+                f: fn for f, fn in real["realizerFunctions"].items() if f in shown and fn in shown
+            },
+            nodeFunctions={
+                n: keep(fns) for n, fns in real["nodeFunctions"].items() if n in shown
+            },
+            functionNodes={n: f for n, f in real["functionNodes"].items() if n in shown and f in shown},
+            functionParts={p: f for p, f in real["functionParts"].items() if p in shown and f in shown},
+            explicitNodes={n: x for n, x in real["explicitNodes"].items() if n in shown},
+            explicitParts={p: x for p, x in real["explicitParts"].items() if p in shown},
+            calls=[c for c in real["calls"] if c["id"] in shown],
+        )
+        return RealizationFlow(
+            ids=keep(self.ids),
+            realization=sliced,
+            lane_targets={n: keep(ps) for n, ps in self.lane_targets.items() if n in shown and keep(ps)},
+            labels={i: label for i, label in self.labels.items() if i in shown},
+        )
 
 
 def _unique(items: list[str]) -> list[str]:
@@ -108,7 +141,7 @@ def build_realization_flow(
 ) -> RealizationFlow:
     r = realization
     uc = semantic[use_case_id]
-    out = RealizationFlow(use_case_id)
+    out = RealizationFlow()
     ids: list[str] = [use_case_id]
 
     children = [semantic[c] for c in uc.children if c in semantic]
@@ -128,7 +161,9 @@ def build_realization_flow(
 
     step_realizers: dict[str, list[str]] = {}
     coarse_steps: dict[str, list[str]] = {}
-    unrealized: list[str] = []
+    # A system step nothing realizes, in a use case with step links: the finding of the checks.
+    flagged = {f.element_id for f in r.findings if f.code == UNREALIZED_SYSTEM_STEP}
+    unrealized = [s for s in system_steps if s in flagged]
     uc_coarse = r.coarse_realizers.get(use_case_id, [])
     for step in system_steps:
         stepwise = r.step_realizers.get(step, [])
@@ -137,8 +172,6 @@ def build_realization_flow(
             step_realizers[step] = list(stepwise)
         elif coarse:
             coarse_steps[step] = list(coarse)
-        elif use_case_id in r.in_scope:
-            unrealized.append(step)
 
     realizers = _unique([f for fs in step_realizers.values() for f in fs]
                         + [f for fs in coarse_steps.values() for f in fs])
@@ -148,11 +181,25 @@ def build_realization_flow(
     # same): the nodes and parts of a function that refines the use case as a whole.
     function_nodes = dict(r.uc_function_nodes.get(use_case_id, {}))
     function_parts = dict(r.uc_function_parts.get(use_case_id, {}))
+    # What a `#refine` from the node itself gives the use case, and the parts of those nodes.
+    explicit_nodes = {
+        n: p for n, p in r.uc_nodes.get(use_case_id, {}).items() if n not in nodes and n not in function_nodes
+    }
+    reached_parts = {p for n in nodes for p in r.node_parts.get(n, [])}
+    explicit_parts = {
+        p: x for p, x in r.uc_parts.get(use_case_id, {}).items() if p not in reached_parts
+    }
     node_functions = {
         n: list(fns)
         for n, fns in r.uc_node_functions.get(use_case_id, {}).items()
         if n in nodes
     }
+    # The frame of an explicit node's lane: the function that owns it.
+    functions_of_model = function_ids(semantic) if explicit_nodes else set()
+    for n in explicit_nodes:
+        owner = semantic.get(semantic[n].parent_id or "")
+        if owner is not None and owner.id in functions_of_model:
+            node_functions[n] = [owner.id]
     realizer_functions: dict[str, str] = {}
     for realizer in realizers:
         function = _function_of(semantic, realizer)
@@ -171,10 +218,12 @@ def build_realization_flow(
             ids.append(flow)  # type: ignore[arg-type]
             ids.extend(c for c in semantic[flow].children if c in semantic)  # type: ignore[index]
     ids.extend(functions)
-    lane_nodes = _unique(nodes + list(function_nodes))
+    lane_nodes = _unique(nodes + list(explicit_nodes) + list(function_nodes))
     ids.extend(lane_nodes)
     lane_targets = {n: list(r.node_parts.get(n, [])) for n in lane_nodes if r.node_parts.get(n)}
     ids.extend(p for ps in lane_targets.values() for p in ps)
+    ids.extend(explicit_parts)
+    ids.extend(function_parts)
     ids.extend(actors)
 
     calls = _calls(semantic, uc, views)
@@ -198,9 +247,14 @@ def build_realization_flow(
         "nodeFunctions": node_functions,
         "functionNodes": function_nodes,
         "functionParts": function_parts,
+        "explicitNodes": explicit_nodes,
+        "explicitParts": explicit_parts,
         "calls": calls,
     }
-    labelled = _unique(actors + lane_nodes + functions + realizers + [p for ps in lane_targets.values() for p in ps])
+    labelled = _unique(
+        actors + lane_nodes + functions + realizers + list(explicit_parts) + list(function_parts)
+        + [p for ps in lane_targets.values() for p in ps]
+    )
     out.labels = unambiguous_labels(semantic, labelled)
     return out
 

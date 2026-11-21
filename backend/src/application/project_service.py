@@ -2190,16 +2190,20 @@ class ProjectService:
             diagram_mode = "structure"
         mode_error: str | None = None
         expected = expected_root_kinds(diagram_mode)
+        flow_roots = [r for r in expose_roots if r.kind == ArtifactKind.USE_CASE]
+        if diagram_mode == "useCaseRealization":
+            # One use case per view; the other exposes (its actor, say) are only along for the
+            # ride. Counted by use cases, not by exposes.
+            expected = None
+            if len(flow_roots) != 1:
+                mode_error = (
+                    f"{view.type_ref} draws the activity of one use case; "
+                    f"this view exposes {len(flow_roots)}. Use one view per use case"
+                )
         if expected is not None and root.kind not in expected:
             mode_error = (
                 f"{view.type_ref or diagram_mode} requires expose of kind "
                 f"{', '.join(sorted(k.value for k in expected))}; got '{root.kind.value}'"
-            )
-
-        if mode_error is None and diagram_mode == "useCaseRealization" and len(expose_roots) > 1:
-            mode_error = (
-                f"{view.type_ref} draws the activity of one use case; "
-                f"this view exposes {len(expose_roots)}. Use one view per use case"
             )
 
         if (
@@ -2271,7 +2275,7 @@ class ProjectService:
             artifact_ids |= extra
         elif diagram_mode == "useCaseRealization" and mode_error is None:
             realization_flow = build_realization_flow(
-                project.semantic, derive_realization(project.semantic), root.id, project.views
+                project.semantic, derive_realization(project.semantic), flow_roots[0].id, project.views
             )
             artifact_ids |= set(realization_flow.ids)
         elif diagram_mode == "realizationChain":
@@ -2656,9 +2660,11 @@ class ProjectService:
                 else None,
                 set(project.semantic),
             )
-            result["flowRealization"] = realization_flow.realization
-            result["laneTargets"] = realization_flow.lane_targets
-            result["realizationLabels"] = realization_flow.labels
+            # Only what the view shows, after its filters.
+            shown_flow = realization_flow.restricted_to(artifact_ids)
+            result["flowRealization"] = shown_flow.realization
+            result["laneTargets"] = shown_flow.lane_targets
+            result["realizationLabels"] = shown_flow.labels
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

@@ -24,7 +24,10 @@ EXTRA = """
     use case def Uc { actor A { perform a1; } action a1; action sys; action later; }
     #refine dependency from Mixed::Fn::flow::s1 to Mixed::Uc::sys;
     #refine dependency from Mixed::Fn::flow::s2 to Mixed::Uc::sys;
+    use case def Ex { action e1; }
+    #refine dependency from Mixed::Fn::n to Mixed::Ex;
   }
+  allocate Mixed::Fn::n to L::vc;
 """
 VIEWS = """\
 package FlowViews {
@@ -36,6 +39,11 @@ package FlowViews {
   view MixedFlow : ActionFlowView { expose RealizationProbe::Mixed::Uc; }
   view MixedExpose : ActionFlowView { expose RealizationProbe::UC::Lock; expose RealizationProbe::F::Security::startFlow; }
   view FlowFirst : ActionFlowView { expose RealizationProbe::F::Security::startFlow; expose RealizationProbe::UC::Lock; }
+  view ZWithActor : ActionFlowView { expose RealizationProbe::UC::Start; expose RealizationProbe::UC::Start::Driver; }
+  view ZActorFirst : ActionFlowView { expose RealizationProbe::UC::Start::Driver; expose RealizationProbe::UC::Start; }
+  view ZOnlyParts : ActionFlowView { expose RealizationProbe::UC::Start; filter @SysML::PartUsage; }
+  view ZKeepsUseCase : ActionFlowView { expose RealizationProbe::UC::Start; filter @SysML::ActionUsage; }
+  view ExFlow : ActionFlowView { expose RealizationProbe::Mixed::Ex; }
   view OwnFlow : ActionFlowView { expose RealizationProbe::Nested::Deep::Own; }
 }
 """
@@ -190,6 +198,27 @@ def test_nodes_and_parts_reached_only_through_their_function_are_projected(tmp_p
     assert real["functionParts"] == api["functionParts"]
 
 
+def test_a_node_that_refines_the_use_case_itself_has_a_lane_without_steps(tmp_path: Path):
+    """The electric car form: function nodes refine the use case, no step link."""
+    client, pid = _client(tmp_path)
+    ex = _view(client, pid, "ExFlow")
+    real = ex["flowRealization"]
+    node = f"{P}::Mixed::Fn::n"
+    assert real["explicitNodes"] == {node: "explicit"}
+    assert real["explicitParts"] == {VC: "explicit"}
+    assert real["nodeFunctions"] == {node: [f"{P}::Mixed::Fn"]}  # the frame of its lane
+    assert ex["laneTargets"] == {node: [VC]}
+    for eid in (node, VC, f"{P}::Mixed::Fn"):
+        assert eid in ex["semantic"], eid
+    # Not twice: a node reached through a step stays a step lane.
+    start = _view(client, pid, "StartFlow")["flowRealization"]
+    assert start["explicitNodes"] == {} and start["explicitParts"] == {}
+    # The same sets as the realization endpoint, which the matrix, the chain and Details read.
+    api = client.get(api_url(f"/projects/{pid}/realization")).json()["useCases"][f"{P}::Mixed::Ex"]
+    assert set(api["nodes"]) == set(real["explicitNodes"])
+    assert set(api["parts"]) == set(real["explicitParts"])
+
+
 def test_two_function_steps_realize_one_step(tmp_path: Path):
     client, pid = _client(tmp_path)
     mixed = _view(client, pid, "MixedFlow")
@@ -250,6 +279,50 @@ def test_one_use_case_per_view(tmp_path: Path):
     assert "flowRealization" not in body
 
 
+def test_an_actor_along_with_the_use_case_is_not_a_second_use_case(tmp_path: Path):
+    client, pid = _client(tmp_path)
+    for name in ("ZWithActor", "ZActorFirst"):
+        body = _view(client, pid, name)
+        assert body["diagramMode"] == "useCaseRealization", name
+        assert body.get("modeError") is None, name
+        assert body["flowRealization"]["useCaseId"] == START
+
+
+def test_the_view_filter_prunes_the_slice(tmp_path: Path):
+    client, pid = _client(tmp_path)
+    plain = _view(client, pid, "StartFlow")["flowRealization"]
+    assert plain["systemSteps"] and plain["stepRealizers"]
+    # A filter that keeps the actions keeps the use case flow, with what realizes it.
+    kept = _view(client, pid, "ZKeepsUseCase")
+    assert kept["diagramMode"] == "useCaseRealization"
+    assert kept["flowRealization"]["systemSteps"] == plain["systemSteps"]
+    # A filter that drops every action leaves no step and nothing that only a step reached.
+    only = _view(client, pid, "ZOnlyParts")
+    assert only["diagramMode"] == "useCaseRealization"
+    real = only["flowRealization"]
+    assert real["systemSteps"] == [] and real["actorSteps"] == {} and real["actors"] == []
+    assert real["stepRealizers"] == {} and real["unrealizedSteps"] == []
+    assert not any(f"{START}::{n}" in only["semantic"] for n in ("checkKey", "start", "done"))
+    assert set(only["realizationLabels"]) <= set(only["semantic"])
+    assert set(only["laneTargets"]) <= set(only["semantic"])
+
+
+def test_unrealized_steps_are_the_findings_of_the_checks(tmp_path: Path):
+    from domain.realization import UNREALIZED_SYSTEM_STEP, derive_realization
+    from adapters.parser.subset_parser import SubsetSysmlParser
+    from domain.models import SysmlFile
+
+    elements = SubsetSysmlParser().parse_project(
+        [SysmlFile(id="f.sysml", name="f", content=_model(), path="f.sysml")]
+    ).elements
+    flagged = {f.element_id for f in derive_realization(elements).findings if f.code == UNREALIZED_SYSTEM_STEP}
+    client, pid = _client(tmp_path)
+    shown = set()
+    for name in ("StartFlow", "MixedFlow", "UnlockFlow", "LockFlow", "OwnFlow"):
+        shown |= set(_view(client, pid, name)["flowRealization"]["unrealizedSteps"])
+    assert shown == flagged and flagged
+
+
 def test_content_does_not_depend_on_the_depth_setting(tmp_path: Path):
     client, pid = _client(tmp_path)
     for name in ("StartFlow", "OwnFlow", "DriveFlow"):
@@ -292,5 +365,18 @@ def test_electric_car_copy_with_a_use_case_flow_is_reasonable(tmp_path: Path):
     assert real["stepRealizers"] == {}  # the car has no step links yet
     assert real["unrealizedSteps"] == []  # not in scope: no step link, no finding
     assert real["inScope"] is False
+    # Every node and part the endpoint (matrix, chain, Details) gives the use case has a lane.
+    api = client.get(api_url(f"/projects/{project['id']}/realization")).json()["useCases"][
+        "UseCases::Driving::StartVehicle"
+    ]
+    assert api["nodes"] or api["functionNodes"], "the car refines StartVehicle with nodes"
+    lanes = set(real["explicitNodes"]) | set(real["functionNodes"])
+    assert set(api["nodes"]) | set(api["functionNodes"]) <= lanes
+    parts = set(real["explicitParts"]) | set(real["functionParts"])
+    assert set(api["parts"]) | set(api["functionParts"]) <= parts | {
+        p for ps in start["laneTargets"].values() for p in ps
+    }
+    for node in lanes:
+        assert node in start["semantic"]
     security = client.get(api_url(f"/projects/{project['id']}/views/CarFlows::SecurityFlow")).json()
     assert security["diagramMode"] == "actionFlow"
