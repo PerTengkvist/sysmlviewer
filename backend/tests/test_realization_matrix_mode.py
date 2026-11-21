@@ -35,10 +35,12 @@ package Views {
   view OnlyStart : GridView { expose RealizationProbe::UC::Start; }
 }
 """
+# Allocation between two plain parts: neither is a function node.
+OTHER = "package Other { part logical; part physical; allocate Other::logical to Other::physical; }"
 REQ = "package R { requirement def Safe { doc /* safe */ } }"
 
 
-def _project(tmp_path: Path, content: str = PROBE + "\n" + REQ + MATRIX_VIEWS):
+def _project(tmp_path: Path, content: str = PROBE + "\n" + REQ + OTHER + MATRIX_VIEWS):
     client = TestClient(create_app(data_dir=tmp_path))
     pid = client.post(api_url("/projects"), json={"name": "T"}).json()["id"]
     add_content_file(client, pid, tmp_path, "probe.sysml", content)
