@@ -153,3 +153,73 @@ def test_matrix_view_saves_no_geometry(tmp_path: Path):
         json={"structureNotation": "sysmlv2", "parts": {}, "ports": {}, "edges": {}},
     )
     assert res.status_code == 200
+
+
+NESTED = """
+package Deep {
+  package A { package B { use case def <'UCX'> Deepest { action s; } } }
+  use case def Top;
+}
+package Both {
+  requirement def Safe { doc /* safe */ }
+  use case def Drive;
+}
+package Views2 {
+  view Nested : GridView { expose Deep; }
+  view OnlyUseCases : GridView {
+    expose Both;
+    filter @SysML::UseCaseUsage;
+  }
+  view Unfiltered : GridView { expose Both; }
+}
+"""
+
+
+def _nested(tmp_path: Path):
+    return _project(tmp_path, NESTED)
+
+
+@pytest.mark.parametrize("levels", [1, 2, 3, 6])
+def test_mode_and_rows_do_not_depend_on_the_diagram_levels(tmp_path: Path, levels: int):
+    client, pid = _nested(tmp_path)
+    res = client.get(api_url(f"/projects/{pid}/views/Views2::Nested"), params={"levels": levels})
+    view = res.json()
+    assert view["diagramMode"] == "realizationMatrix"
+    ucs = {k for k, e in view["semantic"].items() if e["kind"] == "useCase"}
+    assert ucs == {"Deep::A::B::Deepest", "Deep::Top"}
+
+
+def test_the_filter_decides_the_mode_on_the_rows_it_keeps(tmp_path: Path):
+    client, pid = _nested(tmp_path)
+    assert _view(client, pid, "Views2::Unfiltered")["diagramMode"] == "requirementTable"
+    view = _view(client, pid, "Views2::OnlyUseCases")
+    assert view["diagramMode"] == "realizationMatrix"
+    assert {k for k, e in view["semantic"].items() if e["kind"] == "useCase"} == {"Both::Drive"}
+
+
+def test_electric_car_use_cases_grid_is_a_matrix_at_default_levels(tmp_path: Path):
+    copy = tmp_path / "electric_car"
+    shutil.copytree(REPO / "examples" / "electric_car", copy)
+    uc = copy / "use_cases" / "use_cases.sysml"
+    text = uc.read_text(encoding="utf-8")
+    cut = text.rstrip().rfind("}")
+    uc.write_text(text[:cut] + "  view UCGrid : GridView { expose UseCases; }\n" + text[cut:], encoding="utf-8")
+    client = TestClient(create_app(workspace=tmp_path))
+    pid = client.post(api_url("/session/open"), json={"folder": str(copy)}).json()["project"]["id"]
+    view = _view(client, pid, "UseCases::UCGrid")
+    assert view["diagramMode"] == "realizationMatrix"
+    assert sum(1 for e in view["semantic"].values() if e["kind"] == "useCase") == 21
+
+
+def test_use_cases_nested_in_a_use_case_are_no_rows(tmp_path: Path):
+    src = """
+package N {
+  use case def Outer { use case inner; action s; }
+  view V : GridView { expose N; }
+}
+"""
+    client, pid = _project(tmp_path, src)
+    view = _view(client, pid, "N::V")
+    assert view["diagramMode"] == "realizationMatrix"
+    ucs = {k for k, e in view["semantic"].items() if e["kind"] == "useCase"}
+    assert ucs == {"N::Outer"}, ucs

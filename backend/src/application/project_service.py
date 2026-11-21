@@ -2061,16 +2061,31 @@ class ProjectService:
         )
 
         exposed_kinds: set[ArtifactKind] | None = None
+        grid_ids: set[str] = set()
         if view.type_ref == "GridView":
-            # A grid shows a requirements table, or the realization matrix when
-            # it exposes use cases and no requirements.
-            exposed_kinds = {
-                project.semantic[aid].kind
-                for eroot in expose_roots
-                for aid in collect_exposed(
-                    project.semantic, eroot.id, expose_kinds[eroot.id], effective_levels
+            # A grid shows a requirements table, or the realization matrix when what it
+            # exposes (all the way down, after the view's filters, whatever the diagram
+            # levels) has use cases and no requirements.
+            from domain.view_filter import apply_view_filters, parse_stored_filters
+
+            for eroot in expose_roots:
+                grid_ids |= collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    structural_depth(project.semantic, eroot.id),
                 )
-                if aid in project.semantic
+            grid_filters = parse_stored_filters(stored_filters)
+            if grid_filters:
+                grid_ids = apply_view_filters(
+                    project.semantic,
+                    grid_ids,
+                    grid_filters,
+                    root_id=root.id,
+                    root_ids=set(expose_root_ids),
+                )
+            exposed_kinds = {
+                project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
         diagram_mode = resolve_diagram_mode(view, root, exposed_kinds)
         # `expose Car::*;` shows Car's members without Car: no frame to draw.
@@ -2113,19 +2128,17 @@ class ProjectService:
                         for gc in child.children:
                             artifact_ids.add(gc)
         elif diagram_mode == "realizationMatrix":
-            # Rows: the exposed use cases. Everything else the matrix shows is
+            # Rows: the exposed use cases, not those nested in another use case (the
+            # frontend lists the same ones). Everything else the matrix shows is
             # added to `semantic` below.
-            for eroot in expose_roots:
-                artifact_ids |= {
-                    aid
-                    for aid in collect_exposed(
-                        project.semantic,
-                        eroot.id,
-                        expose_kinds[eroot.id],
-                        effective_levels,
-                    )
-                    if project.semantic[aid].kind == ArtifactKind.USE_CASE
-                }
+            def _is_row(aid: str) -> bool:
+                el = project.semantic[aid]
+                owner = project.semantic.get(el.parent_id or "")
+                return el.kind == ArtifactKind.USE_CASE and not (
+                    owner is not None and owner.kind == ArtifactKind.USE_CASE
+                )
+
+            artifact_ids = {aid for aid in grid_ids if _is_row(aid)}
         elif diagram_mode == "tree":
             for eroot in expose_roots:
                 artifact_ids |= collect_exposed(
