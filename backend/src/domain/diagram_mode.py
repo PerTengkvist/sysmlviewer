@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Collection
+
 from domain.models import ArtifactKind, SemanticElement, ViewDef
 
 TYPE_REF_TO_MODE: dict[str, str] = {
@@ -17,9 +19,25 @@ TYPE_REF_TO_MODE: dict[str, str] = {
 }
 
 
-def resolve_diagram_mode(view: ViewDef, root: SemanticElement) -> str:
-    """Map view typeRef (and root kind fallback) to a frontend diagramMode string."""
+def resolve_diagram_mode(
+    view: ViewDef,
+    root: SemanticElement,
+    exposed_kinds: Collection[ArtifactKind] | None = None,
+) -> str:
+    """Map view typeRef (and root kind fallback) to a frontend diagramMode string.
+
+    `exposed_kinds` (kinds of the exposed elements) lets a `GridView` choose by content:
+    use cases and no requirements give the realization matrix, anything else the
+    requirements table.
+    """
     type_ref = view.type_ref
+    if (
+        type_ref == "GridView"
+        and exposed_kinds is not None
+        and ArtifactKind.USE_CASE in exposed_kinds
+        and ArtifactKind.REQUIREMENT not in exposed_kinds
+    ):
+        return "realizationMatrix"
     if type_ref and type_ref in TYPE_REF_TO_MODE:
         mapped = TYPE_REF_TO_MODE[type_ref]
         if mapped != "general":
