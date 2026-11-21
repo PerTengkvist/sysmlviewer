@@ -16,6 +16,17 @@ export type ActionNodeData = {
   viewMode: ViewMode
   /** Names of the parts that perform this action (`perform flow.step;`). */
   performedBy?: string[]
+  /** useCaseRealization: `+n`, the step also belongs to n more lanes. */
+  badge?: string
+  /** useCaseRealization: a system step that nothing realizes. */
+  unrealized?: boolean
+  /** useCaseRealization: a system step that a flow realizes as a whole. */
+  coarse?: boolean
+  /** useCaseRealization: `▸ Start`, a step that calls an included use case. */
+  isCall?: boolean
+  calledUseCaseId?: string
+  /** useCaseRealization: the lane the node sits in. */
+  laneId?: string
 }
 
 const centerHandle: CSSProperties = {
@@ -141,13 +152,24 @@ function ActionNodeInner({ data, selected }: NodeProps) {
 
   const style = nodeInlineStyle(d.formatStyle, d.viewMode)
   const bg = kindBackground('action', d.viewMode, d.formatStyle)
+  const marks = [
+    d.unrealized ? ' unrealized' : '',
+    d.coarse ? ' coarse' : '',
+    d.isCall ? ' call' : '',
+  ].join('')
   return (
     <div
-      className={`action-node${selected ? ' selected' : ''}`}
+      className={`action-node${marks}${selected ? ' selected' : ''}`}
       style={{ ...style, backgroundColor: bg || style.backgroundColor }}
+      data-lane-id={d.laneId}
+      title={d.unrealized ? 'No function step realizes this step' : d.coarse ? 'Realized by a whole flow' : undefined}
     >
-      <span className="stereotype">«action»</span>
-      <strong>{d.label}</strong>
+      {d.isCall ? null : <span className="stereotype">«action»</span>}
+      <strong>
+        {d.unrealized ? <span className="action-warning">⚠ </span> : null}
+        {d.label}
+      </strong>
+      {d.badge ? <span className="action-badge">{d.badge}</span> : null}
       {d.performedBy?.length ? (
         <span className="action-performer" title="Performed by">
           ⟨{d.performedBy.join(', ')}⟩

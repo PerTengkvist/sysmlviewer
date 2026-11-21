@@ -36,6 +36,8 @@ import type {
   SemanticElement,
   SequenceLayout,
   RealizationMatrixLayout,
+  UseCaseRealizationLayout,
+  RealizationLaneMode,
   ViewPayload,
   ViewSnapshot,
   VisualizationEdge,
@@ -139,6 +141,12 @@ import {
   buildRealizationChain,
   redrawRealizationChain,
 } from './modes/realization/buildRealizationChain'
+import {
+  buildUseCaseRealizationGraph,
+  layoutAfterDrop,
+  layoutAfterResize,
+} from './modes/realization/buildUseCaseRealizationGraph'
+import { LaneGroupNode, LaneNode } from './modes/realization/LaneNode'
 import { RequirementNode } from './modes/requirements/RequirementNode'
 import { buildRealizationMatrix } from './modes/realization/buildRealizationMatrix'
 import { RealizationMatrix } from './modes/realization/RealizationMatrix'
@@ -231,6 +239,8 @@ const allNodeTypes: NodeTypes = {
   useCase: UseCaseNode,
   actor: ActorNode,
   chain: ChainNode,
+  lane: LaneNode,
+  laneGroup: LaneGroupNode,
 }
 
 const allEdgeTypes: EdgeTypes = {
@@ -337,6 +347,12 @@ function FitViewOnViewKey({
   }, [viewKey, layoutEpoch, fitView, setViewport, getNodes, onReady, printMode, viewportCache])
   return null
 }
+
+const REALIZATION_LANE_MODES: { id: RealizationLaneMode; label: string; title: string }[] = [
+  { id: 'blackbox', label: 'Black box', title: 'The actors and the system' },
+  { id: 'whitebox', label: 'White box', title: 'One lane per function node' },
+  { id: 'logical', label: 'Logical', title: 'One lane per logical part (allocate)' },
+]
 
 export const DIAGRAM_MODE_LABELS: Record<DiagramMode, string> = {
   whitebox: 'Interconnection',
@@ -615,6 +631,8 @@ type Props = {
   onSequenceLayoutChange?: (layout: SequenceLayout | null) => void
   /** Realization matrix: the rows / columns choice changed (saved with the view). */
   onRealizationMatrixChange?: (layout: RealizationMatrixLayout) => void
+  /** useCaseRealization: save the lane mode / order / widths with the view (null resets). */
+  onUseCaseRealizationLayoutChange?: (layout: UseCaseRealizationLayout | null) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
   onPortsMoved?: (
@@ -683,6 +701,7 @@ export function DiagramCanvas({
   onAutoLayoutEdgeKindsChange,
   onSequenceLayoutChange,
   onRealizationMatrixChange,
+  onUseCaseRealizationLayoutChange,
   onPortMoved,
   onPortsMoved,
   onRelationEndMoved,
@@ -857,6 +876,10 @@ export function DiagramCanvas({
   onNodesMovedRef.current = onNodesMoved
   const onSequenceLayoutChangeRef = useRef(onSequenceLayoutChange)
   onSequenceLayoutChangeRef.current = onSequenceLayoutChange
+  const onUseCaseRealizationLayoutChangeRef = useRef(onUseCaseRealizationLayoutChange)
+  onUseCaseRealizationLayoutChangeRef.current = onUseCaseRealizationLayoutChange
+  /** Start of a lane drag: where its nodes were, to move them along. */
+  const laneDragRef = useRef<{ laneId: string; x: number; members: Map<string, number> } | null>(null)
   // Lifeline order / widths currently on the canvas (saved with the view).
   const sequenceLayoutRef = useRef<SequenceLayout | null>(null)
   trackLayoutWriteRef.current = trackLayoutWrite ?? ((work) => work)
@@ -987,7 +1010,7 @@ export function DiagramCanvas({
     ? JSON.stringify(requirementDisplay)
     : ''
   const viewKey = view
-    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${Object.keys(view.semantic).sort().join(',')}`
+    ? `${diagramEpoch}|${view.view.id}|${view.diagramMode ?? ''}|${showAttributes}|${renderViewMode}|${structureNotation}|${nestedPortReveal}|${reqDisplaySig}|${edgeSig}|${nodeStyleSig}|${collapseSig}|${selectedConnectionColor}|${selectedConnectionLinewidthFactor}|${filterSig}|${Object.keys(view.semantic).sort().join(',')}|${view.diagramMode === 'useCaseRealization' ? JSON.stringify(view.useCaseRealizationLayout ?? null) : ''}`
     : null
 
   const flowDirRef = useRef(flowDir)
@@ -1106,6 +1129,14 @@ export function DiagramCanvas({
           selectedConnectionLinewidthFactor,
         })
         break
+      case 'useCaseRealization':
+        built = buildUseCaseRealizationGraph({
+          view: filteredView,
+          viewMode: renderViewMode,
+          selectedConnectionColor,
+          selectedConnectionLinewidthFactor,
+        })
+        break
       case 'requirementTable':
       case 'realizationMatrix':
         built = { nodes: [], edges: [] }
@@ -1134,8 +1165,9 @@ export function DiagramCanvas({
       previousViewId &&
       previousViewId === view.view.id &&
       nodesRef.current.length &&
-      // Sequence lifelines are derived from order and widths, never kept.
-      view.diagramMode !== 'sequence'
+      // Sequence lifelines and realization lanes are derived from order and widths, never kept.
+      view.diagramMode !== 'sequence' &&
+      view.diagramMode !== 'useCaseRealization'
         ? preserveExistingGeometry(
             built.nodes,
             built.edges,
@@ -1150,7 +1182,11 @@ export function DiagramCanvas({
     setNodes(
       geometry.nodes.map((node) => ({
         ...node,
-        draggable: !portMoveMode && !isEditLocked(view.visualization.nodes[node.id]),
+        // The lanes of a realization view move sideways; its steps never move.
+        draggable:
+          view.diagramMode === 'useCaseRealization'
+            ? node.draggable
+            : !portMoveMode && !isEditLocked(view.visualization.nodes[node.id]),
         data: {
           ...(node.data as PartNodeData),
           editLocked: isEditLocked(view.visualization.nodes[node.id]),
@@ -1508,6 +1544,19 @@ export function DiagramCanvas({
     (rawChanges: NodeChange[]) => {
       let changes = rawChanges
       let sequenceResizeEnds: Extract<NodeChange, { type: 'dimensions' }>[] = []
+      let laneResizeEnds: Extract<NodeChange, { type: 'dimensions' }>[] = []
+      if (mode === 'useCaseRealization') {
+        // Lanes only move sideways; a lane resize ends in a saved width.
+        changes = rawChanges.map((c) => {
+          if (c.type !== 'position' || !c.position) return c
+          const y = nodesRef.current.find((n) => n.id === c.id)?.position.y ?? c.position.y
+          return { ...c, position: { x: c.position.x, y } }
+        })
+        laneResizeEnds = changes.filter(
+          (c): c is Extract<NodeChange, { type: 'dimensions' }> =>
+            c.type === 'dimensions' && c.resizing === false && !!c.dimensions,
+        )
+      }
       if (mode === 'sequence') {
         // Lifelines sit on one line: only horizontal moves are allowed.
         changes = rawChanges.map((c) =>
@@ -1533,6 +1582,19 @@ export function DiagramCanvas({
         }
         return next
       })
+
+      if (mode === 'useCaseRealization') {
+        let layout = viewRef.current?.useCaseRealizationLayout ?? null
+        for (const c of laneResizeEnds) {
+          const data = nodesRef.current.find((n) => n.id === c.id)?.data as
+            | { laneId?: string; minWidth?: number }
+            | undefined
+          if (!data?.laneId) continue
+          layout = layoutAfterResize(layout, data.laneId, c.dimensions!.width, data.minWidth ?? 0)
+        }
+        if (laneResizeEnds.length) onUseCaseRealizationLayoutChangeRef.current?.(layout)
+        return
+      }
 
       if (mode === 'sequence') {
         // Width is saved as part of the view's sequence layout, never as
@@ -1608,7 +1670,7 @@ export function DiagramCanvas({
     let timer: ReturnType<typeof setTimeout> | undefined
     const onKeyUp = (event: KeyboardEvent) => {
       if (!ARROW_KEYS.has(event.key)) return
-      if (modeRef.current === 'sequence') return
+      if (modeRef.current === 'sequence' || modeRef.current === 'useCaseRealization') return
       if (!(event.target as Element | null)?.closest?.('.react-flow')) return
       clearTimeout(timer)
       timer = setTimeout(() => {
@@ -1626,6 +1688,23 @@ export function DiagramCanvas({
   }, [printMode, rerouteAfterMove])
 
   const onNodeDragStart: OnNodeDrag = useCallback((_event, node) => {
+    if (modeRef.current === 'useCaseRealization') {
+      // A lane takes its steps with it while it moves.
+      const laneId = (node.data as { laneId?: string }).laneId
+      laneDragRef.current =
+        node.type === 'lane' && laneId
+          ? {
+              laneId,
+              x: node.position.x,
+              members: new Map(
+                nodesRef.current
+                  .filter((n) => n.type === 'action' && (n.data as { laneId?: string }).laneId === laneId)
+                  .map((n) => [n.id, n.position.x]),
+              ),
+            }
+          : null
+      return
+    }
     const data = node.data as PartNodeData
     if (!data?.isBoundary) {
       boundaryDragRef.current = null
@@ -1655,6 +1734,17 @@ export function DiagramCanvas({
 
   const onNodeDrag: OnNodeDrag = useCallback(
     (_event, node) => {
+      const lane = laneDragRef.current
+      if (lane) {
+        const dx = node.position.x - lane.x
+        setNodes((ns) =>
+          ns.map((n) => {
+            const x = lane.members.get(n.id)
+            return x === undefined ? n : { ...n, position: { x: x + dx, y: n.position.y } }
+          }),
+        )
+        return
+      }
       const snap = boundaryDragRef.current
       if (!snap || snap.nodeId !== node.id) return
       applyBoundaryEdgeDelta(
@@ -1667,6 +1757,44 @@ export function DiagramCanvas({
 
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, node, draggedNodes) => {
+      if (mode === 'useCaseRealization') {
+        const start = laneDragRef.current
+        laneDragRef.current = null
+        const current = viewRef.current
+        if (!start || !current) return
+        // The drop only decides the order; x is derived from it. Put the lane back first,
+        // so that an unchanged order leaves the diagram as it was.
+        const lanes = nodesRef.current.filter((n) => n.type === 'lane')
+        const xBefore = (n: Node) => (n.id === node.id ? start.x : n.position.x)
+        const centre = (n: Node, x: number) => x + (nodeExtentSize(n).width ?? 0) / 2
+        const order = [...lanes]
+          .sort((a, b) => xBefore(a) - xBefore(b))
+          .map((n) => (n.data as { laneId: string }).laneId)
+        const centres = Object.fromEntries(
+          lanes
+            .filter((n) => n.id !== node.id)
+            .map((n) => [(n.data as { laneId: string }).laneId, centre(n, n.position.x)]),
+        )
+        const dropped = nodesRef.current.find((n) => n.id === node.id) ?? node
+        const layout = current.useCaseRealizationLayout ?? null
+        const next = layoutAfterDrop(
+          layout,
+          layout?.lanes ?? 'whitebox',
+          order,
+          start.laneId,
+          centre(dropped, dropped.position.x),
+          centres,
+        )
+        setNodes((ns) =>
+          ns.map((n) => {
+            if (n.id === node.id) return { ...n, position: { x: start.x, y: n.position.y } }
+            const x = start.members.get(n.id)
+            return x === undefined ? n : { ...n, position: { x, y: n.position.y } }
+          }),
+        )
+        onUseCaseRealizationLayoutChangeRef.current?.(next)
+        return
+      }
       if (mode === 'sequence') {
         // The drop position only decides the order; x is derived from it.
         const lifelines = nodesRef.current.filter((n) => n.type === 'lifeline')
@@ -1746,6 +1874,13 @@ export function DiagramCanvas({
 
   const applyRedraw = useCallback(
     (direction: RedrawDirection) => {
+      if (mode === 'useCaseRealization') {
+        // Forget the lane order and widths, but not the lane mode.
+        const lanes = viewRef.current?.useCaseRealizationLayout?.lanes
+        onUseCaseRealizationLayoutChangeRef.current?.(lanes ? { lanes } : null)
+        setLayoutEpoch((n) => n + 1)
+        return
+      }
       if (mode === 'sequence') {
         // Default order and widths: forget what the user chose.
         applySequenceLayout(null)
@@ -3217,6 +3352,36 @@ export function DiagramCanvas({
                   </>
                 ) : null}
               </>
+            ) : mode === 'useCaseRealization' ? (
+              <>
+                <div className="realization-lane-switch" role="group" aria-label="Lanes">
+                  {REALIZATION_LANE_MODES.map(({ id, label, title }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={(view.useCaseRealizationLayout?.lanes ?? 'whitebox') === id ? 'active' : ''}
+                      aria-pressed={(view.useCaseRealizationLayout?.lanes ?? 'whitebox') === id}
+                      data-lane-mode={id}
+                      title={title}
+                      onClick={() =>
+                        onUseCaseRealizationLayoutChangeRef.current?.({
+                          ...(view.useCaseRealizationLayout ?? {}),
+                          lanes: id,
+                        })
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => applyRedraw('TD')}
+                  title="Forget the lane order and widths"
+                >
+                  Redraw
+                </button>
+              </>
             ) : (
               <>
                 <button type="button" onClick={() => applyRedraw('TD')} title="Redraw top-down">
@@ -3383,13 +3548,34 @@ export function DiagramCanvas({
           onNodeClick={
             printMode
               ? undefined
-              : (e, node) =>
-                  onSelectArtifact(node.id, { shift: e.shiftKey })
+              : (e, node) => {
+                  if (mode !== 'useCaseRealization') {
+                    onSelectArtifact(node.id, { shift: e.shiftKey })
+                    return
+                  }
+                  // A step may be drawn more than once, a lane stands for its element.
+                  const id = (node.data as { artifactId?: string }).artifactId
+                  if (id) onSelectArtifact(id, { shift: e.shiftKey })
+                }
           }
           onNodeDoubleClick={
             printMode || !onNodeDoubleClick
               ? undefined
               : (_e, node) => {
+                  if (mode === 'useCaseRealization') {
+                    const data = node.data as { artifactId?: string; calledUseCaseId?: string }
+                    // A call node opens the view of the use case it calls, if there is one.
+                    const called = data.calledUseCaseId
+                    const target = called ? view?.menus?.[called]?.[0] : undefined
+                    if (target) {
+                      onOpenViewRef.current(target.viewId)
+                      return
+                    }
+                    const id = called ?? data.artifactId
+                    const el = id ? view?.semantic[id] : undefined
+                    if (id && el) onNodeDoubleClick(id, el.kind)
+                    return
+                  }
                   const el = view?.semantic[node.id]
                   if (el) onNodeDoubleClick(node.id, el.kind)
                 }

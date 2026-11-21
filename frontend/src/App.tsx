@@ -906,6 +906,43 @@ export default function App() {
     [project, activeViewId, viewPayload, matrixSaver],
   )
 
+  // The lane choice of a use case realization view goes through the same saver, one request
+  // per view at a time; a failed save rolls the display back to the last saved choice.
+  const laneProjectId = project?.id
+  const laneSaver = useMemo(
+    () =>
+      createChoiceSaver<import('./api').UseCaseRealizationLayout | null>(
+        (viewId, layout) =>
+          patchVisualization(laneProjectId ?? '', {
+            viewId,
+            useCaseRealizationLayout: layout,
+            structureNotation: structureNotationRef.current,
+          }),
+        (viewId, confirmed, e) => {
+          setViewPayload((prev) =>
+            prev && prev.view.id === viewId
+              ? { ...prev, useCaseRealizationLayout: confirmed }
+              : prev,
+          )
+          setError(`The lane choice could not be saved: ${String(e)}`)
+        },
+      ),
+    [patchVisualization, laneProjectId],
+  )
+  const onUseCaseRealizationLayoutChange = useCallback(
+    (layout: import('./api').UseCaseRealizationLayout | null) => {
+      if (!project || !activeViewId || !viewPayload) return
+      const initial = viewPayload.useCaseRealizationLayout ?? null
+      setViewPayload((prev) =>
+        prev && prev.view.id === activeViewId
+          ? { ...prev, useCaseRealizationLayout: layout }
+          : prev,
+      )
+      void laneSaver.save(activeViewId, layout, initial)
+    },
+    [project, activeViewId, viewPayload, laneSaver],
+  )
+
   const onPortsMoved = useCallback(
     async (
       moves: { portId: string; side: PortSide; offset: number }[],
@@ -2105,6 +2142,7 @@ export default function App() {
                 onSequenceLayoutChange={(layout) =>
                   void onSequenceLayoutChange(layout)
                 }
+                onUseCaseRealizationLayoutChange={onUseCaseRealizationLayoutChange}
                 onAutoLayoutEdgeKindsChange={(kinds) =>
                   void onAutoLayoutEdgeKindsChange(kinds)
                 }
