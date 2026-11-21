@@ -1,6 +1,7 @@
 """Text, markdown and JSON reports of an impact evaluation.
 
-Text and markdown use short names; JSON uses full ids.
+Text and markdown use short names; JSON uses full ids. A name that two nodes share is
+qualified by the shortest unique id suffix (see `domain/failure/labels.py`).
 """
 
 from __future__ import annotations
@@ -8,6 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from domain.failure.labels import label, name_of, short_name, tag_key, tail_name
 from domain.failure.model import Failure, FailureKind, GateKind, Impact, ImpactGraph, Layer, Status
 from domain.failure.propagate import (
     affected_nodes,
@@ -21,31 +23,6 @@ from domain.failure.scenarios import SpofRow
 
 
 # -- names ---------------------------------------------------------------
-
-
-def short_name(graph: ImpactGraph, nid: str) -> str:
-    """Name of a node; physical parts are shown with their physical owners (`a.b`)."""
-    names = [graph.nodes[nid].name]
-    while nid in graph.parent:
-        nid = graph.parent[nid]
-        names.append(graph.nodes[nid].name)
-    return ".".join(reversed(names))
-
-
-def label(graph: ImpactGraph, nid: str) -> str:
-    """`<tag> <name>` when the element has a short name, else the name."""
-    node = graph.nodes[nid]
-    return f"{node.short_id} {node.name}" if node.short_id else node.name
-
-
-def _tag_key(graph: ImpactGraph, nid: str) -> tuple[int, str, str]:
-    """Tagged elements by tag, untagged ones after them by name."""
-    node = graph.nodes[nid]
-    return (0, node.short_id, node.name) if node.short_id else (1, "", node.name)
-
-
-def _tail_id(nid: str) -> str:
-    return nid.split("::", 1)[1] if "::" in nid else nid
 
 
 def _flag_text(flag: str) -> str:
@@ -125,12 +102,12 @@ def _flag_lines(
         alive = result.alive
         if "redundancy_exhausted" in flags:
             lines.append(
-                f"FLAGS     redundancy exhausted: {_tail_id(part)} "
+                f"FLAGS     redundancy exhausted: {tail_name(graph, part)} "
                 f"({alive} of {gate.n}, required {_num(gate.required)})"
             )
         if "pool_at_minimum" in flags:
             lines.append(
-                f"FLAGS     pool at minimum: {_tail_id(part)} "
+                f"FLAGS     pool at minimum: {tail_name(graph, part)} "
                 f"({alive} of {gate.n}, {_num(result.surviving)} of {_num(sum(gate.capacities))}, "
                 f"required {_num(gate.required)})"
             )
@@ -139,7 +116,7 @@ def _flag_lines(
         names = ", ".join(sorted({short_name(graph, f.part_id) for f in erroneous if f.part_id in graph.nodes}))
         lines.append(f"FLAGS     erroneous treated as loss: {names}")
     cyclic = sorted(
-        graph.nodes[n].name for n, i in impacts.items() if "cycle" in i.flags and graph.nodes[n].layer is Layer.FUNCTION
+        name_of(graph, n) for n, i in impacts.items() if "cycle" in i.flags and graph.nodes[n].layer is Layer.FUNCTION
     )
     if cyclic:
         lines.append(f"FLAGS     cycle: {', '.join(cyclic)}")
@@ -149,7 +126,7 @@ def _flag_lines(
 def _common_cause_text(graph: ImpactGraph, f: Failure) -> str:
     if "common_cause" not in failure_flags(graph, f):
         return ""
-    names = sorted(graph.nodes[t].name for t in common_cause_targets(graph, f.part_id))
+    names = sorted(name_of(graph, t) for t in common_cause_targets(graph, f.part_id))
     return f"  [common cause: {', '.join(names)}]"
 
 
@@ -157,7 +134,7 @@ def _listing(graph: ImpactGraph, impacts: Mapping[str, Impact], layer: Layer, st
     items = []
     for n in sorted(
         (n for n in affected_nodes(graph, impacts, layer) if impacts[n].status is status),
-        key=lambda n: _tag_key(graph, n),
+        key=lambda n: tag_key(graph, n),
     ):
         name = label(graph, n)
         items.append(name if status is Status.LOST else f"{name} ({_percent(impacts[n].capability)})")
@@ -173,11 +150,11 @@ def to_text(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mapping[st
         for f in failures
     ]
     functions = affected_nodes(graph, impacts, Layer.FUNCTION)
-    width = max((len(graph.nodes[f].name) for f in functions), default=0)
+    width = max((len(name_of(graph, f)) for f in functions), default=0)
     for fn in functions:
         impact = impacts[fn]
         pct = _percent(impact.capability) if impact.status is Status.DEGRADED else ""
-        row = f"{impact.status.value:<9} {graph.nodes[fn].name:<{width}}  {pct:<8} ← "
+        row = f"{impact.status.value:<9} {name_of(graph, fn):<{width}}  {pct:<8} ← "
         lines.append(row + _chain_text(graph, failures, impacts, fn))
     if not functions:
         lines.append("RESULT    no function is lost or degraded")
@@ -226,9 +203,9 @@ def to_markdown(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mappin
         out += ["", f"## {title}", ""]
         nodes = sorted(
             affected_nodes(graph, impacts, layer),
-            key=lambda n: (impacts[n].status is not Status.LOST, _tag_key(graph, n))
+            key=lambda n: (impacts[n].status is not Status.LOST, tag_key(graph, n))
             if layer is not Layer.FUNCTION
-            else (0, (0, "", "")),
+            else (0, (0, "", "", "")),
         )
         if with_cause:
             rows = [
@@ -315,10 +292,10 @@ def _spof_cells(graph: ImpactGraph, row: SpofRow) -> list[str]:
         return ", ".join(label(graph, i) for i in ids)
 
     return [
-        _tail_id(row.part_id),
+        tail_name(graph, row.part_id),
         names(row.lost_functions),
         names(row.degraded_functions),
-        names(sorted(row.requirements_at_risk, key=lambda i: _tag_key(graph, i))),
+        names(sorted(row.requirements_at_risk, key=lambda i: tag_key(graph, i))),
         ", ".join(_flag_text(f) for f in sorted(row.flags)),
     ]
 

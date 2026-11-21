@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from domain.failure.model import Failure, FailureKind, Impact, ImpactGraph, Layer, Status
-from domain.failure.report import _tag_key, label, short_name
+from domain.failure.labels import disambiguate, label, name_of, short_name, short_qual, tag_key
 from domain.failure.propagate import affected_nodes, chain, common_cause_targets, evaluate, failure_flags
 from domain.fmea.model import FmeaModel, ModeSpec, Unit
 from domain.fmea.severity import requirement_groups
@@ -47,6 +47,7 @@ class Row:
     end_effect: tuple[Effect, ...]
     chain: tuple[str, ...]
     lost_functions: tuple[str, ...]
+    lost_function_labels: tuple[str, ...]  # same order, unambiguous names for display
     requirements_at_risk: tuple[str, ...]
     flags: frozenset[str]
     detection_method: str | None
@@ -103,23 +104,37 @@ def _effects(graph: ImpactGraph, impacts: Mapping[str, Impact], layers: Sequence
     for layer in layers:
         nodes = affected_nodes(graph, impacts, layer)
         if layer in (Layer.USE_CASE, Layer.REQUIREMENT):
-            nodes = sorted(nodes, key=lambda n: _tag_key(graph, n))
+            nodes = sorted(nodes, key=lambda n: tag_key(graph, n))
         for nid in nodes:
             node = graph.nodes[nid]
             tagged = layer in (Layer.USE_CASE, Layer.REQUIREMENT)
             out.append(
                 Effect(
-                    nid, label(graph, nid) if tagged else node.name, layer.value,
+                    nid, label(graph, nid) if tagged else name_of(graph, nid), layer.value,
                     impacts[nid].status, node.short_id if tagged else None,
                 )
             )
     return tuple(out)
 
 
-def _item_name(graph: ImpactGraph, part_id: str) -> str:
-    if part_id in graph.nodes:
-        return short_name(graph, part_id)
-    return ".".join(part_id.split("::")[-2:])
+def _item_names(graph: ImpactGraph, part_ids: Sequence[str]) -> dict[str, str]:
+    """Display name per item, unique among all items (parts that are not in the graph too).
+
+    A part in the graph is shown like in the failure report (`a.b` with its physical owners), any
+    other part by its last two id segments. Names that two items share are qualified with the
+    shortest unique suffix of the part id.
+    """
+    base = {
+        pid: short_name(graph, pid) if pid in graph.nodes else ".".join(pid.split("::")[-2:])
+        for pid in part_ids
+    }
+
+    def qual(pid: str, k: int) -> str:
+        if pid in graph.nodes:
+            return short_qual(graph, pid, k)
+        return "::".join(pid.split("::")[-(k + 1):])
+
+    return disambiguate(base, qual)
 
 
 def _functions_of(graph: ImpactGraph, part_id: str) -> tuple[str, ...]:
@@ -129,8 +144,9 @@ def _functions_of(graph: ImpactGraph, part_id: str) -> tuple[str, ...]:
         if node.layer is Layer.FUNCTION_NODE and any(
             e.label == "allocate" and e.source in logical for e in graph.inputs.get(nid, ())
         ):
-            if node.name not in names:
-                names.append(node.name)
+            text = name_of(graph, nid)
+            if text not in names:
+                names.append(text)
     return tuple(names)
 
 
@@ -150,10 +166,11 @@ def analyze(
     mission = cfg.mission_time_h
     cache: dict[Failure, dict[str, Impact]] = {}
     rows: list[Row] = []
+    item_names = _item_names(graph, [item.part_id for item in fmea.items])
     for item in fmea.items:
         node = graph.nodes.get(item.part_id)
         functions = _functions_of(graph, item.part_id)
-        name = _item_name(graph, item.part_id)
+        name = item_names[item.part_id]
         for unit in item.units:
             for m in unit.modes:
                 failure = Failure(
@@ -213,6 +230,7 @@ def _row(fmea, graph, groups, part_id, name, qty, unit: Unit, m: ModeSpec, failu
         item_id=part_id, item_name=name, qty=qty, sru=unit.sru, mode_id=m.id, description=m.description,
         local_effect=_local_effect(m), functions=functions, next_higher=next_higher, end_effect=end_effect,
         chain=path, chain_status=path_status, lost_functions=lost,
+        lost_function_labels=tuple(name_of(graph, n) for n in lost),
         requirements_at_risk=tuple(e.id for e in end_effect if e.layer == Layer.REQUIREMENT.value),
         flags=frozenset(flags), detection_method=m.detection_method, severity=severity,
         rate_fit=unit.rate_fit, mode_ratio=m.mode_ratio, effect_probability=m.effect_probability,
