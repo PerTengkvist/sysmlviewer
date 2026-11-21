@@ -77,6 +77,13 @@ class Realization:
     declared: set[tuple[str, str]] = field(default_factory=set)
     # (uc, function | node | part) -> the `#refine` that gave the winning precision
     origin: dict[tuple[str, str], str] = field(default_factory=dict)
+    # Display data for clients, so that they only read: realizer (function step | flow)
+    # -> the function nodes performing its steps; uc -> node -> the functions it is
+    # realized through (empty for a node that refines the use case itself); node ->
+    # its `allocate` targets.
+    realizer_nodes: dict[str, list[str]] = field(default_factory=dict)
+    uc_node_functions: dict[str, dict[str, list[str]]] = field(default_factory=dict)
+    node_parts: dict[str, list[str]] = field(default_factory=dict)
     in_scope: set[str] = field(default_factory=set)
     findings: list[Finding] = field(default_factory=list)
 
@@ -294,9 +301,16 @@ class _Deriver:
                 realizers.append(src)
             if function:
                 _put(out.uc_functions.setdefault(uc, {}), function, precision, out.origin, uc, rel.id)
+            listed = out.realizer_nodes.setdefault(src, [])
             for step in steps:
                 for node in self._function_nodes(step):
                     self._add_node(uc, node, precision, rel.id)
+                    if node not in listed:
+                        listed.append(node)
+                    if function:
+                        fns = out.uc_node_functions.setdefault(uc, {}).setdefault(node, [])
+                        if function not in fns:
+                            fns.append(function)
 
     def _add_node(self, uc: str, node: str, precision: Precision, refine_id: str) -> None:
         out = self.out
@@ -306,6 +320,9 @@ class _Deriver:
 
     def _include_union(self) -> None:
         out = self.out
+        for node, parts in self.allocated_to.items():
+            if node in self.sem and self._is_node(self.sem[node]):
+                out.node_parts[node] = list(parts)
         includes: dict[str, list[str]] = {}
         for el in self.sem.values():
             if (
@@ -322,6 +339,7 @@ class _Deriver:
             {k: dict(v) for k, v in out.uc_parts.items()},
         )
         targets = (out.uc_functions, out.uc_nodes, out.uc_parts)
+        direct_fns = {k: {n: list(f) for n, f in v.items()} for k, v in out.uc_node_functions.items()}
         for uc in includes:
             reached: list[str] = []
             queue = list(includes[uc])
@@ -331,6 +349,10 @@ class _Deriver:
                     continue
                 reached.append(inc)
                 queue.extend(includes.get(inc, []))
+            for inc in reached:
+                for node, fns in direct_fns.get(inc, {}).items():
+                    mine = out.uc_node_functions.setdefault(uc, {}).setdefault(node, [])
+                    mine.extend(f for f in fns if f not in mine)
             for direct_map, target in zip(direct, targets):
                 for inc in reached:
                     for key, precision in direct_map.get(inc, {}).items():
