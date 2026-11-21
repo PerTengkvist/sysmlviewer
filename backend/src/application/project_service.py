@@ -1631,6 +1631,7 @@ class ProjectService:
             ViewLayout,
             ViewLayouts,
             apply_auto_layout_edge_kinds,
+            apply_realization_matrix,
             apply_sequence_layout,
             apply_layout_scopes,
             apply_legacy_layout_rules,
@@ -1650,6 +1651,7 @@ class ProjectService:
         legacy_layout_patch = "layoutRules" in patch or "layeredLayout" in patch
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         sequence_layout_patch = "sequenceLayout" in patch
+        matrix_patch = "realizationMatrix" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1718,6 +1720,13 @@ class ProjectService:
             if sequence_layout_patch:
                 working = apply_sequence_layout(
                     working, view_id, patch.get("sequenceLayout")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if matrix_patch:
+                working = apply_realization_matrix(
+                    working, view_id, patch.get("realizationMatrix")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1798,6 +1807,7 @@ class ProjectService:
                 or legacy_layout_patch
                 or edge_kinds_patch
                 or sequence_layout_patch
+                or matrix_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -2488,6 +2498,11 @@ class ProjectService:
             ),
             "sequenceLayout": (
                 layout_for_view.to_dict().get("sequenceLayout")
+                if layout_for_view
+                else None
+            ),
+            "realizationMatrix": (
+                layout_for_view.to_dict().get("realizationMatrix")
                 if layout_for_view
                 else None
             ),

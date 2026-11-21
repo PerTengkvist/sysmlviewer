@@ -868,6 +868,25 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
+  const onRealizationMatrixChange = useCallback(
+    async (layout: import('./api').RealizationMatrixLayout) => {
+      if (!project || !activeViewId) return
+      setViewPayload((prev) =>
+        prev ? { ...prev, realizationMatrix: layout } : prev,
+      )
+      try {
+        await patchVisualization(project.id, {
+          viewId: activeViewId,
+          realizationMatrix: layout,
+          structureNotation,
+        })
+      } catch (e) {
+        setError(String(e))
+      }
+    },
+    [project, activeViewId, structureNotation],
+  )
+
   const onPortsMoved = useCallback(
     async (
       moves: { portId: string; side: PortSide; offset: number }[],
@@ -2063,6 +2082,9 @@ export default function App() {
                   void eventLog.report({ message, viewId })
                 }
                 onLayoutScopesChange={(scopes) => void onLayoutScopesChange(scopes)}
+                onRealizationMatrixChange={(layout) =>
+                  void onRealizationMatrixChange(layout)
+                }
                 onSequenceLayoutChange={(layout) =>
                   void onSequenceLayoutChange(layout)
                 }
