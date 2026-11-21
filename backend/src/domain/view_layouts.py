@@ -295,6 +295,9 @@ class ViewLayout:
     # Sequence diagrams: user-chosen lifeline order and header widths
     # ({order?: [id], widths?: {id: px}}); None when never set.
     sequence_layout: dict[str, Any] | None = None
+    # Realization matrix: what rows and columns list ({rows?: useCases | steps,
+    # columns?: nodes | parts}); None when never set.
+    realization_matrix: dict[str, str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
@@ -310,6 +313,8 @@ class ViewLayout:
             out["autoLayoutEdgeKinds"] = dict(self.auto_layout_edge_kinds)
         if self.sequence_layout is not None:
             out["sequenceLayout"] = _copy_sequence_layout(self.sequence_layout)
+        if self.realization_matrix is not None:
+            out["realizationMatrix"] = dict(self.realization_matrix)
         return out
 
     @classmethod
@@ -348,6 +353,7 @@ class ViewLayout:
                 data.get("autoLayoutEdgeKinds")
             ),
             sequence_layout=normalize_sequence_layout(data.get("sequenceLayout")),
+            realization_matrix=normalize_realization_matrix(data.get("realizationMatrix")),
         )
 
 
@@ -382,6 +388,22 @@ def normalize_sequence_layout(raw: Any) -> dict[str, Any] | None:
             if isinstance(key, str) and key and value > 0:
                 clean[key] = float(value)
         out["widths"] = clean
+    return out
+
+
+MATRIX_ROWS = ("useCases", "steps")
+MATRIX_COLUMNS = ("nodes", "parts")
+
+
+def normalize_realization_matrix(raw: Any) -> dict[str, str] | None:
+    """`{rows?, columns?}` with known values only; None when not a dict."""
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, str] = {}
+    if raw.get("rows") in MATRIX_ROWS:
+        out["rows"] = raw["rows"]
+    if raw.get("columns") in MATRIX_COLUMNS:
+        out["columns"] = raw["columns"]
     return out
 
 
@@ -775,6 +797,7 @@ def _copy_view_layout(
     layout_scopes: list[dict[str, Any]] | None = None,
     auto_layout_edge_kinds: dict[str, bool] | None | object = ...,
     sequence_layout: dict[str, Any] | None | object = ...,
+    realization_matrix: dict[str, str] | None | object = ...,
 ) -> ViewLayout:
     """Rebuild ViewLayout while preserving fields not explicitly overridden."""
     override = view_layout.hierarchical_levels_override
@@ -786,6 +809,9 @@ def _copy_view_layout(
     seq_layout = view_layout.sequence_layout
     if sequence_layout is not ...:
         seq_layout = sequence_layout  # type: ignore[assignment]
+    matrix_layout = view_layout.realization_matrix
+    if realization_matrix is not ...:
+        matrix_layout = realization_matrix  # type: ignore[assignment]
     return ViewLayout(
         nodes=nodes if nodes is not None else dict(view_layout.nodes),
         edges=edges if edges is not None else dict(view_layout.edges),
@@ -803,6 +829,9 @@ def _copy_view_layout(
         auto_layout_edge_kinds=dict(edge_kinds) if edge_kinds is not None else None,
         sequence_layout=(
             _copy_sequence_layout(seq_layout) if seq_layout is not None else None
+        ),
+        realization_matrix=(
+            dict(matrix_layout) if matrix_layout is not None else None
         ),
     )
 
@@ -972,5 +1001,20 @@ def apply_sequence_layout(
     by_view[view_id] = _copy_view_layout(
         view_layout,
         sequence_layout=normalize_sequence_layout(raw),
+    )
+    return ViewLayouts(by_view=by_view)
+
+
+def apply_realization_matrix(
+    layouts: ViewLayouts,
+    view_id: str,
+    raw: dict[str, Any] | None,
+) -> ViewLayouts:
+    """Replace per-view realization matrix choice (None clears)."""
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    by_view[view_id] = _copy_view_layout(
+        view_layout,
+        realization_matrix=normalize_realization_matrix(raw),
     )
     return ViewLayouts(by_view=by_view)

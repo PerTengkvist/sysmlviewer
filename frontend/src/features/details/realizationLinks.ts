@@ -16,6 +16,8 @@ export type RealizationEntry = {
   precision: RealizationPrecision
   /** Reached only through `include`. */
   viaInclude: boolean
+  /** A function node that only stands for its function, which refines the use case. */
+  throughFunction?: boolean
 }
 
 export type RealizedByNode = RealizationEntry & { parts: RealizationEntry[] }
@@ -41,6 +43,8 @@ export type RealizesEntry = {
   stepId: string | null
   precision: RealizationPrecision
   viaInclude: boolean
+  /** A function node that only stands for its function, which refines the use case. */
+  throughFunction?: boolean
 }
 
 export type ElementRealization = {
@@ -109,6 +113,17 @@ function realizedBy(realization: Realization, ucId: string): RealizedByGroup[] {
     // A node that refines the use case itself belongs to no function.
     for (const fn of functions.length ? functions : [null]) group(fn).nodes.push(node)
   }
+  // A function that refines the use case, with no node of its own serving it, stands for its nodes.
+  for (const [nodeId, fn] of Object.entries(uc.functionNodes)) {
+    group(fn).nodes.push({
+      ...entry(nodeId, 'explicit'),
+      viaInclude: via.has(fn),
+      throughFunction: true,
+      parts: (realization.nodeParts[nodeId] ?? [])
+        .filter((p) => uc.functionParts[p] === fn)
+        .map((p) => ({ ...entry(p, 'explicit'), viaInclude: via.has(fn), throughFunction: true })),
+    })
+  }
   return [...groups.values()]
 }
 
@@ -126,6 +141,26 @@ function realizesFromMaps(
       stepId: null,
       precision,
       viaInclude: uc.viaInclude.includes(id),
+    })
+  }
+  return out
+}
+
+function realizesThroughFunction(
+  realization: Realization,
+  key: 'functionNodes' | 'functionParts',
+  id: string,
+): RealizesEntry[] {
+  const out: RealizesEntry[] = []
+  for (const [ucId, uc] of Object.entries(realization.useCases)) {
+    const fn = uc[key][id]
+    if (!fn) continue
+    out.push({
+      useCaseId: ucId,
+      stepId: null,
+      precision: 'explicit',
+      viaInclude: uc.viaInclude.includes(fn),
+      throughFunction: true,
     })
   }
   return out
@@ -212,7 +247,9 @@ export function elementRealization(
   add(info.realizes, realizesFromLinks(realization, semantic, id))
   add(info.realizes, realizesFromMaps(realization, 'functions', id))
   add(info.realizes, realizesFromMaps(realization, 'nodes', id))
+  add(info.realizes, realizesThroughFunction(realization, 'functionNodes', id))
   seen.clear()
   add(info.realizesViaNode, realizesFromMaps(realization, 'parts', id))
+  add(info.realizesViaNode, realizesThroughFunction(realization, 'functionParts', id))
   return info
 }

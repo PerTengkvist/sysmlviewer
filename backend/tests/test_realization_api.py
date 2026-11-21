@@ -82,7 +82,7 @@ def test_get_realization(tmp_path: Path):
 
     codes = {f["code"] for f in data["findings"]}
     assert "unrealized-system-step" in codes
-    assert set(data["findings"][0]) == {"code", "elementId", "message"}
+    assert set(data["findings"][0]) == {"code", "elementId", "message", "useCaseId"}
 
 
 ORDER = """
@@ -197,3 +197,15 @@ def test_realization_view_data_for_the_details_panel(tmp_path: Path):
     assert f"{N}::F::Seq::ghost" not in run["nodes"]
     # Allocation targets of a function node.
     assert data["nodeParts"][shared] == [f"{N}::L::vc", f"{N}::L::bc"]
+
+
+def test_function_nodes_of_an_explicit_function_link(tmp_path: Path):
+    client, pid = _client(tmp_path)
+    data = _get(client, pid)
+    assert data["useCases"][LOCK]["functionNodes"] == {
+        f"{SEC}::auth": SEC,
+        f"{SEC}::immo": SEC,
+        f"{SEC}::locks": SEC,
+    }
+    assert data["useCases"][START]["functionNodes"] == {}
+    assert data["useCases"][LOCK]["functionParts"] == {f"{P}::L::vc": SEC, f"{P}::L::bc": SEC}

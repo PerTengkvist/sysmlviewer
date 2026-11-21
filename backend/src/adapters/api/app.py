@@ -75,6 +75,8 @@ class VisualizationPatch(BaseModel):
     autoLayoutEdgeKinds: dict[str, Any] | None = None
     # Sequence diagrams {order?, widths?}; null clears.
     sequenceLayout: dict[str, Any] | None = None
+    # Realization matrix {rows?, columns?}; null clears.
+    realizationMatrix: dict[str, Any] | None = None
 
 
 class ViewSnapshotBody(BaseModel):

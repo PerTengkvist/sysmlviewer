@@ -57,6 +57,8 @@ const uc = (partial: Partial<UseCaseRealization>): UseCaseRealization => ({
   declared: [],
   origin: {},
   nodeFunctions: {},
+  functionNodes: {},
+  functionParts: {},
   ...partial,
 })
 
@@ -104,12 +106,12 @@ const realization: Realization = {
     {
       code: 'unrealized-system-step',
       elementId: `${UC}::askForBrake`,
-      message: 'system step is not realized',
+      message: 'system step is not realized', useCaseId: null,
     },
     {
       code: 'untraced-function-step',
       elementId: `${UC}::askForBrake`,
-      message: 'other finding',
+      message: 'other finding', useCaseId: null,
     },
   ],
 }
@@ -233,5 +235,54 @@ describe('elementRealization', () => {
   it('shows a finding on its element and none on others', () => {
     expect(info(`${UC}::askForBrake`).findings).toHaveLength(1)
     expect(info(UC).findings).toEqual([])
+  })
+})
+
+describe('a function that stands for its nodes', () => {
+  const realization = (): Realization => ({
+    links: [],
+    actorSteps: {},
+    systemSteps: {},
+    stepRealizers: {},
+    coarseRealizers: {},
+    realizerNodes: {},
+    nodeParts: {},
+    useCases: {
+      'UC::Lonely': uc({
+        functions: { [SEC]: 'explicit' },
+        declared: [SEC],
+        functionNodes: { [AUTH]: SEC, [IMMO]: SEC },
+      }),
+    },
+    inScope: [],
+    findings: [],
+  })
+
+  it('lists the nodes under the function, marked through its function', () => {
+    const info = elementRealization(realization(), semantic, 'UC::Lonely')
+    expect(info.realizedBy).toHaveLength(1)
+    expect(info.realizedBy[0].nodes.map((n) => [n.id, n.precision, n.throughFunction])).toEqual([
+      [AUTH, 'explicit', true],
+      [IMMO, 'explicit', true],
+    ])
+  })
+
+  it('lets the node say which use case it realizes through its function', () => {
+    const info = elementRealization(realization(), semantic, AUTH)
+    expect(info.realizes).toEqual([
+      { useCaseId: 'UC::Lonely', stepId: null, precision: 'explicit', viaInclude: false, throughFunction: true },
+    ])
+  })
+
+  it('lists the parts that the function reaches for the node', () => {
+    const real = realization()
+    real.nodeParts = { [AUTH]: [VC] }
+    real.useCases['UC::Lonely'].functionParts = { [VC]: SEC }
+    const node = elementRealization(real, semantic, 'UC::Lonely').realizedBy[0].nodes[0]
+    expect(node.parts.map((p) => [p.id, p.throughFunction])).toEqual([[VC, true]])
+    expect(elementRealization(real, semantic, VC).realizesViaNode[0]).toMatchObject({
+      useCaseId: 'UC::Lonely',
+      throughFunction: true,
+    })
   })
 })

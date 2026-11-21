@@ -98,7 +98,7 @@ def _split_use_edge(relation_id: str) -> tuple[str, str] | None:
 
 
 # Diagram modes that draw no canvas, so there is no geometry to save or compare.
-_MODES_WITHOUT_GEOMETRY = frozenset({"requirementTable"})
+_MODES_WITHOUT_GEOMETRY = frozenset({"requirementTable", "realizationMatrix"})
 _MAX_NAMED_ELEMENTS = 10
 
 
@@ -254,6 +254,8 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
         | set(realization.uc_nodes)
         | set(realization.uc_parts)
         | set(realization.via_include)
+        | set(realization.uc_function_nodes)
+        | set(realization.uc_function_parts)
         | {uc for uc, _ in realization.declared}
     )
     for uc in by_model(ucs):
@@ -264,6 +266,8 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
             "viaInclude": by_model(realization.via_include.get(uc, set())),
             "declared": by_model(e for u, e in realization.declared if u == uc),
             "origin": {e: r for (u, e), r in realization.origin.items() if u == uc},
+            "functionNodes": dict(realization.uc_function_nodes.get(uc, {})),
+            "functionParts": dict(realization.uc_function_parts.get(uc, {})),
             "nodeFunctions": {
                 n: list(f) for n, f in realization.uc_node_functions.get(uc, {}).items()
             },
@@ -287,9 +291,61 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
         "useCases": use_cases,
         "inScope": by_model(realization.in_scope),
         "findings": [
-            {"code": f.code, "elementId": f.element_id, "message": f.message}
+            {
+                "code": f.code,
+                "elementId": f.element_id,
+                "message": f.message,
+                "useCaseId": f.use_case_id,
+            }
             for f in realization.findings
         ],
+    }
+
+
+def _matrix_realization(full: dict, semantic: dict[str, SemanticElement], rows: list[str]) -> dict:
+    """The realization payload restricted to the use cases (rows) a matrix exposes."""
+    ucs = set(rows)
+
+    def owner(eid: str) -> str:
+        el = semantic.get(eid)
+        return el.parent_id if el is not None and el.parent_id else ""
+
+    def keep(eid: str) -> bool:
+        return eid in ucs or owner(eid) in ucs
+
+    use_cases = {k: v for k, v in full["useCases"].items() if k in ucs}
+    # A finding belongs to the matrix when it is about a row, a step of a row, a function
+    # or function node that realizes a row, or a `#refine` that ends at a row or its step.
+    related: set[str] = set(ucs)
+    for info in use_cases.values():
+        related |= set(info["functions"]) | set(info["nodes"]) | set(info["functionNodes"])
+
+    def keep_finding(finding: dict) -> bool:
+        if finding["useCaseId"] is not None:
+            return finding["useCaseId"] in ucs  # one finding per use case
+        eid = finding["elementId"]
+        if keep(eid) or eid in related:
+            return True
+        el = semantic.get(eid)
+        return el is not None and any(
+            end is not None and keep(end) for end in (el.source_id, el.target_id)
+        )
+
+    return {
+        "links": [link for link in full["links"] if keep(link["targetId"])],
+        "actorSteps": {k: v for k, v in full["actorSteps"].items() if k in ucs},
+        "systemSteps": {k: v for k, v in full["systemSteps"].items() if k in ucs},
+        "stepRealizers": {k: v for k, v in full["stepRealizers"].items() if keep(k)},
+        "coarseRealizers": {k: v for k, v in full["coarseRealizers"].items() if keep(k)},
+        "realizerNodes": {
+            k: v
+            for k, v in full["realizerNodes"].items()
+            if any(link["sourceId"] == k and keep(link["targetId"]) for link in full["links"])
+        },
+        "nodeParts": dict(full["nodeParts"]),
+        "useCases": use_cases,
+        "inScope": [u for u in full["inScope"] if u in ucs],
+        "findings": [f for f in full["findings"] if keep_finding(f)],
     }
 
 
@@ -700,6 +756,46 @@ class ProjectService:
         return _realization_payload(
             derive_realization(project.semantic), list(project.semantic)
         )
+
+    def _matrix_payload(
+        self,
+        project_id: str,
+        project: Project,
+        use_case_ids: set[str],
+        semantic: dict[str, dict],
+    ) -> dict:
+        """What the realization matrix draws, beyond the exposed use cases in `semantic`.
+
+        Adds the realization of those use cases (with `realizerNodes` and `nodeParts`), every
+        function node of the model with its owning function (so gaps show) and the elements
+        the cells name; they are put into `semantic`.
+        """
+        from domain.realization import function_nodes
+
+        full = self.get_realization(project_id) or {}
+        rows = [aid for aid in project.semantic if aid in use_case_ids]
+        nodes = function_nodes(project.semantic)
+        realization = _matrix_realization(full, project.semantic, rows)
+        needed: set[str] = set(rows)
+        for uc in rows:
+            needed |= set(realization["systemSteps"].get(uc, []))
+            needed |= set(realization["actorSteps"].get(uc, {}))
+        for node in nodes:
+            needed.add(node.id)
+            needed |= set(realization["nodeParts"].get(node.id, []))
+            if node.function_id:
+                needed.add(node.function_id)
+        needed |= {link["refineId"] for link in realization["links"]}
+        needed |= {link["sourceId"] for link in realization["links"]}
+        for eid in needed:
+            if eid in project.semantic and eid not in semantic:
+                semantic[eid] = project.semantic[eid].to_dict()
+        return {
+            "realization": realization,
+            "matrixColumns": {
+                "nodes": [{"id": n.id, "functionId": n.function_id} for n in nodes]
+            },
+        }
 
     def list_documentation(self, project_id: str) -> list[str] | None:
         project = self.repo.get(project_id)
@@ -1549,6 +1645,7 @@ class ProjectService:
             ViewLayout,
             ViewLayouts,
             apply_auto_layout_edge_kinds,
+            apply_realization_matrix,
             apply_sequence_layout,
             apply_layout_scopes,
             apply_legacy_layout_rules,
@@ -1568,6 +1665,7 @@ class ProjectService:
         legacy_layout_patch = "layoutRules" in patch or "layeredLayout" in patch
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         sequence_layout_patch = "sequenceLayout" in patch
+        matrix_patch = "realizationMatrix" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1636,6 +1734,13 @@ class ProjectService:
             if sequence_layout_patch:
                 working = apply_sequence_layout(
                     working, view_id, patch.get("sequenceLayout")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if matrix_patch:
+                working = apply_realization_matrix(
+                    working, view_id, patch.get("realizationMatrix")
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1716,6 +1821,7 @@ class ProjectService:
                 or legacy_layout_patch
                 or edge_kinds_patch
                 or sequence_layout_patch
+                or matrix_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -1979,7 +2085,34 @@ class ProjectService:
             else max(1, hierarchical_levels)
         )
 
-        diagram_mode = resolve_diagram_mode(view, root)
+        exposed_kinds: set[ArtifactKind] | None = None
+        grid_ids: set[str] = set()
+        if view.type_ref == "GridView":
+            # A grid shows a requirements table, or the realization matrix when what it
+            # exposes (all the way down, after the view's filters, whatever the diagram
+            # levels) has use cases and no requirements.
+            from domain.view_filter import apply_view_filters, parse_stored_filters
+
+            for eroot in expose_roots:
+                grid_ids |= collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    structural_depth(project.semantic, eroot.id),
+                )
+            grid_filters = parse_stored_filters(stored_filters)
+            if grid_filters:
+                grid_ids = apply_view_filters(
+                    project.semantic,
+                    grid_ids,
+                    grid_filters,
+                    root_id=root.id,
+                    root_ids=set(expose_root_ids),
+                )
+            exposed_kinds = {
+                project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
+            }
+        diagram_mode = resolve_diagram_mode(view, root, exposed_kinds)
         # `expose Car::*;` shows Car's members without Car: no frame to draw.
         if diagram_mode == "whitebox" and not includes_root(
             expose_kinds.get(root.id, EXPOSE_MEMBER)
@@ -2019,6 +2152,18 @@ class ProjectService:
                     if child:
                         for gc in child.children:
                             artifact_ids.add(gc)
+        elif diagram_mode == "realizationMatrix":
+            # Rows: the exposed use cases, not those nested in another use case (the
+            # frontend lists the same ones). Everything else the matrix shows is
+            # added to `semantic` below.
+            def _is_row(aid: str) -> bool:
+                el = project.semantic[aid]
+                owner = project.semantic.get(el.parent_id or "")
+                return el.kind == ArtifactKind.USE_CASE and not (
+                    owner is not None and owner.kind == ArtifactKind.USE_CASE
+                )
+
+            artifact_ids = {aid for aid in grid_ids if _is_row(aid)}
         elif diagram_mode == "tree":
             for eroot in expose_roots:
                 artifact_ids |= collect_exposed(
@@ -2166,6 +2311,9 @@ class ProjectService:
                 for part_id in parts:
                     if part_id not in semantic and part_id in project.semantic:
                         semantic[part_id] = project.semantic[part_id].to_dict()
+        matrix: dict | None = None
+        if diagram_mode == "realizationMatrix":
+            matrix = self._matrix_payload(project_id, project, artifact_ids, semantic)
         nodes = {}
         from domain.merge import DEFAULT_TREE_HEIGHT, DEFAULT_TREE_WIDTH
         from domain.view_layouts import (
@@ -2380,11 +2528,18 @@ class ProjectService:
                 if layout_for_view
                 else None
             ),
+            "realizationMatrix": (
+                layout_for_view.to_dict().get("realizationMatrix")
+                if layout_for_view
+                else None
+            ),
             "semantic": semantic,
             "visualization": {"nodes": nodes, "edges": edges},
             "subdiagrams": subdiagrams,
             "menus": menus,
         }
+        if matrix is not None:
+            result.update(matrix)
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

@@ -50,6 +50,8 @@ const realization: Realization = {
       declared: [],
       origin: {},
       nodeFunctions: { 'F::Sec::auth': ['F::Sec'] },
+      functionNodes: {},
+      functionParts: {},
     },
   },
   inScope: ['UC::Start'],
@@ -122,7 +124,7 @@ describe('Details: realization', () => {
   it('shows a finding as a warning row', () => {
     const withFinding: Realization = {
       ...realization,
-      findings: [{ code: 'untraced-function-step', elementId: 'UC::Start::ask', message: 'no realizer' }],
+      findings: [{ code: 'untraced-function-step', elementId: 'UC::Start::ask', message: 'no realizer', useCaseId: null }],
     }
     const html = render('UC::Start::ask', { realization: withFinding })
     expect(html).toContain('class="realization-finding"')

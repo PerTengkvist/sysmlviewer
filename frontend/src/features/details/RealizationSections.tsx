@@ -42,10 +42,12 @@ function Badges({
   precision,
   viaInclude,
   viaUseCase = false,
+  throughFunction = false,
 }: {
   precision: RealizationPrecision
   viaInclude: boolean
   viaUseCase?: boolean
+  throughFunction?: boolean
 }) {
   return (
     <>
@@ -57,6 +59,12 @@ function Badges({
         <>
           {' '}
           <span className="realization-via-include">via use case</span>
+        </>
+      )}
+      {throughFunction && (
+        <>
+          {' '}
+          <span className="realization-through-function">through its function</span>
         </>
       )}
       {viaInclude && (
@@ -107,7 +115,11 @@ export function RealizationSections({
   const entry = (e: RealizationEntry) => (
     <>
       {link(e.id)}
-      <Badges precision={e.precision} viaInclude={e.viaInclude} />
+      <Badges
+        precision={e.precision}
+        viaInclude={e.viaInclude}
+        throughFunction={e.throughFunction}
+      />
     </>
   )
   const realizes = (items: RealizesEntry[]) => (
@@ -121,7 +133,11 @@ export function RealizationSections({
           ) : (
             link(e.useCaseId)
           )}
-          <Badges precision={e.precision} viaInclude={e.viaInclude} />
+          <Badges
+            precision={e.precision}
+            viaInclude={e.viaInclude}
+            throughFunction={e.throughFunction}
+          />
         </li>
       ))}
     </ul>
