@@ -13,6 +13,7 @@ from domain.interface_naming import (
     suggest_port_name_for_type,
 )
 from domain.dependency_tree import build_dependency_tree
+from domain.realization import Realization, derive_realization
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -240,6 +241,53 @@ def _resolve_layout_scopes(
     return out
 
 
+def _realization_payload(realization: Realization, order: list[str]) -> dict:
+    """Camel-case JSON form of a Realization; lists follow model order."""
+    rank = {eid: i for i, eid in enumerate(order)}
+
+    def by_model(ids) -> list[str]:
+        return sorted(ids, key=lambda i: (rank.get(i, len(rank)), i))
+
+    use_cases: dict[str, dict] = {}
+    ucs = (
+        set(realization.uc_functions)
+        | set(realization.uc_nodes)
+        | set(realization.uc_parts)
+        | set(realization.via_include)
+        | {uc for uc, _ in realization.declared}
+    )
+    for uc in by_model(ucs):
+        use_cases[uc] = {
+            "functions": dict(realization.uc_functions.get(uc, {})),
+            "nodes": dict(realization.uc_nodes.get(uc, {})),
+            "parts": dict(realization.uc_parts.get(uc, {})),
+            "viaInclude": by_model(realization.via_include.get(uc, set())),
+            "declared": by_model(e for u, e in realization.declared if u == uc),
+            "origin": {e: r for (u, e), r in realization.origin.items() if u == uc},
+        }
+    return {
+        "links": [
+            {
+                "refineId": link.refine_id,
+                "sourceId": link.source_id,
+                "targetId": link.target_id,
+                "precision": link.precision,
+            }
+            for link in realization.links
+        ],
+        "actorSteps": {uc: dict(steps) for uc, steps in realization.actor_steps.items()},
+        "systemSteps": {uc: list(steps) for uc, steps in realization.system_steps.items()},
+        "stepRealizers": {k: list(v) for k, v in realization.step_realizers.items()},
+        "coarseRealizers": {k: list(v) for k, v in realization.coarse_realizers.items()},
+        "useCases": use_cases,
+        "inScope": by_model(realization.in_scope),
+        "findings": [
+            {"code": f.code, "elementId": f.element_id, "message": f.message}
+            for f in realization.findings
+        ],
+    }
+
+
 def _declared_view_name(project: Project, view_id: str) -> str | None:
     """Name for the layout file. Generated artifact views have none."""
     return next((v.name for v in project.views if v.id == view_id), None)
@@ -357,6 +405,7 @@ class ProjectService:
         self.parser = parser
         self.events: EventLog = events or NullEventLog()
         self._reported_once: set[tuple] = set()
+        self._realization_cache: dict[str, tuple[dict, dict]] = {}
         # Sync routes run in a threadpool; a view layout is read, merged and
         # written back, so overlapping writers would drop each other's changes.
         self._layout_lock = threading.RLock()
@@ -634,6 +683,24 @@ class ProjectService:
         if artifact_id not in project.semantic:
             raise ElementNotFoundError(artifact_id)
         return build_dependency_tree(project.semantic, artifact_id)
+
+    def get_realization(self, project_id: str) -> dict | None:
+        """Use case realization of the project (see domain/realization.py).
+
+        Cached per project; the entry is dropped when the semantic model
+        differs from the one it was derived from. None when the project is missing.
+        """
+        project = self.get_project(project_id)
+        if not project:
+            return None
+        cached = self._realization_cache.get(project_id)
+        if cached is not None and cached[0] == project.semantic:
+            return cached[1]
+        payload = _realization_payload(
+            derive_realization(project.semantic), list(project.semantic)
+        )
+        self._realization_cache[project_id] = (dict(project.semantic), payload)
+        return payload
 
     def list_documentation(self, project_id: str) -> list[str] | None:
         project = self.repo.get(project_id)
