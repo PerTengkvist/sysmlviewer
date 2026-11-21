@@ -372,6 +372,14 @@ export interface ChainEdge {
   projected: boolean
 }
 
+/** Unambiguous header labels of a realization matrix, by element id (decision B11). */
+export interface MatrixLabels {
+  rows: Record<string, string>
+  nodes: Record<string, string>
+  parts: Record<string, string>
+  functions: Record<string, string>
+}
+
 export interface ViewPayload {
   view: ViewDef
   /**
@@ -403,6 +411,8 @@ export interface ViewPayload {
   realization?: Realization
   /** realizationMatrix only: every function node of the model, with its owning function. */
   matrixColumns?: { nodes: MatrixNodeColumn[] }
+  /** realizationMatrix only: unambiguous labels of rows, node and part columns and functions. */
+  matrixLabels?: MatrixLabels
   modeError?: string | null
   /**
    * actionFlow only: the parts that perform each step (`perform flow.step;`

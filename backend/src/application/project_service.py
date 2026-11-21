@@ -14,7 +14,7 @@ from domain.interface_naming import (
 )
 from domain.dependency_tree import build_dependency_tree
 from domain.realization import Realization, derive_realization
-from domain.realization_chain import Chain, build_chain, chain_labels
+from domain.realization_chain import Chain, build_chain, chain_labels, unambiguous_labels
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -791,11 +791,27 @@ class ProjectService:
         for eid in needed:
             if eid in project.semantic and eid not in semantic:
                 semantic[eid] = project.semantic[eid].to_dict()
+        # Unambiguous labels, one set per kind of header; the client only reads them.
+        top_rows = [
+            r
+            for r in rows
+            if not ((p := project.semantic[r].parent_id) in semantic and project.semantic[p].kind == ArtifactKind.USE_CASE)
+        ]
+        node_ids = [n.id for n in nodes]
+        part_ids = list(dict.fromkeys(p for n in node_ids for p in realization["nodeParts"].get(n, [])))
+        function_ids_ = list(dict.fromkeys(n.function_id for n in nodes if n.function_id))
+        labels = {
+            "rows": unambiguous_labels(project.semantic, top_rows, tagged=True),
+            "nodes": unambiguous_labels(project.semantic, node_ids, tagged=False),
+            "parts": unambiguous_labels(project.semantic, part_ids, tagged=False),
+            "functions": unambiguous_labels(project.semantic, function_ids_, tagged=False),
+        }
         return {
             "realization": realization,
             "matrixColumns": {
                 "nodes": [{"id": n.id, "functionId": n.function_id} for n in nodes]
             },
+            "matrixLabels": labels,
         }
 
     def list_documentation(self, project_id: str) -> list[str] | None:
