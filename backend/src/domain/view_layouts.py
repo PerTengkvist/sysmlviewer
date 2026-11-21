@@ -884,6 +884,8 @@ def apply_view_snapshot(
     """
     nodes = dict(layout.nodes)
     for artifact_id, geometry in parts.items():
+        if all(geometry.get(name) is None for name in ("x", "y", "width", "height")):
+            continue  # nothing to store; an empty entry must not erase what is saved
         nodes[artifact_id] = replace(
             nodes.get(artifact_id) or ViewNodeLayout(),
             x=_optional_float(geometry.get("x")),

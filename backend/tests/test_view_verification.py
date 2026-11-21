@@ -252,12 +252,31 @@ def test_snapshots_from_layout_and_payload_keep_port_label_offset():
     assert snapshot_from_view_payload(payload).ports[PORT]["labelOffset"] == offset
 
 
-def test_canvas_entry_without_any_value_is_not_a_missing_entry():
+def test_canvas_entry_without_any_value_is_still_a_missing_entry():
     canvas = GeometrySnapshot(
         parts={PART: {"x": None, "y": None, "width": None, "height": None}},
         ports={},
         edges={},
     )
-    assert compare_geometry(canvas, GeometrySnapshot({}, {}, {}), source="saved") == []
-    placed = GeometrySnapshot(parts={PART: _part()}, ports={}, edges={})
-    assert [m.field for m in compare_geometry(placed, GeometrySnapshot({}, {}, {}), source="saved")] == ["entry"]
+    found = compare_geometry(canvas, GeometrySnapshot({}, {}, {}), source="saved")
+    assert [m.field for m in found] == ["entry"]
+
+
+def test_payload_snapshot_leaves_out_nodes_without_geometry():
+    """A realization chain node that nothing has placed has nothing to confirm."""
+    payload = {
+        "visualization": {
+            "nodes": {PART: _part(), "Pkg::unplaced": {"artifactId": "Pkg::unplaced"}},
+            "edges": {},
+        }
+    }
+    assert set(snapshot_from_view_payload(payload).parts) == {PART}
+
+
+def test_snapshot_entry_without_values_does_not_erase_saved_geometry():
+    from domain.view_layouts import apply_view_snapshot
+
+    layout = ViewLayout(nodes={PART: ViewNodeLayout(x=10.0, y=20.0, width=100.0, height=50.0)})
+    out = apply_view_snapshot(layout, parts={PART: {}}, ports={}, edges={})
+    node = out.nodes[PART]
+    assert (node.x, node.y, node.width, node.height) == (10.0, 20.0, 100.0, 50.0)
