@@ -93,7 +93,7 @@ const KIND_KEYWORD: Partial<Record<SemanticElement['kind'], string>> = {
 export function elementTypeLabel(el: SemanticElement): string {
   const word = KIND_KEYWORD[el.kind] ?? el.kind
   if (el.isDefinition) {
-    return el.isAbstract && el.kind === 'part' ? `abstract ${word} def` : `${word} def`
+    return el.isAbstract ? `abstract ${word} def` : `${word} def`
   }
   return el.kind === 'part' && el.isReference ? 'ref part' : word
 }

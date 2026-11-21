@@ -8,6 +8,7 @@ import {
 import type { SemanticElement } from '../../../../api'
 import { buildUseCaseFlow } from './buildUseCaseFlow'
 import { ActionNode } from '../actionFlow/ActionNode'
+import { flowNodeTarget } from './flowNodeTarget'
 import { UseCaseFlowParamsPanel } from './UseCaseFlowParamsPanel'
 import { DIAGRAM_MAX_ZOOM, DIAGRAM_MIN_ZOOM, diagramFitOptions } from '../../diagramZoom'
 import { DependencyTreeButton } from '../../../dependencyTree/DependencyTreeButton'
@@ -84,7 +85,8 @@ export function UseCaseFlowDialog({
               nodesDraggable={false}
               nodesConnectable={false}
               onNodeClick={(_, node) => {
-                if (onOpenElement && semantic[node.id]) onOpenElement(node.id)
+                const target = flowNodeTarget(node.data, semantic, useCaseId)
+                if (onOpenElement && target) onOpenElement(target)
               }}
               proOptions={{ hideAttribution: true }}
             >

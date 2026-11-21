@@ -227,6 +227,10 @@ describe('elementTypeLabel', () => {
     expect(t({ kind: 'part', isReference: true })).toBe('ref part')
     expect(t({ kind: 'part', isDefinition: true })).toBe('part def')
     expect(t({ kind: 'part', isDefinition: true, isAbstract: true })).toBe('abstract part def')
+    expect(t({ kind: 'useCase', isDefinition: true, isAbstract: true })).toBe(
+      'abstract use case def',
+    )
+    expect(t({ kind: 'part', isAbstract: true })).toBe('part')
     expect(t({ kind: 'useCase' })).toBe('use case')
     expect(t({ kind: 'useCase', isDefinition: true })).toBe('use case def')
     expect(t({ kind: 'requirement' })).toBe('requirement')
