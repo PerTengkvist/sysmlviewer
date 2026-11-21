@@ -421,7 +421,8 @@ export interface UseCaseFlowRealization {
   /** Function node -> the functions it is realized through. */
   nodeFunctions: Record<string, string[]>
   /** `perform X;` and `include use case X;` steps of a composite use case, in order. */
-  calls: { id: string; calledUseCaseId: string }[]
+  /** `viewId`: the view to open for the call (its activity view first), if the use case has one. */
+  calls: { id: string; calledUseCaseId: string; viewId: string | null }[]
 }
 
 export interface ViewPayload {

@@ -252,8 +252,8 @@ describe('composite use case', () => {
   const START_UC = 'P::UC::Start'
   const DRIVE = 'P::UC::Drive'
   const calls = [
-    { id: `${DRIVE}::include_Start`, calledUseCaseId: START_UC },
-    { id: `${DRIVE}::include_Unlock`, calledUseCaseId: 'P::UC::Unlock' },
+    { id: `${DRIVE}::include_Start`, calledUseCaseId: START_UC, viewId: 'V::StartFlow' },
+    { id: `${DRIVE}::include_Unlock`, calledUseCaseId: 'P::UC::Unlock', viewId: null },
   ]
   function drive(): ViewPayload {
     const v = fixture({
@@ -288,8 +288,10 @@ describe('composite use case', () => {
         kind: 'call',
         label: '▸ Start',
         calledUseCaseId: START_UC,
+        calledViewId: 'V::StartFlow',
         lane: 'system',
       })
+      expect(f.nodes.find((n) => n.id === calls[1].id)?.calledViewId).toBeNull()
       expect(f.nodes.find((n) => n.id === calls[1].id)?.label).toBe('▸ Unlock')
       const [first, second] = [calls[0].id, calls[1].id]
       expect(pairs(f)).toContain(`${first}>${second}`)

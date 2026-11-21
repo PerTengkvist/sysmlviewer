@@ -180,7 +180,7 @@ export function buildUseCaseRealizationGraph(opts: UseCaseRealizationGraphOpts):
       ...(n.badge ? { badge: n.badge } : {}),
       ...(n.unrealized ? { unrealized: true } : {}),
       ...(n.coarse ? { coarse: true } : {}),
-      ...(n.calledUseCaseId ? { calledUseCaseId: n.calledUseCaseId } : {}),
+      ...(n.calledUseCaseId ? { calledUseCaseId: n.calledUseCaseId, calledViewId: n.calledViewId ?? null } : {}),
       laneId: n.lane,
     }
     return {
@@ -190,6 +190,8 @@ export function buildUseCaseRealizationGraph(opts: UseCaseRealizationGraphOpts):
       style: { ...sizes.get(n.id)! },
       draggable: false,
       connectable: false,
+      // A node that cannot be dragged is not `nopan` by itself, and a double click on it zooms.
+      className: 'nopan',
       zIndex: 2,
       data: data as unknown as Record<string, unknown>,
     }

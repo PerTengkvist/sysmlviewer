@@ -414,6 +414,9 @@ def normalize_realization_matrix(raw: Any) -> dict[str, str] | None:
         out["rows"] = raw["rows"]
     if raw.get("columns") in MATRIX_COLUMNS:
         out["columns"] = raw["columns"]
+    return out
+
+
 REALIZATION_LANE_MODES = ("blackbox", "whitebox", "logical")
 
 
@@ -1101,6 +1104,9 @@ def apply_realization_matrix(
         view_layout,
         realization_matrix=normalize_realization_matrix(raw),
     )
+    return ViewLayouts(by_view=by_view)
+
+
 def apply_use_case_realization_layout(
     layouts: ViewLayouts,
     view_id: str,

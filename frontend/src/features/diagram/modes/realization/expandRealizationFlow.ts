@@ -36,8 +36,9 @@ export type RealizationFlowNode = {
   unrealized?: boolean
   /** A system step that a flow realizes as a whole. */
   coarse?: boolean
-  /** A call node: the use case it calls. */
+  /** A call node: the use case it calls, and the view that opens it, if any. */
   calledUseCaseId?: string
+  calledViewId?: string | null
 }
 
 export type RealizationFlowEdge = {
@@ -80,6 +81,7 @@ type Item = {
   kind: FlowNodeKind
   name: string
   calledUseCaseId?: string
+  calledViewId?: string | null
 }
 
 type Succession = { id: string; source: string; target: string; label: string }
@@ -90,16 +92,18 @@ function useCaseFlow(
   semantic: Record<string, SemanticElement>,
   real: UseCaseFlowRealization,
 ): { items: Item[]; successions: Succession[] } {
-  const calls = new Map(real.calls.map((c) => [c.id, c.calledUseCaseId]))
+  const calls = new Map(real.calls.map((c) => [c.id, c]))
   const steps = new Set([...real.systemSteps, ...Object.keys(real.actorSteps)])
   const items: Item[] = []
   const written: SemanticElement[] = []
   for (const el of Object.values(semantic)) {
     if (el.parentId !== uc) continue
     const item = { id: el.id, elementId: el.id, name: el.name }
-    const called = calls.get(el.id)
+    const call = calls.get(el.id)
     if (el.kind === 'succession') written.push(el)
-    else if (called) items.push({ ...item, kind: 'call', calledUseCaseId: called })
+    else if (call) {
+      items.push({ ...item, kind: 'call', calledUseCaseId: call.calledUseCaseId, calledViewId: call.viewId })
+    }
     else if (el.kind !== 'action') continue
     else if (el.typeRef === 'start') items.push({ ...item, kind: 'start' })
     else if (el.typeRef === 'done') items.push({ ...item, kind: 'done' })
@@ -213,6 +217,7 @@ export function expandRealizationFlow(
         label: `▸ ${semantic[called]?.name ?? called}`,
         lane: lane(SYSTEM_LANE, 'system'),
         calledUseCaseId: called,
+        calledViewId: item.calledViewId ?? null,
       })
       continue
     }

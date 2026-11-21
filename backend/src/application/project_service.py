@@ -2271,7 +2271,7 @@ class ProjectService:
             artifact_ids |= extra
         elif diagram_mode == "useCaseRealization" and mode_error is None:
             realization_flow = build_realization_flow(
-                project.semantic, derive_realization(project.semantic), root.id
+                project.semantic, derive_realization(project.semantic), root.id, project.views
             )
             artifact_ids |= set(realization_flow.ids)
         elif diagram_mode == "realizationChain":

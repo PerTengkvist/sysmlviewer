@@ -15,11 +15,11 @@ Pure domain logic: no I/O.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from domain.models import ArtifactKind, SemanticElement
+from domain.models import ArtifactKind, SemanticElement, ViewDef
 from domain.perform import is_perform, resolve_perform_target
 from domain.realization import Realization
 from domain.realization_labels import unambiguous_labels
@@ -44,9 +44,19 @@ def _unique(items: list[str]) -> list[str]:
     return list(dict.fromkeys(items))
 
 
-def _calls(semantic: Mapping[str, SemanticElement], uc: SemanticElement) -> list[dict[str, str]]:
+def _view_of(views: Sequence[ViewDef], use_case_id: str) -> str | None:
+    """The view to open for a use case: its activity view, else the first view that exposes it."""
+    exposing = [v for v in views if v.root_artifact_id == use_case_id]
+    activity = [v for v in exposing if v.type_ref == "ActionFlowView"]
+    chosen = (activity or exposing or [None])[0]
+    return chosen.id if chosen else None
+
+
+def _calls(
+    semantic: Mapping[str, SemanticElement], uc: SemanticElement, views: Sequence[ViewDef]
+) -> list[dict[str, str | None]]:
     """`then perform X;` and `include use case X;` where X is a use case, in declaration order."""
-    calls: list[dict[str, str]] = []
+    calls: list[dict[str, str | None]] = []
     performed: set[str] = set()
     for cid in uc.children:
         el = semantic.get(cid)
@@ -56,7 +66,7 @@ def _calls(semantic: Mapping[str, SemanticElement], uc: SemanticElement) -> list
         if target not in semantic:
             target = resolve_perform_target(dict(semantic), el)
         if target and semantic[target].kind == ArtifactKind.USE_CASE:
-            calls.append({"id": cid, "calledUseCaseId": target})
+            calls.append({"id": cid, "calledUseCaseId": target, "viewId": _view_of(views, target)})
             performed.add(target)
     for cid in uc.children:
         el = semantic.get(cid)
@@ -67,9 +77,11 @@ def _calls(semantic: Mapping[str, SemanticElement], uc: SemanticElement) -> list
             and semantic[el.target_id].kind == ArtifactKind.USE_CASE
             and el.target_id not in performed
         ):
-            calls.append({"id": cid, "calledUseCaseId": el.target_id})  # type: ignore[dict-item]
+            calls.append(
+                {"id": cid, "calledUseCaseId": el.target_id, "viewId": _view_of(views, el.target_id)}
+            )
     rank = {cid: i for i, cid in enumerate(uc.children)}
-    calls.sort(key=lambda c: rank.get(c["id"], 0))
+    calls.sort(key=lambda c: rank.get(str(c["id"]), 0))
     return calls
 
 
@@ -92,6 +104,7 @@ def build_realization_flow(
     semantic: Mapping[str, SemanticElement],
     realization: Realization,
     use_case_id: str,
+    views: Sequence[ViewDef] = (),
 ) -> RealizationFlow:
     r = realization
     uc = semantic[use_case_id]
@@ -155,7 +168,7 @@ def build_realization_flow(
     ids.extend(p for ps in lane_targets.values() for p in ps)
     ids.extend(actors)
 
-    calls = _calls(semantic, uc)
+    calls = _calls(semantic, uc, views)
     for call in calls:
         ids.append(call["calledUseCaseId"])
 

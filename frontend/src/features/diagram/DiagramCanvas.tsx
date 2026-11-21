@@ -1372,8 +1372,11 @@ export function DiagramCanvas({
     const wanted = new Set(selectedIds)
     setNodes((current) => {
       let changed = false
+      const byElement = modeRef.current === 'useCaseRealization'
       const next = current.map((item) => {
-        const selected = wanted.has(item.id)
+        // Realization nodes (lanes, steps drawn twice) stand for an element of their own.
+        const element = byElement ? (item.data as { artifactId?: string }).artifactId : undefined
+        const selected = wanted.has(item.id) || (element !== undefined && wanted.has(element))
         if (!!item.selected === selected) return item
         changed = true
         return { ...item, selected }
@@ -3563,12 +3566,15 @@ export function DiagramCanvas({
               ? undefined
               : (_e, node) => {
                   if (mode === 'useCaseRealization') {
-                    const data = node.data as { artifactId?: string; calledUseCaseId?: string }
+                    const data = node.data as {
+                      artifactId?: string
+                      calledUseCaseId?: string
+                      calledViewId?: string | null
+                    }
                     // A call node opens the view of the use case it calls, if there is one.
                     const called = data.calledUseCaseId
-                    const target = called ? view?.menus?.[called]?.[0] : undefined
-                    if (target) {
-                      onOpenViewRef.current(target.viewId)
+                    if (data.calledViewId) {
+                      onOpenViewRef.current(data.calledViewId)
                       return
                     }
                     const id = called ?? data.artifactId

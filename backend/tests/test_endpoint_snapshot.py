@@ -330,6 +330,9 @@ _REALIZATION_ADDED = [
     # The two AllocationViews that draw the realization chain (steps 15-17): views only.
     "UseCaseRealization::SecurityChain",
     "UseCaseRealization::StartChain",
+    # The two ActionFlowViews on use cases that draw the swimlane activity (steps 18-22).
+    "UseCaseRealization::StartRealization",
+    "UseCaseRealization::DriveRealization",
     "UseCaseRealization::alloc1",
     "UseCaseRealization::alloc2",
     "UseCaseRealization::alloc3",

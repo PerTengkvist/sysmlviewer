@@ -4,7 +4,8 @@
 // Start is realized step by step (askForBrake is deliberately left unrealized),
 // Unlock and Lock by coarser links, and Drive through its `include`s.
 // StartChain and SecurityChain draw the chain as columns: use case | function |
-// function node | logical part.
+// function node | logical part. StartRealization and DriveRealization draw the activity
+// of a use case on swimlanes (black box, white box or logical).
 package UseCaseRealization {
   package UC {
     use case def <'UCA'> Start {
@@ -64,5 +65,13 @@ package UseCaseRealization {
 
   view SecurityChain : AllocationView {
     expose UseCaseRealization::F::Security;
+  }
+
+  view StartRealization : ActionFlowView {
+    expose UseCaseRealization::UC::Start;
+  }
+
+  view DriveRealization : ActionFlowView {
+    expose UseCaseRealization::UC::Drive;
   }
 }

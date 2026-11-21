@@ -25,6 +25,8 @@ export type ActionNodeData = {
   /** useCaseRealization: `▸ Start`, a step that calls an included use case. */
   isCall?: boolean
   calledUseCaseId?: string
+  /** The view that opens the called use case, when it has one. */
+  calledViewId?: string | null
   /** useCaseRealization: the lane the node sits in. */
   laneId?: string
 }

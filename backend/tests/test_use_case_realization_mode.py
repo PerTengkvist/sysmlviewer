@@ -34,6 +34,8 @@ package FlowViews {
   view DriveFlow : ActionFlowView { expose RealizationProbe::UC::Drive; }
   view SecurityFlow : ActionFlowView { expose RealizationProbe::F::Security::startFlow; }
   view MixedFlow : ActionFlowView { expose RealizationProbe::Mixed::Uc; }
+  view MixedExpose : ActionFlowView { expose RealizationProbe::UC::Lock; expose RealizationProbe::F::Security::startFlow; }
+  view FlowFirst : ActionFlowView { expose RealizationProbe::F::Security::startFlow; expose RealizationProbe::UC::Lock; }
   view OwnFlow : ActionFlowView { expose RealizationProbe::Nested::Deep::Own; }
 }
 """
@@ -102,6 +104,13 @@ def test_action_flow_on_use_case_is_realization(tmp_path: Path):
     payload = _view(client, pid, "StartFlow")
     assert payload["diagramMode"] == "useCaseRealization"
     assert payload.get("modeError") is None
+
+
+def test_mode_follows_all_exposes_not_only_the_first(tmp_path: Path):
+    client, pid = _client(tmp_path)
+    # A use case together with an action: an action flow, whichever comes first.
+    assert _view(client, pid, "MixedExpose")["diagramMode"] == "actionFlow"
+    assert _view(client, pid, "FlowFirst")["diagramMode"] == "actionFlow"
 
 
 def test_payload_carries_the_use_case_and_its_realization(tmp_path: Path):
@@ -179,14 +188,32 @@ def test_composite_use_case_has_call_nodes(tmp_path: Path):
     payload = _view(client, pid, "DriveFlow")
     assert payload["diagramMode"] == "useCaseRealization"
     calls = payload["realization"]["calls"]
+    # viewId: the view to open for a call, the activity view of the called use case first.
     assert calls == [
-        {"id": f"{DRIVE}::include_Start", "calledUseCaseId": START},
-        {"id": f"{DRIVE}::include_Unlock", "calledUseCaseId": UNLOCK},
+        {"id": f"{DRIVE}::include_Start", "calledUseCaseId": START, "viewId": "FlowViews::StartFlow"},
+        {"id": f"{DRIVE}::include_Unlock", "calledUseCaseId": UNLOCK, "viewId": "FlowViews::UnlockFlow"},
     ]
     for call in calls:
         assert call["id"] in payload["semantic"]
         assert call["calledUseCaseId"] in payload["semantic"]
     assert payload["realization"]["systemSteps"] == []
+
+
+def test_a_call_opens_the_activity_view_before_other_views_and_none_when_there_is_none(tmp_path: Path):
+    client = TestClient(create_app(data_dir=tmp_path))
+    pid = client.post(api_url("/projects"), json={"name": "C"}).json()["id"]
+    add_content_file(client, pid, tmp_path, "probe.sysml", _model())
+    add_content_file(
+        client, pid, tmp_path, "views.sysml",
+        """package FlowViews {
+  view StartChain : AllocationView { expose RealizationProbe::UC::Start; }
+  view StartFlow : ActionFlowView { expose RealizationProbe::UC::Start; }
+  view DriveFlow : ActionFlowView { expose RealizationProbe::UC::Drive; }
+}
+""",
+    )
+    calls = {c["calledUseCaseId"]: c["viewId"] for c in _view(client, pid, "DriveFlow")["realization"]["calls"]}
+    assert calls == {START: "FlowViews::StartFlow", UNLOCK: None}
 
 
 def test_content_does_not_depend_on_the_depth_setting(tmp_path: Path):

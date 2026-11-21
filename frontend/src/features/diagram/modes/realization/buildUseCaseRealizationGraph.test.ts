@@ -200,6 +200,11 @@ describe('dragging', () => {
     expect(g.nodes.find((n) => n.type === 'laneGroup')?.draggable).toBe(false)
   })
 
+  it('keeps a double click on a step from zooming the canvas (a node that cannot be dragged must say nopan)', () => {
+    const g = build()
+    for (const n of g.nodes.filter((n) => n.type === 'action')) expect(n.className).toContain('nopan')
+  })
+
   it('stores the order of the mode after a drop, and keeps the other fields', () => {
     const start: UseCaseRealizationLayout = {
       lanes: 'whitebox',
