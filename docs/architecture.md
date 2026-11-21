@@ -176,6 +176,26 @@ A failure mode has `id` (`^[a-z][a-z0-9_]*$`), `local_effect`, `mode_ratio` (alp
 
 **Drift demo.** `scripts/electric_car_trigger_fmea_failure.py apply|reset [--project DIR]` works only on Electric Car. `apply` renames the part def `BatteryModule` to `BatteryCellModule` in both places in `vehicle_physical.sysml`, so the model stays valid while `fmea/library/battery_module.yaml` is out of date and `fmea.py validate|analyze|simulate` exit 1. The original bytes and checksums go to the ignored `<project>/.sysmlviewer/fmea_trigger.json`; `reset` restores the `.sysml` file, `state.json` and `project.json` byte for byte, refuses if you edited the `.sysml` file or `fmea/library/battery_module.yaml` after `apply`, and never writes in `views/`. It uses no version control. See `docs/tutorials/fmea.md`.
 
+## Use case realization
+
+`domain/realization.py` (`derive_realization(semantic)`, pure domain code) derives how functions, function nodes and logical parts realize a use case. The one link written by hand is a `#refine` dependency from a function step to a use case step; the rest follows from ownership, `perform` and `allocate`. Roles come from relations, not names.
+
+| Role | Definition |
+|---|---|
+| UC step | action directly in a use case, except `start`/`done` and `then perform X` |
+| actor step | UC step that an actor performs: `actor Driver { perform step; }` (the parser reads `perform` and `doc` in an actor body; `resolve_performers` includes actors) |
+| system step | UC step that no actor performs |
+| function flow, function step | action owned by a part with steps of its own, and an action directly in it |
+| function | part that owns a function flow |
+| function node | part that performs a function step, or is the source of an `allocate` |
+| logical part | target of the function node's `allocate` |
+
+Allowed `#refine` ends: function step or flow to UC step or use case; function or function node to use case. Precision is `step` (function step to UC step), `coarse` (a flow, or a function step towards a use case, or a flow towards a UC step) or `explicit` (function or function node to use case, the form models used before steps); the best precision wins, and `declared` remembers explicit links. `Realization` holds `links`, `actor_steps`, `system_steps`, `step_realizers`, `coarse_realizers`, `uc_functions`, `uc_nodes`, `uc_parts`, `via_include` (a composite use case gets the union of what its included use cases have, marked here), `in_scope` and `findings`.
+
+**Opt-in.** A use case is in scope when one of its steps is the target of a step link. Findings are only reported inside the scope, so a model without step links (the electric car) gets none and behaves as before. Codes: `unrealized-system-step`, `untraced-function-step` (a flow where other steps are linked), `refine-without-step` (explicit function link that no step backs), `explicit-mismatch` (explicit function node link without steps behind it, or the other way round, when the use case has explicit node links), `bad-realization-end` (`#refine` from a UC step or function step to something that is not an allowed end; `#refine` from a use case to a requirement is ordinary traceability and is not reported).
+
+**Consumers.** `scripts/check_sysml.py` prints `REALIZATION <code> <id>: <message>` and a summary line, and exits 1 on findings. `failure/extract.py` adds, after the explicit ones, the `refine` edges `uc_functions` and `uc_nodes` imply (same edge as an explicit `#refine`, deduplicated), so the failure and FMEA reports cannot tell the two forms apart. `domain/dependency_tree.py` adds the same pairs as `refine` edges with the step link's dependency as `relationId`.
+
 ## Parser subset
 
 Supported textual constructs:
@@ -200,7 +220,7 @@ Supported textual constructs:
 - `state def` / nested `state` / `transition … from … to …`
 - `action def` / nested `action` / `succession … first … then …` / `first start; then a; then if g then b else c; then done;`
 - `abstract part def …` / `abstract action def …` (`isAbstract`, written only when true). `part def` sets `isDefinition` (also only when true), so an abstract definition shows «abstract part def» and an abstract usage «abstract part»; concrete parts keep «part».
-- `perform [action] ref;` where `ref` is `name`, `flow.step` or `Pkg::Fn::flow.step`. In an action or case it is a flow step (id `<owner>::<last segment>`); in a part it says the part performs that action (id `<part>::perform_<ref>`, so two performs never merge). The reference is resolved from its owner with the rules in "Name resolution and imports" (so an import only counts in the namespace it is written in); the result is stored as `performTargetId`. A perform whose path does not resolve and whose last segment names no element is a warning with its line.
+- `perform [action] ref;` where `ref` is `name`, `flow.step` or `Pkg::Fn::flow.step`. In an action or case it is a flow step (id `<owner>::<last segment>`); in a part or an actor body (`actor Driver { perform step; doc /* … */ }`, any other member is a warning) it says the part or actor performs that action (id `<owner>::perform_<ref>`, so two performs never merge). The reference is resolved from its owner with the rules in "Name resolution and imports" (so an import only counts in the namespace it is written in); the result is stored as `performTargetId`. A perform whose path does not resolve and whose last segment names no element is a warning with its line.
 - Anonymous successions, messages and transitions get the ids `<owner>::succN`, `<owner>::msgN` and `<owner>::tN`, numbered from 1 within each owner (the use case, action, interaction or state def they sit in), not across the file. A flow therefore keeps its edge ids when another flow in the same file changes; layouts and visualization key on those ids. Named successions and the branch edges `if_<guard>_yes` / `if_<guard>_else` keep their names and do not use a number. Projects saved before this rule numbered across the file and can lose saved edge geometry for anonymous successions, messages and transitions once, the first time they are opened.
 - `#Keyword dependency … from … to …` (prefix metadata on dependencies; shown as `«Keyword»`)
 - `#Keyword part def …` / `#Keyword part …` / `#Keyword ref part …` (replaces `«part»` with `«Keyword»`)
@@ -266,7 +286,7 @@ part that owns it.
 
 - **Up:** one chain, picked per level by priority: 1. trace: satisfy,
   refine / derive / objective / implements dependencies (a function's or
-  functional entity's `#refine` to a use case included) and any dependency
+  functional entity's `#refine` to a use case included, and the same links implied by a step-level `#refine`, see "Use case realization") and any dependency
   whose target is a requirement; 2. allocate; 3. owner; 4. specialization
   family and typing; 5. include (perform goes here once it exists);
   6. other dependencies (`#Command`, `#Mount`, `#extend`, …). Within a
