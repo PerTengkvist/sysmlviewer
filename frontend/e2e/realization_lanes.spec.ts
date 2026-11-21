@@ -221,7 +221,10 @@ test('DriveRealization draws the included use cases as call nodes that open thei
   const start = nodeSel(`${DRIVE}::include_Start`)
   await expect(page.locator(start)).toContainText('▸ Start')
   await expect(page.locator(nodeSel(`${DRIVE}::include_Unlock`))).toContainText('▸ Unlock')
-  await expect(page.locator('.react-flow__node-lane')).toHaveCount(1)
+  // Drive has no steps of its own; what its included use cases reach (through include) are
+  // lanes without steps: the function nodes, then system.
+  await expect.poll(() => laneOrder(page)).toEqual([AUTH, IMMO, `${SEC}::locks`, 'system'])
+  await expect(page.locator(`${laneSel(AUTH)} .rlane`)).toHaveClass(/explicit-link|projected/)
   await page.locator(start).dblclick()
   // Start has a view of its own (StartRealization): its lanes appear.
   await expect(page.locator(laneSel(AUTH))).toBeVisible({ timeout: 30_000 })
