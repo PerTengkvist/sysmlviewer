@@ -19,6 +19,7 @@ from collections.abc import Mapping
 from domain.dependency_tree import lift_port_to_part
 from domain.failure.model import Edge, Gate, GateKind, ImpactGraph, Layer, Node
 from domain.models import ArtifactKind, SemanticElement
+from domain.occurrence import in_occurrence
 
 _TRACE_KEYWORDS = {"refine", "derive", "objective", "implements", "extend"}
 _RELATION_KINDS = {
@@ -74,7 +75,11 @@ class _Extractor:
 
     def _is_usage(self, eid: str) -> bool:
         el = self.sem[eid]
-        return el.kind == ArtifactKind.PART and not el.is_definition
+        return (
+            el.kind == ArtifactKind.PART
+            and not el.is_definition
+            and not in_occurrence(self.sem, eid)
+        )
 
     def _descendant_usages(self, eid: str) -> list[str]:
         out: list[str] = []

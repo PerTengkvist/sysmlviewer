@@ -7,6 +7,7 @@ import re
 from domain.expose import SUFFIX as EXPOSE_SUFFIX
 from domain.expose import kind_of
 from domain.models import ArtifactKind, SemanticElement
+from domain.occurrence import MATERIALIZED, in_occurrence
 
 
 _IMPORT_LINE_RE = re.compile(
@@ -74,7 +75,17 @@ def _emit_element(
 
     if el.kind == ArtifactKind.PART:
         parent = semantic.get(el.parent_id) if el.parent_id else None
+        sequence_part = in_occurrence(semantic, el.id)
+        if sequence_part and _is_materialized(semantic, el):
+            return
         nested = _structural_children(semantic, el)
+        if sequence_part:
+            nested = [
+                c
+                for c in nested
+                if c.kind not in _RELATION_KINDS and not _is_materialized(semantic, c)
+            ]
+        links = _feature_links(semantic, el) if sequence_part else ""
         mult = f" [{el.multiplicity}]" if el.multiplicity else ""
         meta = "".join(f"#{kw} " for kw in el.metadata_keywords)
         ref = "ref " if el.is_reference else ""
@@ -82,20 +93,24 @@ def _emit_element(
         meta = _abstract_prefix(el) + meta
         if el.type_ref:
             if nested:
-                lines.append(f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref} {{")
+                lines.append(
+                    f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref}{links} {{"
+                )
                 _emit_children(semantic, el, lines, indent + 1)
                 lines.append(f"{pad}}}")
             else:
-                lines.append(f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref};")
+                lines.append(
+                    f"{pad}{meta}{ref}part {el.name}{mult} : {el.type_ref}{links};"
+                )
             return
         # Nested under a part without type → usage/composite part (not a def)
-        if parent and parent.kind == ArtifactKind.PART:
+        if parent and parent.kind in (ArtifactKind.PART, ArtifactKind.OCCURRENCE):
             if nested:
-                lines.append(f"{pad}{meta}{ref}part {el.name} {{")
+                lines.append(f"{pad}{meta}{ref}part {el.name}{links} {{")
                 _emit_children(semantic, el, lines, indent + 1)
                 lines.append(f"{pad}}}")
             else:
-                lines.append(f"{pad}{meta}{ref}part {el.name};")
+                lines.append(f"{pad}{meta}{ref}part {el.name}{links};")
             return
         lines.append(f"{pad}{meta}{ref}part def {el.name} {{")
         _emit_children(semantic, el, lines, indent + 1)
@@ -222,6 +237,32 @@ def _emit_element(
         lines.append(f"{pad}lifeline {el.name};")
         return
 
+    if el.kind == ArtifactKind.OCCURRENCE:
+        type_bit = f" {':>' if el.is_definition else ':'} {el.type_ref}" if el.type_ref else ""
+        keyword = "occurrence def" if el.is_definition else "occurrence"
+        if el.children:
+            lines.append(f"{pad}{keyword} {el.name}{type_bit} {{")
+            _emit_children(semantic, el, lines, indent + 1)
+            lines.append(f"{pad}}}")
+        else:
+            lines.append(f"{pad}{keyword} {el.name}{type_bit};")
+        return
+
+    if el.kind == ArtifactKind.EVENT_OCCURRENCE:
+        type_bit = f" : {el.type_ref}" if el.type_ref else ""
+        lines.append(f"{pad}event occurrence {el.name}{type_bit};")
+        return
+
+    if el.kind == ArtifactKind.MESSAGE and _occurrence_message(semantic, el):
+        occ_id = el.parent_id or ""
+        prefix = "".join(f"#{kw} " for kw in (el.metadata_keywords or []))
+        name = "" if el.id in _anonymous_messages(semantic, occ_id) else f" {el.name}"
+        payload = f" of {el.type_ref}" if el.type_ref else ""
+        src = _message_end(occ_id, el.source_id, el.source_event_id)
+        tgt = _message_end(occ_id, el.target_id, el.target_event_id)
+        lines.append(f"{pad}{prefix}message{name}{payload} from {src} to {tgt};")
+        return
+
     if el.kind == ArtifactKind.MESSAGE:
         src = semantic.get(el.source_id) if el.source_id else None
         tgt = semantic.get(el.target_id) if el.target_id else None
@@ -288,6 +329,75 @@ def _emit_element(
         return
 
 
+_RELATION_KINDS = {
+    ArtifactKind.SPECIALIZATION,
+    ArtifactKind.SUBSETTING,
+    ArtifactKind.REDEFINITION,
+}
+
+
+def _is_materialized(semantic: dict[str, SemanticElement], part: SemanticElement) -> bool:
+    """A part the parser made for a feature a message end passes through."""
+    return part.kind == ArtifactKind.PART and any(
+        rel.kind == ArtifactKind.REDEFINITION
+        and rel.source_id == part.id
+        and MATERIALIZED in rel.metadata_keywords
+        for rel in (semantic.get(c) for c in semantic.get(part.parent_id or "", part).children)
+        if rel is not None
+    )
+
+
+def _feature_links(semantic: dict[str, SemanticElement], part: SemanticElement) -> str:
+    """` :> target` / ` :>> target` for the subsetting and redefinition of a part."""
+    parent = semantic.get(part.parent_id or "")
+    out = ""
+    for cid in parent.children if parent else []:
+        rel = semantic.get(cid)
+        if (
+            rel is None
+            or rel.source_id != part.id
+            or rel.kind not in (ArtifactKind.SUBSETTING, ArtifactKind.REDEFINITION)
+            or MATERIALIZED in rel.metadata_keywords
+        ):
+            continue
+        target = rel.type_ref or rel.target_id or ""  # a chain is kept as written
+        if target not in semantic and not rel.type_ref:
+            prefix = (part.parent_id or "") + "::"
+            target = target[len(prefix) :] if target.startswith(prefix) else target.lstrip("?")
+        op = ":>" if rel.kind == ArtifactKind.SUBSETTING else ":>>"
+        out += f" {op} {target}"
+    return out
+
+
+def _anonymous_messages(semantic: dict[str, SemanticElement], occ_id: str) -> set[str]:
+    """Messages the parser would number itself: `msgN` in order, N counting up from 1.
+    A written `message msg5 …` out of that sequence keeps its name."""
+    occ = semantic.get(occ_id)
+    out: set[str] = set()
+    counter = 1
+    for cid in occ.children if occ else []:
+        msg = semantic.get(cid)
+        if msg is not None and msg.kind == ArtifactKind.MESSAGE and msg.name == f"msg{counter}":
+            out.add(cid)
+            counter += 1
+    return out
+
+
+def _occurrence_message(semantic: dict[str, SemanticElement], msg: SemanticElement) -> bool:
+    parent = semantic.get(msg.parent_id or "")
+    return parent is not None and parent.kind == ArtifactKind.OCCURRENCE
+
+
+def _message_end(occ_id: str, part_id: str | None, event_id: str | None) -> str:
+    prefix = occ_id + "::"
+    path = (part_id or "?")
+    path = path[len(prefix) :] if path.startswith(prefix) else path.split("::")[-1]
+    path = path.replace("::", ".")
+    if event_id:
+        path += "." + event_id.rsplit("::", 1)[-1]
+    return path
+
+
 def _abstract_prefix(el: SemanticElement) -> str:
     return "abstract " if el.is_abstract else ""
 
@@ -337,7 +447,12 @@ def _emit_children(
         ArtifactKind.VIEW: 15,
         ArtifactKind.PACKAGE: 16,
     }
-    children.sort(key=lambda c: (order.get(c.kind, 9), c.id))
+    order[ArtifactKind.OCCURRENCE] = 8
+    order[ArtifactKind.EVENT_OCCURRENCE] = 2.5
+    # Messages keep their declaration order (sorting on id puts msg10 before msg2).
+    children.sort(
+        key=lambda c: (order.get(c.kind, 9), "" if c.kind == ArtifactKind.MESSAGE else c.id)
+    )
     for child in children:
         _emit_element(semantic, child, lines, indent)
 

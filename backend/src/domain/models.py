@@ -43,6 +43,8 @@ class ArtifactKind(str, Enum):
     INCLUDE = "include"
     INTERFACE = "interface"
     SATISFY = "satisfy"
+    OCCURRENCE = "occurrence"
+    EVENT_OCCURRENCE = "eventOccurrence"
 
 
 class RoutingType(str, Enum):
@@ -213,6 +215,10 @@ class SemanticElement:
     documentation: str | None = None
     # Short name from `<'R-01'>` on a declaration
     short_id: str | None = None
+    # For occurrence-form messages: the event occurrence each end is drawn at
+    # (`from a.sent to b.received`), or the part-qualified name when it does not resolve.
+    source_event_id: str | None = None
+    target_event_id: str | None = None
     children: list[str] = field(default_factory=list)
     file_id: str | None = None
 
@@ -226,6 +232,10 @@ class SemanticElement:
             out["performTargetId"] = self.perform_target_id
         if self.type_target_id:
             out["typeTargetId"] = self.type_target_id
+        if self.source_event_id:
+            out["sourceEventId"] = self.source_event_id
+        if self.target_event_id:
+            out["targetEventId"] = self.target_event_id
         return out
 
     def _to_dict(self) -> dict[str, Any]:
@@ -278,6 +288,8 @@ class SemanticElement:
             metadata_keywords=list(data.get("metadataKeywords") or []),
             documentation=data.get("documentation"),
             short_id=data.get("shortId"),
+            source_event_id=data.get("sourceEventId"),
+            target_event_id=data.get("targetEventId"),
             children=list(data.get("children") or []),
             file_id=data.get("fileId"),
         )

@@ -26,6 +26,7 @@ from domain.fmea.schema import (
 )
 from domain.models import ArtifactKind, SemanticElement
 from domain.name_resolution import NameResolver
+from domain.occurrence import in_occurrence
 
 SEVERITY_FILE = "severity.yaml"
 INSTANCES_FILE = "instances.yaml"
@@ -114,8 +115,13 @@ def _is_part_def(el: SemanticElement) -> bool:
     return el.kind == ArtifactKind.PART and el.is_definition
 
 
-def _is_part_usage(el: SemanticElement) -> bool:
-    return el.kind == ArtifactKind.PART and not el.is_definition
+def _is_part_usage(el: SemanticElement, semantic: Mapping[str, SemanticElement]) -> bool:
+    """A part usage of the system, not a lifeline of a scenario (a part of an occurrence)."""
+    return (
+        el.kind == ArtifactKind.PART
+        and not el.is_definition
+        and not in_occurrence(semantic, el.id)
+    )
 
 
 def _suggest(ref: str, elements: list[SemanticElement]) -> tuple[str, ...]:
@@ -134,7 +140,7 @@ def load_fmea(
     model = FmeaModel([], severity, lines=sources.lines)
     order = {eid: i for i, eid in enumerate(semantic)}
     defs = [e for e in semantic.values() if _is_part_def(e)]
-    usages = [e for e in semantic.values() if _is_part_usage(e)]
+    usages = [e for e in semantic.values() if _is_part_usage(e, semantic)]
 
     # library: part def id -> (file, PartLibrary)
     libraries: dict[str, tuple[str, PartLibrary]] = {}
@@ -275,7 +281,7 @@ def _resolve_part(
 ) -> str | None:
     direct = resolver.resolve_feature_ref(ref, None, "")
     found = semantic.get(direct.element_id) if direct.element_id else None
-    if found is not None and not _is_part_usage(found):
+    if found is not None and not _is_part_usage(found, semantic):
         model.unresolved.append(Unresolved("not-a-part-usage", loc, ref))
         return None
     try:
