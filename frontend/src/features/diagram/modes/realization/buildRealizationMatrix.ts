@@ -9,8 +9,9 @@ import { labelMap } from '../../labels'
 
 /**
  * Rows, columns and cells of the realization matrix. Everything is read from the view
- * payload (`realization`, `matrixColumns`, `performers`, `semantic`); the realization
- * itself is derived once, in the backend.
+ * payload (`realization`, `matrixColumns`, `semantic`); the realization itself is derived
+ * once, in the backend. Rows are the use cases of `semantic` that no other use case owns (the
+ * backend leaves nested ones out too).
  */
 
 export type MatrixOptions = Required<RealizationMatrixLayout>
@@ -251,11 +252,16 @@ export function buildRealizationMatrix(
   return { options, rows, columns, groups, cells, findings }
 }
 
+/**
+ * One CSV field: quoted when it holds a comma, quote or line break, and prefixed with `'`
+ * when a spreadsheet would run it as a formula (`=`, `+`, `-`, `@`).
+ */
 function csvField(text: string): string {
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+  const safe = /^\s*[=+\-@]/.test(text) ? `'${text}` : text
+  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
-/** The matrix as CSV: the same rows, columns and glyphs as the table. */
+/** The matrix as CSV (with a byte order mark, so Excel reads `●` `○` `✗`): the same rows, columns and glyphs as the table. */
 export function matrixToCsv(matrix: RealizationMatrix): string {
   const groupLabel = new Map(matrix.groups.map((g) => [g.id, g.label]))
   const header = [
@@ -276,5 +282,5 @@ export function matrixToCsv(matrix: RealizationMatrix): string {
   lines.push(
     ['Coverage', '', ...matrix.columns.map((c) => (c.gap ? '✗' : ''))].map(csvField).join(','),
   )
-  return lines.join('\n')
+  return `\uFEFF${lines.join('\n')}`
 }

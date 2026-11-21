@@ -224,11 +224,30 @@ describe('findings', () => {
 describe('matrixToCsv', () => {
   it('writes the same cells as the table', () => {
     const csv = matrixToCsv(buildRealizationMatrix(probeView(), nodesByUc))
-    const lines = csv.split('\n')
+    const lines = csv.replace('\uFEFF', '').split('\n')
     expect(lines[0]).toBe('Use case,Coverage,Security: auth,Security: immo,Security: locks')
     expect(lines[1]).toBe('UCA Start,2/3 ✗,●,●,')
     expect(lines[3]).toBe('UCC Lock,0/1,○,○,○')
     expect(lines.at(-1)).toBe('Coverage,,,,')
+  })
+
+  it('starts with a byte order mark so that Excel reads the glyphs', () => {
+    expect(matrixToCsv(buildRealizationMatrix(probeView(), nodesByUc)).startsWith('\uFEFF')).toBe(true)
+  })
+
+  it('quotes carriage returns', () => {
+    const view = probeView()
+    view.semantic[START] = { ...view.semantic[START], name: 'A\rB', shortId: null }
+    expect(matrixToCsv(buildRealizationMatrix(view, nodesByUc))).toContain('"A\rB",')
+  })
+
+  it('neutralizes fields that a spreadsheet would run as a formula', () => {
+    const view = probeView()
+    for (const [name, shown] of [['=SUM(A1)', "'=SUM(A1)"], ['+1', "'+1"], ['-x', "'-x"], ['@x', "'@x"]]) {
+      view.semantic[START] = { ...view.semantic[START], name, shortId: null }
+      const lines = matrixToCsv(buildRealizationMatrix(view, nodesByUc)).split('\n')
+      expect(lines[1].startsWith(shown + ',')).toBe(true)
+    }
   })
 
   it('quotes fields with commas and quotes', () => {
