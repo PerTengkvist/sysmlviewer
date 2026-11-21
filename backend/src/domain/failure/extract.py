@@ -6,7 +6,9 @@ Roles are derived from relations, not from names:
 - logical part: target of `#implements` or `allocate`, or satisfier of a requirement;
 - function node: source of an `allocate` whose target is a logical part;
 - function: owner of a function node;
-- use case: refined by a function (node), an objective source, or an end of `include`;
+- use case: refined by a function (node) directly or through a step (a `#refine` from a
+  function step to a use case step, see `domain.realization`), an objective source, or
+  an end of `include`;
 - requirement: objective of a use case, or satisfied by a logical part.
 
 `inputs[x]` lists what `x` depends on, in model order.
@@ -20,6 +22,7 @@ from domain.dependency_tree import lift_port_to_part
 from domain.failure.model import Edge, Gate, GateKind, ImpactGraph, Layer, Node
 from domain.models import ArtifactKind, SemanticElement
 from domain.occurrence import in_occurrence
+from domain.realization import derive_realization
 
 _TRACE_KEYWORDS = {"refine", "derive", "objective", "implements", "extend"}
 _RELATION_KINDS = {
@@ -95,8 +98,26 @@ class _Extractor:
         self._roles()
         for rel in self.relations:
             self._edges(rel)
+        self._realization_edges()
         self._warn_definition_only()
         return self._finish()
+
+    def _realization_edges(self) -> None:
+        """Refine edges the step-level links imply, after the explicit ones.
+
+        The same edge as an explicit `#refine` from the function (node) to the use case,
+        so reports do not tell the two forms apart. What a composite use case gets
+        through `include` is already reached by its include edge.
+        """
+        real = derive_realization(self.sem)
+        for table in (real.uc_functions, real.uc_nodes):
+            for uc, members in table.items():
+                for member in members:
+                    if member in real.via_include.get(uc, ()):
+                        continue
+                    if self.layers.get(member) in (Layer.FUNCTION, Layer.FUNCTION_NODE):
+                        self.layers[uc] = Layer.USE_CASE
+                        self._add(uc, Edge(member, "refine"))
 
     def _warn_definition_only(self) -> None:
         """A logical part with function nodes whose only implementers are definitions."""

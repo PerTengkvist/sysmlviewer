@@ -4,8 +4,10 @@ Usage (from the repo root):
     uv run --project backend python scripts/check_sysml.py examples/electric_car
     backend/.venv/bin/python scripts/check_sysml.py examples/electric_car
 
-Prints the element count per kind and every parser / file warning. Exits 1 if
-there are warnings, so it can gate example-model changes.
+Prints the element count per kind and every parser / file warning, then the use
+case realization findings (only for use cases with step-level `#refine` links) as
+`REALIZATION <code> <id>: <message>`. Exits 1 if there are warnings or findings, so
+it can gate example-model changes.
 """
 import sys
 from collections import Counter
@@ -14,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "src"))
 from adapters.parser.subset_parser import SubsetSysmlParser  # noqa: E402
 from domain.models import SysmlFile  # noqa: E402
+from domain.realization import derive_realization  # noqa: E402
 
 if len(sys.argv) != 2:
     sys.exit(__doc__)
@@ -35,4 +38,11 @@ warnings = [("", w) for w in result.warnings] + [
 ]
 for fid, w in warnings:
     print(f"WARNING {fid}: {w}" if fid else f"WARNING {w}")
-sys.exit(1 if warnings else 0)
+
+realization = derive_realization(result.elements)
+findings = realization.findings  # already sorted by code and id
+for f in findings:
+    print(f"REALIZATION {f.code} {f.element_id}: {f.message}")
+if realization.in_scope or findings:
+    print(f"realization: {len(realization.in_scope)} use cases in scope, {len(findings)} findings")
+sys.exit(1 if warnings or findings else 0)

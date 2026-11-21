@@ -8,6 +8,7 @@ from domain.expose import SUFFIX as EXPOSE_SUFFIX
 from domain.expose import kind_of
 from domain.models import ArtifactKind, SemanticElement
 from domain.occurrence import MATERIALIZED, in_occurrence
+from domain.perform import is_perform
 
 
 _IMPORT_LINE_RE = re.compile(
@@ -298,6 +299,21 @@ def _emit_element(
         src_n = src.name if src else (el.source_id or "?").split("::")[-1]
         tgt_n = tgt.name if tgt else (el.target_id or "?").split("::")[-1]
         lines.append(f"{pad}transition {el.name} from {src_n} to {tgt_n};")
+        return
+
+    if el.kind == ArtifactKind.ACTOR:
+        type_bit = f" : {el.type_ref}" if el.type_ref else ""
+        keyword = "actor def" if el.is_definition else "actor"
+        performs = [c for c in _structural_children(semantic, el) if is_perform(c)]
+        if performs or el.documentation:
+            lines.append(f"{pad}{keyword} {el.name}{type_bit} {{")
+            if el.documentation:
+                lines.append(f"{pad}  doc /* {el.documentation} */")
+            for perform in performs:
+                lines.append(f"{pad}  perform {perform.type_ref};")
+            lines.append(f"{pad}}}")
+        else:
+            lines.append(f"{pad}{keyword} {el.name}{type_bit};")
         return
 
     if el.kind == ArtifactKind.ACTION:
