@@ -56,14 +56,14 @@ def resolve_perform_target(
 
 
 def resolve_performers(semantic: dict[str, SemanticElement]) -> dict[str, list[str]]:
-    """Map each performed action id to the ids of the parts that perform it."""
+    """Map each performed action id to the ids of the parts and actors that perform it."""
     out: dict[str, list[str]] = {}
     resolver: NameResolver | None = None
     for el in sorted(semantic.values(), key=lambda e: e.id):
         if not is_perform(el) or not el.parent_id:
             continue
         owner = semantic.get(el.parent_id)
-        if owner is None or owner.kind != ArtifactKind.PART:
+        if owner is None or owner.kind not in (ArtifactKind.PART, ArtifactKind.ACTOR):
             continue
         target = el.perform_target_id
         if target not in semantic:

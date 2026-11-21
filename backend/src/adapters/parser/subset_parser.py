@@ -655,6 +655,77 @@ class SubsetSysmlParser:
         def current_scope() -> _Scope | None:
             return state.scopes[-1] if state.scopes else None
 
+        def add_perform_child(perform_ref: str, line: int) -> None:
+            """The current part or actor performs `perform_ref`.
+
+            Not a flow step: the id comes from the whole reference, so
+            `perform a.stop;` and `perform b.stop;` (or a child named `stop`)
+            stay apart.
+            """
+            perform_id = state.qualify(
+                "perform_" + perform_ref.replace("::", ".").replace(".", "_")
+            )
+            if perform_id in state.elements:
+                return
+            el = SemanticElement(
+                id=perform_id,
+                kind=ArtifactKind.ACTION,
+                name=ref_leaf(perform_ref),
+                parent_id=state.current_parent(),
+                type_ref=perform_ref,
+                file_id=file_id,
+                metadata_keywords=["perform"],
+            )
+            state.add_child(el.parent_id, perform_id)
+            state.elements[perform_id] = el
+            state.perform_lines[perform_id] = line
+
+        def parse_actor_body(actor_id: str) -> None:
+            """Members of `actor X { … }`: `doc /* … */` and `perform ref;`.
+
+            The opening brace is taken and the actor scope pushed; this reads
+            through the matching closing brace.
+            """
+            while peek() is not None:
+                t = peek()
+                if t.value == "}":
+                    take()
+                    return
+                if t.kind == "block_comment":
+                    take()
+                    continue
+                if t.kind == "ident" and t.value == "doc":
+                    take()
+                    if peek() and peek().kind == "block_comment":
+                        bc = take()
+                        assert bc is not None
+                        state.elements[actor_id].documentation = _block_comment_text(bc.value)
+                        if peek() and peek().value == ";":
+                            take()
+                    else:
+                        state.warnings.append(f"line {t.line}: doc without /* … */ body")
+                        skip_until_semicolon_or_brace()
+                    continue
+                if t.kind == "ident" and t.value == "perform":
+                    take()
+                    if peek() and peek().value == "action":
+                        take()
+                    ref = expect_feature_ref()
+                    if not ref:
+                        skip_until_semicolon_or_brace()
+                        continue
+                    if peek() and peek().value == "{":
+                        skip_until_semicolon_or_brace()
+                    elif peek() and peek().value == ";":
+                        take()
+                    add_perform_child(ref, t.line)
+                    continue
+                state.warnings.append(
+                    f"line {t.line}: unsupported actor member '{t.value}' in "
+                    f"'{actor_id}'; expected perform or doc"
+                )
+                skip_until_semicolon_or_brace()
+
         def ensure_flow_action(
             name: str,
             *,
@@ -2082,26 +2153,8 @@ class SubsetSysmlParser:
                 elif peek() and peek().value == ";":
                     take()
                 scope = current_scope()
-                if scope and scope.kind == ArtifactKind.PART:
-                    # The part performs `perform_ref`. Not a flow step: its id
-                    # comes from the whole reference, so `perform a.stop;` and
-                    # `perform b.stop;` (or a child named `stop`) stay apart.
-                    perform_id = state.qualify(
-                        "perform_" + perform_ref.replace("::", ".").replace(".", "_")
-                    )
-                    if perform_id not in state.elements:
-                        el = SemanticElement(
-                            id=perform_id,
-                            kind=ArtifactKind.ACTION,
-                            name=target,
-                            parent_id=state.current_parent(),
-                            type_ref=perform_ref,
-                            file_id=file_id,
-                            metadata_keywords=["perform"],
-                        )
-                        state.add_child(el.parent_id, perform_id)
-                        state.elements[perform_id] = el
-                        state.perform_lines[perform_id] = tok.line
+                if scope and scope.kind in (ArtifactKind.PART, ArtifactKind.ACTOR):
+                    add_perform_child(perform_ref, tok.line)
                     continue
                 step_id = ensure_flow_action(
                     target, type_ref=perform_ref, metadata_keywords=["perform"]
@@ -2503,7 +2556,12 @@ class SubsetSysmlParser:
                 if peek() and peek().value == ";":
                     take()
                 elif peek() and peek().value == "{":
-                    skip_until_semicolon_or_brace()
+                    take()
+                    state.scopes.append(
+                        _Scope(element_id=element_id, kind=ArtifactKind.ACTOR, brace_depth=1)
+                    )
+                    parse_actor_body(element_id)
+                    state.scopes.pop()
                 continue
 
             if tok.kind == "ident" and tok.value == "include":

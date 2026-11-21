@@ -300,6 +300,24 @@ def _emit_element(
         lines.append(f"{pad}transition {el.name} from {src_n} to {tgt_n};")
         return
 
+    if el.kind == ArtifactKind.ACTOR:
+        type_bit = f" : {el.type_ref}" if el.type_ref else ""
+        keyword = "actor def" if el.is_definition else "actor"
+        performs = [c for c in _structural_children(semantic, el) if _is_perform(c)]
+        if performs or el.documentation:
+            lines.append(f"{pad}{keyword} {el.name}{type_bit} {{")
+            if el.documentation:
+                lines.append(f"{pad}  doc /* {el.documentation} */")
+            for perform in performs:
+                lines.append(f"{pad}  perform {perform.type_ref};")
+            lines.append(f"{pad}}}")
+        else:
+            lines.append(f"{pad}{keyword} {el.name}{type_bit};")
+        return
+
+    if _is_perform(el) and (owner := semantic.get(el.parent_id or "")) and owner.kind == ArtifactKind.ACTOR:
+        return  # written by the actor
+
     if el.kind == ArtifactKind.ACTION:
         nested = _structural_children(semantic, el)
         type_bit = f" : {el.type_ref}" if el.type_ref else ""
@@ -334,6 +352,10 @@ _RELATION_KINDS = {
     ArtifactKind.SUBSETTING,
     ArtifactKind.REDEFINITION,
 }
+
+
+def _is_perform(el: SemanticElement) -> bool:
+    return el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords and bool(el.type_ref)
 
 
 def _is_materialized(semantic: dict[str, SemanticElement], part: SemanticElement) -> bool:
