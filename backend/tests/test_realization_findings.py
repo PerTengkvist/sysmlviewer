@@ -97,3 +97,75 @@ def test_electric_car_has_no_findings():
     r = derive_realization(SubsetSysmlParser().parse_project(files).elements)
     assert r.findings == []
     assert r.in_scope == set()
+
+
+DECISION_MODEL = """
+package D {
+  use case def U {
+    action a; action ok; action bad;
+    first start; then a; then if g then ok else bad; then done;
+  }
+  part def F {
+    part n { perform flow.s1; perform flow.s2; perform flow.s3; }
+    action flow {
+      action s1; action s2; action s3;
+      first start; then s1; then if gate then s2 else s3; then done;
+    }
+  }
+  allocate F::n to L::l;
+  package L { part l; }
+  #refine dependency from F::flow::s1 to U::a;
+}
+""".replace("F::flow::s1", "F::flow::s1")
+
+
+def test_decision_nodes_are_not_steps():
+    model = DECISION_MODEL.replace("F::flow::s1", "D::F::flow::s1").replace("to U::a", "to D::U::a")
+    r = derive_realization(parse(model))
+    assert r.system_steps["D::U"] == ["D::U::a", "D::U::ok", "D::U::bad"]
+    assert "D::U::g" not in r.system_steps["D::U"]
+    flagged = {f.element_id for f in r.findings}
+    assert "D::U::g" not in flagged
+    assert "D::F::flow::gate" not in flagged
+    assert "D::F::flow::s1" not in flagged
+
+
+def test_requirement_target_is_never_a_realization_finding():
+    model = (
+        "  package R { requirement def Need; }"
+        f"  #refine dependency from {START_FLOW}::logStart to {P}::R::Need;"
+    )
+    r = derive_realization(probe(model))
+    assert codes(r, "bad-realization-end") == []
+    unscoped = derive_realization(parse(
+        "package Q { requirement def Need; part def F { action fl { action s; } } use case def U { action a; }"
+        " #refine dependency from F::fl::s to Need; #refine dependency from F::fl to Need; }"
+    ))
+    assert codes(unscoped, "bad-realization-end") == []
+
+
+BIG = (
+    "  package UC2 { use case def Big { include use case UC::%s; action d1; } }"
+    f"  #refine dependency from {SEC}::unlockFlow::release to {P}::UC2::Big::d1;"
+)
+
+
+def test_included_explicit_function_is_not_refine_without_step():
+    other = f"{P}::G::Other"
+    r = derive_realization(
+        probe(OTHER + f"  #refine dependency from {other} to {LOCK};" + BIG % "Lock")
+    )
+    assert f"{P}::UC2::Big" in r.in_scope
+    assert r.via_include[f"{P}::UC2::Big"] >= {other}
+    assert codes(r, "refine-without-step") == []
+
+
+def test_included_nodes_are_not_explicit_mismatches():
+    helper = f"{P}::G::Other::helper"
+    r = derive_realization(
+        probe(OTHER + f"  #refine dependency from {helper} to {P}::UC2::Big;" + BIG % "Start")
+    )
+    flagged = {f.element_id for f in r.findings if f.code == "explicit-mismatch"}
+    assert {AUTH, f"{SEC}::immo"} <= set(r.via_include[f"{P}::UC2::Big"])
+    assert AUTH not in flagged and f"{SEC}::immo" not in flagged
+    assert helper in flagged  # a real mismatch is still reported

@@ -36,7 +36,8 @@ from domain.perform import is_perform, resolve_performers
 
 Precision = Literal["step", "coarse", "explicit"]
 _RANK: dict[str, int] = {"step": 0, "coarse": 1, "explicit": 2}
-_MARKERS = frozenset({"start", "done"})
+# `start`/`done` markers and decision nodes (`then if g then a else b;`) are not steps.
+_MARKERS = frozenset({"start", "done", "decide", "decision", "condition"})
 
 UNREALIZED_SYSTEM_STEP = "unrealized-system-step"
 UNTRACED_FUNCTION_STEP = "untraced-function-step"
@@ -110,6 +111,7 @@ class _Deriver:
     ) -> None:
         self.sem = semantic
         self.out = Realization()
+        self.bad_ends: list[tuple[SemanticElement, str | None, str | None]] = []
         order = {eid: i for i, eid in enumerate(semantic)}
         self.performers: dict[str, list[str]] = {
             action: sorted(owners, key=lambda o: order.get(o, 0))
@@ -259,7 +261,7 @@ class _Deriver:
                 (s_role in ("f_step", "flow") and t_role in ("uc_step", "uc"))
                 or (s_role in ("function", "node") and t_role == "uc")
             ):
-                self._bad(rel, s_role, t_role)
+                self.bad_ends.append((rel, s_role, t_role))
                 return
         if t_role not in ("uc_step", "uc") or s_role not in ("f_step", "flow", "function", "node"):
             return  # ordinary traceability, not a realization
@@ -376,8 +378,9 @@ class _Deriver:
         for uc in self.sem:
             if uc not in out.in_scope:
                 continue
+            inherited = out.via_include.get(uc, ())
             for function, precision in out.uc_functions.get(uc, {}).items():
-                if precision == "explicit":
+                if precision == "explicit" and function not in inherited:
                     out.findings.append(
                         Finding(
                             REFINE_WITHOUT_STEP,
@@ -401,7 +404,7 @@ class _Deriver:
                         )
                     )
             for node, precision in nodes.items():
-                if precision == "step" and node not in declared_nodes:
+                if precision == "step" and node not in declared_nodes and node not in inherited:
                     out.findings.append(
                         Finding(
                             EXPLICIT_MISMATCH,
@@ -410,4 +413,8 @@ class _Deriver:
                             "no #refine to it, although other function nodes do",
                         )
                     )
+        for rel, s_role, t_role in self.bad_ends:
+            # A function step that refines a requirement is ordinary traceability.
+            if "uc_step" in (s_role, t_role) or (t_role == "uc" and rel.target_id in out.in_scope):
+                self._bad(rel, s_role, t_role)
         out.findings.sort(key=lambda f: (f.code, f.element_id))

@@ -108,36 +108,47 @@ def test_include_union():
 
 
 def test_roles_from_relations_not_names():
-    renamed = (
-        FIXTURE.read_text(encoding="utf-8")
-        .replace("Security", "Alpha").replace("startFlow", "goFlow")
-        .replace("auth", "ax").replace("immo", "bx").replace("locks", "cx")
-        .replace("UC", "Cases").replace("F::", "Z::").replace("package F", "package Z")
-        .replace("RealizationProbe", "Q")
-    )
-    a = derive_realization(parse(renamed))
+    text = FIXTURE.read_text(encoding="utf-8")
+    renames = [
+        ("Security", "Alpha"), ("startFlow", "goFlow"), ("auth", "ax"), ("immo", "bx"),
+        ("locks", "cx"), ("UC::", "Cases::"), ("package UC", "package Cases"),
+        ("package F ", "package Z "), ("F::", "Z::"), ("L::", "M::"), ("package L ", "package M "),
+        ("RealizationProbe", "Q"),
+    ]
+    for old, new in renames:
+        text = text.replace(old, new)
+
+    def mapped(value):
+        if isinstance(value, str):
+            for old, new in renames:
+                value = value.replace(old, new)
+            return value
+        if isinstance(value, dict):
+            return {mapped(k): mapped(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return type(value)(mapped(v) for v in value)
+        if isinstance(value, set):
+            return {mapped(v) for v in value}
+        return value
+
+    a = derive_realization(parse(text))
     b = derive_realization(probe())
-
-    def shape(r):
-        return (
-            sorted(l.precision for l in r.links),
-            sorted(map(len, r.uc_nodes.values())),
-            sorted(map(len, r.uc_parts.values())),
-            sorted(map(len, r.system_steps.values())),
-            len(r.in_scope),
-        )
-
-    assert shape(a) == shape(b)
+    for name in ("actor_steps", "system_steps", "step_realizers", "coarse_realizers",
+                 "uc_functions", "uc_nodes", "uc_parts", "in_scope", "via_include"):
+        assert getattr(a, name) == mapped(getattr(b, name)), name
+    assert [(l.source_id, l.target_id, l.precision) for l in a.links] == [
+        (mapped(l.source_id), mapped(l.target_id), l.precision) for l in b.links
+    ]
 
 
 def test_occurrence_parts_ignored():
     r = derive_realization(
         probe(
             "  occurrence def Scenario { part ghost { perform "
-            f"{START_FLOW}.logStart; }} }}"
+            f"{START_FLOW}.checkKeyInCabin; }} }}"
         )
     )
-    assert not any("Scenario" in n for nodes in r.uc_nodes.values() for n in nodes)
+    assert r.uc_nodes[START] == {AUTH: "step", IMMO: "step"}
 
 
 def test_deterministic():
