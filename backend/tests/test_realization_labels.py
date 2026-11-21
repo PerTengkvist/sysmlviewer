@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from adapters.api.app import create_app
 from domain.models import ArtifactKind, SemanticElement
-from domain.realization_chain import unambiguous_labels
+from domain.realization_labels import unambiguous_labels
 from helpers import add_content_file, api_url
 
 

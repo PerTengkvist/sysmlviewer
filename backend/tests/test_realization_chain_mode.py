@@ -7,8 +7,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from adapters.api.app import create_app
-from domain.diagram_mode import resolve_diagram_mode
-from domain.models import ArtifactKind, SemanticElement, ViewDef
+from domain.models import ArtifactKind, SemanticElement
 from helpers import add_content_file, api_url
 
 PROBE = (Path(__file__).parent / "fixtures" / "realization_probe.sysml").read_text(
@@ -52,14 +51,29 @@ def _edges(payload: dict) -> set[tuple[str, str, str, str]]:
     return {(e["source"], e["target"], e["kind"], e["precision"]) for e in payload["chainEdges"]}
 
 
-def test_allocation_view_unchanged_for_parts():
-    part = SemanticElement(id="P::X", kind=ArtifactKind.PART, name="X")
-    view = ViewDef(id="v", name="v", root_artifact_id="P::X", type_ref="AllocationView")
-    assert resolve_diagram_mode(view, part) == "allocation"
-    sem = {part.id: part}
-    assert resolve_diagram_mode(view, part, sem) == "allocation"
-    pkg = SemanticElement(id="P", kind=ArtifactKind.PACKAGE, name="P")
-    assert resolve_diagram_mode(view, pkg, {"P": pkg}) == "allocation"
+def test_allocation_view_unchanged_for_parts(tmp_path: Path):
+    """A part with a logical/physical split and a behaviour of its own stays an allocation view."""
+    client = TestClient(create_app(data_dir=tmp_path))
+    pid = client.post(api_url("/projects"), json={"name": "S"}).json()["id"]
+    add_content_file(
+        client,
+        pid,
+        tmp_path,
+        "s.sysml",
+        """package S {
+  part def Vehicle {
+    part logical { part ctrl; }
+    part physical { part ecu; }
+    allocate logical::ctrl to physical::ecu;
+    action operate { action start; action stop; first start; then start; then stop; then done; }
+  }
+  view VA : AllocationView { expose Vehicle; }
+}
+""",
+    )
+    body = client.get(api_url(f"/projects/{pid}/views/S::VA")).json()
+    assert body["diagramMode"] == "allocation"
+    assert "chainEdges" not in body
 
 
 def test_chain_mode_for_use_case_root(tmp_path: Path):
@@ -150,7 +164,7 @@ def test_chain_labels_are_unambiguous(tmp_path: Path):
 
 
 def test_chain_labels_qualify_clashes():
-    from domain.realization_chain import chain_labels
+    from domain.realization_labels import unambiguous_labels
 
     def el(i: str, kind: ArtifactKind, short: str | None = None) -> SemanticElement:
         return SemanticElement(id=i, kind=kind, name=i.split("::")[-1], short_id=short)
@@ -161,7 +175,7 @@ def test_chain_labels_qualify_clashes():
         "C::Park": el("C::Park", ArtifactKind.USE_CASE, "UC9"),
         "D::Park": el("D::Park", ArtifactKind.USE_CASE, "UC9"),
     }
-    assert chain_labels(sem, list(sem)) == {
+    assert unambiguous_labels(sem, list(sem)) == {
         "A::Brake": "A::Brake",
         "B::Brake": "B::Brake",
         "C::Park": "UC9 C::Park",
@@ -197,6 +211,7 @@ def test_mode_and_content_do_not_depend_on_levels(tmp_path: Path):
 
 
 def test_chain_edges_follow_the_explicit_links_of_electric_car(tmp_path: Path):
+    """Both ways: every refine edge is a link of the realization, and every link has its edge."""
     import shutil
 
     src = Path(__file__).resolve().parents[2] / "examples" / "electric_car"
@@ -209,23 +224,30 @@ def test_chain_edges_follow_the_explicit_links_of_electric_car(tmp_path: Path):
         encoding="utf-8",
     )
     client = TestClient(create_app(workspace=ws))
-    project = client.get(api_url("/session")).json()["project"]
-    from domain.realization import derive_realization
-
-    for view_id, root in (("ChainViews::BrakeChain", "UseCases::Driving::Brake"),
-                          ("ChainViews::SecurityChain", "Functions::Security")):
-        body = client.get(api_url(f"/projects/{project['id']}/views/{view_id}")).json()
+    pid = client.get(api_url("/session")).json()["project"]["id"]
+    realization = client.get(api_url(f"/projects/{pid}/realization")).json()
+    explicit = {(l["sourceId"], l["targetId"]) for l in realization["links"]}
+    for view_id, root_is_uc, root in (
+        ("ChainViews::BrakeChain", True, "UseCases::Driving::Brake"),
+        ("ChainViews::SecurityChain", False, "Functions::Security"),
+    ):
+        body = client.get(api_url(f"/projects/{pid}/views/{view_id}")).json()
         assert body["diagramMode"] == "realizationChain", body.get("modeError")
-        assert all(e["kind"] != "owns" for e in body["chainEdges"]), "no step links in electric car"
-        refine_sources = {e["source"] for e in body["chainEdges"] if e["kind"] == "refine"}
-        rel = {
-            (r["sourceId"], r["targetId"])
-            for r in client.get(api_url(f"/projects/{project['id']}/realization")).json()["links"]
-        }
-        for e in body["chainEdges"]:
-            if e["kind"] == "refine" and not e["viaInclude"]:
-                assert (e["source"], e["target"]) in rel
-        assert refine_sources
+        refine = {(e["source"], e["target"]) for e in body["chainEdges"] if e["kind"] == "refine"}
+        ucs = {i for i, r in body["chainRoles"].items() if r == "useCase"}
+        # What the realization says about these use cases and nothing else.
+        expected = set()
+        for uc in ucs:
+            info = realization["useCases"][uc]
+            expected |= {(f, uc) for f in info["functions"]}
+            expected |= {(n, uc) for n in info["nodes"] if not info["nodeFunctions"].get(n)}
+        if not root_is_uc:
+            expected = {(s, t) for s, t in expected if s == root or s.startswith(root + "::")}
+        assert refine == expected, view_id
+        # Every explicit #refine to one of the use cases is drawn.
+        assert {(s, t) for s, t in explicit if t in ucs and s in body["chainRoles"]} <= refine
+        # Electric car has no step links, so nothing is derived through flows.
+        assert not any(e["kind"] == "owns" and not e["projected"] for e in body["chainEdges"])
 
 
 PROJECTION = """\
@@ -299,3 +321,81 @@ def test_chain_reaches_what_the_realization_says(tmp_path: Path):
 def test_function_root_keeps_only_its_own_projection(tmp_path: Path):
     body = _pj(tmp_path, "BrakingChain")
     assert {i for i, r in body["chainRoles"].items() if r == "node"} == {"Pj::Braking::pump", "Pj::Braking::valve"}
+
+
+def _modes(tmp_path: Path, model: str, views: str, names: list[str], extra: str = "") -> dict[str, dict]:
+    client = TestClient(create_app(data_dir=tmp_path))
+    pid = client.post(api_url("/projects"), json={"name": "M"}).json()["id"]
+    add_content_file(client, pid, tmp_path, "m.sysml", model)
+    add_content_file(client, pid, tmp_path, "v.sysml", views)
+    return {n: client.get(api_url(f"/projects/{pid}/views/V::{n}")).json() for n in names}
+
+
+def test_package_that_allocates_stays_an_allocation_view(tmp_path: Path):
+    """A package with a use case somewhere, but also allocations, is the old allocation view."""
+    views = """package V {
+  view WholePkg : AllocationView { expose RealizationProbe; }
+  view UcOnly : AllocationView { expose RealizationProbe::UC; }
+}"""
+    out = _modes(tmp_path, PROBE, views, ["WholePkg", "UcOnly"])
+    assert out["WholePkg"]["diagramMode"] == "allocation"
+    assert out["UcOnly"]["diagramMode"] == "realizationChain"
+
+
+def test_part_with_a_flow_but_no_realization_is_not_a_chain_root(tmp_path: Path):
+    views = "package V { view F : AllocationView { expose RealizationProbe::F::Security; } }"
+    no_links = PROBE.split("  #refine")[0] + "}\n"
+    out = _modes(tmp_path, no_links, views, ["F"])
+    assert out["F"]["diagramMode"] == "allocation"
+
+
+MIXED_VIEWS = """package V {
+  view UcThenPart : AllocationView { expose RealizationProbe::UC::Start; expose RealizationProbe::L; }
+  view PartThenUc : AllocationView { expose RealizationProbe::L; expose RealizationProbe::UC::Start; }
+  view UcAndFn : AllocationView { expose RealizationProbe::UC::Lock; expose RealizationProbe::F::Security; }
+  view NoUc : AllocationView { expose RealizationProbe::UC; filter @SysML::PartUsage; }
+  view Hidden : AllocationView { expose RealizationProbe::UC::Start; filter name.startsWith("a"); }
+}"""
+
+
+def test_mode_does_not_depend_on_the_order_of_exposes(tmp_path: Path):
+    out = _modes(tmp_path, PROBE, MIXED_VIEWS, ["UcThenPart", "PartThenUc", "UcAndFn"])
+    assert out["UcThenPart"]["diagramMode"] == out["PartThenUc"]["diagramMode"] == "allocation"
+    assert out["UcAndFn"]["diagramMode"] == "realizationChain"
+
+
+def test_filter_that_removes_every_use_case_gives_allocation(tmp_path: Path):
+    out = _modes(tmp_path, PROBE, MIXED_VIEWS, ["NoUc"])
+    assert out["NoUc"]["diagramMode"] == "allocation"
+
+
+def test_chain_payload_only_names_what_the_view_shows(tmp_path: Path):
+    out = _modes(tmp_path, PROBE, MIXED_VIEWS, ["Hidden"])["Hidden"]
+    assert out["diagramMode"] == "realizationChain"
+    shown = set(out["semantic"])
+    assert f"{SEC}::auth" in shown and SEC not in shown
+    assert set(out["chainRoles"]) <= shown
+    assert all(e["source"] in shown and e["target"] in shown for e in out["chainEdges"])
+    assert set(out["chainLabels"]) <= shown
+
+
+ALLOC = """package Q {
+  use case def U { action s; }
+  part def F {
+    part n1 { perform f.a; }
+    part n2 { perform f.b; }
+    action f { action a; action b; first start; then a; then b; then done; }
+  }
+  part logical { part lp; }
+  allocate F::n1 to logical::lp;
+  allocate F::n2 to logical::lp;
+  #refine dependency from F::f::a to U::s;
+  #refine dependency from F::n2 to U;
+}"""
+
+
+def test_allocate_edge_has_the_precision_of_its_node(tmp_path: Path):
+    out = _modes(tmp_path, ALLOC, "package V { view C : AllocationView { expose Q::U; } }", ["C"])["C"]
+    by = {(e["source"], e["target"], e["kind"]): e["precision"] for e in out["chainEdges"]}
+    assert by[("Q::F::n1", "Q::logical::lp", "allocate")] == "step"
+    assert by[("Q::F::n2", "Q::logical::lp", "allocate")] == "explicit"

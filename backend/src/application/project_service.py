@@ -14,7 +14,8 @@ from domain.interface_naming import (
 )
 from domain.dependency_tree import build_dependency_tree
 from domain.realization import Realization, derive_realization
-from domain.realization_chain import Chain, build_chain, chain_labels, unambiguous_labels
+from domain.realization_chain import Chain, build_chain, is_chain_view
+from domain.realization_labels import unambiguous_labels
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -792,16 +793,11 @@ class ProjectService:
             if eid in project.semantic and eid not in semantic:
                 semantic[eid] = project.semantic[eid].to_dict()
         # Unambiguous labels, one set per kind of header; the client only reads them.
-        top_rows = [
-            r
-            for r in rows
-            if not ((p := project.semantic[r].parent_id) in semantic and project.semantic[p].kind == ArtifactKind.USE_CASE)
-        ]
         node_ids = [n.id for n in nodes]
         part_ids = list(dict.fromkeys(p for n in node_ids for p in realization["nodeParts"].get(n, [])))
         function_ids_ = list(dict.fromkeys(n.function_id for n in nodes if n.function_id))
         labels = {
-            "rows": unambiguous_labels(project.semantic, top_rows, tagged=True),
+            "rows": unambiguous_labels(project.semantic, rows, tagged=True),
             "nodes": unambiguous_labels(project.semantic, node_ids, tagged=False),
             "parts": unambiguous_labels(project.semantic, part_ids, tagged=False),
             "functions": unambiguous_labels(project.semantic, function_ids_, tagged=False),
@@ -2129,8 +2125,35 @@ class ProjectService:
             exposed_kinds = {
                 project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
+        chain_view = False
+        if view.type_ref == "AllocationView":
+            # The chain or the allocation, by everything the view exposes: all the way down,
+            # after the view's filters, whatever the diagram levels or the order of the exposes.
+            from domain.view_filter import apply_view_filters, parse_stored_filters
+
+            alloc_filters = parse_stored_filters(stored_filters)
+            exposed_content: list[tuple[str, set[str]]] = []
+            for eroot in expose_roots:
+                ids = collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    structural_depth(project.semantic, eroot.id),
+                )
+                if alloc_filters:
+                    ids = apply_view_filters(
+                        project.semantic,
+                        ids,
+                        alloc_filters,
+                        root_id=root.id,
+                        root_ids=set(expose_root_ids),
+                    )
+                exposed_content.append((eroot.id, ids))
+            chain_view = is_chain_view(
+                project.semantic, derive_realization(project.semantic), exposed_content
+            )
         diagram_mode = resolve_diagram_mode(
-            view, root, exposed_kinds, project.semantic
+            view, root, exposed_kinds, chain_view
         )
         # `expose Car::*;` shows Car's members without Car: no frame to draw.
         if diagram_mode == "whitebox" and not includes_root(
@@ -2572,9 +2595,16 @@ class ProjectService:
         if matrix is not None:
             result.update(matrix)
         if chain is not None:
-            result["chainEdges"] = [e.to_dict() for e in chain.edges]
-            result["chainRoles"] = {i: chain.roles[i] for i in chain.ids}
-            result["chainLabels"] = chain_labels(project.semantic, chain.ids)
+            # Only what the view shows (after its filters): labels are made unambiguous
+            # among these, not against hidden elements.
+            shown = [i for i in chain.ids if i in artifact_ids]
+            result["chainEdges"] = [
+                e.to_dict()
+                for e in chain.edges
+                if e.source in artifact_ids and e.target in artifact_ids
+            ]
+            result["chainRoles"] = {i: chain.roles[i] for i in shown}
+            result["chainLabels"] = unambiguous_labels(project.semantic, shown)
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

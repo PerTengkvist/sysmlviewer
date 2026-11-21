@@ -16,10 +16,9 @@ realizes, and the nodes and parts it reaches. Pure domain logic: no I/O.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
-from domain.failure.labels import disambiguate
 from domain.models import ArtifactKind, SemanticElement
 from domain.realization import Precision, Realization, function_ids
 
@@ -69,16 +68,61 @@ def _descendants(semantic: Mapping[str, SemanticElement], root_id: str) -> list[
     return out
 
 
-def is_chain_root(root: SemanticElement, semantic: Mapping[str, SemanticElement]) -> bool:
-    """Whether an AllocationView on `root` draws the realization chain (decision B6).
+def realized_functions(semantic: Mapping[str, SemanticElement], realization: Realization) -> set[str]:
+    """Functions that take part in the realization: they refine a use case or own a node that does."""
+    functions = function_ids(semantic)
+    out: set[str] = set()
+    for uc in set(realization.uc_functions) | set(realization.uc_nodes):
+        out |= set(realization.uc_functions.get(uc, {}))
+        for node in realization.uc_nodes.get(uc, {}):
+            parent = semantic[node].parent_id if node in semantic else None
+            if parent in functions:
+                out.add(parent)  # type: ignore[arg-type]
+    return out & functions
 
-    Whole model, whatever the diagram levels.
+
+def _allocates(semantic: Mapping[str, SemanticElement], content: Iterable[str]) -> bool:
+    for eid in content:
+        el = semantic.get(eid)
+        if el is not None and (
+            el.kind == ArtifactKind.ALLOCATION
+            or (el.kind == ArtifactKind.CONNECTION and el.name.startswith("alloc"))
+        ):
+            return True
+    return False
+
+
+def is_chain_view(
+    semantic: Mapping[str, SemanticElement],
+    realization: Realization,
+    exposed: Iterable[tuple[str, Iterable[str]]],
+) -> bool:
+    """Whether an AllocationView draws the realization chain instead of the allocation (B6).
+
+    `exposed` is each exposed root with the ids it puts in the view, after the view's filters
+    and whatever the diagram levels. Every root has to vote for the chain, so the order of the
+    exposes does not matter: a use case; a function that takes part in the realization; or a
+    package whose content has use cases and allocates nothing. Anything else (a part with a
+    logical/physical split, a package that allocates, a filter that left no use case) keeps the
+    allocation view, which is what an AllocationView was before.
     """
-    if root.kind == ArtifactKind.USE_CASE:
-        return True
-    if root.kind == ArtifactKind.PACKAGE and root.id in semantic:
-        return any(semantic[d].kind == ArtifactKind.USE_CASE for d in _descendants(semantic, root.id))
-    return root.kind == ArtifactKind.PART and root.id in function_ids(semantic)
+    realized = realized_functions(semantic, realization)
+    votes = 0
+    for root_id, content in exposed:
+        root = semantic.get(root_id)
+        ids = set(content)
+        if root is None:
+            return False
+        if root.kind == ArtifactKind.USE_CASE or root.id in realized:
+            pass
+        elif root.kind == ArtifactKind.PACKAGE and any(
+            semantic[i].kind == ArtifactKind.USE_CASE for i in ids if i in semantic
+        ) and not _allocates(semantic, ids):
+            pass
+        else:
+            return False
+        votes += 1
+    return votes > 0
 
 
 def _use_cases_under(semantic: Mapping[str, SemanticElement], root: SemanticElement) -> list[str]:
@@ -158,7 +202,7 @@ def build_chain(
             for part in r.node_parts.get(node, []):
                 if part in r.uc_parts.get(uc, {}):
                     roles[part] = PART
-                    edge(node, part, "allocate", r.uc_parts[uc][part], part in inherited)
+                    edge(node, part, "allocate", precision, via)
 
         # A function that refines the use case stands for its nodes and their parts.
         for node, fn in r.uc_function_nodes.get(uc, {}).items():
@@ -181,33 +225,3 @@ def build_chain(
         )
     ]
     return Chain(ids, roles, edges)
-
-
-def unambiguous_labels(
-    semantic: Mapping[str, SemanticElement], ids: Iterable[str], tagged: bool = True
-) -> dict[str, str]:
-    """Label per id, unique among `ids` (decision B11).
-
-    `tagged`: `<short name> <name>` for tagged elements (the `label` style of
-    domain/failure/labels.py), else the name (the `name` style). A text shared by two or
-    more ids is replaced by the shortest suffix of their qualified ids, in whole `::`
-    segments, that is unique; the tag stays in front. One rule for the realization chain and
-    the realization matrix, whose clients only read the result.
-    """
-    ids = [i for i in ids if i in semantic]
-
-    def suffix(key: str, k: int) -> str:
-        return "::".join(key.split("::")[-(k + 1):])
-
-    def tag(key: str) -> str:
-        short = semantic[key].short_id if tagged else None
-        return f"{short} " if short else ""
-
-    base = {i: f"{tag(i)}{semantic[i].name}" for i in ids}
-    qual: Callable[[str, int], str] = lambda key, k: f"{tag(key)}{suffix(key, k)}"
-    return disambiguate(base, qual)
-
-
-def chain_labels(semantic: Mapping[str, SemanticElement], ids: Iterable[str]) -> dict[str, str]:
-    """Labels of the elements of a chain: the tagged style."""
-    return unambiguous_labels(semantic, ids, tagged=True)
