@@ -179,3 +179,17 @@ export function buildRealizationChain(opts: RealizationChainOpts): { nodes: Node
 
   return { nodes, edges }
 }
+
+/**
+ * Redraw: the columns are fixed, so every node goes back to the place the layout gives it,
+ * whatever the view has saved or the user dragged. Nodes the chain does not know stay as
+ * they are; only the position changes.
+ */
+export function redrawRealizationChain(opts: RealizationChainOpts, current: Node[]): Node[] {
+  const fresh = buildRealizationChain({ ...opts, ignoreSaved: true })
+  const at = new Map(fresh.nodes.map((n) => [n.id, n.position]))
+  return current.map((n) => {
+    const p = at.get(n.id)
+    return p ? { ...n, position: { x: p.x, y: p.y } } : n
+  })
+}

@@ -135,7 +135,10 @@ import { buildTreeGraph } from './modes/tree/buildTreeGraph'
 import { TreeDiagramNode } from './modes/tree/TreeNode'
 import { buildAllocationGraph } from './modes/allocation/buildAllocationGraph'
 import { ChainNode } from './modes/realization/ChainNode'
-import { buildRealizationChain } from './modes/realization/buildRealizationChain'
+import {
+  buildRealizationChain,
+  redrawRealizationChain,
+} from './modes/realization/buildRealizationChain'
 import { RequirementNode } from './modes/requirements/RequirementNode'
 import { buildRealizationMatrix } from './modes/realization/buildRealizationMatrix'
 import { RealizationMatrix } from './modes/realization/RealizationMatrix'
@@ -1755,18 +1758,15 @@ export function DiagramCanvas({
           view.visualization,
           view.viewFilters || [],
         )
-        const fresh = buildRealizationChain({
-          view: { ...view, semantic: filtered.semantic, visualization: filtered.visualization },
-          viewMode: renderViewMode,
-          ignoreSaved: true,
-          selectedConnectionColor,
-          selectedConnectionLinewidthFactor,
-        })
-        const at = new Map(fresh.nodes.map((n) => [n.id, n.position]))
-        const moved = nodes.map((n) => {
-          const p = at.get(n.id)
-          return p ? { ...n, position: { x: p.x, y: p.y } } : n
-        })
+        const moved = redrawRealizationChain(
+          {
+            view: { ...view, semantic: filtered.semantic, visualization: filtered.visualization },
+            viewMode: renderViewMode,
+            selectedConnectionColor,
+            selectedConnectionLinewidthFactor,
+          },
+          nodes,
+        )
         setNodes(moved)
         const chainPatch: Record<string, Partial<VisualizationNode>> = {}
         for (const n of moved) {

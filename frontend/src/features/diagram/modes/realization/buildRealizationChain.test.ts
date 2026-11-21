@@ -5,6 +5,7 @@ import {
   countCrossings,
   CHAIN_COLUMN_X,
   orderColumns,
+  redrawRealizationChain,
 } from './buildRealizationChain'
 
 function el(id: string, kind: SemanticElement['kind'], extra: Partial<SemanticElement> = {}): SemanticElement {
@@ -194,5 +195,28 @@ describe('buildRealizationChain', () => {
   it('is empty without a payload for the chain', () => {
     const view = { ...payload(FIXTURE), chainRoles: undefined, chainEdges: undefined } as ViewPayload
     expect(buildRealizationChain({ view, viewMode: 'light' })).toEqual({ nodes: [], edges: [] })
+  })
+})
+
+describe('redrawRealizationChain', () => {
+  const opts = (f: Fixture) => ({ view: payload(f), viewMode: 'light' as const })
+
+  it('puts every node back in its column, whatever was saved or dragged', () => {
+    const f: Fixture = { ...FIXTURE, positions: { F1: { x: 1234, y: 567 } } }
+    const current = build(f).nodes // F1 sits at its saved position
+    const moved = current.map((n) => (n.id === 'N1' ? { ...n, position: { x: 5, y: 5 } } : n))
+    const fresh = redrawRealizationChain(opts(f), moved)
+    const at = (id: string) => fresh.find((n) => n.id === id)!.position
+    expect(at('F1').x).toBe(CHAIN_COLUMN_X.function)
+    expect(at('N1').x).toBe(CHAIN_COLUMN_X.node)
+    expect(at('F1').y).toBeLessThan(at('F2').y)
+  })
+
+  it('keeps nodes it does not know and everything but the position', () => {
+    const current = [...build(FIXTURE).nodes, { id: 'X', position: { x: 1, y: 2 }, data: {} }]
+    const fresh = redrawRealizationChain(opts(FIXTURE), current)
+    expect(fresh.find((n) => n.id === 'X')!.position).toEqual({ x: 1, y: 2 })
+    expect(fresh.find((n) => n.id === 'UC1')!.type).toBe('chain')
+    expect(fresh).toHaveLength(current.length)
   })
 })
