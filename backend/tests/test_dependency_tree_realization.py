@@ -71,3 +71,16 @@ def test_explicit_and_step_merged_in_tree():
     refined = lambda d: [c["id"] for c in d["children"] if c["label"] == "refine"]
     assert sorted(refined(a)) == sorted(refined(b))
     assert len(refined(b)) == len(set(refined(b)))
+
+
+def test_included_use_case_gets_no_refiners_of_its_own():
+    """Park only includes Start: auth, immo and Security reach it through the include."""
+    for text in (EXPLICIT, STEP):
+        park = build_dependency_tree(elements(text), "Eq::UC::Park")["down"]["children"]
+        assert [(c["id"], c["label"]) for c in park if c["label"] == "refine"] == []
+
+
+def test_climb_from_a_node_in_the_step_form():
+    chain = climb(build_dependency_tree(elements(STEP), f"{SEC}::auth"))
+    assert chain == climb(build_dependency_tree(elements(EXPLICIT), f"{SEC}::auth"))
+    assert (START, "refine") in chain

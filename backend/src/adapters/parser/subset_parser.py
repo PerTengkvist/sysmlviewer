@@ -655,6 +655,19 @@ class SubsetSysmlParser:
         def current_scope() -> _Scope | None:
             return state.scopes[-1] if state.scopes else None
 
+        def read_doc(line: int, owner_id: str | None) -> None:
+            """After `doc`: the `/* … */` body becomes the owner's documentation."""
+            if not (peek() and peek().kind == "block_comment"):
+                state.warnings.append(f"line {line}: doc without /* … */ body")
+                skip_until_semicolon_or_brace()
+                return
+            bc = take()
+            assert bc is not None
+            if peek() and peek().value == ";":
+                take()
+            if owner_id and owner_id in state.elements:
+                state.elements[owner_id].documentation = _block_comment_text(bc.value)
+
         def add_perform_child(perform_ref: str, line: int) -> None:
             """The current part or actor performs `perform_ref`.
 
@@ -696,15 +709,7 @@ class SubsetSysmlParser:
                     continue
                 if t.kind == "ident" and t.value == "doc":
                     take()
-                    if peek() and peek().kind == "block_comment":
-                        bc = take()
-                        assert bc is not None
-                        state.elements[actor_id].documentation = _block_comment_text(bc.value)
-                        if peek() and peek().value == ";":
-                            take()
-                    else:
-                        state.warnings.append(f"line {t.line}: doc without /* … */ body")
-                        skip_until_semicolon_or_brace()
+                    read_doc(t.line, actor_id)
                     continue
                 if t.kind == "ident" and t.value == "perform":
                     take()
@@ -2452,24 +2457,8 @@ class SubsetSysmlParser:
                 continue
 
             if tok.kind == "ident" and tok.value == "doc":
-                line = tok.line
                 take()
-                doc_text: str | None = None
-                if peek() and peek().kind == "block_comment":
-                    bc = take()
-                    assert bc is not None
-                    doc_text = _block_comment_text(bc.value)
-                else:
-                    state.warnings.append(
-                        f"line {line}: doc without /* … */ body"
-                    )
-                    skip_until_semicolon_or_brace()
-                    continue
-                if peek() and peek().value == ";":
-                    take()
-                parent = state.current_parent()
-                if parent and parent in state.elements and doc_text is not None:
-                    state.elements[parent].documentation = doc_text
+                read_doc(tok.line, state.current_parent())
                 continue
 
             # use case def / use case

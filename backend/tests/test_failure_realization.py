@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 from adapters.api.static_paths import resolve_repo_root
 from adapters.parser.subset_parser import SubsetSysmlParser
+from domain.dependency_tree import build_dependency_tree
 from domain.failure.extract import build_impact_graph
 from domain.failure.model import Edge
 from domain.models import SysmlFile
@@ -120,8 +119,13 @@ def test_equivalent_models_same_reports(cli, capsys, tmp_path, argv):
         assert sorted(a.splitlines()) == sorted(b.splitlines())
 
 
-def test_electric_car_reports_unchanged_by_the_derivation(cli, capsys):
-    """The committed car has no step links: its impact graph is what the explicit links give."""
+def test_electric_car_graph_and_trees_unchanged_by_the_derivation(monkeypatch):
+    """The committed car has no step links: with the derivation switched off, graph (inputs
+    in order) and every dependency tree are the same."""
+    import domain.dependency_tree as tree_module
+    import domain.failure.extract as extract_module
+    from domain.realization import Realization
+
     car = REPO / "examples" / "electric_car"
     files = [
         SysmlFile(id=p.relative_to(car).as_posix(), name=p.name, content=p.read_text(encoding="utf-8"),
@@ -129,6 +133,13 @@ def test_electric_car_reports_unchanged_by_the_derivation(cli, capsys):
         for p in sorted(car.rglob("*.sysml"))
     ]
     elements = SubsetSysmlParser().parse_project(files).elements
-    from domain.realization import derive_realization
 
-    assert derive_realization(elements).in_scope == set()
+    def snapshot():
+        g = build_impact_graph(elements)
+        trees = {eid: build_dependency_tree(elements, eid) for eid in elements}
+        return (g.nodes, [(k, list(v)) for k, v in g.inputs.items()], g.parent, g.warnings), trees
+
+    with_derivation = snapshot()
+    monkeypatch.setattr(extract_module, "derive_realization", lambda *a, **k: Realization())
+    monkeypatch.setattr(tree_module, "derive_realization", lambda *a, **k: Realization())
+    assert snapshot() == with_derivation

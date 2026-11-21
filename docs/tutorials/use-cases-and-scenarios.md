@@ -118,7 +118,7 @@ package Realize {
 
 Roles come from the relations, not from names: a function is a part that owns an action flow, a function node is a part that performs one of its steps, and a logical part is the target of the node's `allocate`. A `#refine` from a function or a function node straight to a use case still works, and so does one from a whole flow (a coarse link). The most precise link wins, and a function (node) that refines a use case directly counts the same in failure and FMEA reports as one found through the steps.
 
-A use case with at least one step link is checked. `scripts/check_sysml.py` then reports system steps nobody realizes (`unrealized-system-step`), steps in a linked flow that refine nothing (`untraced-function-step`) and links with a wrong end (`bad-realization-end`). Use cases without step links are not checked.
+A use case with at least one step link is checked. `scripts/check_sysml.py` then reports system steps nobody realizes (`unrealized-system-step`), steps in a linked flow that refine nothing (`untraced-function-step`) and links with a wrong end (`bad-realization-end`, for example a function node that refines a use case step). Use cases without step links are not checked.
 
 ## Sequences
 

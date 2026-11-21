@@ -8,6 +8,7 @@ from domain.expose import SUFFIX as EXPOSE_SUFFIX
 from domain.expose import kind_of
 from domain.models import ArtifactKind, SemanticElement
 from domain.occurrence import MATERIALIZED, in_occurrence
+from domain.perform import is_perform
 
 
 _IMPORT_LINE_RE = re.compile(
@@ -303,7 +304,7 @@ def _emit_element(
     if el.kind == ArtifactKind.ACTOR:
         type_bit = f" : {el.type_ref}" if el.type_ref else ""
         keyword = "actor def" if el.is_definition else "actor"
-        performs = [c for c in _structural_children(semantic, el) if _is_perform(c)]
+        performs = [c for c in _structural_children(semantic, el) if is_perform(c)]
         if performs or el.documentation:
             lines.append(f"{pad}{keyword} {el.name}{type_bit} {{")
             if el.documentation:
@@ -314,9 +315,6 @@ def _emit_element(
         else:
             lines.append(f"{pad}{keyword} {el.name}{type_bit};")
         return
-
-    if _is_perform(el) and (owner := semantic.get(el.parent_id or "")) and owner.kind == ArtifactKind.ACTOR:
-        return  # written by the actor
 
     if el.kind == ArtifactKind.ACTION:
         nested = _structural_children(semantic, el)
@@ -352,10 +350,6 @@ _RELATION_KINDS = {
     ArtifactKind.SUBSETTING,
     ArtifactKind.REDEFINITION,
 }
-
-
-def _is_perform(el: SemanticElement) -> bool:
-    return el.kind == ArtifactKind.ACTION and "perform" in el.metadata_keywords and bool(el.type_ref)
 
 
 def _is_materialized(semantic: dict[str, SemanticElement], part: SemanticElement) -> bool:

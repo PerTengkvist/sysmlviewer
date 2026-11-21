@@ -40,9 +40,9 @@ for fid, w in warnings:
     print(f"WARNING {fid}: {w}" if fid else f"WARNING {w}")
 
 realization = derive_realization(result.elements)
-findings = sorted(realization.findings, key=lambda f: (f.code, f.element_id))
+findings = realization.findings  # already sorted by code and id
 for f in findings:
     print(f"REALIZATION {f.code} {f.element_id}: {f.message}")
-if realization.in_scope:
+if realization.in_scope or findings:
     print(f"realization: {len(realization.in_scope)} use cases in scope, {len(findings)} findings")
 sys.exit(1 if warnings or findings else 0)

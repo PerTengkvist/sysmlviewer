@@ -182,7 +182,7 @@ A failure mode has `id` (`^[a-z][a-z0-9_]*$`), `local_effect`, `mode_ratio` (alp
 
 | Role | Definition |
 |---|---|
-| UC step | action directly in a use case, except `start`/`done` and `then perform X` |
+| UC step | action directly in a use case, except `start`/`done`, decision nodes (`then if g then a else b;`) and `then perform X` |
 | actor step | UC step that an actor performs: `actor Driver { perform step; }` (the parser reads `perform` and `doc` in an actor body; `resolve_performers` includes actors) |
 | system step | UC step that no actor performs |
 | function flow, function step | action owned by a part with steps of its own, and an action directly in it |
@@ -192,7 +192,7 @@ A failure mode has `id` (`^[a-z][a-z0-9_]*$`), `local_effect`, `mode_ratio` (alp
 
 Allowed `#refine` ends: function step or flow to UC step or use case; function or function node to use case. Precision is `step` (function step to UC step), `coarse` (a flow, or a function step towards a use case, or a flow towards a UC step) or `explicit` (function or function node to use case, the form models used before steps); the best precision wins, and `declared` remembers explicit links. `Realization` holds `links`, `actor_steps`, `system_steps`, `step_realizers`, `coarse_realizers`, `uc_functions`, `uc_nodes`, `uc_parts`, `via_include` (a composite use case gets the union of what its included use cases have, marked here), `in_scope` and `findings`.
 
-**Opt-in.** A use case is in scope when one of its steps is the target of a step link. Findings are only reported inside the scope, so a model without step links (the electric car) gets none and behaves as before. Codes: `unrealized-system-step`, `untraced-function-step` (a flow where other steps are linked), `refine-without-step` (explicit function link that no step backs), `explicit-mismatch` (explicit function node link without steps behind it, or the other way round, when the use case has explicit node links), `bad-realization-end` (`#refine` from a UC step or function step to something that is not an allowed end; `#refine` from a use case to a requirement is ordinary traceability and is not reported).
+**Opt-in.** A use case is in scope when one of its steps is the target of a step link. Findings are only reported inside the scope, so a model without step links (the electric car) gets none and behaves as before. Codes: `unrealized-system-step`, `untraced-function-step` (a flow where other steps are linked), `refine-without-step` (explicit function link that no step backs), `explicit-mismatch` (explicit function node link without steps behind it, or the other way round, when the use case has explicit node links), `bad-realization-end` (`#refine` with a UC step as an end, or a function step or flow towards a use case in scope, that is not an allowed end; a function step or flow refining a requirement, and a use case refining a requirement, are ordinary traceability and are not reported). Entries a use case only has through `include` (`via_include`) never give `refine-without-step` or `explicit-mismatch`.
 
 **Consumers.** `scripts/check_sysml.py` prints `REALIZATION <code> <id>: <message>` and a summary line, and exits 1 on findings. `failure/extract.py` adds, after the explicit ones, the `refine` edges `uc_functions` and `uc_nodes` imply (same edge as an explicit `#refine`, deduplicated), so the failure and FMEA reports cannot tell the two forms apart. `domain/dependency_tree.py` adds the same pairs as `refine` edges with the step link's dependency as `relationId`.
 
