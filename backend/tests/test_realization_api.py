@@ -45,6 +45,8 @@ def test_get_realization(tmp_path: Path):
         "systemSteps",
         "stepRealizers",
         "coarseRealizers",
+        "realizerNodes",
+        "nodeParts",
         "useCases",
         "inScope",
         "findings",
@@ -83,28 +85,39 @@ def test_get_realization(tmp_path: Path):
     assert set(data["findings"][0]) == {"code", "elementId", "message"}
 
 
-def test_realization_cached_per_revision(tmp_path: Path):
+ORDER = """
+package O {
+  USE1
+  USE2
+  part def F {
+    action f { action s; action t; }
+  }
+  #refine dependency from F::f::s to U1::a;
+  #refine dependency from F::f::t to U2::b;
+}
+"""
+U1 = "use case def U1 { action a; }"
+U2 = "use case def U2 { action b; }"
+
+
+def test_realization_follows_declaration_order(tmp_path: Path):
     from adapters.parser.subset_parser import SubsetSysmlParser
     from adapters.persistence.workspace_repo import WorkspaceProjectRepository
     from application.project_service import ProjectService
 
-    client, pid = _client(tmp_path)
+    client, pid = _client(tmp_path, ORDER.replace("USE1", U1).replace("USE2", U2))
     service = ProjectService(
         repo=WorkspaceProjectRepository(tmp_path), parser=SubsetSysmlParser()
     )
     first = service.get_realization(pid)
     assert first is not None
-    assert service.get_realization(pid) is first
-    assert _get(client, pid) == first
-
-    # Drop the step links: the use case leaves scope and the result is recomputed.
-    changed = "\n".join(
-        line for line in PROBE.splitlines() if "UC::Start::" not in line or "#refine" not in line
+    assert list(first["useCases"]) == ["O::U1", "O::U2"]
+    (tmp_path / "probe.sysml").write_text(
+        ORDER.replace("USE1", U2).replace("USE2", U1), encoding="utf-8"
     )
-    (tmp_path / "probe.sysml").write_text(changed, encoding="utf-8")
     after = service.get_realization(pid)
-    assert after is not first
-    assert START in first["inScope"] and START not in after["inScope"]
+    assert after is not None
+    assert list(after["useCases"]) == ["O::U2", "O::U1"]
 
 
 def test_empty_model(tmp_path: Path):
@@ -115,6 +128,8 @@ def test_empty_model(tmp_path: Path):
         "systemSteps": {},
         "stepRealizers": {},
         "coarseRealizers": {},
+        "realizerNodes": {},
+        "nodeParts": {},
         "useCases": {},
         "inScope": [],
         "findings": [],
@@ -124,3 +139,61 @@ def test_empty_model(tmp_path: Path):
 def test_unknown_project_is_404(tmp_path: Path):
     client, _ = _client(tmp_path, content=None)
     assert client.get(api_url("/projects/nope/realization")).status_code == 404
+
+
+NODES = """
+package N {
+  package UC {
+    use case def Run {
+      action a1;
+      action a2;
+      action a3;
+    }
+  }
+  package F {
+    part def Fx {
+      part shared { perform fxFlow.s1; perform F::Fy::fyFlow.t1; }
+      part only  { perform fxFlow.s2; }
+      action fxFlow { action s1; action s2; }
+    }
+    part def Fy {
+      action fyFlow { action t1; }
+    }
+    part def Fz {
+      part zn { perform zFlow.z1; }
+      action zFlow { action z1; action z2; }
+    }
+    occurrence def Seq {
+      part ghost { perform fxFlow.s1; }
+    }
+  }
+  package L { part vc; part bc; }
+  allocate F::Fx::shared to L::vc;
+  allocate F::Fx::shared to L::bc;
+  #refine dependency from F::Fx::fxFlow::s1 to UC::Run::a1;
+  #refine dependency from F::Fy::fyFlow::t1 to UC::Run::a2;
+  #refine dependency from F::Fz::zFlow to UC::Run::a3;
+}
+"""
+
+N = "N"
+RUN = f"{N}::UC::Run"
+
+
+def test_realization_view_data_for_the_details_panel(tmp_path: Path):
+    client, pid = _client(tmp_path, NODES)
+    data = _get(client, pid)
+    run = data["useCases"][RUN]
+
+    # A function node that performs steps of two functions sits under both of them.
+    shared = f"{N}::F::Fx::shared"
+    assert run["nodeFunctions"][shared] == [f"{N}::F::Fx", f"{N}::F::Fy"]
+    assert data["realizerNodes"][f"{N}::F::Fy::fyFlow::t1"] == [shared]
+
+    # A flow that realizes coarsely lists the nodes of its steps.
+    assert data["realizerNodes"][f"{N}::F::Fz::zFlow"] == [f"{N}::F::Fz::zn"]
+    # A part in an occurrence is not a function node.
+    assert data["realizerNodes"][f"{N}::F::Fx::fxFlow::s1"] == [shared]
+    assert f"{N}::F::Seq::ghost" not in run["nodes"]
+    # Allocation targets of a function node.
+    assert data["nodeParts"][shared] == [f"{N}::L::vc", f"{N}::L::bc"]

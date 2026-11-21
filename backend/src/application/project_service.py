@@ -264,6 +264,9 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
             "viaInclude": by_model(realization.via_include.get(uc, set())),
             "declared": by_model(e for u, e in realization.declared if u == uc),
             "origin": {e: r for (u, e), r in realization.origin.items() if u == uc},
+            "nodeFunctions": {
+                n: list(f) for n, f in realization.uc_node_functions.get(uc, {}).items()
+            },
         }
     return {
         "links": [
@@ -279,6 +282,8 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
         "systemSteps": {uc: list(steps) for uc, steps in realization.system_steps.items()},
         "stepRealizers": {k: list(v) for k, v in realization.step_realizers.items()},
         "coarseRealizers": {k: list(v) for k, v in realization.coarse_realizers.items()},
+        "realizerNodes": {k: list(v) for k, v in realization.realizer_nodes.items()},
+        "nodeParts": {k: list(v) for k, v in realization.node_parts.items()},
         "useCases": use_cases,
         "inScope": by_model(realization.in_scope),
         "findings": [
@@ -405,7 +410,6 @@ class ProjectService:
         self.parser = parser
         self.events: EventLog = events or NullEventLog()
         self._reported_once: set[tuple] = set()
-        self._realization_cache: dict[str, tuple[dict, dict]] = {}
         # Sync routes run in a threadpool; a view layout is read, merged and
         # written back, so overlapping writers would drop each other's changes.
         self._layout_lock = threading.RLock()
@@ -687,20 +691,15 @@ class ProjectService:
     def get_realization(self, project_id: str) -> dict | None:
         """Use case realization of the project (see domain/realization.py).
 
-        Cached per project; the entry is dropped when the semantic model
-        differs from the one it was derived from. None when the project is missing.
+        Derived on every call from the freshly parsed model. None when the
+        project is missing.
         """
         project = self.get_project(project_id)
         if not project:
             return None
-        cached = self._realization_cache.get(project_id)
-        if cached is not None and cached[0] == project.semantic:
-            return cached[1]
-        payload = _realization_payload(
+        return _realization_payload(
             derive_realization(project.semantic), list(project.semantic)
         )
-        self._realization_cache[project_id] = (dict(project.semantic), payload)
-        return payload
 
     def list_documentation(self, project_id: str) -> list[str] | None:
         project = self.repo.get(project_id)
