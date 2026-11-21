@@ -334,6 +334,7 @@ export const DIAGRAM_MODE_LABELS: Record<DiagramMode, string> = {
   allocation: 'Allocation',
   requirementTable: 'Requirements table',
   useCase: 'Use case',
+  realizationMatrix: 'Realization matrix',
 }
 
 function routingToConnectionLine(routing: RoutingType): ConnectionLineType {
@@ -1079,6 +1080,7 @@ export function DiagramCanvas({
         )
         break
       case 'requirementTable':
+      case 'realizationMatrix':
         built = { nodes: [], edges: [] }
         break
       default:

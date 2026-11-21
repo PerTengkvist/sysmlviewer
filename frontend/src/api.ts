@@ -40,6 +40,7 @@ export type DiagramMode =
   | 'allocation'
   | 'requirementTable'
   | 'useCase'
+  | 'realizationMatrix'
 
 export interface SemanticElement {
   id: string
@@ -341,6 +342,12 @@ export type SequenceLayout = {
   widths?: Record<string, number>
 }
 
+/** Per-view realization matrix choice: what the rows and the columns list. */
+export type RealizationMatrixLayout = {
+  rows?: 'useCases' | 'steps'
+  columns?: 'nodes' | 'parts'
+}
+
 export type AutoLayoutEdgeKinds = {
   connections: boolean
   bindings: boolean
@@ -374,10 +381,17 @@ export interface ViewPayload {
   autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
   /** Sequence diagrams: saved lifeline order / header widths; null when never set. */
   sequenceLayout?: SequenceLayout | null
+  /** Realization matrix: saved rows / columns choice; null when never set. */
+  realizationMatrix?: RealizationMatrixLayout | null
+  /** realizationMatrix only: the realization of the exposed use cases. */
+  realization?: Realization
+  /** realizationMatrix only: every function node of the model, with its function and parts. */
+  matrixColumns?: { nodes: MatrixNodeColumn[] }
   modeError?: string | null
   /**
-   * actionFlow only: the parts that perform each step (`perform flow.step;`
-   * in a part), by action id. The parts are in `semantic` for their names.
+   * actionFlow: the parts that perform each step (`perform flow.step;` in a
+   * part), by action id. realizationMatrix: the same, for the function steps that
+   * realize a use case step. The parts are in `semantic` for their names.
    */
   performers?: Record<string, string[]>
   /**
@@ -544,6 +558,15 @@ export interface Realization {
   findings: RealizationFinding[]
 }
 
+/** A function node column of the realization matrix. */
+export interface MatrixNodeColumn {
+  id: string
+  /** The function part that owns the node; null when none does. */
+  functionId: string | null
+  /** Logical parts the node is allocated to. */
+  partIds: string[]
+}
+
 const BASE = '/api'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -676,6 +699,8 @@ export const api = {
       autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
       /** Sequence lifeline order / widths; null clears. */
       sequenceLayout?: SequenceLayout | null
+      /** Realization matrix rows / columns choice; null clears. */
+      realizationMatrix?: RealizationMatrixLayout | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {
