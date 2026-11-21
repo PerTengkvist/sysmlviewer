@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createChoiceSaver } from './features/diagram/modes/realization/choiceSaver'
+import { choiceTarget } from './features/diagram/modes/realization/choiceTarget'
 import {
   api,
   type ElementStyle,
@@ -896,14 +897,14 @@ export default function App() {
   )
   const onRealizationMatrixChange = useCallback(
     (layout: import('./api').RealizationMatrixLayout) => {
-      if (!project || !activeViewId || !viewPayload) return
-      const initial = viewPayload.realizationMatrix ?? null
+      const target = choiceTarget(viewPayload, 'realizationMatrix')
+      if (!project || !target) return
       setViewPayload((prev) =>
-        prev ? { ...prev, realizationMatrix: layout } : prev,
+        prev && prev.view.id === target.viewId ? { ...prev, realizationMatrix: layout } : prev,
       )
-      void matrixSaver.save(activeViewId, layout, initial)
+      void matrixSaver.save(target.viewId, layout, target.initial)
     },
-    [project, activeViewId, viewPayload, matrixSaver],
+    [project, viewPayload, matrixSaver],
   )
 
   // The lane choice of a use case realization view goes through the same saver, one request
@@ -931,16 +932,16 @@ export default function App() {
   )
   const onUseCaseRealizationLayoutChange = useCallback(
     (layout: import('./api').UseCaseRealizationLayout | null) => {
-      if (!project || !activeViewId || !viewPayload) return
-      const initial = viewPayload.useCaseRealizationLayout ?? null
+      const target = choiceTarget(viewPayload, 'useCaseRealizationLayout')
+      if (!project || !target) return
       setViewPayload((prev) =>
-        prev && prev.view.id === activeViewId
+        prev && prev.view.id === target.viewId
           ? { ...prev, useCaseRealizationLayout: layout }
           : prev,
       )
-      void laneSaver.save(activeViewId, layout, initial)
+      void laneSaver.save(target.viewId, layout, target.initial)
     },
-    [project, activeViewId, viewPayload, laneSaver],
+    [project, viewPayload, laneSaver],
   )
 
   const onPortsMoved = useCallback(
