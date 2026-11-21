@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { elementRealization } from '../../../details/realizationLinks'
 import { buildRealizationMatrix, matrixToCsv } from './buildRealizationMatrix'
 import {
   AUTH, BC, DRIVE, IMMO, LOCK, LOCKS, REFINE_1, REFINE_2, REFINE_4, SEC, START, UNLOCK, VC,
@@ -55,7 +56,7 @@ describe('columns', () => {
 
   it('keeps every function node of the model, also unlinked ones', () => {
     const view = probeView()
-    view.matrixColumns.nodes.push({ id: 'X::f::lonely', functionId: 'X::f', partIds: [] })
+    view.matrixColumns.nodes.push({ id: 'X::f::lonely', functionId: 'X::f' })
     view.semantic['X::f'] = el('X::f', 'part')
     view.semantic['X::f::lonely'] = el('X::f::lonely', 'part', 'X::f')
     const m = buildRealizationMatrix(view, nodesByUc)
@@ -65,7 +66,7 @@ describe('columns', () => {
 
   it('groups nodes that no function owns under an empty group', () => {
     const view = probeView()
-    view.matrixColumns.nodes.push({ id: 'X::free', functionId: null, partIds: [] })
+    view.matrixColumns.nodes.push({ id: 'X::free', functionId: null })
     view.semantic['X::free'] = el('X::free', 'part')
     const m = buildRealizationMatrix(view, nodesByUc)
     expect(m.groups.at(-1)).toEqual({ id: null, label: '', span: 1 })
@@ -153,7 +154,8 @@ describe('coverage', () => {
 
   it('flags a column that realizes nothing in the exposed use cases', () => {
     const view = probeView()
-    view.matrixColumns.nodes.push({ id: 'X::f::lonely', functionId: 'X::f', partIds: ['X::p'] })
+    view.matrixColumns.nodes.push({ id: 'X::f::lonely', functionId: 'X::f' })
+    view.realization.nodeParts['X::f::lonely'] = ['X::p']
     view.semantic['X::f::lonely'] = el('X::f::lonely', 'part', 'X::f')
     view.semantic['X::f'] = el('X::f', 'part')
     view.semantic['X::p'] = el('X::p', 'part')
@@ -192,5 +194,30 @@ describe('matrixToCsv', () => {
     view.semantic[START] = { ...view.semantic[START], name: 'A, "B"', shortId: null }
     const csv = matrixToCsv(buildRealizationMatrix(view, nodesByUc))
     expect(csv).toContain('"A, ""B""",')
+  })
+})
+
+describe('agreement with Details', () => {
+  it('says the same as the Details panel about every use case / node pair', () => {
+    const view = probeView()
+    const m = buildRealizationMatrix(view, nodesByUc)
+    for (const [r, row] of m.rows.entries()) {
+      for (const [c, column] of m.columns.entries()) {
+        const cell = m.cells[r][c]
+        const node = elementRealization(view.realization, view.semantic, column.id)
+        const hit = node.realizes.find((e) => e.useCaseId === row.id)
+        if (cell.glyph && !cell.tooltip.includes('through its function')) {
+          expect(hit?.precision, `${row.id} / ${column.id}`).toBe(cell.precision)
+        } else if (cell.glyph) {
+          // A bare explicit link of the function: Details lists the function with that
+          // precision in "Realized by"; the node itself is not listed as realizing it.
+          expect(hit).toBeUndefined()
+          const fn = elementRealization(view.realization, view.semantic, column.groupId!)
+          expect(fn.realizes.find((e) => e.useCaseId === row.id)?.precision).toBe('explicit')
+        } else {
+          expect(hit, `${row.id} / ${column.id}`).toBeUndefined()
+        }
+      }
+    }
   })
 })

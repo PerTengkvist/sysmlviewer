@@ -2874,7 +2874,6 @@ export function DiagramCanvas({
         semantic: view.semantic,
         realization: view.realization,
         matrixColumns: view.matrixColumns,
-        performers: view.performers,
       },
       matrixOptions(view.realizationMatrix),
     )

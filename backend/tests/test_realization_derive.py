@@ -157,3 +157,20 @@ def test_deterministic():
     assert a == b
     assert list(a.uc_nodes[START]) == [AUTH, IMMO]
     assert [l.refine_id for l in a.links] == [f"{P}::dep{i}" for i in (1, 2, 3, 4)]
+
+
+def test_function_nodes_in_model_order_with_their_function():
+    from domain.realization import FunctionNode, function_nodes
+
+    assert function_nodes(probe()) == [
+        FunctionNode(AUTH, SEC),
+        FunctionNode(IMMO, SEC),
+        FunctionNode(LOCKS, SEC),
+    ]
+
+
+def test_function_nodes_skip_parts_that_only_allocate():
+    from domain.realization import function_nodes
+
+    sem = probe("part lg; part ph; allocate lg to ph;")
+    assert [n.id for n in function_nodes(sem)] == [AUTH, IMMO, LOCKS]

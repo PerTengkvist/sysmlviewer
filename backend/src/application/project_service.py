@@ -310,6 +310,12 @@ def _matrix_realization(full: dict, semantic: dict[str, SemanticElement], rows: 
         "systemSteps": {k: v for k, v in full["systemSteps"].items() if k in ucs},
         "stepRealizers": {k: v for k, v in full["stepRealizers"].items() if keep(k)},
         "coarseRealizers": {k: v for k, v in full["coarseRealizers"].items() if keep(k)},
+        "realizerNodes": {
+            k: v
+            for k, v in full["realizerNodes"].items()
+            if any(link["sourceId"] == k and keep(link["targetId"]) for link in full["links"])
+        },
+        "nodeParts": dict(full["nodeParts"]),
         "useCases": {k: v for k, v in full["useCases"].items() if k in ucs},
         "inScope": [u for u in full["inScope"] if u in ucs],
         "findings": [f for f in full["findings"] if keep(f["elementId"])],
@@ -733,54 +739,35 @@ class ProjectService:
     ) -> dict:
         """What the realization matrix draws, beyond the exposed use cases in `semantic`.
 
-        Adds the realization of those use cases, every function node of the model with its
-        function and logical parts (so gaps show), who performs the realizing function steps,
-        and the elements the cells name; they are put into `semantic`.
+        Adds the realization of those use cases (with `realizerNodes` and `nodeParts`), every
+        function node of the model with its owning function (so gaps show) and the elements
+        the cells name; they are put into `semantic`.
         """
-        from domain.perform import resolve_performers
-        from domain.realization_matrix import matrix_nodes
+        from domain.realization import function_nodes
 
         full = self.get_realization(project_id) or {}
         rows = [aid for aid in project.semantic if aid in use_case_ids]
+        nodes = function_nodes(project.semantic)
         realization = _matrix_realization(full, project.semantic, rows)
-        all_performers = resolve_performers(project.semantic)
-        nodes = matrix_nodes(project.semantic, all_performers)
-
-        realizing_steps = {
-            step
-            for steps in realization["stepRealizers"].values()
-            for step in steps
-        }
-        performers = {
-            step: list(all_performers[step])
-            for step in project.semantic
-            if step in realizing_steps and step in all_performers
-        }
         needed: set[str] = set(rows)
         for uc in rows:
             needed |= set(realization["systemSteps"].get(uc, []))
             needed |= set(realization["actorSteps"].get(uc, {}))
         for node in nodes:
-            needed |= {node.id, *node.part_ids}
+            needed.add(node.id)
+            needed |= set(realization["nodeParts"].get(node.id, []))
             if node.function_id:
                 needed.add(node.function_id)
         needed |= {link["refineId"] for link in realization["links"]}
         needed |= {link["sourceId"] for link in realization["links"]}
-        needed |= realizing_steps
-        for parts in performers.values():
-            needed |= set(parts)
         for eid in needed:
             if eid in project.semantic and eid not in semantic:
                 semantic[eid] = project.semantic[eid].to_dict()
         return {
             "realization": realization,
             "matrixColumns": {
-                "nodes": [
-                    {"id": n.id, "functionId": n.function_id, "partIds": n.part_ids}
-                    for n in nodes
-                ]
+                "nodes": [{"id": n.id, "functionId": n.function_id} for n in nodes]
             },
-            "performers": performers,
         }
 
     def list_documentation(self, project_id: str) -> list[str] | None:

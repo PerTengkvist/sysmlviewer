@@ -21,7 +21,6 @@ export type MatrixSource = {
   semantic: Record<string, SemanticElement>
   realization: Realization
   matrixColumns: NonNullable<ViewPayload['matrixColumns']>
-  performers?: Record<string, string[]>
 }
 
 export type MatrixRow = {
@@ -92,7 +91,7 @@ export function buildRealizationMatrix(
   options: MatrixOptions = DEFAULT_MATRIX_OPTIONS,
 ): RealizationMatrix {
   const { semantic, realization } = source
-  const performers = source.performers ?? {}
+  const nodeParts = realization.nodeParts
   const nodes = source.matrixColumns.nodes
   const inScope = new Set(realization.inScope)
 
@@ -100,7 +99,7 @@ export function buildRealizationMatrix(
   const byNodes = options.columns === 'nodes'
   const columnIds = byNodes
     ? nodes.map((n) => n.id)
-    : [...new Set(nodes.flatMap((n) => n.partIds))]
+    : [...new Set(nodes.flatMap((n) => nodeParts[n.id] ?? []))]
   const columnLabels = labelMap(
     columnIds.map((id) => ({ id, name: nameOf(semantic, id) })),
     'name',
@@ -129,7 +128,7 @@ export function buildRealizationMatrix(
   // -- use case cells (also the base of the column coverage)
   /** The functions that own the function nodes of a column. */
   const functionsOf = (columnId: string): string[] =>
-    (byNodes ? nodes.filter((n) => n.id === columnId) : nodes.filter((n) => n.partIds.includes(columnId)))
+    (byNodes ? nodes.filter((n) => n.id === columnId) : nodes.filter((n) => (nodeParts[n.id] ?? []).includes(columnId)))
       .flatMap((n) => (n.functionId ? [n.functionId] : []))
 
   const useCaseCell = (uc: string, columnId: string): MatrixCell => {
@@ -216,10 +215,10 @@ export function buildRealizationMatrix(
 
   function stepCell(step: string, columnId: string): MatrixCell {
     for (const functionStep of realization.stepRealizers[step] ?? []) {
-      const owners = performers[functionStep] ?? []
+      const owners = realization.realizerNodes[functionStep] ?? []
       const hit = byNodes
         ? owners.includes(columnId)
-        : owners.some((n) => nodeById.get(n)?.partIds.includes(columnId))
+        : owners.some((n) => (nodeParts[n] ?? []).includes(columnId))
       if (!hit) continue
       const link = realization.links.find(
         (l) => l.targetId === step && l.sourceId === functionStep,

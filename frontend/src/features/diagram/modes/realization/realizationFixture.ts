@@ -82,6 +82,12 @@ export function probeRealization(): Realization {
       [`${START}::showReady`]: [`${SEC}::startFlow::releaseImmobilizer`],
     },
     coarseRealizers: { [UNLOCK]: [`${SEC}::unlockFlow`] },
+    realizerNodes: {
+      [`${SEC}::startFlow::checkKeyInCabin`]: [AUTH],
+      [`${SEC}::startFlow::releaseImmobilizer`]: [IMMO],
+      [`${SEC}::unlockFlow`]: [LOCKS],
+    },
+    nodeParts: { [AUTH]: [VC], [IMMO]: [VC], [LOCKS]: [BC] },
     useCases: {
       [START]: {
         functions: { [SEC]: 'step' },
@@ -89,6 +95,7 @@ export function probeRealization(): Realization {
         parts: { [VC]: 'step' },
         viaInclude: [],
         declared: [],
+        nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC] },
         origin: { [SEC]: REFINE_1, [AUTH]: REFINE_1, [IMMO]: REFINE_2, [VC]: REFINE_1 },
       },
       [UNLOCK]: {
@@ -97,6 +104,7 @@ export function probeRealization(): Realization {
         parts: { [BC]: 'coarse' },
         viaInclude: [],
         declared: [],
+        nodeFunctions: { [LOCKS]: [SEC] },
         origin: { [SEC]: REFINE_3, [LOCKS]: REFINE_3, [BC]: REFINE_3 },
       },
       [LOCK]: {
@@ -105,6 +113,7 @@ export function probeRealization(): Realization {
         parts: {},
         viaInclude: [],
         declared: [SEC],
+        nodeFunctions: {},
         origin: { [SEC]: REFINE_4 },
       },
       [DRIVE]: {
@@ -113,6 +122,7 @@ export function probeRealization(): Realization {
         parts: { [VC]: 'step', [BC]: 'coarse' },
         viaInclude: [SEC, AUTH, IMMO, LOCKS, VC, BC],
         declared: [],
+        nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC], [LOCKS]: [SEC] },
         origin: {},
       },
     },
@@ -128,16 +138,15 @@ export function probeRealization(): Realization {
 }
 
 export const probeNodes: MatrixNodeColumn[] = [
-  { id: AUTH, functionId: SEC, partIds: [VC] },
-  { id: IMMO, functionId: SEC, partIds: [VC] },
-  { id: LOCKS, functionId: SEC, partIds: [BC] },
+  { id: AUTH, functionId: SEC },
+  { id: IMMO, functionId: SEC },
+  { id: LOCKS, functionId: SEC },
 ]
 
 export type ProbeView = {
   semantic: Record<string, SemanticElement>
   realization: Realization
   matrixColumns: NonNullable<ViewPayload['matrixColumns']>
-  performers: Record<string, string[]>
 }
 
 export function probeView(): ProbeView {
@@ -163,10 +172,6 @@ export function probeView(): ProbeView {
   return {
     semantic,
     realization: probeRealization(),
-    matrixColumns: { nodes: probeNodes.map((n) => ({ ...n, partIds: [...n.partIds] })) },
-    performers: {
-      [`${SEC}::startFlow::checkKeyInCabin`]: [AUTH],
-      [`${SEC}::startFlow::releaseImmobilizer`]: [IMMO],
-    },
+    matrixColumns: { nodes: probeNodes.map((n) => ({ ...n })) },
   }
 }

@@ -114,13 +114,11 @@ def test_matrix_payload(tmp_path: Path):
     cols = view["matrixColumns"]
     nodes = {n["id"]: n for n in cols["nodes"]}
     assert list(nodes) == [f"{SEC}::auth", f"{SEC}::immo", f"{SEC}::locks"]
-    assert nodes[f"{SEC}::auth"] == {
-        "id": f"{SEC}::auth",
-        "functionId": SEC,
-        "partIds": [f"{P}::L::vc"],
-    }
-    assert nodes[f"{SEC}::locks"]["partIds"] == [f"{P}::L::bc"]
-    assert view["performers"][f"{SEC}::startFlow::checkKeyInCabin"] == [f"{SEC}::auth"]
+    assert nodes[f"{SEC}::auth"] == {"id": f"{SEC}::auth", "functionId": SEC}
+    # Who performs a realizing step, and the parts of a node, come from the realization.
+    assert real["realizerNodes"][f"{SEC}::startFlow::checkKeyInCabin"] == [f"{SEC}::auth"]
+    assert real["nodeParts"][f"{SEC}::locks"] == [f"{P}::L::bc"]
+    assert "performers" not in view
 
     semantic = view["semantic"]
     for needed in (
