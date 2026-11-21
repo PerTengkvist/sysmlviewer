@@ -10,8 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from domain.failure.model import Failure, FailureKind, Impact, ImpactGraph, Layer, Status
-from domain.failure.labels import label, name_of, short_name
-from domain.failure.report import _tag_key
+from domain.failure.labels import disambiguate, label, name_of, short_name, short_qual, tag_key
 from domain.failure.propagate import affected_nodes, chain, common_cause_targets, evaluate, failure_flags
 from domain.fmea.model import FmeaModel, ModeSpec, Unit
 from domain.fmea.severity import requirement_groups
@@ -105,7 +104,7 @@ def _effects(graph: ImpactGraph, impacts: Mapping[str, Impact], layers: Sequence
     for layer in layers:
         nodes = affected_nodes(graph, impacts, layer)
         if layer in (Layer.USE_CASE, Layer.REQUIREMENT):
-            nodes = sorted(nodes, key=lambda n: _tag_key(graph, n))
+            nodes = sorted(nodes, key=lambda n: tag_key(graph, n))
         for nid in nodes:
             node = graph.nodes[nid]
             tagged = layer in (Layer.USE_CASE, Layer.REQUIREMENT)
@@ -118,10 +117,24 @@ def _effects(graph: ImpactGraph, impacts: Mapping[str, Impact], layers: Sequence
     return tuple(out)
 
 
-def _item_name(graph: ImpactGraph, part_id: str) -> str:
-    if part_id in graph.nodes:
-        return short_name(graph, part_id)
-    return ".".join(part_id.split("::")[-2:])
+def _item_names(graph: ImpactGraph, part_ids: Sequence[str]) -> dict[str, str]:
+    """Display name per item, unique among all items (parts that are not in the graph too).
+
+    A part in the graph is shown like in the failure report (`a.b` with its physical owners), any
+    other part by its last two id segments. Names that two items share are qualified with the
+    shortest unique suffix of the part id.
+    """
+    base = {
+        pid: short_name(graph, pid) if pid in graph.nodes else ".".join(pid.split("::")[-2:])
+        for pid in part_ids
+    }
+
+    def qual(pid: str, k: int) -> str:
+        if pid in graph.nodes:
+            return short_qual(graph, pid, k)
+        return "::".join(pid.split("::")[-(k + 1):])
+
+    return disambiguate(base, qual)
 
 
 def _functions_of(graph: ImpactGraph, part_id: str) -> tuple[str, ...]:
@@ -153,10 +166,11 @@ def analyze(
     mission = cfg.mission_time_h
     cache: dict[Failure, dict[str, Impact]] = {}
     rows: list[Row] = []
+    item_names = _item_names(graph, [item.part_id for item in fmea.items])
     for item in fmea.items:
         node = graph.nodes.get(item.part_id)
         functions = _functions_of(graph, item.part_id)
-        name = _item_name(graph, item.part_id)
+        name = item_names[item.part_id]
         for unit in item.units:
             for m in unit.modes:
                 failure = Failure(

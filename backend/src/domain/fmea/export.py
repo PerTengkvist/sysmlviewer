@@ -7,7 +7,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from domain.failure.labels import name_of
+from domain.failure.labels import name_of, tail_names
 from domain.failure.model import ImpactGraph, Status
 from domain.fmea.analyze import Analysis, Row, spof_modes
 from domain.fmea.schema import SeverityConfig
@@ -304,22 +304,22 @@ def _chain_block(r: Row, graph: ImpactGraph) -> list[str]:
 def _item_criticality(analysis: Analysis, cfg: SeverityConfig) -> list[str]:
     """C_r: the sum of C_m of an item's modes per severity class (MIL-STD-1629A)."""
     totals: dict[tuple[str, str], float] = {}
+    names: dict[str, str] = {}
     for r in analysis.rows:
-        key = (r.item_name, r.severity_class or "")
+        key = (r.item_id, r.severity_class or "")
+        names[r.item_id] = r.item_name
         totals[key] = totals.get(key, 0.0) + (r.c_m or 0.0)
     order = {c.label: i for i, c in enumerate(cfg.severity_classes)}
     rows = [
-        {"Item": item, "Severity class": cls, "C_r": f"{total:.1e}"}
-        for (item, cls), total in sorted(totals.items(), key=lambda kv: (order[kv[0][1]], -kv[1], kv[0][0]))
+        {"Item": names[item_id], "Severity class": cls, "C_r": f"{total:.1e}"}
+        for (item_id, cls), total in sorted(
+            totals.items(), key=lambda kv: (order[kv[0][1]], -kv[1], names[kv[0][0]], kv[0][0])
+        )
     ]
     return [
         "C_r is the sum of C_m over the failure modes of one item in one severity class, per instance.",
         "",
     ] + _md_table(["Item", "Severity class", "C_r"], rows)
-
-
-def _short(item_id: str) -> str:
-    return item_id.split("::", 1)[1] if "::" in item_id else item_id
 
 
 def to_report_markdown(
@@ -372,12 +372,14 @@ def to_report_markdown(
     if not severe:
         out += ["None.", ""]
     out += ["## Coverage", "", "Physical parts without failure modes:", ""]
-    out += [f"- {_short(i)}" for i in cov.parts_without_modes] or ["- none"]
+    parts = tail_names(cov.parts_without_modes)
+    out += [f"- {parts[i]}" for i in cov.parts_without_modes] or ["- none"]
     if cov.modes_without_trace:
         out += ["", "Failure modes without a trace to the model:", ""] + [f"- {i}" for i in cov.modes_without_trace]
     if cov.requirements_without_group:
+        reqs = tail_names(cov.requirements_without_group)
         out += ["", "Requirements without a group:", ""] + [
-            f"- {_short(i)}" for i in cov.requirements_without_group
+            f"- {reqs[i]}" for i in cov.requirements_without_group
         ]
     out.append("")
     if sim is not None:

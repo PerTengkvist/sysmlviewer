@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from domain.failure.labels import label, name_of, short_name, tail_name  # noqa: F401
+from domain.failure.labels import label, name_of, short_name, tag_key, tail_name
 from domain.failure.model import Failure, FailureKind, GateKind, Impact, ImpactGraph, Layer, Status
 from domain.failure.propagate import (
     affected_nodes,
@@ -23,21 +23,6 @@ from domain.failure.scenarios import SpofRow
 
 
 # -- names ---------------------------------------------------------------
-
-
-def _tag_key(graph: ImpactGraph, nid: str) -> tuple[int, str, str, str]:
-    """Tagged elements by tag, untagged ones after them by name; the id breaks ties."""
-    node = graph.nodes[nid]
-    return (0, node.short_id, node.name, nid) if node.short_id else (1, "", node.name, nid)
-
-
-def _tail_id(nid: str) -> str:
-    return nid.split("::", 1)[1] if "::" in nid else nid
-
-
-def _part_text(graph: ImpactGraph, nid: str) -> str:
-    """Part id without its package; qualified further when two parts would look alike."""
-    return tail_name(graph, nid) if nid in graph.nodes else _tail_id(nid)
 
 
 def _flag_text(flag: str) -> str:
@@ -117,12 +102,12 @@ def _flag_lines(
         alive = result.alive
         if "redundancy_exhausted" in flags:
             lines.append(
-                f"FLAGS     redundancy exhausted: {_tail_id(part)} "
+                f"FLAGS     redundancy exhausted: {tail_name(graph, part)} "
                 f"({alive} of {gate.n}, required {_num(gate.required)})"
             )
         if "pool_at_minimum" in flags:
             lines.append(
-                f"FLAGS     pool at minimum: {_tail_id(part)} "
+                f"FLAGS     pool at minimum: {tail_name(graph, part)} "
                 f"({alive} of {gate.n}, {_num(result.surviving)} of {_num(sum(gate.capacities))}, "
                 f"required {_num(gate.required)})"
             )
@@ -149,7 +134,7 @@ def _listing(graph: ImpactGraph, impacts: Mapping[str, Impact], layer: Layer, st
     items = []
     for n in sorted(
         (n for n in affected_nodes(graph, impacts, layer) if impacts[n].status is status),
-        key=lambda n: _tag_key(graph, n),
+        key=lambda n: tag_key(graph, n),
     ):
         name = label(graph, n)
         items.append(name if status is Status.LOST else f"{name} ({_percent(impacts[n].capability)})")
@@ -218,7 +203,7 @@ def to_markdown(graph: ImpactGraph, failures: Sequence[Failure], impacts: Mappin
         out += ["", f"## {title}", ""]
         nodes = sorted(
             affected_nodes(graph, impacts, layer),
-            key=lambda n: (impacts[n].status is not Status.LOST, _tag_key(graph, n))
+            key=lambda n: (impacts[n].status is not Status.LOST, tag_key(graph, n))
             if layer is not Layer.FUNCTION
             else (0, (0, "", "", "")),
         )
@@ -307,10 +292,10 @@ def _spof_cells(graph: ImpactGraph, row: SpofRow) -> list[str]:
         return ", ".join(label(graph, i) for i in ids)
 
     return [
-        _part_text(graph, row.part_id),
+        tail_name(graph, row.part_id),
         names(row.lost_functions),
         names(row.degraded_functions),
-        names(sorted(row.requirements_at_risk, key=lambda i: _tag_key(graph, i))),
+        names(sorted(row.requirements_at_risk, key=lambda i: tag_key(graph, i))),
         ", ".join(_flag_text(f) for f in sorted(row.flags)),
     ]
 

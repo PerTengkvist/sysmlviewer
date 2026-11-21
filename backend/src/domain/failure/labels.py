@@ -20,12 +20,17 @@ of its qualified id, in whole `::` segments, that is unique among the colliding 
 
 Different nodes may get suffixes of different length. Ids and JSON keys are never affected.
 The maps are built once per graph and style (O(N) over the nodes, extra work only for colliding
-groups) and cached on the graph; they are rebuilt if the number of nodes changes.
+groups) and cached on the graph. An `ImpactGraph` must not be changed after it is built (it is
+not, once `build_impact_graph` returns); `dataclasses.replace` gives the copy an empty cache.
+
+A label is unique graph-wide, across layers: a function `Funcs::Brake` and a logical part
+`Log::Brake` are both qualified, and a plain label is qualified too when a qualified one would
+otherwise equal it.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 
 from domain.failure.model import ImpactGraph
 
@@ -58,7 +63,7 @@ def _short_base(graph: ImpactGraph, nid: str) -> str:
     return ".".join(graph.nodes[i].name for i in _chain(graph, nid))
 
 
-def _short_qual(graph: ImpactGraph, nid: str, k: int) -> str:
+def short_qual(graph: ImpactGraph, nid: str, k: int) -> str:
     chain = _chain(graph, nid)
     rest = "".join("." + graph.nodes[i].name for i in chain[1:])
     return _suffix(chain[0], k) + rest
@@ -82,44 +87,60 @@ _BASE: dict[str, Callable[[ImpactGraph, str], str]] = {
 _QUAL: dict[str, Callable[[ImpactGraph, str, int], str]] = {
     "name": lambda g, n, k: _suffix(n, k),
     "label": _label_qual,
-    "short": _short_qual,
+    "short": short_qual,
     "tail": _tail_qual,
 }
 
 
+def disambiguate(base: Mapping[str, str], qual: Callable[[str, int], str]) -> dict[str, str]:
+    """Make the texts of `base` (key -> plain text) unique among all keys.
+
+    A key whose text is shared with another key is shown as `qual(key, k)`, with k growing one
+    step at a time until the text is unique graph-wide: also against texts that were unique
+    before. Keys of different depth may end at different k; a key that cannot grow further stays.
+    """
+    out = dict(base)
+    level = dict.fromkeys(base, 0)
+    while True:
+        by_text: dict[str, list[str]] = {}
+        for key, text in out.items():
+            by_text.setdefault(text, []).append(key)
+        grew = False
+        for keys in (g for g in by_text.values() if len(g) > 1):
+            for key in keys:
+                for k in range(level[key] + 1, level[key] + 2 + len(key.split("::"))):
+                    text = qual(key, k)
+                    if text != out[key]:
+                        level[key], out[key], grew = k, text, True
+                        break
+        if not grew:
+            return out
+
+
 def _build(graph: ImpactGraph, style: str) -> dict[str, str]:
     base, qual = _BASE[style], _QUAL[style]
-    groups: dict[str, list[str]] = {}
-    for nid in graph.nodes:
-        groups.setdefault(base(graph, nid), []).append(nid)
-    out = {nid: text for text, ids in groups.items() for nid in ids}
-    for ids in (g for g in groups.values() if len(g) > 1):
-        pending = list(ids)
-        k = 1
-        while pending:
-            if k >= max(len(i.split("::")) for i in pending):  # whole id reached: ids are unique
-                for nid in pending:
-                    out[nid] = qual(graph, nid, k)
-                break
-            cand = {nid: qual(graph, nid, k) for nid in pending}
-            counts: dict[str, int] = {}
-            for text in cand.values():
-                counts[text] = counts.get(text, 0) + 1
-            for nid, text in cand.items():
-                if counts[text] == 1:
-                    out[nid] = text
-            pending = [nid for nid in pending if counts[cand[nid]] > 1]
-            k += 1
-    return out
+    return disambiguate(
+        {nid: base(graph, nid) for nid in graph.nodes}, lambda nid, k: qual(graph, nid, k)
+    )
+
+
+def tail_names(ids: Iterable[str]) -> dict[str, str]:
+    """Ids without their package segment; the full id where two of `ids` would look alike."""
+    return disambiguate({i: _tail_id(i) for i in ids}, lambda i, k: i if k >= 1 else _tail_id(i))
+
+
+def tag_key(graph: ImpactGraph, nid: str) -> tuple[int, str, str, str]:
+    """Sort key: tagged elements by tag, untagged ones after them by name; the id breaks ties."""
+    node = graph.nodes[nid]
+    return (0, node.short_id, node.name, nid) if node.short_id else (1, "", node.name, nid)
 
 
 def label_map(graph: ImpactGraph, style: str) -> dict[str, str]:
     """Label of every node of the graph in one style, built once per graph."""
-    cached = graph._label_cache.get(style)
-    if cached is None or cached[0] != len(graph.nodes):
-        cached = (len(graph.nodes), _build(graph, style))
-        graph._label_cache[style] = cached
-    return cached[1]
+    cache = graph._label_cache
+    if style not in cache:
+        cache[style] = _build(graph, style)
+    return cache[style]
 
 
 def display(graph: ImpactGraph, nid: str, style: str) -> str:

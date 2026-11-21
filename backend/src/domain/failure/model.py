@@ -75,7 +75,7 @@ class ImpactGraph:
     parent: dict[str, str]  # containment between parts in the graph
     warnings: list[str] = field(default_factory=list)
     # Disambiguated labels per style, see domain/failure/labels.py
-    _label_cache: dict = field(default_factory=dict, repr=False, compare=False)
+    _label_cache: dict = field(default_factory=dict, init=False, repr=False, compare=False)
 
 
 @dataclass(frozen=True)
