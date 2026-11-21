@@ -3,6 +3,7 @@ import type {
   ElementStyle,
   ElementStyleMode,
   Project,
+  Realization,
   RoutingType,
   SemanticElement,
   ViewFilterRow,
@@ -22,9 +23,11 @@ import {
   interfaceUsageKindLabel,
 } from './interfaceLocate'
 import { findPortDefId } from './portLocate'
+import { RelatedElementName, relatedElementText } from './RelatedElementName'
+import { RealizationSections } from './RealizationSections'
+import { elementRealization } from './realizationLinks'
 import { nestedPortsOf } from './nestedPorts'
 import {
-  elementDisplayName,
   elementRelations,
   featureLabel,
   featureTargets,
@@ -98,6 +101,8 @@ type Props = {
   onOpenRelated?: (artifactId: string) => void
   /** Open the dependency tree of an element (not offered for relations). */
   onOpenDependencyTree?: (artifactId: string) => void
+  /** Use case realization of the project; shown as Realized by / Realizes. */
+  realization?: Realization | null
 }
 
 function choiceLabel(item: SemanticElement, choices: SemanticElement[]): string {
@@ -362,8 +367,9 @@ function RelationsList({
     (r) => !exclude?.has(r.relationId),
   )
   if (!items.length) return null
+  const text = (id: string | null) => (id ? relatedElementText(semantic, id) : '—')
   const name = (id: string | null) =>
-    id ? elementDisplayName(semantic[id], id, semantic) : '—'
+    id ? <RelatedElementName semantic={semantic} id={id} /> : <>—</>
   return (
     <div className="children relations-list">
       <h3>Relations</h3>
@@ -385,7 +391,7 @@ function RelationsList({
                     type="button"
                     className="link-button"
                     data-related-id={r.otherId}
-                    title={`Open ${name(r.otherId)}`}
+                    title={`Open ${text(r.otherId)}`}
                     onClick={() => onOpenRelated(r.otherId!)}
                   >
                     {name(r.otherId)}
@@ -619,6 +625,7 @@ export function DetailsPanel({
   onLocateInModelView,
   onOpenRelated,
   onOpenDependencyTree,
+  realization,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false)
   const unlocked = elementUnlocked(viewVisualization, selectedId)
@@ -1524,6 +1531,11 @@ export function DetailsPanel({
         elementId={el.id}
         onOpenRelated={onOpenRelated}
         exclude={new Set(featureLinks.map((t) => t.relationId))}
+      />
+      <RealizationSections
+        info={elementRealization(realization, project.semantic, el.id)}
+        semantic={project.semantic}
+        onOpenRelated={onOpenRelated}
       />
 
       {editorMode && el.kind === 'part' && (

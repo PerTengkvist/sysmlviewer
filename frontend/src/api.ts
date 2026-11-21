@@ -492,6 +492,58 @@ export interface DependencyTree {
   truncated: boolean
 }
 
+/** Strength of a realization link: a step refines a step, a flow or use case is coarser. */
+export type RealizationPrecision = 'step' | 'coarse' | 'explicit'
+
+export interface RealizationLink {
+  refineId: string
+  /** Function step | flow | function | function node. */
+  sourceId: string
+  /** Use case step | use case. */
+  targetId: string
+  precision: RealizationPrecision
+}
+
+/** What realizes one use case; ids map to the best precision. */
+export interface UseCaseRealization {
+  functions: Record<string, RealizationPrecision>
+  nodes: Record<string, RealizationPrecision>
+  parts: Record<string, RealizationPrecision>
+  /** Ids reached only through `include`. */
+  viaInclude: string[]
+  /** Ids a `#refine` declares directly on this use case. */
+  declared: string[]
+  /** id -> the `#refine` that gave its precision. */
+  origin: Record<string, string>
+  /** Function node -> the functions it is realized through; empty for a node that refines the use case itself. */
+  nodeFunctions: Record<string, string[]>
+}
+
+export interface RealizationFinding {
+  code: string
+  elementId: string
+  message: string
+}
+
+/** `GET /projects/{id}/realization`. */
+export interface Realization {
+  links: RealizationLink[]
+  /** use case -> { step: actor }. */
+  actorSteps: Record<string, Record<string, string>>
+  systemSteps: Record<string, string[]>
+  /** Use case step -> function steps that realize it. */
+  stepRealizers: Record<string, string[]>
+  /** Use case (step) -> flows or function steps that realize it coarsely. */
+  coarseRealizers: Record<string, string[]>
+  /** Function step | flow -> the function nodes that perform its steps. */
+  realizerNodes: Record<string, string[]>
+  /** Function node -> its `allocate` targets (logical parts). */
+  nodeParts: Record<string, string[]>
+  useCases: Record<string, UseCaseRealization>
+  inScope: string[]
+  findings: RealizationFinding[]
+}
+
 const BASE = '/api'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -774,6 +826,8 @@ export const api = {
     ),
   listDocumentation: (projectId: string) =>
     request<{ paths: string[] }>(`/projects/${projectId}/documentation`),
+  getRealization: (projectId: string) =>
+    request<Realization>(`/projects/${projectId}/realization`),
   getDependencyTree: (projectId: string, artifactId: string) =>
     request<DependencyTree>(
       `/projects/${projectId}/dependency-tree/${encodeURIComponent(artifactId)}`,
