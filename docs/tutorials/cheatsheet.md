@@ -215,6 +215,25 @@ A use case traces to requirements with `objective`, `#refine dependency`,
 - The requirement table (GridView) has a **Use cases** column, taken from the
   whole model, so the use cases need not be exposed.
 
+### Realizing a use case
+
+A function step refines the use case step it carries out; the function, its nodes and the
+logical parts are derived (see *Use cases and scenarios*):
+
+```sysml
+#refine dependency from Functions::Security::startFlow::checkKeyInCabin
+                     to UseCases::Driving::StartVehicle::checkKey;
+```
+
+Three views show it, all in `examples/diagrams/use_case_realization.sysml`:
+
+- `GridView` exposing use cases (and no requirements): the traceability matrix.
+- `AllocationView` exposing a use case, a package of use cases or a function: the chain use
+  case | function | function node | logical part.
+- `ActionFlowView` exposing one use case: its activity on swimlanes, **Black box** (actors and
+  system), **White box** (a lane per function node) or **Logical** (a lane per logical part).
+  A step nobody realizes is marked only when the use case has step links.
+
 ## Sequences
 
 ```sysml
