@@ -38,7 +38,7 @@ function Toggle<T extends string>({
 }
 
 /** The toolbar buttons: rows switch, columns switch and CSV export. */
-export function RealizationMatrixControls({
+function RealizationMatrixControls({
   options,
   onOptionsChange,
   onExport,

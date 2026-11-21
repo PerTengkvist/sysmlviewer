@@ -116,7 +116,7 @@ The view type in the SysML file decides the diagram type. The diagram's name and
 | `ActionFlowView` | Action flow |
 | `TreeView` | Tree |
 | `AllocationView` | Allocation |
-| `GridView` | Requirements table |
+| `GridView` | Requirements table, or the realization matrix when the view exposes use cases and no requirements |
 | `UseCaseView` | Use case |
 
 The requirements table has its own toolbar buttons, **Flat** and **Hierarchical**. Hierarchical nests the requirements along their «refine» relations. Double-click a row to open the requirement's dialog.

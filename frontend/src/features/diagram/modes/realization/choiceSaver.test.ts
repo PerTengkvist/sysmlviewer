@@ -1,0 +1,86 @@
+import { describe, expect, it } from 'vitest'
+import { createChoiceSaver } from './choiceSaver'
+
+function deferred() {
+  let resolve!: () => void
+  let reject!: (e: unknown) => void
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
+describe('createChoiceSaver', () => {
+  it('sends only the latest choice made while a save is in flight, and in order', async () => {
+    const sent: string[] = []
+    const gates: ReturnType<typeof deferred>[] = []
+    const saver = createChoiceSaver<string>(
+      (_key, choice) => {
+        sent.push(choice)
+        const g = deferred()
+        gates.push(g)
+        return g.promise
+      },
+      () => {},
+    )
+    const done = saver.save('v', 'a', 'start')
+    void saver.save('v', 'b', 'start')
+    void saver.save('v', 'c', 'start')
+    expect(sent).toEqual(['a']) // never two requests at once
+    gates[0].resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(sent).toEqual(['a', 'c']) // b was overtaken
+    gates[1].resolve()
+    await done
+    expect(sent).toEqual(['a', 'c'])
+  })
+
+  it('keeps the views apart', async () => {
+    const sent: string[] = []
+    const saver = createChoiceSaver<string>(async (key, choice) => void sent.push(`${key}:${choice}`), () => {})
+    await Promise.all([saver.save('v1', 'a', ''), saver.save('v2', 'b', '')])
+    expect(sent).toEqual(['v1:a', 'v2:b'])
+  })
+
+  it('rolls back to the last saved choice when a save fails, and drops what waited', async () => {
+    const failures: [string, string | undefined, string][] = []
+    let n = 0
+    const gates: ReturnType<typeof deferred>[] = []
+    const saver = createChoiceSaver<string>(
+      () => {
+        n++
+        const g = deferred()
+        gates.push(g)
+        return g.promise
+      },
+      (key, confirmed, error) => failures.push([key, confirmed, String(error)]),
+    )
+    const first = saver.save('v', 'a', 'start')
+    void saver.save('v', 'b', 'start')
+    gates[0].resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(n).toBe(2)
+    gates[1].reject(new Error('boom'))
+    await first
+    expect(failures).toEqual([['v', 'a', 'Error: boom']]) // 'a' was confirmed, 'b' failed
+  })
+
+  it('starts the next save after a failure from the choice then confirmed', async () => {
+    const sent: string[] = []
+    let fail = true
+    const saver = createChoiceSaver<string>(
+      async (_k, choice) => {
+        sent.push(choice)
+        if (fail) throw new Error('x')
+      },
+      () => {},
+    )
+    await saver.save('v', 'a', 'start')
+    fail = false
+    await saver.save('v', 'b', 'start')
+    expect(sent).toEqual(['a', 'b'])
+  })
+})

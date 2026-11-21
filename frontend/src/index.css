@@ -3155,6 +3155,7 @@ button.linkish {
   margin-left: auto;
 }
 .realization-matrix {
+  --realization-head-height: 28px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
@@ -3164,7 +3165,7 @@ button.linkish {
   border-right: 1px solid var(--panel-border);
   border-bottom: 1px solid var(--panel-border);
   padding: 0.3rem 0.5rem;
-  height: 28px;
+  height: var(--realization-head-height);
   box-sizing: border-box;
   white-space: nowrap;
   background: var(--panel);
@@ -3186,7 +3187,7 @@ button.linkish {
   z-index: 2;
 }
 .realization-matrix thead tr:nth-child(2) .realization-sticky-row {
-  top: 28px;
+  top: var(--realization-head-height);
 }
 .realization-matrix .realization-sticky-column {
   position: sticky;

@@ -7,5 +7,6 @@ export function downloadText(fileName: string, text: string, type = 'text/csv;ch
   document.body.appendChild(link)
   link.click()
   link.remove()
-  URL.revokeObjectURL(url)
+  // Revoking at once can cancel the download in some browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }

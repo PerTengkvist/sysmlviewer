@@ -91,6 +91,24 @@ test('the choice of rows and columns survives a reload', async ({ page }) => {
   )
 })
 
+test('quick switches end in the last choice, in the view and on disk', async ({ page }) => {
+  const steps = page.getByRole('button', { name: 'Steps', exact: true })
+  const useCases = page.getByRole('button', { name: 'Use cases', exact: true })
+  const parts = page.getByRole('button', { name: 'Logical parts', exact: true })
+  const nodes = page.getByRole('button', { name: 'Function nodes', exact: true })
+  for (const b of [steps, parts, useCases, nodes, steps, parts]) await b.click()
+  await expect
+    .poll(async () => {
+      const res = await page.request.get(
+        `/api/projects/${await projectId(page)}/views/${encodeURIComponent(VIEW)}`,
+      )
+      return ((await res.json()) as { realizationMatrix: unknown }).realizationMatrix
+    })
+    .toEqual({ rows: 'steps', columns: 'parts' })
+  await expect(steps).toHaveAttribute('aria-pressed', 'true')
+  await expect(parts).toHaveAttribute('aria-pressed', 'true')
+})
+
 test('a click on a header or a cell selects it in Details', async ({ page }) => {
   await grid(page).locator('th[data-column-id="' + SEC + '::immo"]').click()
   await expect(page.locator('.details-panel')).toContainText('immo')
@@ -111,7 +129,8 @@ test('the export button downloads the same cells as CSV', async ({ page }) => {
   const stream = await download.createReadStream()
   let text = ''
   for await (const chunk of stream) text += chunk
-  const lines = text.split('\n')
+  expect(text.charCodeAt(0)).toBe(0xfeff) // byte order mark, for Excel
+  const lines = text.slice(1).split('\n')
   expect(lines[0]).toBe('Use case,Coverage,Security: auth,Security: immo,Security: locks')
   expect(lines[1]).toBe('UCA Start,2/3 ✗,●,●,')
 })

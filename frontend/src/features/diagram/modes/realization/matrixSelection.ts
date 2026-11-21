@@ -1,5 +1,5 @@
 import type { RealizationMatrixLayout } from '../../../../api'
-import type { MatrixCell, MatrixOptions, MatrixRow, RealizationMatrix } from './buildRealizationMatrix'
+import type { MatrixCell, MatrixOptions, MatrixRow } from './buildRealizationMatrix'
 import { DEFAULT_MATRIX_OPTIONS } from './buildRealizationMatrix'
 
 /** What a click on a cell selects: the `#refine` behind it (the first one), else the use case or step. */
@@ -27,5 +27,3 @@ export function withOption(
 export function matrixFileName(viewName: string): string {
   return `${viewName.replace(/[^\w.-]+/g, '_') || 'realization'}-matrix.csv`
 }
-
-export type { RealizationMatrix }

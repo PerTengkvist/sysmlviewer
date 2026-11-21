@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createChoiceSaver } from './features/diagram/modes/realization/choiceSaver'
 import {
   api,
   type ElementStyle,
@@ -868,23 +869,41 @@ export default function App() {
     [project, activeViewId, structureNotation],
   )
 
+  // The matrix choice is saved one request per view at a time, last choice wins; a
+  // failed save rolls the display back to the last saved choice.
+  const structureNotationRef = useRef(structureNotation)
+  structureNotationRef.current = structureNotation
+  const matrixProjectId = project?.id
+  const matrixSaver = useMemo(
+    () =>
+      createChoiceSaver<import('./api').RealizationMatrixLayout | null>(
+        (viewId, layout) =>
+          patchVisualization(matrixProjectId ?? '', {
+            viewId,
+            realizationMatrix: layout,
+            structureNotation: structureNotationRef.current,
+          }),
+        (viewId, confirmed, e) => {
+          setViewPayload((prev) =>
+            prev && prev.view.id === viewId
+              ? { ...prev, realizationMatrix: confirmed }
+              : prev,
+          )
+          setError(`The matrix choice could not be saved: ${String(e)}`)
+        },
+      ),
+    [patchVisualization, matrixProjectId],
+  )
   const onRealizationMatrixChange = useCallback(
-    async (layout: import('./api').RealizationMatrixLayout) => {
-      if (!project || !activeViewId) return
+    (layout: import('./api').RealizationMatrixLayout) => {
+      if (!project || !activeViewId || !viewPayload) return
+      const initial = viewPayload.realizationMatrix ?? null
       setViewPayload((prev) =>
         prev ? { ...prev, realizationMatrix: layout } : prev,
       )
-      try {
-        await patchVisualization(project.id, {
-          viewId: activeViewId,
-          realizationMatrix: layout,
-          structureNotation,
-        })
-      } catch (e) {
-        setError(String(e))
-      }
+      void matrixSaver.save(activeViewId, layout, initial)
     },
-    [project, activeViewId, structureNotation],
+    [project, activeViewId, viewPayload, matrixSaver],
   )
 
   const onPortsMoved = useCallback(
@@ -2082,9 +2101,7 @@ export default function App() {
                   void eventLog.report({ message, viewId })
                 }
                 onLayoutScopesChange={(scopes) => void onLayoutScopesChange(scopes)}
-                onRealizationMatrixChange={(layout) =>
-                  void onRealizationMatrixChange(layout)
-                }
+                onRealizationMatrixChange={onRealizationMatrixChange}
                 onSequenceLayoutChange={(layout) =>
                   void onSequenceLayoutChange(layout)
                 }
