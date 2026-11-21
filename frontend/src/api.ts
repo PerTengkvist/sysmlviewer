@@ -530,6 +530,11 @@ export interface UseCaseRealization {
   origin: Record<string, string>
   /** Function node -> the functions it is realized through; empty for a node that refines the use case itself. */
   nodeFunctions: Record<string, string[]>
+  /**
+   * Function node -> function, for a function that refines the use case while none of its
+   * nodes serves it itself: the function stands for all its nodes.
+   */
+  functionNodes: Record<string, string>
 }
 
 export interface RealizationFinding {

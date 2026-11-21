@@ -126,29 +126,29 @@ export function buildRealizationMatrix(
   }
 
   // -- use case cells (also the base of the column coverage)
-  /** The functions that own the function nodes of a column. */
-  const functionsOf = (columnId: string): string[] =>
-    (byNodes ? nodes.filter((n) => n.id === columnId) : nodes.filter((n) => (nodeParts[n.id] ?? []).includes(columnId)))
-      .flatMap((n) => (n.functionId ? [n.functionId] : []))
-
   const useCaseCell = (uc: string, columnId: string): MatrixCell => {
     const info = realization.useCases[uc]
     if (!info) return EMPTY_CELL
     let precision: RealizationPrecision | undefined = (byNodes ? info.nodes : info.parts)[columnId]
     let refineId: string | null = info.origin[columnId] ?? null
     let declared = info.declared.includes(columnId)
-    let throughFunction = false
+    let throughFunction: string | null = null
     if (!precision) {
-      // A function that refines the use case without steps covers its function nodes
-      // (and their logical parts).
-      const fn = functionsOf(columnId).find((f) => info.functions[f] === 'explicit')
+      // A function that refines the use case, with no node of its own serving it, stands
+      // for its nodes (and their logical parts); the backend says which (`functionNodes`).
+      const node = byNodes
+        ? columnId in info.functionNodes
+          ? columnId
+          : undefined
+        : Object.keys(info.functionNodes).find((n) => (nodeParts[n] ?? []).includes(columnId))
+      const fn = node ? info.functionNodes[node] : undefined
       if (!fn) return EMPTY_CELL
       precision = 'explicit'
       refineId = info.origin[fn] ?? null
       declared = info.declared.includes(fn)
-      throughFunction = true
+      throughFunction = fn
     }
-    const viaInclude = info.viaInclude.includes(columnId)
+    const viaInclude = info.viaInclude.includes(throughFunction ?? columnId)
     const text = [PRECISION_TEXT[precision]]
     if (throughFunction) text.push('through its function')
     if (declared && precision !== 'explicit') text.push('an explicit #refine also links it')

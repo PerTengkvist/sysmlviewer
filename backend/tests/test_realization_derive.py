@@ -174,3 +174,47 @@ def test_function_nodes_skip_parts_that_only_allocate():
 
     sem = probe("part lg; part ph; allocate lg to ph;")
     assert [n.id for n in function_nodes(sem)] == [AUTH, IMMO, LOCKS]
+
+
+def test_explicit_function_link_projects_onto_its_nodes():
+    r = derive_realization(probe())
+    assert r.uc_function_nodes[LOCK] == {AUTH: SEC, IMMO: SEC, LOCKS: SEC}
+    # Nothing else changes: the nodes are not realizers of Lock.
+    assert r.uc_nodes.get(LOCK, {}) == {}
+    assert r.uc_parts.get(LOCK, {}) == {}
+    assert START not in r.uc_function_nodes and UNLOCK not in r.uc_function_nodes
+
+
+def test_no_projection_when_a_node_of_the_function_serves_the_use_case_itself():
+    # The electric car form: the function and its nodes both refine the use case.
+    both = probe(f"#refine dependency from {AUTH} to {LOCK};")
+    r = derive_realization(both)
+    assert LOCK not in r.uc_function_nodes
+    steps = derive_realization(probe())
+    # A step-level link of one node of the function also stops it (Start has step links).
+    assert START not in steps.uc_function_nodes
+    explicit_and_steps = derive_realization(probe(f"#refine dependency from {SEC} to {START};"))
+    assert START not in explicit_and_steps.uc_function_nodes
+
+
+def test_projection_through_include_is_inherited():
+    r = derive_realization(probe("use case def Big { include use case UC::Lock; }"))
+    big = f"{P}::Big"
+    assert r.uc_function_nodes[big] == {AUTH: SEC, IMMO: SEC, LOCKS: SEC}
+    assert SEC in r.via_include[big]
+
+
+def test_electric_car_projects_no_function_onto_nodes():
+    """There the function and its nodes both refine the use case: no cell is projected."""
+    from adapters.api.static_paths import resolve_repo_root
+
+    root = resolve_repo_root() / "examples" / "electric_car"
+    files = [
+        SysmlFile(
+            id=p.relative_to(root).as_posix(), name=p.name,
+            content=p.read_text(encoding="utf-8"), path=p.relative_to(root).as_posix(),
+        )
+        for p in sorted(root.rglob("*.sysml"))
+    ]
+    r = derive_realization(SubsetSysmlParser().parse_project(files).elements)
+    assert r.uc_function_nodes == {}

@@ -96,6 +96,7 @@ export function probeRealization(): Realization {
         viaInclude: [],
         declared: [],
         nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC] },
+        functionNodes: {},
         origin: { [SEC]: REFINE_1, [AUTH]: REFINE_1, [IMMO]: REFINE_2, [VC]: REFINE_1 },
       },
       [UNLOCK]: {
@@ -105,6 +106,7 @@ export function probeRealization(): Realization {
         viaInclude: [],
         declared: [],
         nodeFunctions: { [LOCKS]: [SEC] },
+        functionNodes: {},
         origin: { [SEC]: REFINE_3, [LOCKS]: REFINE_3, [BC]: REFINE_3 },
       },
       [LOCK]: {
@@ -114,6 +116,7 @@ export function probeRealization(): Realization {
         viaInclude: [],
         declared: [SEC],
         nodeFunctions: {},
+        functionNodes: { [AUTH]: SEC, [IMMO]: SEC, [LOCKS]: SEC },
         origin: { [SEC]: REFINE_4 },
       },
       [DRIVE]: {
@@ -123,6 +126,7 @@ export function probeRealization(): Realization {
         viaInclude: [SEC, AUTH, IMMO, LOCKS, VC, BC],
         declared: [],
         nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC], [LOCKS]: [SEC] },
+        functionNodes: {},
         origin: {},
       },
     },

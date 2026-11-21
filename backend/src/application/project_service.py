@@ -254,6 +254,7 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
         | set(realization.uc_nodes)
         | set(realization.uc_parts)
         | set(realization.via_include)
+        | set(realization.uc_function_nodes)
         | {uc for uc, _ in realization.declared}
     )
     for uc in by_model(ucs):
@@ -264,6 +265,7 @@ def _realization_payload(realization: Realization, order: list[str]) -> dict:
             "viaInclude": by_model(realization.via_include.get(uc, set())),
             "declared": by_model(e for u, e in realization.declared if u == uc),
             "origin": {e: r for (u, e), r in realization.origin.items() if u == uc},
+            "functionNodes": dict(realization.uc_function_nodes.get(uc, {})),
             "nodeFunctions": {
                 n: list(f) for n, f in realization.uc_node_functions.get(uc, {}).items()
             },

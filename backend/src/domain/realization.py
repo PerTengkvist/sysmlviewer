@@ -84,6 +84,11 @@ class Realization:
     realizer_nodes: dict[str, list[str]] = field(default_factory=dict)
     uc_node_functions: dict[str, dict[str, list[str]]] = field(default_factory=dict)
     node_parts: dict[str, list[str]] = field(default_factory=dict)
+    # uc -> function node -> its function, for a function that refines the use case
+    # (`explicit`) while none of its nodes serves the use case itself: such a function
+    # stands for all its nodes. Display data only; `uc_nodes`, findings and the reports
+    # never read it.
+    uc_function_nodes: dict[str, dict[str, str]] = field(default_factory=dict)
     in_scope: set[str] = field(default_factory=set)
     findings: list[Finding] = field(default_factory=list)
 
@@ -115,17 +120,7 @@ def function_nodes(
     """
     if performers is None:
         performers = resolve_performers(dict(semantic))
-    deriver = _Deriver(semantic, performers)
-    nodes: list[FunctionNode] = []
-    for eid, el in semantic.items():
-        if not deriver._is_node(el) or not any(
-            is_perform(semantic[c]) for c in deriver.children.get(eid, [])
-        ):
-            continue
-        owner = deriver._owner(el)
-        function = owner.id if owner is not None and deriver._is_function(owner) else None
-        nodes.append(FunctionNode(eid, function))
-    return nodes
+    return _Deriver(semantic, performers).function_nodes()
 
 
 def _put(
@@ -242,6 +237,33 @@ class _Deriver:
             if self.sem[p].kind == ArtifactKind.PART and not in_occurrence(self.sem, p)
         ]
 
+    def function_nodes(self) -> list[FunctionNode]:
+        nodes: list[FunctionNode] = []
+        for eid, el in self.sem.items():
+            if not self._is_node(el) or not any(
+                is_perform(self.sem[c]) for c in self.children.get(eid, [])
+            ):
+                continue
+            owner = self._owner(el)
+            function = owner.id if owner is not None and self._is_function(owner) else None
+            nodes.append(FunctionNode(eid, function))
+        return nodes
+
+    def _project_functions(self) -> None:
+        """A function that refines a use case stands for its nodes, unless one of them serves it."""
+        out = self.out
+        owned: dict[str, list[str]] = {}
+        for node in self.function_nodes():
+            if node.function_id:
+                owned.setdefault(node.function_id, []).append(node.id)
+        for uc, functions in out.uc_functions.items():
+            served = out.uc_nodes.get(uc, {})
+            for function, precision in functions.items():
+                nodes = owned.get(function, [])
+                if precision != "explicit" or not nodes or any(n in served for n in nodes):
+                    continue
+                out.uc_function_nodes.setdefault(uc, {}).update(dict.fromkeys(nodes, function))
+
     # -- derivation ----------------------------------------------------
 
     def run(self) -> Realization:
@@ -256,6 +278,7 @@ class _Deriver:
             ):
                 self._link(rel)
         self._include_union()
+        self._project_functions()
         self._findings()
         return out
 

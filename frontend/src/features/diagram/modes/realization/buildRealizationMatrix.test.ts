@@ -109,6 +109,16 @@ describe('cells', () => {
     expect(cell(m, START, IMMO).tooltip).not.toMatch(/explicit/i)
   })
 
+  it('marks a ring that comes through include on the nodes of the function', () => {
+    const view = probeView()
+    view.realization.useCases[DRIVE].viaInclude = [SEC]
+    view.realization.useCases[DRIVE].nodes = {}
+    view.realization.useCases[DRIVE].functionNodes = { [AUTH]: SEC }
+    const c = cell(buildRealizationMatrix(view, nodesByUc), DRIVE, AUTH)
+    expect(c).toMatchObject({ glyph: '○', viaInclude: true })
+    expect(c.tooltip).toMatch(/include/i)
+  })
+
   it('marks cells reached only through include', () => {
     expect(cell(m, DRIVE, AUTH)).toMatchObject({ glyph: '●', viaInclude: true, refineId: null })
     expect(cell(m, DRIVE, AUTH).tooltip).toMatch(/include/i)
@@ -169,6 +179,21 @@ describe('coverage', () => {
     ])
   })
 
+  it('shows no ring on the nodes of a function when one of them serves the use case itself', () => {
+    // The electric car form: the function and its node both refine the use case.
+    const view = probeView()
+    const lock = view.realization.useCases[LOCK]
+    lock.nodes = { [AUTH]: 'explicit' }
+    lock.declared = [SEC, AUTH]
+    lock.functionNodes = {}
+    for (const uc of [START, UNLOCK, DRIVE]) delete view.realization.useCases[uc]
+    const m = buildRealizationMatrix(view, nodesByUc)
+    expect(cell(m, LOCK, AUTH).glyph).toBe('○')
+    expect(cell(m, LOCK, IMMO).glyph).toBe('')
+    expect(cell(m, LOCK, LOCKS).glyph).toBe('')
+    expect(m.columns.map((c) => [c.id, c.gap])).toEqual([[AUTH, false], [IMMO, true], [LOCKS, true]])
+  })
+
   it('counts an explicit-only link as realizing', () => {
     const view = probeView()
     delete view.realization.useCases[START]
@@ -206,17 +231,12 @@ describe('agreement with Details', () => {
         const cell = m.cells[r][c]
         const node = elementRealization(view.realization, view.semantic, column.id)
         const hit = node.realizes.find((e) => e.useCaseId === row.id)
-        if (cell.glyph && !cell.tooltip.includes('through its function')) {
-          expect(hit?.precision, `${row.id} / ${column.id}`).toBe(cell.precision)
-        } else if (cell.glyph) {
-          // A bare explicit link of the function: Details lists the function with that
-          // precision in "Realized by"; the node itself is not listed as realizing it.
-          expect(hit).toBeUndefined()
-          const fn = elementRealization(view.realization, view.semantic, column.groupId!)
-          expect(fn.realizes.find((e) => e.useCaseId === row.id)?.precision).toBe('explicit')
-        } else {
-          expect(hit, `${row.id} / ${column.id}`).toBeUndefined()
-        }
+        // The matrix and Details read the same fields, so every cell has a counterpart.
+        expect(hit?.precision ?? null, `${row.id} / ${column.id}`).toBe(cell.precision)
+        expect(hit?.throughFunction ?? false, `${row.id} / ${column.id}`).toBe(
+          cell.tooltip.includes('through its function'),
+        )
+        expect(hit?.viaInclude ?? false, `${row.id} / ${column.id}`).toBe(cell.viaInclude)
       }
     }
   })
