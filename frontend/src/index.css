@@ -3388,3 +3388,35 @@ button.linkish {
 .events-details th {
   color: var(--muted);
 }
+
+/* Realization chain: use case | function | function node | logical part. */
+.chain-node {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 1.5px solid var(--panel-border);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.chain-node strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chain-node-useCase {
+  border-radius: 28px;
+}
+
+.chain-node.selected {
+  outline: 2px solid var(--accent, #3d6b8c);
+}
