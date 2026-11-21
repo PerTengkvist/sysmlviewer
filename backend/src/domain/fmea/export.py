@@ -7,6 +7,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from domain.failure.labels import name_of
 from domain.failure.model import ImpactGraph, Status
 from domain.fmea.analyze import Analysis, Row, spof_modes
 from domain.fmea.schema import SeverityConfig
@@ -35,10 +36,6 @@ def _opt(x: object) -> str:
 
 def _join(items) -> str:
     return "; ".join(items)
-
-
-def _tail(nid: str) -> str:
-    return nid.split("::", 1)[1] if "::" in nid else nid
 
 
 def _common(r: Row) -> dict[str, str]:
@@ -104,7 +101,7 @@ def _spof_rows(analysis: Analysis, threshold: int) -> list[dict[str, str]]:
             "Item": f"{r.item_name}/{r.sru}" if r.sru else r.item_name,
             "Failure mode": r.mode_id,
             "S": str(r.severity),
-            "Lost functions": _join(_tail(f) for f in r.lost_functions),
+            "Lost functions": _join(r.lost_function_labels),
             "Requirements at risk": _join(e.label for e in r.end_effect if e.layer == "requirement"),
         }
         for r in spof_modes(analysis.ranking, threshold)
@@ -294,7 +291,7 @@ def _chain_block(r: Row, graph: ImpactGraph) -> list[str]:
     lines = ["```mermaid", "flowchart LR", f'    {mode_id}["{r.mode_id}<br/>{r.local_effect}"]']
     ids = []
     for i, nid in enumerate(path):
-        name = r.item_name if i == 0 else graph.nodes[nid].name
+        name = r.item_name if i == 0 else name_of(graph, nid)
         ids.append(f"n{i}_{_mid(name)}")
         lines.append(f'    {ids[-1]}["{name}<br/>{status[i]}"]')
     lines.append(f"    {mode_id} -->|fails| {ids[0]}")
