@@ -350,6 +350,7 @@ export const DIAGRAM_MODE_LABELS: Record<DiagramMode, string> = {
   useCase: 'Use case',
   realizationMatrix: 'Realization matrix',
   realizationChain: 'Realization chain',
+  useCaseRealization: 'Use case realization',
 }
 
 function routingToConnectionLine(routing: RoutingType): ConnectionLineType {

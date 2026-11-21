@@ -14,7 +14,7 @@ const ROW_H = 100
 const LEFT = 40
 const TOP = 140
 
-function prettyLabel(name: string, isDecision: boolean): string {
+export function prettyLabel(name: string, isDecision: boolean): string {
   const spaced = name.includes(' ')
     ? name
     : name
@@ -52,7 +52,7 @@ function isDecisionEl(
 /** Extra node height for the ⟨performer⟩ row, so a two-line name still fits. */
 const PERFORMER_ROW_H = 34
 
-function edgeLabel(succ: SemanticElement): string {
+export function edgeLabel(succ: SemanticElement): string {
   const n = succ.name.toLowerCase()
   // `then if g then a else b;` is parsed into `if_g_yes` / `if_g_else`.
   if (n === 'yes' || n.endsWith('_yes')) return 'YES'
