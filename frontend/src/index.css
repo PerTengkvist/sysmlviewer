@@ -217,6 +217,26 @@ input {
   white-space: nowrap;
 }
 
+.realization-precision,
+.realization-via-include {
+  font-size: 0.75rem;
+  color: var(--muted);
+  border: 1px solid var(--muted);
+  border-radius: 0.6rem;
+  padding: 0 0.4rem;
+  white-space: nowrap;
+}
+
+.realization-unrealized,
+.realization-finding {
+  font-size: 0.85rem;
+  margin: 0.2rem 0;
+}
+
+.realization-section ul ul {
+  margin-left: 1rem;
+}
+
 .link-button {
   border: none;
   background: none;

@@ -20,7 +20,7 @@ type Props = {
   semantic: Record<string, SemanticElement>
   onClose: () => void
   onOpenAction?: (actionId: string) => void
-  /** Open the details of a traced requirement. */
+  /** Open the details of a traced requirement or a clicked step. */
   onOpenElement?: (artifactId: string) => void
   /** Open the dependency tree of this use case. */
   onOpenDependencyTree?: (artifactId: string) => void
@@ -83,6 +83,9 @@ export function UseCaseFlowDialog({
               maxZoom={DIAGRAM_MAX_ZOOM}
               nodesDraggable={false}
               nodesConnectable={false}
+              onNodeClick={(_, node) => {
+                if (onOpenElement && semantic[node.id]) onOpenElement(node.id)
+              }}
               proOptions={{ hideAttribution: true }}
             >
               <Background />

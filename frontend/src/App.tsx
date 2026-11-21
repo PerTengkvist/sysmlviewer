@@ -5,6 +5,7 @@ import {
   type ExampleProject,
   type PortSide,
   type Project,
+  type Realization,
   type RoutingType,
   type ViewPayload,
   type VisualizationEdge,
@@ -183,6 +184,7 @@ export default function App() {
     seq: number
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
+  const [realization, setRealization] = useState<Realization | null>(null)
   const canvasApiRef = useRef<DiagramCanvasApi | null>(null)
   const pendingWrites = useRef(createPendingWrites()).current
   const eventLog = useEventLog(project?.id ?? null)
@@ -399,6 +401,25 @@ export default function App() {
     }).catch(() => {
       if (!cancelled) setDocPaths([])
     })
+    return () => {
+      cancelled = true
+    }
+  }, [project?.id, project?.updatedAt])
+
+  useEffect(() => {
+    if (!project) {
+      setRealization(null)
+      return
+    }
+    let cancelled = false
+    void api
+      .getRealization(project.id)
+      .then((res) => {
+        if (!cancelled) setRealization(res)
+      })
+      .catch(() => {
+        if (!cancelled) setRealization(null)
+      })
     return () => {
       cancelled = true
     }
@@ -1512,6 +1533,7 @@ export default function App() {
     },
     onOpenRelated: openRelatedDetails,
     onOpenDependencyTree: openDependencyTree,
+    realization,
     onLocateInModelView: (artifactId) => {
       setLeftTab('views')
       setSelectedId(artifactId)
