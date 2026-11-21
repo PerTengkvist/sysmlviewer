@@ -59,6 +59,9 @@ class Finding:
     code: str
     element_id: str
     message: str
+    # The use case a finding is about, when it is about one (the same function or node can
+    # have one finding per use case); None for a finding about a link or a function step.
+    use_case_id: str | None = None
 
 
 @dataclass
@@ -89,6 +92,9 @@ class Realization:
     # stands for all its nodes. Display data only; `uc_nodes`, findings and the reports
     # never read it.
     uc_function_nodes: dict[str, dict[str, str]] = field(default_factory=dict)
+    # uc -> logical part -> function: the parts of those nodes that the use case does not
+    # reach through a node of its own.
+    uc_function_parts: dict[str, dict[str, str]] = field(default_factory=dict)
     in_scope: set[str] = field(default_factory=set)
     findings: list[Finding] = field(default_factory=list)
 
@@ -263,6 +269,10 @@ class _Deriver:
                 if precision != "explicit" or not nodes or any(n in served for n in nodes):
                     continue
                 out.uc_function_nodes.setdefault(uc, {}).update(dict.fromkeys(nodes, function))
+                for node in nodes:
+                    for part in self.allocated_to.get(node, []):
+                        if part not in out.uc_parts.get(uc, {}):
+                            out.uc_function_parts.setdefault(uc, {})[part] = function
 
     # -- derivation ----------------------------------------------------
 
@@ -277,8 +287,8 @@ class _Deriver:
                 and rel.target_id in self.sem
             ):
                 self._link(rel)
-        self._include_union()
         self._project_functions()
+        self._include_union()
         self._findings()
         return out
 
@@ -394,6 +404,10 @@ class _Deriver:
         )
         targets = (out.uc_functions, out.uc_nodes, out.uc_parts)
         direct_fns = {k: {n: list(f) for n, f in v.items()} for k, v in out.uc_node_functions.items()}
+        direct_proj = (
+            {k: dict(v) for k, v in out.uc_function_nodes.items()},
+            {k: dict(v) for k, v in out.uc_function_parts.items()},
+        )
         for uc in includes:
             reached: list[str] = []
             queue = list(includes[uc])
@@ -407,12 +421,32 @@ class _Deriver:
                 for node, fns in direct_fns.get(inc, {}).items():
                     mine = out.uc_node_functions.setdefault(uc, {}).setdefault(node, [])
                     mine.extend(f for f in fns if f not in mine)
+            for proj, inherited_into in zip(
+                direct_proj, (out.uc_function_nodes, out.uc_function_parts)
+            ):
+                for inc in reached:
+                    for key, function in proj.get(inc, {}).items():
+                        inherited_into.setdefault(uc, {}).setdefault(key, function)
+                        if function not in direct[0].get(uc, {}):
+                            out.via_include.setdefault(uc, set()).add(function)
             for direct_map, target in zip(direct, targets):
                 for inc in reached:
                     for key, precision in direct_map.get(inc, {}).items():
                         if key not in direct_map.get(uc, {}):
                             out.via_include.setdefault(uc, set()).add(key)
                         _put(target.setdefault(uc, {}), key, precision)
+
+        # A projected node or part that the use case reaches directly (also through an
+        # included use case) is shown once, with its own precision.
+        for projected, served in (
+            (out.uc_function_nodes, out.uc_nodes),
+            (out.uc_function_parts, out.uc_parts),
+        ):
+            for uc in list(projected):
+                for key in [k for k in projected[uc] if k in served.get(uc, {})]:
+                    del projected[uc][key]
+                if not projected[uc]:
+                    del projected[uc]
 
     # -- findings ------------------------------------------------------
 
@@ -438,6 +472,7 @@ class _Deriver:
                         UNREALIZED_SYSTEM_STEP,
                         step,
                         f"system step {step!r} of use case {uc!r} is not realized by any function step",
+                        uc,
                     )
                 )
         for flow in sorted(stepped_flows, key=list(self.sem).index):
@@ -463,6 +498,7 @@ class _Deriver:
                             function,
                             f"function {function!r} refines use case {uc!r}, but none of its "
                             "steps realizes a step of the use case",
+                            uc,
                         )
                     )
             nodes = out.uc_nodes.get(uc, {})
@@ -477,6 +513,7 @@ class _Deriver:
                             node,
                             f"function node {node!r} refines use case {uc!r}, but none of the "
                             "steps it performs realizes a step of the use case",
+                            uc,
                         )
                     )
             for node, precision in nodes.items():
@@ -487,6 +524,7 @@ class _Deriver:
                             node,
                             f"function node {node!r} realizes steps of use case {uc!r}, but has "
                             "no #refine to it, although other function nodes do",
+                            uc,
                         )
                     )
         for rel, s_role, t_role in self.bad_ends:

@@ -82,7 +82,7 @@ def test_get_realization(tmp_path: Path):
 
     codes = {f["code"] for f in data["findings"]}
     assert "unrealized-system-step" in codes
-    assert set(data["findings"][0]) == {"code", "elementId", "message"}
+    assert set(data["findings"][0]) == {"code", "elementId", "message", "useCaseId"}
 
 
 ORDER = """
@@ -208,3 +208,4 @@ def test_function_nodes_of_an_explicit_function_link(tmp_path: Path):
         f"{SEC}::locks": SEC,
     }
     assert data["useCases"][START]["functionNodes"] == {}
+    assert data["useCases"][LOCK]["functionParts"] == {f"{P}::L::vc": SEC, f"{P}::L::bc": SEC}

@@ -252,3 +252,22 @@ package Extra {
     assert any(code == "bad-realization-end" for code, _ in found)
     # Lock is not exposed: nothing about it.
     assert all("Lock" not in f["message"] for f in view["realization"]["findings"])
+
+
+def test_a_finding_of_another_use_case_is_not_listed(tmp_path: Path):
+    extra = """
+package G { part def Gf { part g1 { perform gflow.a; } action gflow { action a; action b; } } }
+#refine dependency from F::Security::unlockFlow::release to UC::Unlock::unlockDoors;
+#refine dependency from G::Gf to UC::Start;
+#refine dependency from G::Gf to UC::Unlock;
+"""
+    text = PROBE.rstrip().removesuffix("}") + extra + "}\n" + MATRIX_VIEWS
+    client, pid = _project(tmp_path, text)
+    only = _view(client, pid, "Views::OnlyStart")["realization"]["findings"]
+    gf = [f for f in only if f["code"] == "refine-without-step"]
+    assert [f["useCaseId"] for f in gf] == [START]
+    assert all(UNLOCK not in f["message"] for f in only)
+    allv = _view(client, pid, "Views::Matrix")["realization"]["findings"]
+    assert sorted(f["useCaseId"] for f in allv if f["code"] == "refine-without-step") == sorted(
+        [START, UNLOCK]
+    )

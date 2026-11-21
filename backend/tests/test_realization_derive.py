@@ -218,3 +218,34 @@ def test_electric_car_projects_no_function_onto_nodes():
     ]
     r = derive_realization(SubsetSysmlParser().parse_project(files).elements)
     assert r.uc_function_nodes == {}
+
+
+def test_projection_reaches_the_parts_of_the_nodes():
+    r = derive_realization(probe())
+    assert r.uc_function_parts[LOCK] == {VC: SEC, BC: SEC}
+    assert START not in r.uc_function_parts  # Start's parts are realized directly
+
+
+def test_composite_inherits_the_projection_of_an_included_use_case():
+    text = FIXTURE.read_text(encoding="utf-8").replace("include use case Unlock;", "include use case Lock;")
+    r = derive_realization(parse(text))
+    drive = DRIVE
+    # auth and immo serve Drive through Start already; only locks is projected, via include.
+    assert r.uc_function_nodes[drive] == {LOCKS: SEC}
+    assert r.uc_function_parts[drive] == {BC: SEC}
+    assert SEC in r.via_include[drive]
+    assert AUTH not in r.uc_function_nodes[drive]
+
+
+def test_findings_name_their_use_case():
+    text = FIXTURE.read_text(encoding="utf-8").rstrip().removesuffix("}") + (
+        "package G { part def Gf { part g1 { perform gflow.a; } action gflow { action a; } } }\n"
+        "#refine dependency from F::Security::unlockFlow::release to UC::Unlock::unlockDoors;\n"
+        "#refine dependency from G::Gf to UC::Start;\n"
+        "#refine dependency from G::Gf to UC::Unlock;\n}\n"
+    )
+    r = derive_realization(parse(text))
+    mine = {(f.code, f.use_case_id) for f in r.findings if f.code == "refine-without-step"}
+    assert mine == {("refine-without-step", START), ("refine-without-step", UNLOCK)}
+    unrealized = [f for f in r.findings if f.code == "unrealized-system-step"]
+    assert unrealized and all(f.use_case_id in (START, UNLOCK) for f in unrealized)
