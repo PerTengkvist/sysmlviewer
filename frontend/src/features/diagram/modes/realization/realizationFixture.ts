@@ -97,6 +97,7 @@ export function probeRealization(): Realization {
         declared: [],
         nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC] },
         functionNodes: {},
+        functionParts: {},
         origin: { [SEC]: REFINE_1, [AUTH]: REFINE_1, [IMMO]: REFINE_2, [VC]: REFINE_1 },
       },
       [UNLOCK]: {
@@ -107,6 +108,7 @@ export function probeRealization(): Realization {
         declared: [],
         nodeFunctions: { [LOCKS]: [SEC] },
         functionNodes: {},
+        functionParts: {},
         origin: { [SEC]: REFINE_3, [LOCKS]: REFINE_3, [BC]: REFINE_3 },
       },
       [LOCK]: {
@@ -117,6 +119,7 @@ export function probeRealization(): Realization {
         declared: [SEC],
         nodeFunctions: {},
         functionNodes: { [AUTH]: SEC, [IMMO]: SEC, [LOCKS]: SEC },
+        functionParts: { [VC]: SEC, [BC]: SEC },
         origin: { [SEC]: REFINE_4 },
       },
       [DRIVE]: {
@@ -127,6 +130,7 @@ export function probeRealization(): Realization {
         declared: [],
         nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC], [LOCKS]: [SEC] },
         functionNodes: {},
+        functionParts: {},
         origin: {},
       },
     },
@@ -136,6 +140,7 @@ export function probeRealization(): Realization {
         code: 'unrealized-system-step',
         elementId: `${START}::askForBrake`,
         message: 'system step is not realized',
+        useCaseId: START,
       },
     ],
   }

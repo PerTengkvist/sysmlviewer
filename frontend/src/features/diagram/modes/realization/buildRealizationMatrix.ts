@@ -60,7 +60,13 @@ export type MatrixCell = {
 }
 
 /** A finding that the grid does not show as a mark (a `✗` already stands for an unrealized step). */
-export type MatrixFinding = { code: string; elementId: string; label: string; message: string }
+export type MatrixFinding = {
+  code: string
+  elementId: string
+  useCaseId: string | null
+  label: string
+  message: string
+}
 
 export type RealizationMatrix = {
   options: MatrixOptions
@@ -140,13 +146,9 @@ export function buildRealizationMatrix(
     let throughFunction: string | null = null
     if (!precision) {
       // A function that refines the use case, with no node of its own serving it, stands
-      // for its nodes (and their logical parts); the backend says which (`functionNodes`).
-      const node = byNodes
-        ? columnId in info.functionNodes
-          ? columnId
-          : undefined
-        : Object.keys(info.functionNodes).find((n) => (nodeParts[n] ?? []).includes(columnId))
-      const fn = node ? info.functionNodes[node] : undefined
+      // for its nodes and their logical parts; the backend says which (`functionNodes`,
+      // `functionParts`).
+      const fn = (byNodes ? info.functionNodes : info.functionParts)[columnId]
       if (!fn) return EMPTY_CELL
       precision = 'explicit'
       refineId = info.origin[fn] ?? null

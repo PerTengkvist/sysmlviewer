@@ -535,12 +535,16 @@ export interface UseCaseRealization {
    * nodes serves it itself: the function stands for all its nodes.
    */
   functionNodes: Record<string, string>
+  /** Logical part -> function: the parts of those nodes that the use case does not reach otherwise. */
+  functionParts: Record<string, string>
 }
 
 export interface RealizationFinding {
   code: string
   elementId: string
   message: string
+  /** The use case the finding is about; null for a finding about a link or a function step. */
+  useCaseId: string | null
 }
 
 /** `GET /projects/{id}/realization`. */

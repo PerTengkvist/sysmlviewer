@@ -83,4 +83,20 @@ describe('createChoiceSaver', () => {
     await saver.save('v', 'b', 'start')
     expect(sent).toEqual(['a', 'b'])
   })
+
+  it('rolls back to what the server holds after the view was loaded again', async () => {
+    const failures: (string | undefined)[] = []
+    let fail = false
+    const saver = createChoiceSaver<string>(
+      async () => {
+        if (fail) throw new Error('x')
+      },
+      (_k, confirmed) => failures.push(confirmed),
+    )
+    await saver.save('v', 'a', 'start') // saved: 'a'
+    // The view is loaded again; the server holds 'z' by now (another window saved it).
+    fail = true
+    await saver.save('v', 'b', 'z')
+    expect(failures).toEqual(['z'])
+  })
 })

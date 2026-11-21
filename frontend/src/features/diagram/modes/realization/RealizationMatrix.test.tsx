@@ -72,7 +72,7 @@ describe('findings', () => {
     view.realization.findings.push({
       code: 'refine-without-step',
       elementId: 'RealizationProbe::F::Security',
-      message: 'function refines Start without steps',
+      message: 'function refines Start without steps', useCaseId: null,
     })
     const html = renderToStaticMarkup(
       createElement(RealizationMatrix, {

@@ -96,7 +96,9 @@ test('quick switches end in the last choice, in the view and on disk', async ({ 
   const useCases = page.getByRole('button', { name: 'Use cases', exact: true })
   const parts = page.getByRole('button', { name: 'Logical parts', exact: true })
   const nodes = page.getByRole('button', { name: 'Function nodes', exact: true })
-  for (const b of [steps, parts, useCases, nodes, steps, parts]) await b.click()
+  // The path (use cases, parts) -> (steps, parts) -> (steps, nodes): the last state is new, so
+  // no earlier request can pass for it.
+  for (const b of [parts, steps, nodes]) await b.click()
   await expect
     .poll(async () => {
       const res = await page.request.get(
@@ -104,9 +106,11 @@ test('quick switches end in the last choice, in the view and on disk', async ({ 
       )
       return ((await res.json()) as { realizationMatrix: unknown }).realizationMatrix
     })
-    .toEqual({ rows: 'steps', columns: 'parts' })
+    .toEqual({ rows: 'steps', columns: 'nodes' })
   await expect(steps).toHaveAttribute('aria-pressed', 'true')
-  await expect(parts).toHaveAttribute('aria-pressed', 'true')
+  await expect(nodes).toHaveAttribute('aria-pressed', 'true')
+  await expect(useCases).toHaveAttribute('aria-pressed', 'false')
+  await expect(parts).toHaveAttribute('aria-pressed', 'false')
 })
 
 test('a click on a header or a cell selects it in Details', async ({ page }) => {
