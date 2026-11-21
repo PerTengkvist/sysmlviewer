@@ -385,13 +385,12 @@ export interface ViewPayload {
   realizationMatrix?: RealizationMatrixLayout | null
   /** realizationMatrix only: the realization of the exposed use cases. */
   realization?: Realization
-  /** realizationMatrix only: every function node of the model, with its function and parts. */
+  /** realizationMatrix only: every function node of the model, with its owning function. */
   matrixColumns?: { nodes: MatrixNodeColumn[] }
   modeError?: string | null
   /**
-   * actionFlow: the parts that perform each step (`perform flow.step;` in a
-   * part), by action id. realizationMatrix: the same, for the function steps that
-   * realize a use case step. The parts are in `semantic` for their names.
+   * actionFlow only: the parts that perform each step (`perform flow.step;`
+   * in a part), by action id. The parts are in `semantic` for their names.
    */
   performers?: Record<string, string[]>
   /**
@@ -563,8 +562,6 @@ export interface MatrixNodeColumn {
   id: string
   /** The function part that owns the node; null when none does. */
   functionId: string | null
-  /** Logical parts the node is allocated to. */
-  partIds: string[]
 }
 
 const BASE = '/api'

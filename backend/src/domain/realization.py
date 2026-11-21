@@ -97,6 +97,37 @@ def derive_realization(
     return _Deriver(semantic, performers).run()
 
 
+@dataclass(frozen=True)
+class FunctionNode:
+    id: str
+    function_id: str | None  # the function part that owns the node, if it is one
+
+
+def function_nodes(
+    semantic: Mapping[str, SemanticElement],
+    performers: Mapping[str, list[str]] | None = None,
+) -> list[FunctionNode]:
+    """Every function node of the model in model order, linked to a use case or not.
+
+    A function node is a part that performs a function step (`perform flow.step;`); a part
+    that is only an `allocate` source is not one. Its function is the owner when that is a
+    function (a part with a function flow). Used by the realization matrix, so gaps show.
+    """
+    if performers is None:
+        performers = resolve_performers(dict(semantic))
+    deriver = _Deriver(semantic, performers)
+    nodes: list[FunctionNode] = []
+    for eid, el in semantic.items():
+        if not deriver._is_node(el) or not any(
+            is_perform(semantic[c]) for c in deriver.children.get(eid, [])
+        ):
+            continue
+        owner = deriver._owner(el)
+        function = owner.id if owner is not None and deriver._is_function(owner) else None
+        nodes.append(FunctionNode(eid, function))
+    return nodes
+
+
 def _put(
     target: dict[str, Precision],
     key: str,
