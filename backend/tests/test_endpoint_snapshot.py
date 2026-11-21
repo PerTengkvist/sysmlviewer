@@ -269,6 +269,112 @@ for _scope in (_PROJECT_EC, _CAR_FILE):
     for _name in _TYPE_DEFS:
         ACCEPTED_DIFFS.add(f"{_scope}: element id added 'LogicalArchitecture::Types::{_name}'")
 
+# examples/diagrams/use_case_realization.sysml: a new example file (use case
+# realization: `#refine` from function steps to use case steps, function nodes that
+# `perform` steps, `allocate` to logical parts, and a UseCaseView). Purely additive:
+# nothing existing changes. Every `perform` (the actors' too) resolves to the step it
+# names, which gives a `performTargetId` line each; the 17 relations are the
+# successions, the `#refine` dependencies, the allocations and the two `include`s.
+_REALIZATION_ADDED = [
+    "UseCaseRealization",
+    "UseCaseRealization::F",
+    "UseCaseRealization::F::Security",
+    "UseCaseRealization::F::Security::auth",
+    "UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin",
+    "UseCaseRealization::F::Security::immo",
+    "UseCaseRealization::F::Security::immo::perform_startFlow_logStart",
+    "UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer",
+    "UseCaseRealization::F::Security::locks",
+    "UseCaseRealization::F::Security::locks::perform_unlockFlow_release",
+    "UseCaseRealization::F::Security::startFlow",
+    "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+    "UseCaseRealization::F::Security::startFlow::done",
+    "UseCaseRealization::F::Security::startFlow::logStart",
+    "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+    "UseCaseRealization::F::Security::startFlow::start",
+    "UseCaseRealization::F::Security::startFlow::succ1",
+    "UseCaseRealization::F::Security::startFlow::succ2",
+    "UseCaseRealization::F::Security::startFlow::succ3",
+    "UseCaseRealization::F::Security::startFlow::succ4",
+    "UseCaseRealization::F::Security::unlockFlow",
+    "UseCaseRealization::F::Security::unlockFlow::release",
+    "UseCaseRealization::L",
+    "UseCaseRealization::L::bc",
+    "UseCaseRealization::L::vc",
+    "UseCaseRealization::UC",
+    "UseCaseRealization::UC::Drive",
+    "UseCaseRealization::UC::Drive::include_Start",
+    "UseCaseRealization::UC::Drive::include_Unlock",
+    "UseCaseRealization::UC::Lock",
+    "UseCaseRealization::UC::Lock::lockDoors",
+    "UseCaseRealization::UC::Start",
+    "UseCaseRealization::UC::Start::Driver",
+    "UseCaseRealization::UC::Start::Driver::perform_pressStart",
+    "UseCaseRealization::UC::Start::askForBrake",
+    "UseCaseRealization::UC::Start::checkKey",
+    "UseCaseRealization::UC::Start::done",
+    "UseCaseRealization::UC::Start::pressStart",
+    "UseCaseRealization::UC::Start::showReady",
+    "UseCaseRealization::UC::Start::start",
+    "UseCaseRealization::UC::Start::succ1",
+    "UseCaseRealization::UC::Start::succ2",
+    "UseCaseRealization::UC::Start::succ3",
+    "UseCaseRealization::UC::Start::succ4",
+    "UseCaseRealization::UC::Unlock",
+    "UseCaseRealization::UC::Unlock::Driver",
+    "UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock",
+    "UseCaseRealization::UC::Unlock::pressUnlock",
+    "UseCaseRealization::UC::Unlock::unlockDoors",
+    "UseCaseRealization::UseCaseRealizationView",
+    "UseCaseRealization::alloc1",
+    "UseCaseRealization::alloc2",
+    "UseCaseRealization::alloc3",
+    "UseCaseRealization::dep1",
+    "UseCaseRealization::dep2",
+    "UseCaseRealization::dep3",
+    "UseCaseRealization::dep4",
+]
+
+_REALIZATION_RELATIONS = [
+    "UseCaseRealization::F::Security::startFlow::succ1",
+    "UseCaseRealization::F::Security::startFlow::succ2",
+    "UseCaseRealization::F::Security::startFlow::succ3",
+    "UseCaseRealization::F::Security::startFlow::succ4",
+    "UseCaseRealization::UC::Drive::include_Start",
+    "UseCaseRealization::UC::Drive::include_Unlock",
+    "UseCaseRealization::UC::Start::succ1",
+    "UseCaseRealization::UC::Start::succ2",
+    "UseCaseRealization::UC::Start::succ3",
+    "UseCaseRealization::UC::Start::succ4",
+    "UseCaseRealization::alloc1",
+    "UseCaseRealization::alloc2",
+    "UseCaseRealization::alloc3",
+    "UseCaseRealization::dep1",
+    "UseCaseRealization::dep2",
+    "UseCaseRealization::dep3",
+    "UseCaseRealization::dep4",
+]
+
+_REALIZATION_PERFORMS = [
+    ("UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin", "UseCaseRealization::F::Security::startFlow::checkKeyInCabin"),
+    ("UseCaseRealization::F::Security::immo::perform_startFlow_logStart", "UseCaseRealization::F::Security::startFlow::logStart"),
+    ("UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer", "UseCaseRealization::F::Security::startFlow::releaseImmobilizer"),
+    ("UseCaseRealization::F::Security::locks::perform_unlockFlow_release", "UseCaseRealization::F::Security::unlockFlow::release"),
+    ("UseCaseRealization::UC::Start::Driver::perform_pressStart", "UseCaseRealization::UC::Start::pressStart"),
+    ("UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock", "UseCaseRealization::UC::Unlock::pressUnlock"),
+]
+
+_REALIZATION_FILE = "file:examples/diagrams/use_case_realization.sysml"
+for _id in _REALIZATION_ADDED:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: element id added {_id!r}")
+for _id in _REALIZATION_RELATIONS:
+    ACCEPTED_DIFFS.add(f"project:examples/diagrams: relation added {_id!r}")
+for _perform, _target in _REALIZATION_PERFORMS:
+    ACCEPTED_DIFFS.add(
+        f"project:examples/diagrams: {_perform} performTargetId None -> {_target!r}"
+    )
+ACCEPTED_DIFFS.add(f"{_REALIZATION_FILE}: key added")
+
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 
 
