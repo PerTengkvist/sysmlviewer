@@ -57,6 +57,8 @@ export type RealizationLane = {
   /** Function whose frame the lane sits under (white box only). */
   group?: string
   groupLabel?: string
+  /** No step stands here: the lane is reached only through the function that refines the use case. */
+  projected?: boolean
 }
 
 export type ExpandedFlow = {
@@ -309,8 +311,27 @@ export function expandRealizationFlow(
   )
   const actors = real.actors.map((a) => lane(a, 'actor'))
   const groupOf = (id: string): string | undefined =>
-    mode === 'whitebox' && laneKinds.get(id) === 'node' ? real.nodeFunctions[id]?.[0] : undefined
+    mode === 'whitebox' && laneKinds.get(id) === 'node'
+      ? (real.nodeFunctions[id]?.[0] ?? real.functionNodes[id])
+      : undefined
   const middle = appearance.filter((l) => !actors.includes(l) && l !== SYSTEM_LANE && l !== UNALLOCATED_LANE)
+  // What the use case reaches only through its function has lanes without steps.
+  const projected = new Set<string>()
+  if (mode !== 'blackbox') {
+    const wanted =
+      mode === 'whitebox'
+        ? Object.keys(real.functionNodes).map((n) => [n, 'node'] as const)
+        : [
+            ...Object.keys(real.functionNodes).flatMap((n) => targets[n] ?? []),
+            ...Object.keys(real.functionParts),
+          ].map((p) => [p, 'part'] as const)
+    for (const [id, kind] of wanted) {
+      if (middle.includes(id) || actors.includes(id)) continue
+      lane(id, kind)
+      middle.push(id)
+      projected.add(id)
+    }
+  }
   // The lanes of one function sit side by side, at the place of the group's first lane.
   const ordered: string[] = []
   for (const l of middle) {
@@ -330,7 +351,13 @@ export function expandRealizationFlow(
     const kind = laneKinds.get(id) ?? 'node'
     const group = groupOf(id)
     const label = kind === 'system' ? (subject ?? 'System') : kind === 'unallocated' ? 'Unallocated' : nameOf(id)
-    return { id, kind, label, ...(group ? { group, groupLabel: nameOf(group) } : {}) }
+    return {
+      id,
+      kind,
+      label,
+      ...(group ? { group, groupLabel: nameOf(group) } : {}),
+      ...(projected.has(id) ? { projected: true } : {}),
+    }
   })
   return { nodes, edges, lanes }
 }

@@ -420,8 +420,11 @@ export interface UseCaseFlowRealization {
   realizerFunctions: Record<string, string>
   /** Function node -> the functions it is realized through. */
   nodeFunctions: Record<string, string[]>
-  /** `perform X;` and `include use case X;` steps of a composite use case, in order. */
-  /** `viewId`: the view to open for the call (its activity view first), if the use case has one. */
+  /** Function node -> its function, for the nodes a function that refines the use case as a whole stands for. */
+  functionNodes: Record<string, string>
+  /** Logical part -> function, for the parts of those nodes that the use case reaches no other way. */
+  functionParts: Record<string, string>
+  /** `perform X;` and `include use case X;` steps of a composite use case, in order. `viewId`: the view to open for the call (its activity view first), if the use case has one. */
   calls: { id: string; calledUseCaseId: string; viewId: string | null }[]
 }
 

@@ -27,6 +27,11 @@ describe('LaneNode', () => {
     expect(render({ kind: 'system', label: 'System' })).toContain('«system»')
   })
 
+  it('marks a lane that is only reached through its function', () => {
+    expect(render({ projected: true })).toContain('rlane-node projected')
+    expect(render({})).not.toContain('projected')
+  })
+
   it('draws the frame of a function with its name', () => {
     const props = { id: 'g', data: { label: 'Security', groupId: 'F::Security' }, selected: false } as unknown as NodeProps
     const html = renderToStaticMarkup(createElement(LaneGroupNode, props))

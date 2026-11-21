@@ -99,4 +99,37 @@ describe('createChoiceSaver', () => {
     await saver.save('v', 'b', 'z')
     expect(failures).toEqual(['z'])
   })
+
+  describe('for the lanes of a realization view', () => {
+    type Lanes = { lanes?: string; order?: Record<string, string[]> } | null
+
+    it('lets the last of several quick lane choices win, also a reset to null', async () => {
+      const sent: Lanes[] = []
+      const gate = deferred()
+      const saver = createChoiceSaver<Lanes>(
+        (_key, choice) => {
+          sent.push(choice)
+          return sent.length === 1 ? gate.promise : Promise.resolve()
+        },
+        () => {},
+      )
+      void saver.save('v', { lanes: 'logical' }, null)
+      void saver.save('v', { lanes: 'blackbox' }, null)
+      void saver.save('v', { lanes: 'blackbox', order: { blackbox: ['b', 'a'] } }, null)
+      const last = saver.save('v', null, null)
+      gate.resolve()
+      await last
+      expect(sent).toEqual([{ lanes: 'logical' }, null])
+    })
+
+    it('rolls back to the last saved layout, or to what the view showed (null) when none was', async () => {
+      const failures: Lanes[] = []
+      const saver = createChoiceSaver<Lanes>(
+        () => Promise.reject(new Error('no')),
+        (_key, confirmed) => failures.push(confirmed),
+      )
+      await saver.save('v', { lanes: 'logical' }, null)
+      expect(failures).toEqual([null])
+    })
+  })
 })

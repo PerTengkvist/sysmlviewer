@@ -11,6 +11,8 @@ export type LaneNodeData = {
   headerHeight: number
   /** The model element the lane stands for (an actor, node or part); none for system. */
   artifactId?: string
+  /** Reached only through the function that refines the use case: no step stands here. */
+  projected?: boolean
 }
 
 const KIND_LABEL: Record<LaneKind, string> = {
@@ -26,7 +28,8 @@ function LaneNodeInner({ data, selected }: NodeProps) {
   const d = data as unknown as LaneNodeData
   return (
     <div
-      className={`rlane rlane-${d.kind}${selected ? ' selected' : ''}`}
+      className={`rlane rlane-${d.kind}${d.projected ? ' projected' : ''}${selected ? ' selected' : ''}`}
+      title={d.projected ? 'Reached through its function: no step of the use case stands here' : undefined}
       data-lane-id={d.laneId}
       data-lane-kind={d.kind}
     >

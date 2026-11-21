@@ -259,6 +259,7 @@ export function buildUseCaseRealizationGraph(opts: UseCaseRealizationGraphOpts):
       kind: l.kind,
       minWidth: minWidths[id],
       headerHeight: LANE_HEADER_H,
+      ...(l.projected ? { projected: true } : {}),
       artifactId: l.kind === 'system' || l.kind === 'unallocated' ? undefined : id,
     }
     return {

@@ -319,3 +319,45 @@ describe('a use case without successions', () => {
     expect(f.nodes.find((n) => n.id === walk.at(-1))?.kind).toBe('done')
   })
 })
+
+describe('what the use case reaches only through its function', () => {
+  const projected = {
+    stepRealizers: {},
+    coarseSteps: {},
+    unrealizedSteps: [],
+    realizerNodes: {},
+    realizerFunctions: {},
+    nodeFunctions: {},
+    functionNodes: { [AUTH]: SEC, [IMMO]: SEC },
+    functionParts: { [VC]: SEC },
+  }
+
+  it('gives white box a marked lane per node, under its function, before the system lane', () => {
+    const f = expandRealizationFlow(fixture({ realization: projected }), 'whitebox')
+    expect(f.lanes.map((l) => l.id)).toEqual([DRIVER, AUTH, IMMO, 'system'])
+    expect(f.lanes[1]).toMatchObject({ projected: true, group: SEC, groupLabel: 'Security', label: 'auth' })
+    expect(f.lanes[0].projected).toBeUndefined()
+    expect(f.lanes[3].projected).toBeUndefined()
+  })
+
+  it('gives logical a marked lane per part of those nodes', () => {
+    const f = expandRealizationFlow(fixture({ realization: projected }), 'logical')
+    expect(f.lanes.map((l) => l.id)).toEqual([DRIVER, VC, 'system'])
+    expect(f.lanes[1]).toMatchObject({ projected: true, kind: 'part', label: 'vc' })
+  })
+
+  it('leaves black box alone, and does not move any step', () => {
+    expect(expandRealizationFlow(fixture({ realization: projected }), 'blackbox').lanes.map((l) => l.id)).toEqual([
+      DRIVER,
+      'system',
+    ])
+    const plain = expandRealizationFlow(fixture({ realization: { ...projected, functionNodes: {}, functionParts: {} } }), 'whitebox')
+    const withProjection = expandRealizationFlow(fixture({ realization: projected }), 'whitebox')
+    expect(withProjection.nodes).toEqual(plain.nodes)
+  })
+
+  it('does not mark a lane a step already stands in', () => {
+    const f = expandRealizationFlow(fixture({ realization: { functionNodes: { [AUTH]: SEC }, functionParts: {} } }), 'whitebox')
+    expect(f.lanes.find((l) => l.id === AUTH)?.projected).toBeUndefined()
+  })
+})

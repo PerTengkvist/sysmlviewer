@@ -3508,3 +3508,7 @@ button.linkish {
 .action-node {
   position: relative;
 }
+.rlane.projected {
+  border-style: dashed;
+  opacity: 0.8;
+}

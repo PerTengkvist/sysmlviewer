@@ -165,6 +165,24 @@ describe('markers', () => {
   })
 })
 
+describe('lanes reached through the function', () => {
+  it('carry the projected mark', () => {
+    const g = build(null, {
+      realization: {
+        stepRealizers: {},
+        coarseSteps: {},
+        unrealizedSteps: [],
+        realizerNodes: {},
+        realizerFunctions: {},
+        nodeFunctions: {},
+        functionNodes: { [AUTH]: SEC },
+      },
+    })
+    expect((lane(g.nodes, AUTH).data as { projected?: boolean }).projected).toBe(true)
+    expect((lane(g.nodes, 'system').data as { projected?: boolean }).projected).toBeUndefined()
+  })
+})
+
 describe('saved layout', () => {
   it('orders the lanes by the saved order of the mode; unknown ids go, new lanes follow', () => {
     const g = build({ order: { whitebox: ['system', 'gone', IMMO, DRIVER] } })

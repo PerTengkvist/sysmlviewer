@@ -94,6 +94,8 @@ export function fixture(opts: Opts = {}): ViewPayload {
     realizerNodes: { [fstep('checkKeyInCabin')]: [AUTH], [fstep('releaseImmobilizer')]: [IMMO] },
     realizerFunctions: { [fstep('checkKeyInCabin')]: SEC, [fstep('releaseImmobilizer')]: SEC },
     nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC] },
+    functionNodes: {},
+    functionParts: {},
     calls: [],
     ...opts.realization,
   }
