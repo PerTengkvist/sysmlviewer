@@ -21,12 +21,9 @@ from dataclasses import dataclass
 
 from domain.failure.labels import disambiguate
 from domain.models import ArtifactKind, SemanticElement
-from domain.occurrence import in_occurrence
-from domain.perform import is_perform
-from domain.realization import Precision, Realization
+from domain.realization import Precision, Realization, function_ids
 
 _RANK: dict[str, int] = {"step": 0, "coarse": 1, "explicit": 2}
-_MARKERS = frozenset({"start", "done", "decide", "decision", "condition"})
 _KIND_ORDER = {"refine": 0, "owns": 1, "allocate": 2}
 
 USE_CASE, FUNCTION, NODE, PART = "useCase", "function", "node", "part"
@@ -39,6 +36,9 @@ class ChainEdge:
     kind: str  # refine | owns | allocate
     precision: Precision
     via_include: bool
+    # Not a link of its own: a function that refines the use case stands for its nodes
+    # (and their parts) when none of the nodes serves it (`functionNodes` of the realization).
+    projected: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -47,6 +47,7 @@ class ChainEdge:
             "kind": self.kind,
             "precision": self.precision,
             "viaInclude": self.via_include,
+            "projected": self.projected,
         }
 
 
@@ -55,26 +56,6 @@ class Chain:
     ids: list[str]  # model order
     roles: dict[str, str]
     edges: list[ChainEdge]
-
-
-def _is_step(el: SemanticElement) -> bool:
-    return (
-        el.kind == ArtifactKind.ACTION
-        and not is_perform(el)
-        and (el.type_ref or "") not in _MARKERS
-    )
-
-
-def is_function(semantic: Mapping[str, SemanticElement], el: SemanticElement) -> bool:
-    """A part that owns a function flow: an action with steps of its own."""
-    if el.kind != ArtifactKind.PART or in_occurrence(dict(semantic), el.id):
-        return False
-    for cid in el.children:
-        flow = semantic.get(cid)
-        if flow is not None and _is_step(flow):
-            if any((c := semantic.get(s)) is not None and _is_step(c) for s in flow.children):
-                return True
-    return False
 
 
 def _descendants(semantic: Mapping[str, SemanticElement], root_id: str) -> list[str]:
@@ -89,12 +70,15 @@ def _descendants(semantic: Mapping[str, SemanticElement], root_id: str) -> list[
 
 
 def is_chain_root(root: SemanticElement, semantic: Mapping[str, SemanticElement]) -> bool:
-    """Whether an AllocationView on `root` draws the realization chain (decision B6)."""
+    """Whether an AllocationView on `root` draws the realization chain (decision B6).
+
+    Whole model, whatever the diagram levels.
+    """
     if root.kind == ArtifactKind.USE_CASE:
         return True
     if root.kind == ArtifactKind.PACKAGE and root.id in semantic:
         return any(semantic[d].kind == ArtifactKind.USE_CASE for d in _descendants(semantic, root.id))
-    return is_function(semantic, root)
+    return root.kind == ArtifactKind.PART and root.id in function_ids(semantic)
 
 
 def _use_cases_under(semantic: Mapping[str, SemanticElement], root: SemanticElement) -> list[str]:
@@ -111,11 +95,12 @@ def build_chain(
     root_ids: Iterable[str],
 ) -> Chain:
     r = realization
+    functions = function_ids(semantic)
     roots = [semantic[i] for i in root_ids if i in semantic]
     # (use case, function the chain is limited to, or None)
     scopes: list[tuple[str, str | None]] = []
     for root in roots:
-        if is_function(semantic, root):
+        if root.id in functions:
             for uc in semantic:
                 nodes_without_function = any(
                     not r.uc_node_functions.get(uc, {}).get(n) and semantic[n].parent_id == root.id
@@ -127,20 +112,26 @@ def build_chain(
             scopes.extend((uc, None) for uc in _use_cases_under(semantic, root))
 
     roles: dict[str, str] = {}
-    best: dict[tuple[str, str, str], tuple[Precision, bool]] = {}
+    best: dict[tuple[str, str, str], tuple[Precision, bool, bool]] = {}
     order: list[tuple[str, str, str]] = []
 
-    def edge(src: str, tgt: str, kind: str, precision: Precision, via: bool) -> None:
+    def edge(
+        src: str, tgt: str, kind: str, precision: Precision, via: bool, projected: bool = False
+    ) -> None:
         key = (src, tgt, kind)
         if key not in best:
             order.append(key)
-            best[key] = (precision, via)
+            best[key] = (precision, via, projected)
             return
-        old, old_via = best[key]
-        best[key] = (precision if _RANK[precision] < _RANK[old] else old, old_via and via)
+        old, old_via, old_projected = best[key]
+        best[key] = (
+            precision if _RANK[precision] < _RANK[old] else old,
+            old_via and via,
+            old_projected and projected,
+        )
 
     for root in roots:
-        if is_function(semantic, root):
+        if root.id in functions:
             roles[root.id] = FUNCTION
     for uc, only in scopes:
         roles[uc] = USE_CASE
@@ -168,6 +159,17 @@ def build_chain(
                 if part in r.uc_parts.get(uc, {}):
                     roles[part] = PART
                     edge(node, part, "allocate", r.uc_parts[uc][part], part in inherited)
+
+        # A function that refines the use case stands for its nodes and their parts.
+        for node, fn in r.uc_function_nodes.get(uc, {}).items():
+            if only is not None and fn != only:
+                continue
+            roles[node] = NODE
+            edge(fn, node, "owns", "explicit", fn in inherited, True)
+            for part in r.node_parts.get(node, []):
+                if part in r.uc_function_parts.get(uc, {}) or part in r.uc_parts.get(uc, {}):
+                    roles[part] = PART
+                    edge(node, part, "allocate", "explicit", fn in inherited, True)
 
     rank = {eid: i for i, eid in enumerate(semantic)}
     ids = sorted(roles, key=lambda i: rank.get(i, len(rank)))

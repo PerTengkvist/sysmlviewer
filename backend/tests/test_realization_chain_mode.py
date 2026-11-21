@@ -226,3 +226,76 @@ def test_chain_edges_follow_the_explicit_links_of_electric_car(tmp_path: Path):
             if e["kind"] == "refine" and not e["viaInclude"]:
                 assert (e["source"], e["target"]) in rel
         assert refine_sources
+
+
+PROJECTION = """\
+package Pj {
+  use case def <'U1'> Brake { action a; }
+  use case def <'U2'> Park { action b; }
+  part def Braking {
+    part pump { perform flow.run; }
+    part valve { perform flow.open; }
+    action flow { action run; action open; first start; then run; then open; then done; }
+  }
+  part def Serving {
+    part own { perform sflow.go; }
+    part other { perform sflow.stop; }
+    action sflow { action go; action stop; first start; then go; then stop; then done; }
+  }
+  part logical { part lp; part lq; }
+  allocate Braking::pump to logical::lp;
+  allocate Braking::valve to logical::lq;
+  #refine dependency from Braking to Brake;
+  #refine dependency from Serving to Park;
+  #refine dependency from Serving::own to Park;
+  view BrakeChain : AllocationView { expose Brake; }
+  view BrakingChain : AllocationView { expose Braking; }
+  view ParkChain : AllocationView { expose Park; }
+}
+"""
+
+
+def _pj(tmp_path: Path, name: str) -> dict:
+    client = TestClient(create_app(data_dir=tmp_path))
+    pid = client.post(api_url("/projects"), json={"name": "Pj"}).json()["id"]
+    add_content_file(client, pid, tmp_path, "pj.sysml", PROJECTION)
+    body = client.get(api_url(f"/projects/{pid}/views/Pj::{name}")).json()
+    body["_realization"] = client.get(api_url(f"/projects/{pid}/realization")).json()
+    return body
+
+
+def test_function_stands_for_its_nodes_and_parts_as_projected_edges(tmp_path: Path):
+    body = _pj(tmp_path, "BrakeChain")
+    by_key = {(e["source"], e["target"], e["kind"]): e for e in body["chainEdges"]}
+    assert by_key[("Pj::Braking", "Pj::Brake", "refine")]["projected"] is False
+    for node, part in (("pump", "lp"), ("valve", "lq")):
+        assert by_key[("Pj::Braking", f"Pj::Braking::{node}", "owns")]["projected"] is True
+        assert by_key[(f"Pj::Braking::{node}", f"Pj::logical::{part}", "allocate")]["projected"] is True
+
+
+def test_projection_is_off_when_a_node_serves_the_use_case(tmp_path: Path):
+    body = _pj(tmp_path, "ParkChain")
+    kinds = {(e["source"], e["kind"]) for e in body["chainEdges"]}
+    assert ("Pj::Braking", "owns") not in kinds
+    assert not any(e["projected"] for e in body["chainEdges"])
+    assert "Pj::Serving::other" not in body["chainRoles"]
+
+
+def test_chain_reaches_what_the_realization_says(tmp_path: Path):
+    """Matrix, Details and the chain read the same fields: nodes and parts agree per use case."""
+    for view, uc in (("BrakeChain", "Pj::Brake"), ("ParkChain", "Pj::Park")):
+        (tmp_path / view).mkdir()
+        body = _pj(tmp_path / view, view)
+        info = body["_realization"]["useCases"][uc]
+        edges = body["chainEdges"]
+        fns = {e["source"] for e in edges if e["kind"] == "refine" and e["target"] == uc and body["chainRoles"][e["source"]] == "function"}
+        nodes = {e["source"] for e in edges if e["kind"] == "refine" and e["target"] == uc and body["chainRoles"][e["source"]] == "node"}
+        nodes |= {e["target"] for e in edges if e["kind"] == "owns" and e["source"] in fns}
+        parts = {e["target"] for e in edges if e["kind"] == "allocate" and e["source"] in nodes}
+        assert nodes == set(info["nodes"]) | set(info["functionNodes"]), view
+        assert parts == set(info["parts"]) | set(info["functionParts"]), view
+
+
+def test_function_root_keeps_only_its_own_projection(tmp_path: Path):
+    body = _pj(tmp_path, "BrakingChain")
+    assert {i for i, r in body["chainRoles"].items() if r == "node"} == {"Pj::Braking::pump", "Pj::Braking::valve"}
