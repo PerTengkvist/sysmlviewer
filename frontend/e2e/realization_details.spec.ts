@@ -63,5 +63,6 @@ test('a system step no function step realizes is marked Not realized', async ({ 
   const dlg = page.getByRole('dialog', { name: /askForBrake/ })
   await expect(dlg).toBeVisible()
   await expect(dlg.locator('.realization-unrealized')).toHaveText('Not realized')
-  await expect(dlg.locator('.realization-finding')).toContainText('askForBrake')
+  // The gap is shown once: no separate warning row for the same step.
+  await expect(dlg.locator('.realization-finding')).toHaveCount(0)
 })

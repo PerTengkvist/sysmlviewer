@@ -31,6 +31,8 @@ export type StepRealizer = {
   stepId: string
   precision: RealizationPrecision
   nodeIds: string[]
+  /** Realizes the whole use case, not this step (a flow or step linked to the use case). */
+  viaUseCase: boolean
 }
 
 export type RealizesEntry = {
@@ -79,68 +81,7 @@ export function hasRealizationInfo(info: ElementRealization): boolean {
   )
 }
 
-function isPerform(el: SemanticElement): boolean {
-  return el.kind === 'action' && (el.metadataKeywords ?? []).includes('perform')
-}
-
-/** Parts (not actors) that perform `actionId`, in model order. */
-function performersOf(
-  semantic: Record<string, SemanticElement>,
-  actionId: string,
-): string[] {
-  const out: string[] = []
-  for (const el of Object.values(semantic)) {
-    if (!isPerform(el) || el.performTargetId !== actionId || !el.parentId) continue
-    const owner = semantic[el.parentId]
-    if (owner?.kind === 'part' && !out.includes(owner.id)) out.push(owner.id)
-  }
-  return out
-}
-
-function isAncestor(
-  semantic: Record<string, SemanticElement>,
-  ancestorId: string,
-  id: string,
-): boolean {
-  const seen = new Set<string>()
-  let cur = semantic[id]?.parentId ?? null
-  while (cur && !seen.has(cur)) {
-    if (cur === ancestorId) return true
-    seen.add(cur)
-    cur = semantic[cur]?.parentId ?? null
-  }
-  return false
-}
-
-/** The function (among `functions`) a function node performs steps of, or sits in. */
-function functionOfNode(
-  semantic: Record<string, SemanticElement>,
-  functions: string[],
-  nodeId: string,
-): string | null {
-  for (const el of Object.values(semantic)) {
-    if (!isPerform(el) || el.parentId !== nodeId || !el.performTargetId) continue
-    const flow = semantic[el.performTargetId]?.parentId
-    const fn = flow ? semantic[flow]?.parentId : null
-    if (fn && functions.includes(fn)) return fn
-  }
-  return functions.find((f) => isAncestor(semantic, f, nodeId)) ?? null
-}
-
-function partsOfNode(
-  semantic: Record<string, SemanticElement>,
-  nodeId: string,
-): string[] {
-  return Object.values(semantic)
-    .filter((e) => e.kind === 'allocation' && e.sourceId === nodeId && e.targetId)
-    .map((e) => e.targetId as string)
-}
-
-function realizedBy(
-  realization: Realization,
-  semantic: Record<string, SemanticElement>,
-  ucId: string,
-): RealizedByGroup[] {
+function realizedBy(realization: Realization, ucId: string): RealizedByGroup[] {
   const uc = realization.useCases[ucId]
   if (!uc) return []
   const via = new Set(uc.viaInclude)
@@ -149,7 +90,6 @@ function realizedBy(
     precision,
     viaInclude: via.has(id),
   })
-  const functions = Object.keys(uc.functions)
   const groups = new Map<string | null, RealizedByGroup>()
   const group = (fn: string | null): RealizedByGroup => {
     let g = groups.get(fn)
@@ -159,30 +99,17 @@ function realizedBy(
     }
     return g
   }
-  for (const fn of functions) group(fn)
-  const placedParts = new Set<string>()
+  for (const fn of Object.keys(uc.functions)) group(fn)
   for (const [nodeId, precision] of Object.entries(uc.nodes)) {
-    const parts = partsOfNode(semantic, nodeId)
+    const parts = (realization.nodeParts[nodeId] ?? [])
       .filter((p) => p in uc.parts)
-      .map((p) => {
-        placedParts.add(p)
-        return entry(p, uc.parts[p])
-      })
-    group(functionOfNode(semantic, functions, nodeId)).nodes.push({
-      ...entry(nodeId, precision),
-      parts,
-    })
+      .map((p) => entry(p, uc.parts[p]))
+    const node: RealizedByNode = { ...entry(nodeId, precision), parts }
+    const functions = (uc.nodeFunctions[nodeId] ?? []).filter((f) => f in uc.functions)
+    // A node that refines the use case itself belongs to no function.
+    for (const fn of functions.length ? functions : [null]) group(fn).nodes.push(node)
   }
-  const result = [...groups.values()]
-  const loose = Object.keys(uc.parts).filter((p) => !placedParts.has(p))
-  if (loose.length) {
-    // Parts whose function node is not in the use case's node map: list them on their own.
-    group(null).nodes.push(
-      ...loose.map((p) => ({ ...entry(p, uc.parts[p]), parts: [] })),
-    )
-    if (!result.includes(groups.get(null)!)) result.push(groups.get(null)!)
-  }
-  return result
+  return [...groups.values()]
 }
 
 function realizesFromMaps(
@@ -239,25 +166,38 @@ export function elementRealization(
     ...empty(),
     findings: realization.findings.filter((f) => f.elementId === id),
   }
-  if (el.kind === 'useCase') info.realizedBy = realizedBy(realization, semantic, id)
+  if (el.kind === 'useCase') info.realizedBy = realizedBy(realization, id)
 
   info.performedBy = realization.actorSteps[parent]?.[id] ?? null
   if (realization.systemSteps[parent]?.includes(id)) {
-    const steps = (realization.stepRealizers[id] ?? []).map((stepId) => ({
-      stepId,
-      precision: 'step' as const,
-      nodeIds: performersOf(semantic, stepId),
+    const own = [
+      ...(realization.stepRealizers[id] ?? []).map((stepId) => ({
+        stepId,
+        precision: 'step' as const,
+      })),
+      ...(realization.coarseRealizers[id] ?? []).map((stepId) => ({
+        stepId,
+        precision: 'coarse' as const,
+      })),
+    ]
+    // Nothing realizes the step itself: show what covers its whole use case.
+    const viaUseCase = own.length === 0
+    const found = viaUseCase
+      ? (realization.coarseRealizers[parent] ?? []).map((stepId) => ({
+          stepId,
+          precision: 'coarse' as const,
+        }))
+      : own
+    info.stepRealizers = found.map((r) => ({
+      ...r,
+      nodeIds: realization.realizerNodes[r.stepId] ?? [],
+      viaUseCase,
     }))
-    const coarse = (realization.coarseRealizers[id] ?? []).map((stepId) => ({
-      stepId,
-      precision: 'coarse' as const,
-      nodeIds: performersOf(semantic, stepId),
-    }))
-    info.stepRealizers = [...steps, ...coarse]
-    info.unrealized =
-      realization.inScope.includes(parent) &&
-      info.stepRealizers.length === 0 &&
-      !realization.coarseRealizers[parent]?.length
+    info.unrealized = realization.inScope.includes(parent) && info.stepRealizers.length === 0
+    // The gap is shown as "Not realized", not once more as a finding.
+    if (info.unrealized) {
+      info.findings = info.findings.filter((f) => f.code !== 'unrealized-system-step')
+    }
   }
 
   const seen = new Set<string>()

@@ -39,6 +39,8 @@ const realization: Realization = {
   systemSteps: { 'UC::Start': ['UC::Start::checkKey', 'UC::Start::ask'] },
   stepRealizers: {},
   coarseRealizers: {},
+  realizerNodes: {},
+  nodeParts: {},
   useCases: {
     'UC::Start': {
       functions: { 'F::Sec': 'step' },
@@ -47,6 +49,7 @@ const realization: Realization = {
       viaInclude: [],
       declared: [],
       origin: {},
+      nodeFunctions: { 'F::Sec::auth': ['F::Sec'] },
     },
   },
   inScope: ['UC::Start'],
@@ -119,7 +122,7 @@ describe('Details: realization', () => {
   it('shows a finding as a warning row', () => {
     const withFinding: Realization = {
       ...realization,
-      findings: [{ code: 'unrealized-system-step', elementId: 'UC::Start::ask', message: 'no realizer' }],
+      findings: [{ code: 'untraced-function-step', elementId: 'UC::Start::ask', message: 'no realizer' }],
     }
     const html = render('UC::Start::ask', { realization: withFinding })
     expect(html).toContain('class="realization-finding"')
