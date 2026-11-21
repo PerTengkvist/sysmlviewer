@@ -144,6 +144,10 @@ def build_realization_flow(
                         + [f for fs in coarse_steps.values() for f in fs])
     realizer_nodes = {f: list(r.realizer_nodes.get(f, [])) for f in realizers}
     nodes = _unique([n for ns in realizer_nodes.values() for n in ns])
+    # What the use case reaches only through its function (the matrix and Details show the
+    # same): the nodes and parts of a function that refines the use case as a whole.
+    function_nodes = dict(r.uc_function_nodes.get(use_case_id, {}))
+    function_parts = dict(r.uc_function_parts.get(use_case_id, {}))
     node_functions = {
         n: list(fns)
         for n, fns in r.uc_node_functions.get(use_case_id, {}).items()
@@ -155,7 +159,11 @@ def build_realization_flow(
         if function:
             realizer_functions[realizer] = function
 
-    functions = _unique(list(realizer_functions.values()) + [f for fs in node_functions.values() for f in fs])
+    functions = _unique(
+        list(realizer_functions.values())
+        + [f for fs in node_functions.values() for f in fs]
+        + list(function_nodes.values())
+    )
     for realizer in realizers:
         ids.append(realizer)
         flow = _flow_of(semantic, realizer)
@@ -163,8 +171,9 @@ def build_realization_flow(
             ids.append(flow)  # type: ignore[arg-type]
             ids.extend(c for c in semantic[flow].children if c in semantic)  # type: ignore[index]
     ids.extend(functions)
-    ids.extend(nodes)
-    lane_targets = {n: list(r.node_parts.get(n, [])) for n in nodes if r.node_parts.get(n)}
+    lane_nodes = _unique(nodes + list(function_nodes))
+    ids.extend(lane_nodes)
+    lane_targets = {n: list(r.node_parts.get(n, [])) for n in lane_nodes if r.node_parts.get(n)}
     ids.extend(p for ps in lane_targets.values() for p in ps)
     ids.extend(actors)
 
@@ -187,9 +196,11 @@ def build_realization_flow(
         "realizerNodes": realizer_nodes,
         "realizerFunctions": realizer_functions,
         "nodeFunctions": node_functions,
+        "functionNodes": function_nodes,
+        "functionParts": function_parts,
         "calls": calls,
     }
-    labelled = _unique(actors + nodes + functions + realizers + [p for ps in lane_targets.values() for p in ps])
+    labelled = _unique(actors + lane_nodes + functions + realizers + [p for ps in lane_targets.values() for p in ps])
     out.labels = unambiguous_labels(semantic, labelled)
     return out
 

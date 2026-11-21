@@ -2656,7 +2656,7 @@ class ProjectService:
                 else None,
                 set(project.semantic),
             )
-            result["realization"] = realization_flow.realization
+            result["flowRealization"] = realization_flow.realization
             result["laneTargets"] = realization_flow.lane_targets
             result["realizationLabels"] = realization_flow.labels
         if performers is not None:

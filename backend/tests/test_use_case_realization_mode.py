@@ -129,7 +129,7 @@ def test_payload_carries_the_use_case_and_its_realization(tmp_path: Path):
     # Nothing of the unrelated flow or of the other use cases.
     assert UNLOCK not in sem and f"{SEC}::unlockFlow" not in sem and LOCKS not in sem and BC not in sem
 
-    real = payload["realization"]
+    real = payload["flowRealization"]
     assert real["useCaseId"] == START
     assert real["inScope"] is True
     assert real["actors"] == [DRIVER]
@@ -159,22 +159,41 @@ def test_payload_carries_the_use_case_and_its_realization(tmp_path: Path):
 
 def test_coarse_and_unrealized_steps(tmp_path: Path):
     client, pid = _client(tmp_path)
-    unlock = _view(client, pid, "UnlockFlow")["realization"]
+    unlock = _view(client, pid, "UnlockFlow")["flowRealization"]
     # unlockFlow refines the whole use case: the system step is realized coarsely.
     assert unlock["coarseSteps"] == {f"{UNLOCK}::unlockDoors": [f"{SEC}::unlockFlow"]}
     assert unlock["stepRealizers"] == {}
     assert unlock["unrealizedSteps"] == []  # no step link: not in scope (opt-in)
     assert unlock["inScope"] is False
     assert unlock["realizerNodes"] == {f"{SEC}::unlockFlow": [LOCKS]}
-    lock = _view(client, pid, "LockFlow")["realization"]
+    lock = _view(client, pid, "LockFlow")["flowRealization"]
     assert lock["coarseSteps"] == {} and lock["unrealizedSteps"] == []
     assert lock["systemSteps"] == [f"{P}::UC::Lock::lockDoors"]
+
+
+def test_nodes_and_parts_reached_only_through_their_function_are_projected(tmp_path: Path):
+    """Security refines Lock as a whole: its nodes and their parts get lanes, as in the matrix."""
+    client, pid = _client(tmp_path)
+    lock = _view(client, pid, "LockFlow")
+    real = lock["flowRealization"]
+    assert real["functionNodes"] == {AUTH: SEC, IMMO: SEC, LOCKS: SEC}
+    assert real["functionParts"] == {VC: SEC, BC: SEC}
+    assert lock["laneTargets"] == {AUTH: [VC], IMMO: [VC], LOCKS: [BC]}
+    for eid in (AUTH, IMMO, LOCKS, VC, BC, SEC):
+        assert eid in lock["semantic"], eid
+    # A use case with step links of its own has nothing projected.
+    start = _view(client, pid, "StartFlow")["flowRealization"]
+    assert start["functionNodes"] == {} and start["functionParts"] == {}
+    # The same projection as the realization endpoint (and so the matrix and Details).
+    api = client.get(api_url(f"/projects/{pid}/realization")).json()["useCases"][f"{P}::UC::Lock"]
+    assert real["functionNodes"] == api["functionNodes"]
+    assert real["functionParts"] == api["functionParts"]
 
 
 def test_two_function_steps_realize_one_step(tmp_path: Path):
     client, pid = _client(tmp_path)
     mixed = _view(client, pid, "MixedFlow")
-    real = mixed["realization"]
+    real = mixed["flowRealization"]
     fn = f"{P}::Mixed::Fn"
     assert real["stepRealizers"] == {
         f"{P}::Mixed::Uc::sys": [f"{fn}::flow::s1", f"{fn}::flow::s2"]
@@ -187,7 +206,7 @@ def test_composite_use_case_has_call_nodes(tmp_path: Path):
     client, pid = _client(tmp_path)
     payload = _view(client, pid, "DriveFlow")
     assert payload["diagramMode"] == "useCaseRealization"
-    calls = payload["realization"]["calls"]
+    calls = payload["flowRealization"]["calls"]
     # viewId: the view to open for a call, the activity view of the called use case first.
     assert calls == [
         {"id": f"{DRIVE}::include_Start", "calledUseCaseId": START, "viewId": "FlowViews::StartFlow"},
@@ -196,7 +215,7 @@ def test_composite_use_case_has_call_nodes(tmp_path: Path):
     for call in calls:
         assert call["id"] in payload["semantic"]
         assert call["calledUseCaseId"] in payload["semantic"]
-    assert payload["realization"]["systemSteps"] == []
+    assert payload["flowRealization"]["systemSteps"] == []
 
 
 def test_a_call_opens_the_activity_view_before_other_views_and_none_when_there_is_none(tmp_path: Path):
@@ -212,8 +231,23 @@ def test_a_call_opens_the_activity_view_before_other_views_and_none_when_there_i
 }
 """,
     )
-    calls = {c["calledUseCaseId"]: c["viewId"] for c in _view(client, pid, "DriveFlow")["realization"]["calls"]}
+    calls = {c["calledUseCaseId"]: c["viewId"] for c in _view(client, pid, "DriveFlow")["flowRealization"]["calls"]}
     assert calls == {START: "FlowViews::StartFlow", UNLOCK: None}
+
+
+def test_one_use_case_per_view(tmp_path: Path):
+    client = TestClient(create_app(data_dir=tmp_path))
+    pid = client.post(api_url("/projects"), json={"name": "C"}).json()["id"]
+    add_content_file(client, pid, tmp_path, "probe.sysml", _model())
+    add_content_file(
+        client, pid, tmp_path, "views.sysml",
+        "package FlowViews { view Two : ActionFlowView { expose RealizationProbe::UC::Start; "
+        "expose RealizationProbe::UC::Lock; } }\n",
+    )
+    body = _view(client, pid, "Two")
+    assert body["diagramMode"] == "useCaseRealization"
+    assert "one use case" in body["modeError"]
+    assert "flowRealization" not in body
 
 
 def test_content_does_not_depend_on_the_depth_setting(tmp_path: Path):
@@ -222,13 +256,13 @@ def test_content_does_not_depend_on_the_depth_setting(tmp_path: Path):
         shallow, deep = _view(client, pid, name, 1), _view(client, pid, name, 6)
         assert shallow["diagramMode"] == deep["diagramMode"] == "useCaseRealization"
         assert list(shallow["semantic"]) == list(deep["semantic"])
-        assert shallow["realization"] == deep["realization"]
+        assert shallow["flowRealization"] == deep["flowRealization"]
     nested = _view(client, pid, "OwnFlow", 1)
     assert f"{P}::Nested::Deep::Own::only" in nested["semantic"]
-    assert nested["realization"]["systemSteps"] == [
+    assert nested["flowRealization"]["systemSteps"] == [
         f"{P}::Nested::Deep::Own::only", f"{P}::Nested::Deep::Own::unlinked",
     ]
-    assert nested["realization"]["unrealizedSteps"] == []  # not in scope
+    assert nested["flowRealization"]["unrealizedSteps"] == []  # not in scope
 
 
 def test_nodes_carry_no_saved_position(tmp_path: Path):
@@ -253,7 +287,7 @@ def test_electric_car_copy_with_a_use_case_flow_is_reasonable(tmp_path: Path):
     start = client.get(api_url(f"/projects/{project['id']}/views/CarFlows::StartFlow")).json()
     assert start["diagramMode"] == "useCaseRealization"
     assert start.get("modeError") is None
-    real = start["realization"]
+    real = start["flowRealization"]
     assert real["useCaseId"] == "UseCases::Driving::StartVehicle"
     assert real["stepRealizers"] == {}  # the car has no step links yet
     assert real["unrealizedSteps"] == []  # not in scope: no step link, no finding
