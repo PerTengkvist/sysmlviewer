@@ -71,7 +71,7 @@ describe('whitebox', () => {
     // Function steps stand for themselves when selected.
     expect(f.nodes.find((n) => n.id === fstep('checkKeyInCabin'))).toMatchObject({
       artifactId: fstep('checkKeyInCabin'),
-      label: 'checkKeyInCabin',
+      label: 'Check Key In Cabin',
     })
   })
 
@@ -335,15 +335,15 @@ describe('what the use case reaches only through its function', () => {
   it('gives white box a marked lane per node, under its function, before the system lane', () => {
     const f = expandRealizationFlow(fixture({ realization: projected }), 'whitebox')
     expect(f.lanes.map((l) => l.id)).toEqual([DRIVER, AUTH, IMMO, 'system'])
-    expect(f.lanes[1]).toMatchObject({ projected: true, group: SEC, groupLabel: 'Security', label: 'auth' })
-    expect(f.lanes[0].projected).toBeUndefined()
-    expect(f.lanes[3].projected).toBeUndefined()
+    expect(f.lanes[1]).toMatchObject({ reach: 'function', group: SEC, groupLabel: 'Security', label: 'auth' })
+    expect(f.lanes[0].reach).toBeUndefined()
+    expect(f.lanes[3].reach).toBeUndefined()
   })
 
   it('gives logical a marked lane per part of those nodes', () => {
     const f = expandRealizationFlow(fixture({ realization: projected }), 'logical')
     expect(f.lanes.map((l) => l.id)).toEqual([DRIVER, VC, 'system'])
-    expect(f.lanes[1]).toMatchObject({ projected: true, kind: 'part', label: 'vc' })
+    expect(f.lanes[1]).toMatchObject({ reach: 'function', kind: 'part', label: 'vc' })
   })
 
   it('leaves black box alone, and does not move any step', () => {
@@ -358,6 +358,59 @@ describe('what the use case reaches only through its function', () => {
 
   it('does not mark a lane a step already stands in', () => {
     const f = expandRealizationFlow(fixture({ realization: { functionNodes: { [AUTH]: SEC }, functionParts: {} } }), 'whitebox')
-    expect(f.lanes.find((l) => l.id === AUTH)?.projected).toBeUndefined()
+    expect(f.lanes.find((l) => l.id === AUTH)?.reach).toBeUndefined()
+  })
+})
+
+describe('labels', () => {
+  it('writes the steps of the use case and of the functions alike: camel case split, the qualifier kept', () => {
+    const view = fixture()
+    view.realizationLabels = { ...view.realizationLabels, [fstep('releaseImmobilizer')]: 'Security::releaseImmobilizer' }
+    const f = expandRealizationFlow(view, 'whitebox')
+    const label = (id: string) => f.nodes.find((n) => n.id === id)?.label
+    expect(label(fstep('checkKeyInCabin'))).toBe('Check Key In Cabin')
+    expect(label(fstep('releaseImmobilizer'))).toBe('Security::Release Immobilizer')
+    expect(label(step('pressStart'))).toBe('Press Start')
+  })
+})
+
+describe('what a node of the use case refines itself (the electric car form)', () => {
+  const explicit = {
+    stepRealizers: {},
+    coarseSteps: {},
+    unrealizedSteps: [],
+    realizerNodes: {},
+    realizerFunctions: {},
+    nodeFunctions: { [AUTH]: [SEC] },
+    explicitNodes: { [AUTH]: 'explicit' as const, [IMMO]: 'explicit' as const },
+    explicitParts: { [VC]: 'explicit' as const },
+  }
+
+  it('gives white box a lane per node, marked as an own link, under its function', () => {
+    const f = expandRealizationFlow(fixture({ realization: explicit }), 'whitebox')
+    expect(f.lanes.map((l) => l.id)).toEqual([DRIVER, AUTH, IMMO, 'system'])
+    expect(f.lanes[1]).toMatchObject({ reach: 'explicit', group: SEC, groupLabel: 'Security' })
+    expect(f.lanes[2]).toMatchObject({ reach: 'explicit' })
+    expect(f.lanes[2].group).toBeUndefined()
+  })
+
+  it('gives logical the lane of the part, also one no node of the use case is allocated to', () => {
+    const f = expandRealizationFlow(fixture({ realization: explicit }), 'logical')
+    expect(f.lanes.map((l) => l.id)).toEqual([DRIVER, VC, 'system'])
+    expect(f.lanes[1]).toMatchObject({ reach: 'explicit', kind: 'part' })
+    const bc = expandRealizationFlow(
+      fixture({ realization: { ...explicit, explicitParts: { [VC]: 'explicit', [BC]: 'explicit' } } }),
+      'logical',
+    )
+    expect(bc.lanes.map((l) => l.id)).toEqual([DRIVER, VC, BC, 'system'])
+  })
+
+  it('an own link wins over the projection, and black box has neither', () => {
+    const both = { ...explicit, functionNodes: { [AUTH]: SEC } }
+    expect(expandRealizationFlow(fixture({ realization: both }), 'whitebox').lanes[1].reach).toBe('explicit')
+    expect(expandRealizationFlow(fixture({ realization: explicit }), 'blackbox').lanes.map((l) => l.id)).toEqual([
+      DRIVER,
+      'system',
+    ])
   })
 })

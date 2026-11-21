@@ -424,6 +424,10 @@ export interface UseCaseFlowRealization {
   functionNodes: Record<string, string>
   /** Logical part -> function, for the parts of those nodes that the use case reaches no other way. */
   functionParts: Record<string, string>
+  /** Function node -> precision, for the nodes a `#refine` from the node itself gives the use case, no step reaching them. */
+  explicitNodes: Record<string, RealizationPrecision>
+  /** Logical part -> precision, for the parts the use case reaches without a step of its own. */
+  explicitParts: Record<string, RealizationPrecision>
   /** `perform X;` and `include use case X;` steps of a composite use case, in order. `viewId`: the view to open for the call (its activity view first), if the use case has one. */
   calls: { id: string; calledUseCaseId: string; viewId: string | null }[]
 }

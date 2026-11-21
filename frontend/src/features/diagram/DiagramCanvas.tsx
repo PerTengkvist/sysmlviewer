@@ -1795,7 +1795,8 @@ export function DiagramCanvas({
             return x === undefined ? n : { ...n, position: { x, y: n.position.y } }
           }),
         )
-        onUseCaseRealizationLayoutChangeRef.current?.(next)
+        // Dropped where it was: nothing to save.
+        if (next) onUseCaseRealizationLayoutChangeRef.current?.(next)
         return
       }
       if (mode === 'sequence') {

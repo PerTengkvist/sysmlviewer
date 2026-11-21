@@ -11,8 +11,8 @@ export type LaneNodeData = {
   headerHeight: number
   /** The model element the lane stands for (an actor, node or part); none for system. */
   artifactId?: string
-  /** Reached only through the function that refines the use case: no step stands here. */
-  projected?: boolean
+  /** No step stands here: reached by an own `#refine` (explicit) or through the function. */
+  reach?: 'explicit' | 'function'
 }
 
 const KIND_LABEL: Record<LaneKind, string> = {
@@ -28,8 +28,14 @@ function LaneNodeInner({ data, selected }: NodeProps) {
   const d = data as unknown as LaneNodeData
   return (
     <div
-      className={`rlane rlane-${d.kind}${d.projected ? ' projected' : ''}${selected ? ' selected' : ''}`}
-      title={d.projected ? 'Reached through its function: no step of the use case stands here' : undefined}
+      className={`rlane rlane-${d.kind}${d.reach === 'function' ? ' projected' : d.reach === 'explicit' ? ' explicit-link' : ''}${selected ? ' selected' : ''}`}
+      title={
+        d.reach === 'function'
+          ? 'Reached through its function: no step of the use case stands here'
+          : d.reach === 'explicit'
+            ? 'Refines the use case itself: no step stands here'
+            : undefined
+      }
       data-lane-id={d.laneId}
       data-lane-kind={d.kind}
     >

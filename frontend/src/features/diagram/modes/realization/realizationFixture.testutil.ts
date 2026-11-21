@@ -96,6 +96,8 @@ export function fixture(opts: Opts = {}): ViewPayload {
     nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC] },
     functionNodes: {},
     functionParts: {},
+    explicitNodes: {},
+    explicitParts: {},
     calls: [],
     ...opts.realization,
   }

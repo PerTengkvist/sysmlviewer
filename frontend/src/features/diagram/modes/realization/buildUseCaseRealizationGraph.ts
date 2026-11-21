@@ -7,7 +7,7 @@ import { orientEdgeHandles } from '../../layout/dependencyLayout'
 import { layoutFlowTopDown } from '../../layout/flowLayout'
 import type { ActionNodeData } from '../actionFlow/ActionNode'
 import { fixedActionNodeSize } from '../actionFlow/actionNodeSize'
-import { resolveLifelineOrder } from '../sequence/sequenceLayout'
+import { orderAfterDrop, resolveLifelineOrder } from '../sequence/sequenceLayout'
 import { expandRealizationFlow, type RealizationLane, type RealizationFlowNode } from './expandRealizationFlow'
 import type { LaneNodeData } from './LaneNode'
 
@@ -68,7 +68,10 @@ export function packLanes(
   return xs
 }
 
-/** The layout after lane `id` was dropped with its centre at `droppedCentre`. */
+/**
+ * The layout after lane `id` was dropped with its centre at `droppedCentre`, or null when that
+ * leaves the order as it was (nothing to save).
+ */
 export function layoutAfterDrop(
   layout: UseCaseRealizationLayout | null | undefined,
   mode: RealizationLaneMode,
@@ -76,11 +79,9 @@ export function layoutAfterDrop(
   id: string,
   droppedCentre: number,
   centres: Record<string, number>,
-): UseCaseRealizationLayout {
-  const others = current.filter((o) => o !== id)
-  let index = others.findIndex((o) => (centres[o] ?? 0) > droppedCentre)
-  if (index < 0) index = others.length
-  const order = [...others.slice(0, index), id, ...others.slice(index)]
+): UseCaseRealizationLayout | null {
+  const order = orderAfterDrop(current, id, droppedCentre, centres)
+  if (order.length === current.length && order.every((o, i) => o === current[i])) return null
   return { ...(layout ?? {}), order: { ...(layout?.order ?? {}), [mode]: order } }
 }
 
@@ -259,7 +260,7 @@ export function buildUseCaseRealizationGraph(opts: UseCaseRealizationGraphOpts):
       kind: l.kind,
       minWidth: minWidths[id],
       headerHeight: LANE_HEADER_H,
-      ...(l.projected ? { projected: true } : {}),
+      ...(l.reach ? { reach: l.reach } : {}),
       artifactId: l.kind === 'system' || l.kind === 'unallocated' ? undefined : id,
     }
     return {
@@ -268,6 +269,8 @@ export function buildUseCaseRealizationGraph(opts: UseCaseRealizationGraphOpts):
       position: { x: xs[id], y: laneY },
       style: { width: widths[id], height: laneH },
       draggable: true,
+      // Only the header starts a drag: a click in the body of the lane selects, never moves.
+      dragHandle: '.rlane-header',
       connectable: false,
       zIndex: 0,
       data: data as unknown as Record<string, unknown>,

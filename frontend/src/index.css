@@ -3512,3 +3512,7 @@ button.linkish {
   border-style: dashed;
   opacity: 0.8;
 }
+.rlane.explicit-link {
+  border-style: dotted;
+  opacity: 0.9;
+}

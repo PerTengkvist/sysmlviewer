@@ -57,8 +57,11 @@ export type RealizationLane = {
   /** Function whose frame the lane sits under (white box only). */
   group?: string
   groupLabel?: string
-  /** No step stands here: the lane is reached only through the function that refines the use case. */
-  projected?: boolean
+  /**
+   * No step stands here: the use case reaches the lane by a `#refine` from the node itself
+   * (`explicit`) or only through the function that refines it (`function`).
+   */
+  reach?: 'explicit' | 'function'
 }
 
 export type ExpandedFlow = {
@@ -145,6 +148,16 @@ function flowRanks(flow: string, semantic: Record<string, SemanticElement>): Map
   const ranks = new Map<string, number>()
   dependencyLayers(ids, forward).forEach((layer, i) => layer.forEach((id) => ranks.set(id, i)))
   return ranks
+}
+
+/**
+ * A function step is written like a step of the use case (`prettyLabel`: camel case split), also
+ * when the backend qualified its name to tell two apart (`Security::checkKey`): the qualifier
+ * stays, the last segment is split.
+ */
+function stepName(label: string): string {
+  const cut = label.lastIndexOf('::')
+  return cut < 0 ? prettyLabel(label, false) : `${label.slice(0, cut + 2)}${prettyLabel(label.slice(cut + 2), false)}`
 }
 
 export function expandRealizationFlow(
@@ -244,7 +257,7 @@ export function expandRealizationFlow(
         .map((c) => c.f)
       const ids = chain.map((f) => ((uses.get(f) ?? 0) > 1 ? `${item.id}/${f}` : f))
       chain.forEach((f, i) => {
-        nodes.push({ id: ids[i], artifactId: f, kind: 'step', label: nameOf(f), ...inLanes(lanesOf(f)) })
+        nodes.push({ id: ids[i], artifactId: f, kind: 'step', label: stepName(nameOf(f)), ...inLanes(lanesOf(f)) })
         if (i > 0) chainEdges.push({ id: `${item.id}/chain/${i}`, source: ids[i - 1], target: ids[i] })
       })
       entry.set(item.id, ids[0])
@@ -315,21 +328,24 @@ export function expandRealizationFlow(
       ? (real.nodeFunctions[id]?.[0] ?? real.functionNodes[id])
       : undefined
   const middle = appearance.filter((l) => !actors.includes(l) && l !== SYSTEM_LANE && l !== UNALLOCATED_LANE)
-  // What the use case reaches only through its function has lanes without steps.
-  const projected = new Set<string>()
+  // What the use case reaches without a step has lanes without steps: by a `#refine` from the
+  // node itself (and the parts it allocates to), or only through the function that refines it.
+  const reach = new Map<string, 'explicit' | 'function'>()
   if (mode !== 'blackbox') {
-    const wanted =
-      mode === 'whitebox'
-        ? Object.keys(real.functionNodes).map((n) => [n, 'node'] as const)
-        : [
-            ...Object.keys(real.functionNodes).flatMap((n) => targets[n] ?? []),
-            ...Object.keys(real.functionParts),
-          ].map((p) => [p, 'part'] as const)
-    for (const [id, kind] of wanted) {
-      if (middle.includes(id) || actors.includes(id)) continue
-      lane(id, kind)
-      middle.push(id)
-      projected.add(id)
+    const ids = (kind: 'explicit' | 'function') => {
+      const nodes = Object.keys(kind === 'explicit' ? real.explicitNodes : real.functionNodes)
+      const parts = Object.keys(kind === 'explicit' ? real.explicitParts : real.functionParts)
+      return mode === 'whitebox'
+        ? nodes.map((n) => [n, 'node'] as const)
+        : [...nodes.flatMap((n) => targets[n] ?? []), ...parts].map((p) => [p, 'part'] as const)
+    }
+    for (const kind of ['explicit', 'function'] as const) {
+      for (const [id, laneKind] of ids(kind)) {
+        if (middle.includes(id) || actors.includes(id)) continue
+        lane(id, laneKind)
+        middle.push(id)
+        reach.set(id, kind)
+      }
     }
   }
   // The lanes of one function sit side by side, at the place of the group's first lane.
@@ -356,7 +372,7 @@ export function expandRealizationFlow(
       kind,
       label,
       ...(group ? { group, groupLabel: nameOf(group) } : {}),
-      ...(projected.has(id) ? { projected: true } : {}),
+      ...(reach.has(id) ? { reach: reach.get(id) } : {}),
     }
   })
   return { nodes, edges, lanes }

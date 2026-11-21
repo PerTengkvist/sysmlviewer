@@ -166,7 +166,7 @@ describe('markers', () => {
 })
 
 describe('lanes reached through the function', () => {
-  it('carry the projected mark', () => {
+  it('carry how they are reached', () => {
     const g = build(null, {
       realization: {
         stepRealizers: {},
@@ -176,10 +176,13 @@ describe('lanes reached through the function', () => {
         realizerFunctions: {},
         nodeFunctions: {},
         functionNodes: { [AUTH]: SEC },
+        explicitNodes: { [IMMO]: 'explicit' },
       },
     })
-    expect((lane(g.nodes, AUTH).data as { projected?: boolean }).projected).toBe(true)
-    expect((lane(g.nodes, 'system').data as { projected?: boolean }).projected).toBeUndefined()
+    const reach = (id: string) => (lane(g.nodes, id).data as { reach?: string }).reach
+    expect(reach(AUTH)).toBe('function')
+    expect(reach(IMMO)).toBe('explicit')
+    expect(reach('system')).toBeUndefined()
   })
 })
 
@@ -221,6 +224,19 @@ describe('dragging', () => {
   it('keeps a double click on a step from zooming the canvas (a node that cannot be dragged must say nopan)', () => {
     const g = build()
     for (const n of g.nodes.filter((n) => n.type === 'action')) expect(n.className).toContain('nopan')
+  })
+
+  it('lets only the header start a drag, so a click in the body of a lane is not a move', () => {
+    const g = build()
+    for (const n of g.nodes.filter((n) => n.type === 'lane')) expect(n.dragHandle).toBe('.rlane-header')
+  })
+
+  it('saves nothing when a lane is dropped where it already was', () => {
+    const order = [DRIVER, AUTH, IMMO, 'system']
+    const centres = { [DRIVER]: 100, [IMMO]: 500, system: 700 }
+    // Dropped a little to either side, still between the same neighbours.
+    expect(layoutAfterDrop(null, 'whitebox', order, AUTH, 300, centres)).toBeNull()
+    expect(layoutAfterDrop({ lanes: 'whitebox', order: { whitebox: order } }, 'whitebox', order, AUTH, 420, centres)).toBeNull()
   })
 
   it('stores the order of the mode after a drop, and keeps the other fields', () => {

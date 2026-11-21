@@ -27,9 +27,11 @@ describe('LaneNode', () => {
     expect(render({ kind: 'system', label: 'System' })).toContain('«system»')
   })
 
-  it('marks a lane that is only reached through its function', () => {
-    expect(render({ projected: true })).toContain('rlane-node projected')
+  it('marks a lane that no step stands in, by how the use case reaches it', () => {
+    expect(render({ reach: 'function' })).toContain('rlane-node projected')
+    expect(render({ reach: 'explicit' })).toContain('rlane-node explicit-link')
     expect(render({})).not.toContain('projected')
+    expect(render({})).not.toContain('explicit-link')
   })
 
   it('draws the frame of a function with its name', () => {
