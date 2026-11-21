@@ -127,7 +127,9 @@ def compare_geometry(
         for artifact_id, canvas_entry in canvas_section.items():
             saved_entry = saved_section.get(artifact_id)
             if saved_entry is None:
-                if not partial:
+                # An element the canvas holds no value for (a realization chain node that
+                # has not been placed) has nothing to save, so nothing to miss.
+                if not partial and any(v is not None for v in canvas_entry.values()):
                     out.append(
                         Mismatch(
                             element, artifact_id, "entry", "present", None, source

@@ -174,3 +174,55 @@ def test_chain_nodes_carry_no_default_position(tmp_path: Path):
     nodes = _view(client, pid, "StartChain")["visualization"]["nodes"]
     assert nodes, "the elements still have visualization rows"
     assert all("x" not in n and "y" not in n for n in nodes.values())
+
+
+NESTED = """\
+package Outer {
+  package Mid { package Inner { use case def Deep { action a; } } }
+  view DeepChain : AllocationView { expose Outer; }
+}
+"""
+
+
+def test_mode_and_content_do_not_depend_on_levels(tmp_path: Path):
+    client = TestClient(create_app(data_dir=tmp_path))
+    pid = client.post(api_url("/projects"), json={"name": "N"}).json()["id"]
+    add_content_file(client, pid, tmp_path, "nested.sysml", NESTED)
+    seen = []
+    for levels in (1, 2, 5):
+        res = client.get(api_url(f"/projects/{pid}/views/Outer::DeepChain"), params={"levels": levels})
+        body = res.json()
+        seen.append((body["diagramMode"], sorted(body["chainRoles"])))
+    assert seen[0] == seen[1] == seen[2] == ("realizationChain", ["Outer::Mid::Inner::Deep"])
+
+
+def test_chain_edges_follow_the_explicit_links_of_electric_car(tmp_path: Path):
+    import shutil
+
+    src = Path(__file__).resolve().parents[2] / "examples" / "electric_car"
+    ws = tmp_path / "ec"
+    shutil.copytree(src, ws)
+    (ws / "chain_views.sysml").write_text(
+        "package ChainViews {\n"
+        "  view BrakeChain : AllocationView { expose UseCases::Driving::Brake; }\n"
+        "  view SecurityChain : AllocationView { expose Functions::Security; }\n}\n",
+        encoding="utf-8",
+    )
+    client = TestClient(create_app(workspace=ws))
+    project = client.get(api_url("/session")).json()["project"]
+    from domain.realization import derive_realization
+
+    for view_id, root in (("ChainViews::BrakeChain", "UseCases::Driving::Brake"),
+                          ("ChainViews::SecurityChain", "Functions::Security")):
+        body = client.get(api_url(f"/projects/{project['id']}/views/{view_id}")).json()
+        assert body["diagramMode"] == "realizationChain", body.get("modeError")
+        assert all(e["kind"] != "owns" for e in body["chainEdges"]), "no step links in electric car"
+        refine_sources = {e["source"] for e in body["chainEdges"] if e["kind"] == "refine"}
+        rel = {
+            (r["sourceId"], r["targetId"])
+            for r in client.get(api_url(f"/projects/{project['id']}/realization")).json()["links"]
+        }
+        for e in body["chainEdges"]:
+            if e["kind"] == "refine" and not e["viaInclude"]:
+                assert (e["source"], e["target"]) in rel
+        assert refine_sources

@@ -250,3 +250,14 @@ def test_snapshots_from_layout_and_payload_keep_port_label_offset():
 
     assert snapshot_from_layout(layout).ports[PORT]["labelOffset"] == offset
     assert snapshot_from_view_payload(payload).ports[PORT]["labelOffset"] == offset
+
+
+def test_canvas_entry_without_any_value_is_not_a_missing_entry():
+    canvas = GeometrySnapshot(
+        parts={PART: {"x": None, "y": None, "width": None, "height": None}},
+        ports={},
+        edges={},
+    )
+    assert compare_geometry(canvas, GeometrySnapshot({}, {}, {}), source="saved") == []
+    placed = GeometrySnapshot(parts={PART: _part()}, ports={}, edges={})
+    assert [m.field for m in compare_geometry(placed, GeometrySnapshot({}, {}, {}), source="saved")] == ["entry"]
