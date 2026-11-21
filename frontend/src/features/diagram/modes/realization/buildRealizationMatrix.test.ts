@@ -204,6 +204,23 @@ describe('coverage', () => {
   })
 })
 
+describe('findings', () => {
+  it('lists the findings that the grid does not show as a mark', () => {
+    const view = probeView()
+    view.realization.findings.push(
+      { code: 'refine-without-step', elementId: SEC, message: 'function refines Start without steps' },
+      { code: 'bad-realization-end', elementId: 'P::dep', message: 'not a realization' },
+    )
+    const m = buildRealizationMatrix(view, nodesByUc)
+    // The unrealized system step is the ✗ of the grid; the others are listed.
+    expect(m.findings.map((f) => [f.code, f.elementId])).toEqual([
+      ['refine-without-step', SEC],
+      ['bad-realization-end', 'P::dep'],
+    ])
+    expect(m.findings[0].label).toBe('Security')
+  })
+})
+
 describe('matrixToCsv', () => {
   it('writes the same cells as the table', () => {
     const csv = matrixToCsv(buildRealizationMatrix(probeView(), nodesByUc))

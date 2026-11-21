@@ -3,6 +3,7 @@ requirements give the realization matrix, anything else the requirements table."
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -148,11 +149,17 @@ def test_matrix_payload_is_filtered_to_exposed_use_cases(tmp_path: Path):
 
 def test_matrix_view_saves_no_geometry(tmp_path: Path):
     client, pid = _project(tmp_path)
-    res = client.post(
-        api_url(f"/projects/{pid}/views/Views::Matrix/save-snapshot"),
-        json={"structureNotation": "sysmlv2", "parts": {}, "ports": {}, "edges": {}},
-    )
-    assert res.status_code == 200
+    snapshot = {
+        "structureNotation": "sysmlv2",
+        "parts": {START: {"x": 5, "y": 6, "width": 100, "height": 50}},
+        "ports": {},
+        "edges": {},
+    }
+    res = client.post(api_url(f"/projects/{pid}/views/Views::Matrix/save-snapshot"), json=snapshot)
+    assert res.status_code == 200, res.text
+    assert res.json()["status"] == "skipped"
+    for file in tmp_path.rglob("views/Matrix.json"):
+        assert not json.loads(file.read_text(encoding="utf-8")).get("nodes"), file
 
 
 NESTED = """
@@ -223,3 +230,25 @@ package N {
     assert view["diagramMode"] == "realizationMatrix"
     ucs = {k for k, e in view["semantic"].items() if e["kind"] == "useCase"}
     assert ucs == {"N::Outer"}, ucs
+
+
+def test_findings_on_the_functions_nodes_and_links_of_the_rows_are_kept(tmp_path: Path):
+    extra = """
+package Extra {
+  part def Other {
+    part o { perform f.x; }
+    action f { action x; first start; then x; then done; }
+  }
+  #refine dependency from Other to RealizationProbe::UC::Start;
+  #refine dependency from RealizationProbe::UC::Start::checkKey to R::Safe;
+  #refine dependency from Other to RealizationProbe::UC::Lock;
+}
+"""
+    client, pid = _project(tmp_path, PROBE + "\n" + REQ + extra + MATRIX_VIEWS)
+    view = _view(client, pid, "Views::OnlyStart")
+    found = {(f["code"], f["elementId"].rsplit("::", 1)[-1]) for f in view["realization"]["findings"]}
+    assert ("refine-without-step", "Other") in found
+    assert ("unrealized-system-step", "askForBrake") in found
+    assert any(code == "bad-realization-end" for code, _ in found)
+    # Lock is not exposed: nothing about it.
+    assert all("Lock" not in f["message"] for f in view["realization"]["findings"])

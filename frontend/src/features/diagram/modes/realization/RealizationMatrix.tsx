@@ -189,6 +189,20 @@ export function RealizationMatrix({
           </tr>
         </tfoot>
       </table>
+      {matrix.findings.length > 0 && (
+        <ul className="realization-findings">
+          {matrix.findings.map((f) => (
+            <li
+              key={`${f.code}|${f.elementId}`}
+              data-finding-code={f.code}
+              onClick={pick(f.elementId)}
+              title={f.code}
+            >
+              <strong>{f.label}</strong>: {f.message}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

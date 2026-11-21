@@ -3219,6 +3219,15 @@ button.linkish {
 .realization-matrix tr.selected td {
   background: color-mix(in srgb, var(--accent, #2563eb) 18%, var(--panel));
 }
+.realization-findings {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 13px;
+  color: var(--danger, #b91c1c);
+}
+.realization-findings li {
+  cursor: pointer;
+}
 .realization-matrix th[data-column-id],
 .realization-matrix tbody th {
   cursor: pointer;

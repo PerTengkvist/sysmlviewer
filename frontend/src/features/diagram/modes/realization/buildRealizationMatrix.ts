@@ -58,6 +58,9 @@ export type MatrixCell = {
   tooltip: string
 }
 
+/** A finding that the grid does not show as a mark (a `✗` already stands for an unrealized step). */
+export type MatrixFinding = { code: string; elementId: string; label: string; message: string }
+
 export type RealizationMatrix = {
   options: MatrixOptions
   rows: MatrixRow[]
@@ -65,6 +68,7 @@ export type RealizationMatrix = {
   groups: MatrixGroup[]
   /** `cells[row][column]`. */
   cells: MatrixCell[][]
+  findings: MatrixFinding[]
 }
 
 const EMPTY_CELL: MatrixCell = {
@@ -241,7 +245,10 @@ export function buildRealizationMatrix(
     groupId: byNodes ? (nodeById.get(id)?.functionId ?? null) : null,
     gap: !columnRealizes.get(id),
   }))
-  return { options, rows, columns, groups, cells }
+  const findings = realization.findings
+    .filter((f) => f.code !== 'unrealized-system-step')
+    .map((f) => ({ ...f, label: nameOf(semantic, f.elementId) }))
+  return { options, rows, columns, groups, cells, findings }
 }
 
 function csvField(text: string): string {

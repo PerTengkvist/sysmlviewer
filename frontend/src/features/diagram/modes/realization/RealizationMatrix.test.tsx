@@ -66,6 +66,29 @@ describe('RealizationMatrix', () => {
   })
 })
 
+describe('findings', () => {
+  it('lists the findings below the grid', () => {
+    const view = probeView()
+    view.realization.findings.push({
+      code: 'refine-without-step',
+      elementId: 'RealizationProbe::F::Security',
+      message: 'function refines Start without steps',
+    })
+    const html = renderToStaticMarkup(
+      createElement(RealizationMatrix, {
+        matrix: buildRealizationMatrix(view, matrixOptions(null)),
+        selectedIds: [],
+        onSelect: noop,
+        onOptionsChange: noop,
+        onExport: noop,
+      }),
+    )
+    expect(html).toContain('data-finding-code="refine-without-step"')
+    expect(html).toContain('function refines Start without steps')
+    expect(render()).not.toContain('realization-findings')
+  })
+})
+
 describe('selection and options', () => {
   const matrix = buildRealizationMatrix(probeView(), matrixOptions(null))
   const row = (id: string) => matrix.rows.find((r) => r.id === id)!

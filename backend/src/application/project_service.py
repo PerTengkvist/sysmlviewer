@@ -306,6 +306,21 @@ def _matrix_realization(full: dict, semantic: dict[str, SemanticElement], rows: 
     def keep(eid: str) -> bool:
         return eid in ucs or owner(eid) in ucs
 
+    use_cases = {k: v for k, v in full["useCases"].items() if k in ucs}
+    # A finding belongs to the matrix when it is about a row, a step of a row, a function
+    # or function node that realizes a row, or a `#refine` that ends at a row or its step.
+    related: set[str] = set(ucs)
+    for info in use_cases.values():
+        related |= set(info["functions"]) | set(info["nodes"]) | set(info["functionNodes"])
+
+    def keep_finding(eid: str) -> bool:
+        if keep(eid) or eid in related:
+            return True
+        el = semantic.get(eid)
+        return el is not None and any(
+            end is not None and keep(end) for end in (el.source_id, el.target_id)
+        )
+
     return {
         "links": [link for link in full["links"] if keep(link["targetId"])],
         "actorSteps": {k: v for k, v in full["actorSteps"].items() if k in ucs},
@@ -318,9 +333,9 @@ def _matrix_realization(full: dict, semantic: dict[str, SemanticElement], rows: 
             if any(link["sourceId"] == k and keep(link["targetId"]) for link in full["links"])
         },
         "nodeParts": dict(full["nodeParts"]),
-        "useCases": {k: v for k, v in full["useCases"].items() if k in ucs},
+        "useCases": use_cases,
         "inScope": [u for u in full["inScope"] if u in ucs],
-        "findings": [f for f in full["findings"] if keep(f["elementId"])],
+        "findings": [f for f in full["findings"] if keep_finding(f["elementId"])],
     }
 
 
