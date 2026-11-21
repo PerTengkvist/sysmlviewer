@@ -24,7 +24,7 @@ import {
 import { findPortDefId } from './portLocate'
 import { nestedPortsOf } from './nestedPorts'
 import {
-  elementDisplayName,
+  relatedElementLabel,
   elementRelations,
   featureLabel,
   featureTargets,
@@ -362,8 +362,22 @@ function RelationsList({
     (r) => !exclude?.has(r.relationId),
   )
   if (!items.length) return null
-  const name = (id: string | null) =>
-    id ? elementDisplayName(semantic[id], id, semantic) : '—'
+  const text = (id: string | null) => {
+    if (!id) return '—'
+    const l = relatedElementLabel(semantic, id)
+    return [l.type, l.shortId, l.name].filter(Boolean).join(' ')
+  }
+  const name = (id: string | null) => {
+    if (!id) return <>—</>
+    const l = relatedElementLabel(semantic, id)
+    return (
+      <>
+        {l.type && <span className="relation-element-type">{l.type}</span>}
+        {l.type && ' '}
+        {l.shortId ? `${l.shortId} ${l.name}` : l.name}
+      </>
+    )
+  }
   return (
     <div className="children relations-list">
       <h3>Relations</h3>
@@ -385,7 +399,7 @@ function RelationsList({
                     type="button"
                     className="link-button"
                     data-related-id={r.otherId}
-                    title={`Open ${name(r.otherId)}`}
+                    title={`Open ${text(r.otherId)}`}
                     onClick={() => onOpenRelated(r.otherId!)}
                   >
                     {name(r.otherId)}

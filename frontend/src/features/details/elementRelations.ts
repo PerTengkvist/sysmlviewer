@@ -81,6 +81,42 @@ export function elementDisplayName(
   return el.shortId ? `${el.shortId} ${el.name}` : el.name
 }
 
+const KIND_KEYWORD: Partial<Record<SemanticElement['kind'], string>> = {
+  useCase: 'use case',
+  eventOccurrence: 'event occurrence',
+}
+
+/**
+ * The SysML keyword for an element: `part`, `ref part`, `use case def`,
+ * `abstract part def`. An unknown kind is shown as it is.
+ */
+export function elementTypeLabel(el: SemanticElement): string {
+  const word = KIND_KEYWORD[el.kind] ?? el.kind
+  if (el.isDefinition) {
+    return el.isAbstract && el.kind === 'part' ? `abstract ${word} def` : `${word} def`
+  }
+  return el.kind === 'part' && el.isReference ? 'ref part' : word
+}
+
+export type RelatedElementLabel = {
+  /** Element type keyword; null when the element is not in the model. */
+  type: string | null
+  shortId: string | null
+  name: string
+}
+
+/** Type, short id and name of the far end of a relation. */
+export function relatedElementLabel(
+  semantic: Record<string, SemanticElement>,
+  id: string,
+): RelatedElementLabel {
+  const el = semantic[id]
+  if (!el) return { type: null, shortId: null, name: id }
+  const occ = owningOccurrenceId(semantic, id)
+  const name = occ ? `${semantic[occ].name}.${occurrencePath(semantic, id)}` : el.name
+  return { type: elementTypeLabel(el), shortId: el.shortId || null, name }
+}
+
 export type FeatureTarget = {
   label: 'Subsets' | 'Redefines'
   relationId: string

@@ -211,7 +211,8 @@ input {
   font-size: 0.85rem;
 }
 
-.relation-stereotype {
+.relation-stereotype,
+.relation-element-type {
   color: var(--muted);
   white-space: nowrap;
 }
