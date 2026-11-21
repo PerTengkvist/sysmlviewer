@@ -11,6 +11,7 @@ import {
   type VisualizationEdge,
   type VisualizationNode,
 } from './api'
+import { createRealizationLoader } from './features/details/realizationLoader'
 import { DiagramCanvas, type DiagramCanvasApi } from './features/diagram/DiagramCanvas'
 import { EventsDrawer } from './features/events/EventsDrawer'
 import { useEventLog } from './features/events/useEventLog'
@@ -406,24 +407,14 @@ export default function App() {
     }
   }, [project?.id, project?.updatedAt])
 
+  const realizationLoader = useMemo(
+    () => createRealizationLoader(api.getRealization, setRealization),
+    [],
+  )
   useEffect(() => {
-    if (!project) {
-      setRealization(null)
-      return
-    }
-    let cancelled = false
-    void api
-      .getRealization(project.id)
-      .then((res) => {
-        if (!cancelled) setRealization(res)
-      })
-      .catch(() => {
-        if (!cancelled) setRealization(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [project?.id, project?.updatedAt])
+    realizationLoader.update(project)
+  }, [realizationLoader, project?.id, project?.semantic]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => realizationLoader.dispose(), [realizationLoader])
 
   const updateHorizontalLayout = useCallback((sizes: [number, number, number]) => {
     setSettings((prev) => {
