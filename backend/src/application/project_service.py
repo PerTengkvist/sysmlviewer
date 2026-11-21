@@ -16,6 +16,7 @@ from domain.dependency_tree import build_dependency_tree
 from domain.realization import Realization, derive_realization
 from domain.realization_chain import Chain, build_chain, is_chain_view
 from domain.realization_labels import unambiguous_labels
+from domain.use_case_realization_view import RealizationFlow, build_realization_flow
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -100,7 +101,11 @@ def _split_use_edge(relation_id: str) -> tuple[str, str] | None:
 
 
 # Diagram modes that draw no canvas, so there is no geometry to save or compare.
-_MODES_WITHOUT_GEOMETRY = frozenset({"requirementTable", "realizationMatrix"})
+# The swimlane activity has no node geometry either: its nodes are placed by the client and
+# only the lane order and widths are saved (useCaseRealizationLayout).
+_MODES_WITHOUT_GEOMETRY = frozenset(
+    {"requirementTable", "realizationMatrix", "useCaseRealization"}
+)
 _MAX_NAMED_ELEMENTS = 10
 
 
@@ -2125,6 +2130,10 @@ class ProjectService:
             exposed_kinds = {
                 project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
+        if view.type_ref == "ActionFlowView":
+            # By what the view exposes, whichever comes first: use cases (and no action) draw
+            # the swimlane activity of a use case.
+            exposed_kinds = {r.kind for r in expose_roots}
         chain_view = False
         realization: Realization | None = None  # derived once, for the mode and the chain
         if view.type_ref == "AllocationView":
@@ -2174,6 +2183,12 @@ class ProjectService:
                 f"{', '.join(sorted(k.value for k in expected))}; got '{root.kind.value}'"
             )
 
+        if mode_error is None and diagram_mode == "useCaseRealization" and len(expose_roots) > 1:
+            mode_error = (
+                f"{view.type_ref} draws the activity of one use case; "
+                f"this view exposes {len(expose_roots)}. Use one view per use case"
+            )
+
         if (
             mode_error is None
             and diagram_mode == "sequence"
@@ -2187,6 +2202,7 @@ class ProjectService:
 
         artifact_ids: set[str] = set()
         chain: Chain | None = None
+        realization_flow: RealizationFlow | None = None
         lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
@@ -2240,6 +2256,11 @@ class ProjectService:
                     }:
                         extra.add(cid)
             artifact_ids |= extra
+        elif diagram_mode == "useCaseRealization" and mode_error is None:
+            realization_flow = build_realization_flow(
+                project.semantic, derive_realization(project.semantic), root.id
+            )
+            artifact_ids |= set(realization_flow.ids)
         elif diagram_mode == "realizationChain":
             chain = build_chain(
                 project.semantic,
@@ -2428,7 +2449,9 @@ class ProjectService:
                 pending_local.append(aid)
                 continue
             resolved = resolve_view_node(global_node, overlay)
-            if diagram_mode == "realizationChain" and not overlay_has_xy(overlay):
+            if diagram_mode == "useCaseRealization" or (
+                diagram_mode == "realizationChain" and not overlay_has_xy(overlay)
+            ):
                 # Only a position the view saved counts; the client lays the rest out.
                 for key in ("x", "y", "width", "height"):
                     resolved.pop(key, None)
@@ -2611,6 +2634,10 @@ class ProjectService:
             ]
             result["chainRoles"] = {i: chain.roles[i] for i in shown}
             result["chainLabels"] = unambiguous_labels(project.semantic, shown)
+        if realization_flow is not None:
+            result["realization"] = realization_flow.realization
+            result["laneTargets"] = realization_flow.lane_targets
+            result["realizationLabels"] = realization_flow.labels
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

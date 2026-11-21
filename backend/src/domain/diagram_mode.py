@@ -31,7 +31,8 @@ def resolve_diagram_mode(
     use cases and no requirements give the realization matrix, anything else the
     requirements table. An `AllocationView` draws the realization chain when
     `realization_chain` is set (see `realization_chain.is_chain_view`); otherwise it stays
-    the logical -> physical allocation.
+    the logical -> physical allocation. An `ActionFlowView` whose exposes include use cases and
+    no actions draws the white-box activity of a use case with swimlanes.
     """
     type_ref = view.type_ref
     if (
@@ -41,6 +42,13 @@ def resolve_diagram_mode(
         and ArtifactKind.REQUIREMENT not in exposed_kinds
     ):
         return "realizationMatrix"
+    if (
+        type_ref == "ActionFlowView"
+        and exposed_kinds is not None
+        and ArtifactKind.USE_CASE in exposed_kinds
+        and ArtifactKind.ACTION not in exposed_kinds
+    ):
+        return "useCaseRealization"
     if type_ref == "AllocationView" and realization_chain:
         return "realizationChain"
     if type_ref and type_ref in TYPE_REF_TO_MODE:
@@ -62,6 +70,8 @@ def expected_root_kinds(diagram_mode: str) -> set[ArtifactKind] | None:
         return {ArtifactKind.STATE}
     if diagram_mode == "actionFlow":
         return {ArtifactKind.ACTION}
+    if diagram_mode == "useCaseRealization":
+        return {ArtifactKind.USE_CASE}
     if diagram_mode == "tree":
         return None
     return None
