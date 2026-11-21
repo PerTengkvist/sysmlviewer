@@ -48,6 +48,9 @@ test('double-click on a use case lists its requirements and opens one', async ({
     hasText: 'StartVehicle',
   })
   await expect(incoming).toContainText('«refine»')
+  // The far end shows its element type before short id and name.
+  await expect(incoming).toContainText('use case def UC001 StartVehicle')
+  await expect(incoming.locator('.relation-element-type')).toHaveText('use case def')
 
   // And back: the use case at the far end opens the use case dialog again.
   await incoming.locator('[data-related-id="UseCases::Driving::StartVehicle"]').click()

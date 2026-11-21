@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { SemanticElement } from '../../api'
 import {
+  elementTypeLabel,
+  relatedElementLabel,
   elementDisplayName,
   elementRelations,
   featureLabel,
@@ -213,5 +215,61 @@ describe('parts inside an occurrence', () => {
     expect(featureTargets(m, 'D::UnlockSequence::car::locks')[0].label).toBe('Redefines')
     expect(featureTargets(m, 'L::Car::keyFob')).toEqual([])
     expect(featureLabel(m, 'L::Car::keyFob')).toBe('keyFob (Car)')
+  })
+})
+
+describe('elementTypeLabel', () => {
+  const t = (partial: Partial<SemanticElement> & { kind: SemanticElement['kind'] }) =>
+    elementTypeLabel({ id: 'x', name: 'x', parentId: null, typeRef: null, sourceId: null, targetId: null, ...partial } as SemanticElement)
+
+  it('gives the SysML keyword for usages and definitions', () => {
+    expect(t({ kind: 'part' })).toBe('part')
+    expect(t({ kind: 'part', isReference: true })).toBe('ref part')
+    expect(t({ kind: 'part', isDefinition: true })).toBe('part def')
+    expect(t({ kind: 'part', isDefinition: true, isAbstract: true })).toBe('abstract part def')
+    expect(t({ kind: 'useCase' })).toBe('use case')
+    expect(t({ kind: 'useCase', isDefinition: true })).toBe('use case def')
+    expect(t({ kind: 'requirement' })).toBe('requirement')
+    expect(t({ kind: 'requirement', isDefinition: true })).toBe('requirement def')
+    expect(t({ kind: 'action' })).toBe('action')
+    expect(t({ kind: 'action', isDefinition: true })).toBe('action def')
+    expect(t({ kind: 'occurrence', isDefinition: true })).toBe('occurrence def')
+    expect(t({ kind: 'occurrence' })).toBe('occurrence')
+    expect(t({ kind: 'eventOccurrence' })).toBe('event occurrence')
+    expect(t({ kind: 'interaction' })).toBe('interaction')
+    expect(t({ kind: 'interaction', isDefinition: true })).toBe('interaction def')
+    expect(t({ kind: 'lifeline' })).toBe('lifeline')
+    expect(t({ kind: 'message', isDefinition: true })).toBe('message def')
+    for (const k of ['actor', 'port', 'state', 'attribute', 'message', 'view', 'package'] as const) {
+      expect(t({ kind: k })).toBe(k)
+    }
+    expect(t({ kind: 'port', isDefinition: true })).toBe('port def')
+  })
+
+  it('keeps an unknown kind unchanged, with def for a definition', () => {
+    expect(t({ kind: 'weird' as SemanticElement['kind'] })).toBe('weird')
+    expect(t({ kind: 'weird' as SemanticElement['kind'], isDefinition: true })).toBe('weird def')
+  })
+})
+
+describe('relatedElementLabel', () => {
+  const sem: Record<string, SemanticElement> = {
+    'UC::Start': { id: 'UC::Start', kind: 'useCase', name: 'StartVehicle', shortId: 'UC001', isDefinition: true, parentId: null, typeRef: null, sourceId: null, targetId: null } as SemanticElement,
+    'F::auth': { id: 'F::auth', kind: 'part', name: 'authenticate', parentId: null, typeRef: null, sourceId: null, targetId: null } as SemanticElement,
+    Occ: { id: 'Occ', kind: 'occurrence', name: 'UnlockSequence', isDefinition: true, parentId: null, typeRef: null, sourceId: null, targetId: null } as SemanticElement,
+    'Occ::keyFob': { id: 'Occ::keyFob', kind: 'part', name: 'keyFob', isReference: true, parentId: 'Occ', typeRef: null, sourceId: null, targetId: null } as SemanticElement,
+  }
+
+  it('returns type, short id and name', () => {
+    expect(relatedElementLabel(sem, 'UC::Start')).toEqual({ type: 'use case def', shortId: 'UC001', name: 'StartVehicle' })
+  })
+  it('has a null short id when the element has none', () => {
+    expect(relatedElementLabel(sem, 'F::auth')).toEqual({ type: 'part', shortId: null, name: 'authenticate' })
+  })
+  it('names a part in an occurrence with its path', () => {
+    expect(relatedElementLabel(sem, 'Occ::keyFob')).toEqual({ type: 'ref part', shortId: null, name: 'UnlockSequence.keyFob' })
+  })
+  it('falls back to the id without a type for a missing element', () => {
+    expect(relatedElementLabel(sem, 'Nope')).toEqual({ type: null, shortId: null, name: 'Nope' })
   })
 })

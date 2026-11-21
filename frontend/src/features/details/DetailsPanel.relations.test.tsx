@@ -104,4 +104,49 @@ describe('DetailsPanel relations', () => {
     const html = render('R::PowerModes', { onOpenRelated: noop })
     expect(html).toMatch(/<button[^>]*data-related-id="UC::Start"/)
   })
+
+  it('shows the element type before short id and name, in its own span', () => {
+    const out = render('UC::Start')
+    expect(out).toContain(
+      '<span class="relation-element-type">requirement</span> REQ-PERF-06 PowerModes',
+    )
+    const inc = render('R::PowerModes')
+    expect(inc).toContain('<span class="relation-element-type">use case</span> StartVehicle')
+  })
+
+  it('shows the type on both ends of an owned relation', () => {
+    const p = project()
+    p.semantic['R::PowerModes'].children = ['R::link']
+    p.semantic['R::link'] = el({
+      id: 'R::link',
+      kind: 'dependency',
+      name: 'link',
+      parentId: 'R::PowerModes',
+      sourceId: 'UC::Start',
+      targetId: 'R::DriveToDest',
+      metadataKeywords: ['refine'],
+    })
+    const html = renderToStaticMarkup(
+      createElement(DetailsPanel, { project: p, selectedId: 'R::PowerModes', onRoutingChange: noop }),
+    )
+    expect(html).toContain('data-direction="owned"')
+    expect(html).toContain(
+      '<span class="relation-element-type">use case</span> StartVehicle → <span class="relation-element-type">requirement</span> US-DRIVE-01',
+    )
+  })
+
+  it('puts the type in the button title', () => {
+    const html = render('R::PowerModes', { onOpenRelated: noop })
+    expect(html).toContain('title="Open use case StartVehicle"')
+  })
+
+  it('shows a missing element as its id without a type', () => {
+    const p = project()
+    p.semantic['UC::dep2'].targetId = 'Gone::X'
+    const html = renderToStaticMarkup(
+      createElement(DetailsPanel, { project: p, selectedId: 'UC::Start', onRoutingChange: noop }),
+    )
+    expect(html).toContain('Gone::X')
+    expect(html).not.toMatch(/<\/span> Gone::X/)
+  })
 })
