@@ -14,6 +14,7 @@ from domain.interface_naming import (
 )
 from domain.dependency_tree import build_dependency_tree
 from domain.realization import Realization, derive_realization
+from domain.realization_chain import Chain, build_chain, chain_labels
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -2112,7 +2113,9 @@ class ProjectService:
             exposed_kinds = {
                 project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
-        diagram_mode = resolve_diagram_mode(view, root, exposed_kinds)
+        diagram_mode = resolve_diagram_mode(
+            view, root, exposed_kinds, project.semantic
+        )
         # `expose Car::*;` shows Car's members without Car: no frame to draw.
         if diagram_mode == "whitebox" and not includes_root(
             expose_kinds.get(root.id, EXPOSE_MEMBER)
@@ -2138,6 +2141,7 @@ class ProjectService:
             )
 
         artifact_ids: set[str] = set()
+        chain: Chain | None = None
         lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
@@ -2191,6 +2195,13 @@ class ProjectService:
                     }:
                         extra.add(cid)
             artifact_ids |= extra
+        elif diagram_mode == "realizationChain":
+            chain = build_chain(
+                project.semantic,
+                derive_realization(project.semantic),
+                [r.id for r in expose_roots],
+            )
+            artifact_ids |= set(chain.ids)
         elif diagram_mode == "allocation":
             for eroot in expose_roots:
                 artifact_ids.add(eroot.id)
@@ -2372,6 +2383,10 @@ class ProjectService:
                 pending_local.append(aid)
                 continue
             resolved = resolve_view_node(global_node, overlay)
+            if diagram_mode == "realizationChain" and not overlay_has_xy(overlay):
+                # Only a position the view saved counts; the client lays the rest out.
+                for key in ("x", "y", "width", "height"):
+                    resolved.pop(key, None)
             if diagram_mode == "tree":
                 if overlay is None or overlay.width is None:
                     resolved["width"] = DEFAULT_TREE_WIDTH
@@ -2540,6 +2555,10 @@ class ProjectService:
         }
         if matrix is not None:
             result.update(matrix)
+        if chain is not None:
+            result["chainEdges"] = [e.to_dict() for e in chain.edges]
+            result["chainRoles"] = {i: chain.roles[i] for i in chain.ids}
+            result["chainLabels"] = chain_labels(project.semantic, chain.ids)
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

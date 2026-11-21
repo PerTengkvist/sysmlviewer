@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 
 from domain.models import ArtifactKind, SemanticElement, ViewDef
 
@@ -23,12 +23,15 @@ def resolve_diagram_mode(
     view: ViewDef,
     root: SemanticElement,
     exposed_kinds: Collection[ArtifactKind] | None = None,
+    semantic: Mapping[str, SemanticElement] | None = None,
 ) -> str:
     """Map view typeRef (and root kind fallback) to a frontend diagramMode string.
 
     `exposed_kinds` (kinds of the exposed elements) lets a `GridView` choose by content:
     use cases and no requirements give the realization matrix, anything else the
-    requirements table.
+    requirements table. An `AllocationView` on a use case, a package with use cases or a
+    function (`semantic` is the whole model) draws the realization chain; on anything
+    else it stays the logical -> physical allocation.
     """
     type_ref = view.type_ref
     if (
@@ -38,6 +41,11 @@ def resolve_diagram_mode(
         and ArtifactKind.REQUIREMENT not in exposed_kinds
     ):
         return "realizationMatrix"
+    if type_ref == "AllocationView":
+        from domain.realization_chain import is_chain_root
+
+        if is_chain_root(root, semantic if semantic is not None else {root.id: root}):
+            return "realizationChain"
     if type_ref and type_ref in TYPE_REF_TO_MODE:
         mapped = TYPE_REF_TO_MODE[type_ref]
         if mapped != "general":

@@ -1,0 +1,200 @@
+"""The realization chain of use cases: use case | function | function node | logical part.
+
+`build_chain` turns a `Realization` (domain/realization.py, which does all the deriving)
+into the nodes and edges of a column graph, for an `AllocationView` whose root is a use
+case, a package with use cases, or a function. Nothing is derived here beyond choosing
+what to show:
+
+- `refine`: function -> use case (precision as in the realization), or function node ->
+  use case for a node that refines the use case itself;
+- `owns`: function -> function node, for the nodes that perform its steps;
+- `allocate`: function node -> logical part.
+
+With a function as root the chain runs the other way: the function, the use cases it
+realizes, and the nodes and parts it reaches. Pure domain logic: no I/O.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass
+
+from domain.failure.labels import disambiguate
+from domain.models import ArtifactKind, SemanticElement
+from domain.occurrence import in_occurrence
+from domain.perform import is_perform
+from domain.realization import Precision, Realization
+
+_RANK: dict[str, int] = {"step": 0, "coarse": 1, "explicit": 2}
+_MARKERS = frozenset({"start", "done", "decide", "decision", "condition"})
+_KIND_ORDER = {"refine": 0, "owns": 1, "allocate": 2}
+
+USE_CASE, FUNCTION, NODE, PART = "useCase", "function", "node", "part"
+
+
+@dataclass(frozen=True)
+class ChainEdge:
+    source: str
+    target: str
+    kind: str  # refine | owns | allocate
+    precision: Precision
+    via_include: bool
+
+    def to_dict(self) -> dict:
+        return {
+            "source": self.source,
+            "target": self.target,
+            "kind": self.kind,
+            "precision": self.precision,
+            "viaInclude": self.via_include,
+        }
+
+
+@dataclass
+class Chain:
+    ids: list[str]  # model order
+    roles: dict[str, str]
+    edges: list[ChainEdge]
+
+
+def _is_step(el: SemanticElement) -> bool:
+    return (
+        el.kind == ArtifactKind.ACTION
+        and not is_perform(el)
+        and (el.type_ref or "") not in _MARKERS
+    )
+
+
+def is_function(semantic: Mapping[str, SemanticElement], el: SemanticElement) -> bool:
+    """A part that owns a function flow: an action with steps of its own."""
+    if el.kind != ArtifactKind.PART or in_occurrence(dict(semantic), el.id):
+        return False
+    for cid in el.children:
+        flow = semantic.get(cid)
+        if flow is not None and _is_step(flow):
+            if any((c := semantic.get(s)) is not None and _is_step(c) for s in flow.children):
+                return True
+    return False
+
+
+def _descendants(semantic: Mapping[str, SemanticElement], root_id: str) -> list[str]:
+    out: list[str] = []
+    stack = [root_id]
+    while stack:
+        for cid in semantic[stack.pop()].children:
+            if cid in semantic:
+                out.append(cid)
+                stack.append(cid)
+    return out
+
+
+def is_chain_root(root: SemanticElement, semantic: Mapping[str, SemanticElement]) -> bool:
+    """Whether an AllocationView on `root` draws the realization chain (decision B6)."""
+    if root.kind == ArtifactKind.USE_CASE:
+        return True
+    if root.kind == ArtifactKind.PACKAGE and root.id in semantic:
+        return any(semantic[d].kind == ArtifactKind.USE_CASE for d in _descendants(semantic, root.id))
+    return is_function(semantic, root)
+
+
+def _use_cases_under(semantic: Mapping[str, SemanticElement], root: SemanticElement) -> list[str]:
+    if root.kind == ArtifactKind.USE_CASE:
+        return [root.id]
+    if root.kind == ArtifactKind.PACKAGE and root.id in semantic:
+        return [d for d in _descendants(semantic, root.id) if semantic[d].kind == ArtifactKind.USE_CASE]
+    return []
+
+
+def build_chain(
+    semantic: Mapping[str, SemanticElement],
+    realization: Realization,
+    root_ids: Iterable[str],
+) -> Chain:
+    r = realization
+    roots = [semantic[i] for i in root_ids if i in semantic]
+    # (use case, function the chain is limited to, or None)
+    scopes: list[tuple[str, str | None]] = []
+    for root in roots:
+        if is_function(semantic, root):
+            for uc in semantic:
+                nodes_without_function = any(
+                    not r.uc_node_functions.get(uc, {}).get(n) and semantic[n].parent_id == root.id
+                    for n in r.uc_nodes.get(uc, {})
+                )
+                if root.id in r.uc_functions.get(uc, {}) or nodes_without_function:
+                    scopes.append((uc, root.id))
+        else:
+            scopes.extend((uc, None) for uc in _use_cases_under(semantic, root))
+
+    roles: dict[str, str] = {}
+    best: dict[tuple[str, str, str], tuple[Precision, bool]] = {}
+    order: list[tuple[str, str, str]] = []
+
+    def edge(src: str, tgt: str, kind: str, precision: Precision, via: bool) -> None:
+        key = (src, tgt, kind)
+        if key not in best:
+            order.append(key)
+            best[key] = (precision, via)
+            return
+        old, old_via = best[key]
+        best[key] = (precision if _RANK[precision] < _RANK[old] else old, old_via and via)
+
+    for root in roots:
+        if is_function(semantic, root):
+            roles[root.id] = FUNCTION
+    for uc, only in scopes:
+        roles[uc] = USE_CASE
+        inherited = r.via_include.get(uc, set())
+        node_fns = r.uc_node_functions.get(uc, {})
+        for fn, precision in r.uc_functions.get(uc, {}).items():
+            if only is None or fn == only:
+                roles[fn] = FUNCTION
+                edge(fn, uc, "refine", precision, fn in inherited)
+        for node, precision in r.uc_nodes.get(uc, {}).items():
+            fns = [f for f in node_fns.get(node, []) if only is None or f == only]
+            if only is not None and not fns and (
+                node_fns.get(node) or semantic[node].parent_id != only
+            ):
+                continue
+            roles[node] = NODE
+            via = node in inherited
+            if node_fns.get(node):
+                for fn in fns:
+                    roles.setdefault(fn, FUNCTION)
+                    edge(fn, node, "owns", precision, via)
+            else:
+                edge(node, uc, "refine", precision, via)
+            for part in r.node_parts.get(node, []):
+                if part in r.uc_parts.get(uc, {}):
+                    roles[part] = PART
+                    edge(node, part, "allocate", r.uc_parts[uc][part], part in inherited)
+
+    rank = {eid: i for i, eid in enumerate(semantic)}
+    ids = sorted(roles, key=lambda i: rank.get(i, len(rank)))
+    edges = [
+        ChainEdge(s, t, k, *best[(s, t, k)])
+        for s, t, k in sorted(
+            order,
+            key=lambda e: (_KIND_ORDER[e[2]], rank.get(e[0], 0), rank.get(e[1], 0)),
+        )
+    ]
+    return Chain(ids, roles, edges)
+
+
+def chain_labels(semantic: Mapping[str, SemanticElement], ids: Iterable[str]) -> dict[str, str]:
+    """`<short name> <name>` (or the name), qualified by the shortest unique id suffix on a clash.
+
+    The same rule as the `label` style of domain/failure/labels.py.
+    """
+    ids = [i for i in ids if i in semantic]
+
+    def suffix(key: str, k: int) -> str:
+        return "::".join(key.split("::")[-(k + 1):])
+
+    def tag(key: str) -> str:
+        short = semantic[key].short_id
+        return f"{short} " if short else ""
+
+    base = {i: f"{tag(i)}{semantic[i].name}" for i in ids}
+    qual: Callable[[str, int], str] = lambda key, k: f"{tag(key)}{suffix(key, k)}"
+    return disambiguate(base, qual)
