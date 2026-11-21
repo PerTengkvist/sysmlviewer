@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { RealizationPrecision, SemanticElement } from '../../api'
-import { relatedElementLabel } from './elementRelations'
+import { RelatedElementName, relatedElementText } from './RelatedElementName'
 import {
   hasRealizationInfo,
   type ElementRealization,
@@ -20,15 +20,8 @@ function RelatedLink({
   id: string
   onOpenRelated?: (id: string) => void
 }) {
-  const l = relatedElementLabel(semantic, id)
-  const text = [l.type, l.shortId, l.name].filter(Boolean).join(' ')
-  const body = (
-    <>
-      {l.type && <span className="relation-element-type">{l.type}</span>}
-      {l.type && ' '}
-      {l.shortId ? `${l.shortId} ${l.name}` : l.name}
-    </>
-  )
+  const text = relatedElementText(semantic, id)
+  const body = <RelatedElementName semantic={semantic} id={id} />
   if (onOpenRelated && semantic[id]) {
     return (
       <button
@@ -48,9 +41,11 @@ function RelatedLink({
 function Badges({
   precision,
   viaInclude,
+  viaUseCase = false,
 }: {
   precision: RealizationPrecision
   viaInclude: boolean
+  viaUseCase?: boolean
 }) {
   return (
     <>
@@ -58,6 +53,12 @@ function Badges({
       <span className="realization-precision" data-precision={precision}>
         {precision}
       </span>
+      {viaUseCase && (
+        <>
+          {' '}
+          <span className="realization-via-include">via use case</span>
+        </>
+      )}
       {viaInclude && (
         <>
           {' '}
@@ -167,7 +168,7 @@ export function RealizationSections({
             {info.stepRealizers.map((r) => (
               <li key={r.stepId} data-step-id={r.stepId}>
                 {link(r.stepId)}
-                <Badges precision={r.precision} viaInclude={false} />
+                <Badges precision={r.precision} viaInclude={false} viaUseCase={r.viaUseCase} />
                 {r.nodeIds.length > 0 && (
                   <>
                     {' '}

@@ -23,11 +23,11 @@ import {
   interfaceUsageKindLabel,
 } from './interfaceLocate'
 import { findPortDefId } from './portLocate'
+import { RelatedElementName, relatedElementText } from './RelatedElementName'
 import { RealizationSections } from './RealizationSections'
 import { elementRealization } from './realizationLinks'
 import { nestedPortsOf } from './nestedPorts'
 import {
-  relatedElementLabel,
   elementRelations,
   featureLabel,
   featureTargets,
@@ -367,22 +367,9 @@ function RelationsList({
     (r) => !exclude?.has(r.relationId),
   )
   if (!items.length) return null
-  const text = (id: string | null) => {
-    if (!id) return '—'
-    const l = relatedElementLabel(semantic, id)
-    return [l.type, l.shortId, l.name].filter(Boolean).join(' ')
-  }
-  const name = (id: string | null) => {
-    if (!id) return <>—</>
-    const l = relatedElementLabel(semantic, id)
-    return (
-      <>
-        {l.type && <span className="relation-element-type">{l.type}</span>}
-        {l.type && ' '}
-        {l.shortId ? `${l.shortId} ${l.name}` : l.name}
-      </>
-    )
-  }
+  const text = (id: string | null) => (id ? relatedElementText(semantic, id) : '—')
+  const name = (id: string | null) =>
+    id ? <RelatedElementName semantic={semantic} id={id} /> : <>—</>
   return (
     <div className="children relations-list">
       <h3>Relations</h3>

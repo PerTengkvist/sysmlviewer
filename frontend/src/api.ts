@@ -515,6 +515,8 @@ export interface UseCaseRealization {
   declared: string[]
   /** id -> the `#refine` that gave its precision. */
   origin: Record<string, string>
+  /** Function node -> the functions it is realized through; empty for a node that refines the use case itself. */
+  nodeFunctions: Record<string, string[]>
 }
 
 export interface RealizationFinding {
@@ -533,6 +535,10 @@ export interface Realization {
   stepRealizers: Record<string, string[]>
   /** Use case (step) -> flows or function steps that realize it coarsely. */
   coarseRealizers: Record<string, string[]>
+  /** Function step | flow -> the function nodes that perform its steps. */
+  realizerNodes: Record<string, string[]>
+  /** Function node -> its `allocate` targets (logical parts). */
+  nodeParts: Record<string, string[]>
   useCases: Record<string, UseCaseRealization>
   inScope: string[]
   findings: RealizationFinding[]
