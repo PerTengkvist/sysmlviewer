@@ -50,6 +50,7 @@ const realization: Realization = {
       declared: [],
       origin: {},
       nodeFunctions: { 'F::Sec::auth': ['F::Sec'] },
+      functionNodes: {},
     },
   },
   inScope: ['UC::Start'],
