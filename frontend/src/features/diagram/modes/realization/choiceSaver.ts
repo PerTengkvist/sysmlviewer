@@ -30,7 +30,7 @@ export function createChoiceSaver<T>(
   }
 
   return {
-    /** `initial` is what the server holds now; it is only read for a key never saved before. */
+    /** `initial` is what the view shows, which is what the server holds while nothing is in flight. */
     save(key: string, choice: T, initial: T): Promise<void> {
       let state = states.get(key)
       if (!state) {
@@ -41,6 +41,8 @@ export function createChoiceSaver<T>(
         state.waiting = { choice }
         return state.busy
       }
+      // Idle: what the view shows is what the server holds, also after a reload.
+      state.confirmed = initial
       state.busy = drain(key, state, choice)
       return state.busy
     },

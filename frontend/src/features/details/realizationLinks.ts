@@ -119,7 +119,9 @@ function realizedBy(realization: Realization, ucId: string): RealizedByGroup[] {
       ...entry(nodeId, 'explicit'),
       viaInclude: via.has(fn),
       throughFunction: true,
-      parts: [],
+      parts: (realization.nodeParts[nodeId] ?? [])
+        .filter((p) => uc.functionParts[p] === fn)
+        .map((p) => ({ ...entry(p, 'explicit'), viaInclude: via.has(fn), throughFunction: true })),
     })
   }
   return [...groups.values()]
@@ -144,10 +146,14 @@ function realizesFromMaps(
   return out
 }
 
-function realizesThroughFunction(realization: Realization, id: string): RealizesEntry[] {
+function realizesThroughFunction(
+  realization: Realization,
+  key: 'functionNodes' | 'functionParts',
+  id: string,
+): RealizesEntry[] {
   const out: RealizesEntry[] = []
   for (const [ucId, uc] of Object.entries(realization.useCases)) {
-    const fn = uc.functionNodes[id]
+    const fn = uc[key][id]
     if (!fn) continue
     out.push({
       useCaseId: ucId,
@@ -241,8 +247,9 @@ export function elementRealization(
   add(info.realizes, realizesFromLinks(realization, semantic, id))
   add(info.realizes, realizesFromMaps(realization, 'functions', id))
   add(info.realizes, realizesFromMaps(realization, 'nodes', id))
-  add(info.realizes, realizesThroughFunction(realization, id))
+  add(info.realizes, realizesThroughFunction(realization, 'functionNodes', id))
   seen.clear()
   add(info.realizesViaNode, realizesFromMaps(realization, 'parts', id))
+  add(info.realizesViaNode, realizesThroughFunction(realization, 'functionParts', id))
   return info
 }

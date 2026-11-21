@@ -58,6 +58,7 @@ const uc = (partial: Partial<UseCaseRealization>): UseCaseRealization => ({
   origin: {},
   nodeFunctions: {},
   functionNodes: {},
+  functionParts: {},
   ...partial,
 })
 
@@ -105,12 +106,12 @@ const realization: Realization = {
     {
       code: 'unrealized-system-step',
       elementId: `${UC}::askForBrake`,
-      message: 'system step is not realized',
+      message: 'system step is not realized', useCaseId: null,
     },
     {
       code: 'untraced-function-step',
       elementId: `${UC}::askForBrake`,
-      message: 'other finding',
+      message: 'other finding', useCaseId: null,
     },
   ],
 }
@@ -271,5 +272,17 @@ describe('a function that stands for its nodes', () => {
     expect(info.realizes).toEqual([
       { useCaseId: 'UC::Lonely', stepId: null, precision: 'explicit', viaInclude: false, throughFunction: true },
     ])
+  })
+
+  it('lists the parts that the function reaches for the node', () => {
+    const real = realization()
+    real.nodeParts = { [AUTH]: [VC] }
+    real.useCases['UC::Lonely'].functionParts = { [VC]: SEC }
+    const node = elementRealization(real, semantic, 'UC::Lonely').realizedBy[0].nodes[0]
+    expect(node.parts.map((p) => [p.id, p.throughFunction])).toEqual([[VC, true]])
+    expect(elementRealization(real, semantic, VC).realizesViaNode[0]).toMatchObject({
+      useCaseId: 'UC::Lonely',
+      throughFunction: true,
+    })
   })
 })

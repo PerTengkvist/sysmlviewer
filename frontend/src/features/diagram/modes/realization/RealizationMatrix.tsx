@@ -193,7 +193,7 @@ export function RealizationMatrix({
         <ul className="realization-findings">
           {matrix.findings.map((f) => (
             <li
-              key={`${f.code}|${f.elementId}`}
+              key={`${f.code}|${f.elementId}|${f.useCaseId ?? ''}`}
               data-finding-code={f.code}
               onClick={pick(f.elementId)}
               title={f.code}

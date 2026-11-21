@@ -208,8 +208,84 @@ describe('findings', () => {
   it('lists the findings that the grid does not show as a mark', () => {
     const view = probeView()
     view.realization.findings.push(
-      { code: 'refine-without-step', elementId: SEC, message: 'function refines Start without steps' },
-      { code: 'bad-realization-end', elementId: 'P::dep', message: 'not a realization' },
+      { code: 'refine-without-step', elementId: SEC, message: 'function refines Start without steps', useCaseId: null },
+      { code: 'bad-realization-end', elementId: 'P::dep', message: 'not a realization', useCaseId: null },
+    )
+    const m = buildRealizationMatrix(view, nodesByUc)
+    // The unrealized system step is the ✗ of the grid; the others are listed.
+    expect(m.findings.map((f) => [f.code, f.elementId])).toEqual([
+      ['refine-without-step', SEC],
+      ['bad-realization-end', 'P::dep'],
+    ])
+    expect(m.findings[0].label).toBe('Security')
+  })
+})
+
+describe('matrixToCsv', () => {
+  it('writes the same cells as the table', () => {
+    const csv = matrixToCsv(buildRealizationMatrix(probeView(), nodesByUc))
+    const lines = csv.replace('\uFEFF', '').split('\n')
+    expect(lines[0]).toBe('Use case,Coverage,Security: auth,Security: immo,Security: locks')
+    expect(lines[1]).toBe('UCA Start,2/3 ✗,●,●,')
+    expect(lines[3]).toBe('UCC Lock,0/1,○,○,○')
+    expect(lines.at(-1)).toBe('Coverage,,,,')
+  })
+
+  it('starts with a byte order mark so that Excel reads the glyphs', () => {
+    expect(matrixToCsv(buildRealizationMatrix(probeView(), nodesByUc)).startsWith('\uFEFF')).toBe(true)
+  })
+
+  it('quotes carriage returns', () => {
+    const view = probeView()
+    view.semantic[START] = { ...view.semantic[START], name: 'A\rB', shortId: null }
+    expect(matrixToCsv(buildRealizationMatrix(view, nodesByUc))).toContain('"A\rB",')
+  })
+
+  it('neutralizes fields that a spreadsheet would run as a formula', () => {
+    const view = probeView()
+    for (const [name, shown] of [['=SUM(A1)', "'=SUM(A1)"], ['+1', "'+1"], ['-x', "'-x"], ['@x', "'@x"]]) {
+      view.semantic[START] = { ...view.semantic[START], name, shortId: null }
+      const lines = matrixToCsv(buildRealizationMatrix(view, nodesByUc)).split('\n')
+      expect(lines[1].startsWith(shown + ',')).toBe(true)
+    }
+  })
+
+  it('quotes fields with commas and quotes', () => {
+    const view = probeView()
+    view.semantic[START] = { ...view.semantic[START], name: 'A, "B"', shortId: null }
+    const csv = matrixToCsv(buildRealizationMatrix(view, nodesByUc))
+    expect(csv).toContain('"A, ""B""",')
+  })
+})
+
+describe('agreement with Details', () => {
+  const agree = (options: typeof nodesByUc | typeof ucByParts, key: 'realizes' | 'realizesViaNode') => {
+    const view = probeView()
+    const m = buildRealizationMatrix(view, options)
+    for (const [r, row] of m.rows.entries()) {
+      for (const [c, column] of m.columns.entries()) {
+        const cell = m.cells[r][c]
+        const info = elementRealization(view.realization, view.semantic, column.id)
+        const hit = info[key].find((e) => e.useCaseId === row.id)
+        const at = `${row.id} / ${column.id}`
+        // The matrix and Details read the same fields, so every cell has a counterpart.
+        expect(hit?.precision ?? null, at).toBe(cell.precision)
+        expect(hit?.throughFunction ?? false, at).toBe(cell.tooltip.includes('through its function'))
+        expect(hit?.viaInclude ?? false, at).toBe(cell.viaInclude)
+      }
+    }
+  }
+
+  it('says the same about every use case / function node pair', () => agree(nodesByUc, 'realizes'))
+  it('says the same about every use case / logical part pair', () => agree(ucByParts, 'realizesViaNode'))
+})
+
+describe('findings', () => {
+  it('lists the findings that the grid does not show as a mark', () => {
+    const view = probeView()
+    view.realization.findings.push(
+      { code: 'refine-without-step', elementId: SEC, message: 'function refines Start without steps', useCaseId: null },
+      { code: 'bad-realization-end', elementId: 'P::dep', message: 'not a realization', useCaseId: null },
     )
     const m = buildRealizationMatrix(view, nodesByUc)
     // The unrealized system step is the ✗ of the grid; the others are listed.
