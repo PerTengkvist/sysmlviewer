@@ -82,7 +82,7 @@ def test_action_flow_on_action_unchanged(tmp_path: Path):
     assert set(payload) == {
         "autoLayoutEdgeKinds", "diagramMode", "exposeControlsDepth", "exposeKinds",
         "exposeRootIds", "hasViewLayout", "hierarchicalLevels", "hierarchicalLevelsOverride",
-        "layoutScopes", "menus", "performers", "semantic", "sequenceLayout", "subdiagrams",
+        "layoutScopes", "menus", "performers", "realizationMatrix", "semantic", "sequenceLayout", "subdiagrams",
         "view", "viewFilters", "visualization",
     }
     assert payload["performers"] == {f"{FLOW}::checkKeyInCabin": [AUTH],

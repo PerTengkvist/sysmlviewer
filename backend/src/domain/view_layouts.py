@@ -298,6 +298,9 @@ class ViewLayout:
     # Realization matrix: what rows and columns list ({rows?: useCases | steps,
     # columns?: nodes | parts}); None when never set.
     realization_matrix: dict[str, str] | None = None
+    # Use case realization (ActionFlowView on a use case): lane mode, lane order per mode and
+    # lane widths ({lanes?, order?: {mode: [id]}, widths?: {id: px}}); None when never set.
+    use_case_realization_layout: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodes": {k: v.to_dict() for k, v in self.nodes.items()}}
@@ -315,6 +318,10 @@ class ViewLayout:
             out["sequenceLayout"] = _copy_sequence_layout(self.sequence_layout)
         if self.realization_matrix is not None:
             out["realizationMatrix"] = dict(self.realization_matrix)
+        if self.use_case_realization_layout is not None:
+            out["useCaseRealizationLayout"] = _copy_use_case_realization_layout(
+                self.use_case_realization_layout
+            )
         return out
 
     @classmethod
@@ -354,6 +361,9 @@ class ViewLayout:
             ),
             sequence_layout=normalize_sequence_layout(data.get("sequenceLayout")),
             realization_matrix=normalize_realization_matrix(data.get("realizationMatrix")),
+            use_case_realization_layout=normalize_use_case_realization_layout(
+                data.get("useCaseRealizationLayout")
+            ),
         )
 
 
@@ -404,6 +414,69 @@ def normalize_realization_matrix(raw: Any) -> dict[str, str] | None:
         out["rows"] = raw["rows"]
     if raw.get("columns") in MATRIX_COLUMNS:
         out["columns"] = raw["columns"]
+REALIZATION_LANE_MODES = ("blackbox", "whitebox", "logical")
+
+
+def normalize_use_case_realization_layout(raw: Any) -> dict[str, Any] | None:
+    """`{lanes?, order?: {mode: [id]}, widths?: {id: px}}`; invalid entries dropped.
+
+    An unknown lane mode is `whitebox`; None when `raw` is not a dict.
+    """
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, Any] = {}
+    if "lanes" in raw:
+        lanes = raw["lanes"]
+        out["lanes"] = lanes if lanes in REALIZATION_LANE_MODES else "whitebox"
+    order = raw.get("order")
+    if isinstance(order, dict):
+        clean_order: dict[str, list[str]] = {}
+        for mode in REALIZATION_LANE_MODES:
+            ids = order.get(mode)
+            if isinstance(ids, list):
+                clean_order[mode] = list(
+                    dict.fromkeys(i for i in ids if isinstance(i, str) and i)
+                )
+        out["order"] = clean_order
+    widths = raw.get("widths")
+    if isinstance(widths, dict):
+        out["widths"] = {
+            key: float(value)
+            for key, value in widths.items()
+            if isinstance(key, str)
+            and key
+            and not isinstance(value, bool)
+            and isinstance(value, (int, float))
+            and value > 0
+        }
+    return out
+
+
+def prune_use_case_realization_layout(
+    layout: dict[str, Any] | None, known_ids: set[str]
+) -> dict[str, Any] | None:
+    """The layout without lanes (ids) the model no longer has; `system` and `unallocated` stay."""
+    if layout is None:
+        return None
+    keep = known_ids | {"system", "unallocated"}
+    out = dict(layout)
+    if "order" in out:
+        out["order"] = {
+            mode: [i for i in ids if i in keep] for mode, ids in out["order"].items()
+        }
+    if "widths" in out:
+        out["widths"] = {i: w for i, w in out["widths"].items() if i in keep}
+    return out
+
+
+def _copy_use_case_realization_layout(layout: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    if "lanes" in layout:
+        out["lanes"] = layout["lanes"]
+    if "order" in layout:
+        out["order"] = {mode: list(ids) for mode, ids in layout["order"].items()}
+    if "widths" in layout:
+        out["widths"] = dict(layout["widths"])
     return out
 
 
@@ -798,6 +871,7 @@ def _copy_view_layout(
     auto_layout_edge_kinds: dict[str, bool] | None | object = ...,
     sequence_layout: dict[str, Any] | None | object = ...,
     realization_matrix: dict[str, str] | None | object = ...,
+    use_case_realization_layout: dict[str, Any] | None | object = ...,
 ) -> ViewLayout:
     """Rebuild ViewLayout while preserving fields not explicitly overridden."""
     override = view_layout.hierarchical_levels_override
@@ -812,6 +886,9 @@ def _copy_view_layout(
     matrix_layout = view_layout.realization_matrix
     if realization_matrix is not ...:
         matrix_layout = realization_matrix  # type: ignore[assignment]
+    realization_layout = view_layout.use_case_realization_layout
+    if use_case_realization_layout is not ...:
+        realization_layout = use_case_realization_layout  # type: ignore[assignment]
     return ViewLayout(
         nodes=nodes if nodes is not None else dict(view_layout.nodes),
         edges=edges if edges is not None else dict(view_layout.edges),
@@ -832,6 +909,11 @@ def _copy_view_layout(
         ),
         realization_matrix=(
             dict(matrix_layout) if matrix_layout is not None else None
+        ),
+        use_case_realization_layout=(
+            _copy_use_case_realization_layout(realization_layout)
+            if realization_layout is not None
+            else None
         ),
     )
 
@@ -1019,4 +1101,20 @@ def apply_realization_matrix(
         view_layout,
         realization_matrix=normalize_realization_matrix(raw),
     )
+def apply_use_case_realization_layout(
+    layouts: ViewLayouts,
+    view_id: str,
+    raw: dict[str, Any] | None,
+    known_ids: set[str] | None = None,
+) -> ViewLayouts:
+    """Replace per-view use case realization layout (None clears).
+
+    With `known_ids`, lanes the model does not have are dropped.
+    """
+    by_view = dict(layouts.by_view)
+    view_layout = by_view.get(view_id) or ViewLayout()
+    layout = normalize_use_case_realization_layout(raw)
+    if known_ids is not None:
+        layout = prune_use_case_realization_layout(layout, known_ids)
+    by_view[view_id] = _copy_view_layout(view_layout, use_case_realization_layout=layout)
     return ViewLayouts(by_view=by_view)

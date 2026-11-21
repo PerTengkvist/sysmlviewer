@@ -1665,6 +1665,7 @@ class ProjectService:
             apply_auto_layout_edge_kinds,
             apply_realization_matrix,
             apply_sequence_layout,
+            apply_use_case_realization_layout,
             apply_layout_scopes,
             apply_legacy_layout_rules,
             apply_view_filters,
@@ -1684,6 +1685,7 @@ class ProjectService:
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         sequence_layout_patch = "sequenceLayout" in patch
         matrix_patch = "realizationMatrix" in patch
+        realization_layout_patch = "useCaseRealizationLayout" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1759,6 +1761,16 @@ class ProjectService:
             if matrix_patch:
                 working = apply_realization_matrix(
                     working, view_id, patch.get("realizationMatrix")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if realization_layout_patch:
+                working = apply_use_case_realization_layout(
+                    working,
+                    view_id,
+                    patch.get("useCaseRealizationLayout"),
+                    set(project.semantic),
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1840,6 +1852,7 @@ class ProjectService:
                 or edge_kinds_patch
                 or sequence_layout_patch
                 or matrix_patch
+                or realization_layout_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -2635,6 +2648,14 @@ class ProjectService:
             result["chainRoles"] = {i: chain.roles[i] for i in shown}
             result["chainLabels"] = unambiguous_labels(project.semantic, shown)
         if realization_flow is not None:
+            from domain.view_layouts import prune_use_case_realization_layout
+
+            result["useCaseRealizationLayout"] = prune_use_case_realization_layout(
+                layout_for_view.to_dict().get("useCaseRealizationLayout")
+                if layout_for_view
+                else None,
+                set(project.semantic),
+            )
             result["realization"] = realization_flow.realization
             result["laneTargets"] = realization_flow.lane_targets
             result["realizationLabels"] = realization_flow.labels
