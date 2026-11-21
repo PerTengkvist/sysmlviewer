@@ -65,7 +65,7 @@ const edge = (
   target: string,
   kind: ChainEdge['kind'],
   precision: ChainEdge['precision'] = 'step',
-): ChainEdge => ({ source, target, kind, precision, viaInclude: false })
+): ChainEdge => ({ source, target, kind, precision, viaInclude: false, projected: false })
 
 // Two use cases, two functions, three nodes, two parts. The model order puts F2
 // first, which crosses the straight order: the barycenter pass has to repair it.
@@ -173,6 +173,17 @@ describe('buildRealizationChain', () => {
     const e = edges.find((x) => x.source === 'N1' && x.target === 'UC1')!
     expect(e.sourceHandle).toBe('l-out')
     expect(e.targetHandle).toBe('r-in')
+  })
+
+  it('draws a projected edge dotted, labelled as through its function', () => {
+    const f: Fixture = {
+      roles: { UC1: 'useCase', F1: 'function', N1: 'node' },
+      edges: [edge('F1', 'UC1', 'refine', 'explicit'), { ...edge('F1', 'N1', 'owns', 'explicit'), projected: true }],
+    }
+    const owns = build(f).edges.find((e) => e.source === 'F1' && e.target === 'N1')!
+    expect(owns.label).toBe('through its function')
+    expect(owns.style?.strokeDasharray).toBe('2 4')
+    expect(owns.data).toMatchObject({ projected: true })
   })
 
   it('skips an edge whose end is not in the payload', () => {

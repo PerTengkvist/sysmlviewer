@@ -368,6 +368,8 @@ export interface ChainEdge {
   precision: 'step' | 'coarse' | 'explicit'
   /** The link is inherited through `include` (a composite use case). */
   viaInclude: boolean
+  /** A function that refines the use case stands for its nodes and parts ("through its function"). */
+  projected: boolean
 }
 
 export interface ViewPayload {

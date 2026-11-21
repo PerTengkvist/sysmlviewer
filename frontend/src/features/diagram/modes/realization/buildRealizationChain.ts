@@ -138,8 +138,13 @@ export function buildRealizationChain(opts: RealizationChainOpts): { nodes: Node
   const edges: Edge[] = edgesIn.map((e) => {
     const backwards = sideOf(chainRoles[e.source]) > sideOf(chainRoles[e.target])
     const refine = e.kind === 'refine'
-    const label =
-      e.kind === 'owns' ? undefined : refine ? `«refine» ${e.precision}` : '«allocate»'
+    const label = e.projected
+      ? 'through its function'
+      : e.kind === 'owns'
+        ? undefined
+        : refine
+          ? `«refine» ${e.precision}`
+          : '«allocate»'
     const width = e.kind === 'owns' || e.precision === 'explicit' ? 1 : 1.8
     return {
       id: `chain::${e.source}->${e.target}::${e.kind}`,
@@ -156,7 +161,7 @@ export function buildRealizationChain(opts: RealizationChainOpts): { nodes: Node
       style: {
         stroke: stroke.stroke,
         strokeWidth: width,
-        strokeDasharray: refine ? '6 4' : undefined,
+        strokeDasharray: e.projected ? '2 4' : refine ? '6 4' : undefined,
       },
       labelStyle: { fill: stroke.color || undefined, fontSize: 11, fontWeight: 600 },
       labelBgStyle: { fill: 'var(--canvas)', fillOpacity: 0.85 },
@@ -165,6 +170,7 @@ export function buildRealizationChain(opts: RealizationChainOpts): { nodes: Node
         kind: e.kind,
         precision: e.precision,
         viaInclude: e.viaInclude,
+        projected: e.projected,
         selectedColor: selectedConnectionColor,
         selectedFactor: selectedConnectionLinewidthFactor,
       },
