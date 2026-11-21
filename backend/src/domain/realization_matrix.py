@@ -1,8 +1,10 @@
 """Columns of the realization matrix: every function node of the model.
 
 The matrix lists function nodes and logical parts also when no use case reaches them, so
-gaps show. Roles come from the same relations as in `domain.realization` (a node performs
-a function step or is allocated to a logical part), never from names. Pure domain logic.
+gaps show. Roles come from relations, never from names: a function node is a part that
+performs a function step (`perform flow.step;`). A part that is only an `allocate` source
+(`allocate logical to physical;`) is not a function node.
+Pure domain logic.
 """
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from domain.models import SemanticElement
-from domain.perform import resolve_performers
+from domain.perform import is_perform, resolve_performers
 from domain.realization import _Deriver
 
 
@@ -32,7 +34,9 @@ def matrix_nodes(
     deriver = _Deriver(semantic, performers)
     nodes: list[MatrixNode] = []
     for eid, el in semantic.items():
-        if not deriver._is_node(el):
+        if not deriver._is_node(el) or not any(
+            is_perform(semantic[c]) for c in deriver.children.get(eid, [])
+        ):
             continue
         owner = deriver._owner(el)
         function = owner.id if owner is not None and deriver._is_function(owner) else None
