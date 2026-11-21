@@ -77,24 +77,87 @@ Call it from a use case with `then perform chargeSequence;`. In the viewer it op
 
 ## Sequences
 
-An `interaction def` is one scenario drawn as a sequence diagram: lifelines are the participants, messages are the arrows in the order they are written. Chain messages with `then`. An acknowledgement carries the `#reply` keyword and is drawn dashed.
+A scenario drawn as a sequence diagram is an `occurrence def`. It describes the system while it runs, so its lifelines are not declared as such: a lifeline is a part of the occurrence, an instance, that a message uses as an end. The messages are the arrows, drawn in the order they are written (no `first` or `then` is needed). An acknowledgement carries the `#Reply` keyword, defined once with `metadata def Reply;`, and is drawn dashed.
 
+The main form types each lifeline with the part definition it is an instance of. Use `ref part` for a participant that exists outside the scenario (the parts of the system, the actors) and `part` for one that only lives within it, such as a charging session.
+
+[//]: # (source: examples/electric_car/dynamics/sequences.sysml)
 ```sysml
-interaction def UnlockSequence {
-  doc /* Precondition Locked. Postcondition Unlocked. */
-  lifeline Driver;
-  lifeline keyFob;
-  lifeline bodyController;
-  lifeline locks;
-  message pressUnlock from Driver to keyFob;
-  then message credential from keyFob to bodyController;
-  then message releaseLatches from bodyController to locks;
-  then #reply message indicateUnlocked from locks to Driver;
+metadata def Reply;
+
+part def Driver {
+  doc /* The person driving. Plays the Driver actor of the use cases in the sequences. */
 }
 
+occurrence def UnlockSequence {
+  doc /* Precondition Locked. Postcondition Unlocked. The driver presses unlock on the key fob. The vehicle controller authenticates the credential, the body controller releases the latches and flashes the indicators, and the cabin wakes. The immobilizer stays armed. */
+  ref part Driver : Driver;
+  ref part keyFob : KeyFob;
+  ref part vehicleController : VehicleController;
+  ref part bodyController : BodyController;
+  ref part locks : Locks;
+  ref part lamps : Lamps;
+  ref part climateSystem : ClimateSystem;
+  message pressUnlock from Driver to keyFob;
+  message credential from keyFob to vehicleController;
+  message authenticated from vehicleController to bodyController;
+  message releaseLatches from bodyController to locks;
+  #Reply message latchesReleased from locks to bodyController;
+  message flashIndicators from bodyController to lamps;
+  message wakeCabin from vehicleController to climateSystem;
+  #Reply message indicateUnlocked from lamps to Driver;
+}
+```
+
+`KeyFob`, `VehicleController` and the other types are part definitions in `LogicalArchitecture::Types`, one for each part of `Car`, and `Car` types its parts with them (`part keyFob : Types::KeyFob`). Name each lifeline like the logical part it stands for, so that the sequence and the logical architecture read as one model. Parts that no message uses as an end are not drawn.
+
+A view exposes the occurrence def, as it does for any other diagram:
+
+```sysml
 view UnlockSequenceView : SequenceView {
   expose UnlockSequence;
 }
 ```
 
-Messages are numbered in the diagram in declaration order. Name lifelines after the logical parts that play the roles, so the sequence and the logical architecture read as one model.
+### Other ways to declare a lifeline
+
+A lifeline can also point at a feature of a larger context instead of a type of its own. `examples/diagrams/occurrence_sequences.sysml` shows every form. In short, with `keyFob` as a feature chain and `car.locks` as a nested end:
+
+```sysml
+part def Driver { event occurrence presses; }
+part def KeyFob { event occurrence pressed; }
+part def Car { part keyFob : KeyFob; part locks; }
+
+occurrence def Forms {
+  ref part car : Car;
+  ref part keyFob :> car.keyFob;
+  ref part driver : Driver;
+  message press from driver.presses to keyFob.pressed;
+  message unlock from keyFob to car.locks;
+}
+```
+
+- **Feature chain.** Declare the context once and subset its feature: `ref part car : Car;` and `ref part keyFob :> car.keyFob;`. The lifeline then is the usage `Car::keyFob`, not just something of the same type.
+- **Redefinition.** `part a :>> partA;` redefines a feature that the occurrence def inherits or can see.
+- **Type and subsetting.** `ref part ctrl : Controller :> plant.controller;` gives both.
+- **Nested ends.** With `ref part car : Car;` a message may go `from car.keyFob to car.vehicleController`. The viewer then draws the nested parts as lifelines, with ids such as `<occurrence>::car::keyFob`.
+
+### Events
+
+A message goes between two event occurrences. Declare them in the part definitions and name them in the ends. This is the reference example, in standard SysML v2:
+
+```sysml
+part def PartA { event occurrence sent; }
+part def PartB { event occurrence received; }
+part partA : PartA;
+part partB : PartB;
+occurrence def SequenceA {
+  part a :>> partA;
+  part b :>> partB;
+  message msg from a.sent to b.received;
+}
+```
+
+The viewer draws the message between the two parts. An end without an event (`from a to b`) is fine, and an event that cannot be found gives a warning and is drawn on the part. The electric car does not use events.
+
+The older dialect `interaction def` with `lifeline x;` and `message payload from A to B` still works and is drawn the same way.

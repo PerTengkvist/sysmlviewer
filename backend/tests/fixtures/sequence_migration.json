@@ -1,0 +1,1932 @@
+{
+ "Dynamics::UnlockSequence": {
+  "lifelines": [
+   "Dynamics::UnlockSequence::Driver",
+   "Dynamics::UnlockSequence::keyFob",
+   "Dynamics::UnlockSequence::vehicleController",
+   "Dynamics::UnlockSequence::bodyController",
+   "Dynamics::UnlockSequence::locks",
+   "Dynamics::UnlockSequence::lamps",
+   "Dynamics::UnlockSequence::climateSystem"
+  ],
+  "defaultOrder": [
+   "Dynamics::UnlockSequence::Driver",
+   "Dynamics::UnlockSequence::keyFob",
+   "Dynamics::UnlockSequence::vehicleController",
+   "Dynamics::UnlockSequence::bodyController",
+   "Dynamics::UnlockSequence::locks",
+   "Dynamics::UnlockSequence::lamps",
+   "Dynamics::UnlockSequence::climateSystem"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::UnlockSequence::msg1",
+    "name": "pressUnlock",
+    "sourceId": "Dynamics::UnlockSequence::Driver",
+    "targetId": "Dynamics::UnlockSequence::keyFob",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg2",
+    "name": "credential",
+    "sourceId": "Dynamics::UnlockSequence::keyFob",
+    "targetId": "Dynamics::UnlockSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg3",
+    "name": "authenticated",
+    "sourceId": "Dynamics::UnlockSequence::vehicleController",
+    "targetId": "Dynamics::UnlockSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg4",
+    "name": "releaseLatches",
+    "sourceId": "Dynamics::UnlockSequence::bodyController",
+    "targetId": "Dynamics::UnlockSequence::locks",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg5",
+    "name": "latchesReleased",
+    "sourceId": "Dynamics::UnlockSequence::locks",
+    "targetId": "Dynamics::UnlockSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg6",
+    "name": "flashIndicators",
+    "sourceId": "Dynamics::UnlockSequence::bodyController",
+    "targetId": "Dynamics::UnlockSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg7",
+    "name": "wakeCabin",
+    "sourceId": "Dynamics::UnlockSequence::vehicleController",
+    "targetId": "Dynamics::UnlockSequence::climateSystem",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockSequence::msg8",
+    "name": "indicateUnlocked",
+    "sourceId": "Dynamics::UnlockSequence::lamps",
+    "targetId": "Dynamics::UnlockSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::UnlockDeniedSequence": {
+  "lifelines": [
+   "Dynamics::UnlockDeniedSequence::Driver",
+   "Dynamics::UnlockDeniedSequence::keyFob",
+   "Dynamics::UnlockDeniedSequence::vehicleController",
+   "Dynamics::UnlockDeniedSequence::bodyController",
+   "Dynamics::UnlockDeniedSequence::locks"
+  ],
+  "defaultOrder": [
+   "Dynamics::UnlockDeniedSequence::Driver",
+   "Dynamics::UnlockDeniedSequence::keyFob",
+   "Dynamics::UnlockDeniedSequence::vehicleController",
+   "Dynamics::UnlockDeniedSequence::bodyController",
+   "Dynamics::UnlockDeniedSequence::locks"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::UnlockDeniedSequence::msg1",
+    "name": "pressUnlock",
+    "sourceId": "Dynamics::UnlockDeniedSequence::Driver",
+    "targetId": "Dynamics::UnlockDeniedSequence::keyFob",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockDeniedSequence::msg2",
+    "name": "credential",
+    "sourceId": "Dynamics::UnlockDeniedSequence::keyFob",
+    "targetId": "Dynamics::UnlockDeniedSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockDeniedSequence::msg3",
+    "name": "credentialRejected",
+    "sourceId": "Dynamics::UnlockDeniedSequence::vehicleController",
+    "targetId": "Dynamics::UnlockDeniedSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockDeniedSequence::msg4",
+    "name": "keepLatches",
+    "sourceId": "Dynamics::UnlockDeniedSequence::bodyController",
+    "targetId": "Dynamics::UnlockDeniedSequence::locks",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::UnlockDeniedSequence::msg5",
+    "name": "latchesHeld",
+    "sourceId": "Dynamics::UnlockDeniedSequence::locks",
+    "targetId": "Dynamics::UnlockDeniedSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::UnlockDeniedSequence::msg6",
+    "name": "noResponse",
+    "sourceId": "Dynamics::UnlockDeniedSequence::keyFob",
+    "targetId": "Dynamics::UnlockDeniedSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::LockSequence": {
+  "lifelines": [
+   "Dynamics::LockSequence::Driver",
+   "Dynamics::LockSequence::keyFob",
+   "Dynamics::LockSequence::vehicleController",
+   "Dynamics::LockSequence::bodyController",
+   "Dynamics::LockSequence::doors",
+   "Dynamics::LockSequence::locks",
+   "Dynamics::LockSequence::lamps"
+  ],
+  "defaultOrder": [
+   "Dynamics::LockSequence::Driver",
+   "Dynamics::LockSequence::keyFob",
+   "Dynamics::LockSequence::vehicleController",
+   "Dynamics::LockSequence::bodyController",
+   "Dynamics::LockSequence::doors",
+   "Dynamics::LockSequence::locks",
+   "Dynamics::LockSequence::lamps"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::LockSequence::msg1",
+    "name": "pressLock",
+    "sourceId": "Dynamics::LockSequence::Driver",
+    "targetId": "Dynamics::LockSequence::keyFob",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg2",
+    "name": "credential",
+    "sourceId": "Dynamics::LockSequence::keyFob",
+    "targetId": "Dynamics::LockSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg3",
+    "name": "authenticated",
+    "sourceId": "Dynamics::LockSequence::vehicleController",
+    "targetId": "Dynamics::LockSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg4",
+    "name": "queryDoorsClosed",
+    "sourceId": "Dynamics::LockSequence::bodyController",
+    "targetId": "Dynamics::LockSequence::doors",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg5",
+    "name": "allDoorsClosed",
+    "sourceId": "Dynamics::LockSequence::doors",
+    "targetId": "Dynamics::LockSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg6",
+    "name": "engageLatches",
+    "sourceId": "Dynamics::LockSequence::bodyController",
+    "targetId": "Dynamics::LockSequence::locks",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg7",
+    "name": "latchesEngaged",
+    "sourceId": "Dynamics::LockSequence::locks",
+    "targetId": "Dynamics::LockSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg8",
+    "name": "flashIndicators",
+    "sourceId": "Dynamics::LockSequence::bodyController",
+    "targetId": "Dynamics::LockSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::LockSequence::msg9",
+    "name": "indicateLocked",
+    "sourceId": "Dynamics::LockSequence::lamps",
+    "targetId": "Dynamics::LockSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::OpenDoorSequence": {
+  "lifelines": [
+   "Dynamics::OpenDoorSequence::Passenger",
+   "Dynamics::OpenDoorSequence::doors",
+   "Dynamics::OpenDoorSequence::bodyController",
+   "Dynamics::OpenDoorSequence::locks",
+   "Dynamics::OpenDoorSequence::vehicleController",
+   "Dynamics::OpenDoorSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::OpenDoorSequence::Passenger",
+   "Dynamics::OpenDoorSequence::doors",
+   "Dynamics::OpenDoorSequence::bodyController",
+   "Dynamics::OpenDoorSequence::locks",
+   "Dynamics::OpenDoorSequence::vehicleController",
+   "Dynamics::OpenDoorSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg1",
+    "name": "pullHandle",
+    "sourceId": "Dynamics::OpenDoorSequence::Passenger",
+    "targetId": "Dynamics::OpenDoorSequence::doors",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg2",
+    "name": "handleRequest",
+    "sourceId": "Dynamics::OpenDoorSequence::doors",
+    "targetId": "Dynamics::OpenDoorSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg3",
+    "name": "releaseLatch",
+    "sourceId": "Dynamics::OpenDoorSequence::bodyController",
+    "targetId": "Dynamics::OpenDoorSequence::locks",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg4",
+    "name": "latchReleased",
+    "sourceId": "Dynamics::OpenDoorSequence::locks",
+    "targetId": "Dynamics::OpenDoorSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg5",
+    "name": "doorAjar",
+    "sourceId": "Dynamics::OpenDoorSequence::bodyController",
+    "targetId": "Dynamics::OpenDoorSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg6",
+    "name": "showDoorAjar",
+    "sourceId": "Dynamics::OpenDoorSequence::vehicleController",
+    "targetId": "Dynamics::OpenDoorSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenDoorSequence::msg7",
+    "name": "doorSwingsOpen",
+    "sourceId": "Dynamics::OpenDoorSequence::doors",
+    "targetId": "Dynamics::OpenDoorSequence::Passenger",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::CloseDoorSequence": {
+  "lifelines": [
+   "Dynamics::CloseDoorSequence::Passenger",
+   "Dynamics::CloseDoorSequence::doors",
+   "Dynamics::CloseDoorSequence::locks",
+   "Dynamics::CloseDoorSequence::bodyController",
+   "Dynamics::CloseDoorSequence::vehicleController",
+   "Dynamics::CloseDoorSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::CloseDoorSequence::Passenger",
+   "Dynamics::CloseDoorSequence::doors",
+   "Dynamics::CloseDoorSequence::locks",
+   "Dynamics::CloseDoorSequence::bodyController",
+   "Dynamics::CloseDoorSequence::vehicleController",
+   "Dynamics::CloseDoorSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::CloseDoorSequence::msg1",
+    "name": "pushDoorShut",
+    "sourceId": "Dynamics::CloseDoorSequence::Passenger",
+    "targetId": "Dynamics::CloseDoorSequence::doors",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseDoorSequence::msg2",
+    "name": "latchEngage",
+    "sourceId": "Dynamics::CloseDoorSequence::doors",
+    "targetId": "Dynamics::CloseDoorSequence::locks",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseDoorSequence::msg3",
+    "name": "latchEngaged",
+    "sourceId": "Dynamics::CloseDoorSequence::locks",
+    "targetId": "Dynamics::CloseDoorSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::CloseDoorSequence::msg4",
+    "name": "doorClosed",
+    "sourceId": "Dynamics::CloseDoorSequence::bodyController",
+    "targetId": "Dynamics::CloseDoorSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseDoorSequence::msg5",
+    "name": "clearDoorAjar",
+    "sourceId": "Dynamics::CloseDoorSequence::vehicleController",
+    "targetId": "Dynamics::CloseDoorSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseDoorSequence::msg6",
+    "name": "doorSeated",
+    "sourceId": "Dynamics::CloseDoorSequence::doors",
+    "targetId": "Dynamics::CloseDoorSequence::Passenger",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::OpenWindowSequence": {
+  "lifelines": [
+   "Dynamics::OpenWindowSequence::Passenger",
+   "Dynamics::OpenWindowSequence::windowLifts",
+   "Dynamics::OpenWindowSequence::bodyController",
+   "Dynamics::OpenWindowSequence::battery",
+   "Dynamics::OpenWindowSequence::windows"
+  ],
+  "defaultOrder": [
+   "Dynamics::OpenWindowSequence::Passenger",
+   "Dynamics::OpenWindowSequence::windowLifts",
+   "Dynamics::OpenWindowSequence::bodyController",
+   "Dynamics::OpenWindowSequence::battery",
+   "Dynamics::OpenWindowSequence::windows"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg1",
+    "name": "pressSwitchDown",
+    "sourceId": "Dynamics::OpenWindowSequence::Passenger",
+    "targetId": "Dynamics::OpenWindowSequence::windowLifts",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg2",
+    "name": "lowerRequest",
+    "sourceId": "Dynamics::OpenWindowSequence::windowLifts",
+    "targetId": "Dynamics::OpenWindowSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg3",
+    "name": "lowerWindow",
+    "sourceId": "Dynamics::OpenWindowSequence::bodyController",
+    "targetId": "Dynamics::OpenWindowSequence::windowLifts",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg4",
+    "name": "drawPower",
+    "sourceId": "Dynamics::OpenWindowSequence::windowLifts",
+    "targetId": "Dynamics::OpenWindowSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg5",
+    "name": "moveGlassDown",
+    "sourceId": "Dynamics::OpenWindowSequence::windowLifts",
+    "targetId": "Dynamics::OpenWindowSequence::windows",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg6",
+    "name": "fullyOpen",
+    "sourceId": "Dynamics::OpenWindowSequence::windows",
+    "targetId": "Dynamics::OpenWindowSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::OpenWindowSequence::msg7",
+    "name": "windowOpen",
+    "sourceId": "Dynamics::OpenWindowSequence::windowLifts",
+    "targetId": "Dynamics::OpenWindowSequence::Passenger",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::CloseWindowSequence": {
+  "lifelines": [
+   "Dynamics::CloseWindowSequence::Passenger",
+   "Dynamics::CloseWindowSequence::windowLifts",
+   "Dynamics::CloseWindowSequence::bodyController",
+   "Dynamics::CloseWindowSequence::battery",
+   "Dynamics::CloseWindowSequence::windows"
+  ],
+  "defaultOrder": [
+   "Dynamics::CloseWindowSequence::Passenger",
+   "Dynamics::CloseWindowSequence::windowLifts",
+   "Dynamics::CloseWindowSequence::bodyController",
+   "Dynamics::CloseWindowSequence::battery",
+   "Dynamics::CloseWindowSequence::windows"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg1",
+    "name": "pressSwitchUp",
+    "sourceId": "Dynamics::CloseWindowSequence::Passenger",
+    "targetId": "Dynamics::CloseWindowSequence::windowLifts",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg2",
+    "name": "raiseRequest",
+    "sourceId": "Dynamics::CloseWindowSequence::windowLifts",
+    "targetId": "Dynamics::CloseWindowSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg3",
+    "name": "raiseWindow",
+    "sourceId": "Dynamics::CloseWindowSequence::bodyController",
+    "targetId": "Dynamics::CloseWindowSequence::windowLifts",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg4",
+    "name": "drawPower",
+    "sourceId": "Dynamics::CloseWindowSequence::windowLifts",
+    "targetId": "Dynamics::CloseWindowSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg5",
+    "name": "moveGlassUp",
+    "sourceId": "Dynamics::CloseWindowSequence::windowLifts",
+    "targetId": "Dynamics::CloseWindowSequence::windows",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg6",
+    "name": "pinchCheck",
+    "sourceId": "Dynamics::CloseWindowSequence::windowLifts",
+    "targetId": "Dynamics::CloseWindowSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg7",
+    "name": "fullyClosed",
+    "sourceId": "Dynamics::CloseWindowSequence::windows",
+    "targetId": "Dynamics::CloseWindowSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::CloseWindowSequence::msg8",
+    "name": "windowClosed",
+    "sourceId": "Dynamics::CloseWindowSequence::windowLifts",
+    "targetId": "Dynamics::CloseWindowSequence::Passenger",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::AdjustClimateSequence": {
+  "lifelines": [
+   "Dynamics::AdjustClimateSequence::Driver",
+   "Dynamics::AdjustClimateSequence::climateSystem",
+   "Dynamics::AdjustClimateSequence::battery",
+   "Dynamics::AdjustClimateSequence::vehicleController",
+   "Dynamics::AdjustClimateSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::AdjustClimateSequence::Driver",
+   "Dynamics::AdjustClimateSequence::climateSystem",
+   "Dynamics::AdjustClimateSequence::battery",
+   "Dynamics::AdjustClimateSequence::vehicleController",
+   "Dynamics::AdjustClimateSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::AdjustClimateSequence::msg1",
+    "name": "setTemperature",
+    "sourceId": "Dynamics::AdjustClimateSequence::Driver",
+    "targetId": "Dynamics::AdjustClimateSequence::climateSystem",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AdjustClimateSequence::msg2",
+    "name": "requestPower",
+    "sourceId": "Dynamics::AdjustClimateSequence::climateSystem",
+    "targetId": "Dynamics::AdjustClimateSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AdjustClimateSequence::msg3",
+    "name": "powerGranted",
+    "sourceId": "Dynamics::AdjustClimateSequence::battery",
+    "targetId": "Dynamics::AdjustClimateSequence::climateSystem",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::AdjustClimateSequence::msg4",
+    "name": "setPointChanged",
+    "sourceId": "Dynamics::AdjustClimateSequence::climateSystem",
+    "targetId": "Dynamics::AdjustClimateSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AdjustClimateSequence::msg5",
+    "name": "showSetPoint",
+    "sourceId": "Dynamics::AdjustClimateSequence::vehicleController",
+    "targetId": "Dynamics::AdjustClimateSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AdjustClimateSequence::msg6",
+    "name": "airFlows",
+    "sourceId": "Dynamics::AdjustClimateSequence::climateSystem",
+    "targetId": "Dynamics::AdjustClimateSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::PlayMediaSequence": {
+  "lifelines": [
+   "Dynamics::PlayMediaSequence::Passenger",
+   "Dynamics::PlayMediaSequence::entertainmentSystem",
+   "Dynamics::PlayMediaSequence::vehicleController",
+   "Dynamics::PlayMediaSequence::battery",
+   "Dynamics::PlayMediaSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::PlayMediaSequence::Passenger",
+   "Dynamics::PlayMediaSequence::entertainmentSystem",
+   "Dynamics::PlayMediaSequence::vehicleController",
+   "Dynamics::PlayMediaSequence::battery",
+   "Dynamics::PlayMediaSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::PlayMediaSequence::msg1",
+    "name": "selectTitle",
+    "sourceId": "Dynamics::PlayMediaSequence::Passenger",
+    "targetId": "Dynamics::PlayMediaSequence::entertainmentSystem",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::PlayMediaSequence::msg2",
+    "name": "queryCabinAwake",
+    "sourceId": "Dynamics::PlayMediaSequence::entertainmentSystem",
+    "targetId": "Dynamics::PlayMediaSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::PlayMediaSequence::msg3",
+    "name": "cabinAwake",
+    "sourceId": "Dynamics::PlayMediaSequence::vehicleController",
+    "targetId": "Dynamics::PlayMediaSequence::entertainmentSystem",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::PlayMediaSequence::msg4",
+    "name": "requestPower",
+    "sourceId": "Dynamics::PlayMediaSequence::entertainmentSystem",
+    "targetId": "Dynamics::PlayMediaSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::PlayMediaSequence::msg5",
+    "name": "nowPlaying",
+    "sourceId": "Dynamics::PlayMediaSequence::entertainmentSystem",
+    "targetId": "Dynamics::PlayMediaSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::PlayMediaSequence::msg6",
+    "name": "playbackStarted",
+    "sourceId": "Dynamics::PlayMediaSequence::entertainmentSystem",
+    "targetId": "Dynamics::PlayMediaSequence::Passenger",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::ChargeSequence": {
+  "lifelines": [
+   "Dynamics::ChargeSequence::Driver",
+   "Dynamics::ChargeSequence::Charger",
+   "Dynamics::ChargeSequence::chargeInlet",
+   "Dynamics::ChargeSequence::battery",
+   "Dynamics::ChargeSequence::vehicleController",
+   "Dynamics::ChargeSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::ChargeSequence::Driver",
+   "Dynamics::ChargeSequence::chargeInlet",
+   "Dynamics::ChargeSequence::battery",
+   "Dynamics::ChargeSequence::vehicleController",
+   "Dynamics::ChargeSequence::Charger",
+   "Dynamics::ChargeSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::ChargeSequence::msg1",
+    "name": "connectPlug",
+    "sourceId": "Dynamics::ChargeSequence::Driver",
+    "targetId": "Dynamics::ChargeSequence::chargeInlet",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg2",
+    "name": "plugDetected",
+    "sourceId": "Dynamics::ChargeSequence::chargeInlet",
+    "targetId": "Dynamics::ChargeSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg3",
+    "name": "plugInserted",
+    "sourceId": "Dynamics::ChargeSequence::battery",
+    "targetId": "Dynamics::ChargeSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg4",
+    "name": "lockPlug",
+    "sourceId": "Dynamics::ChargeSequence::vehicleController",
+    "targetId": "Dynamics::ChargeSequence::chargeInlet",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg5",
+    "name": "requestSession",
+    "sourceId": "Dynamics::ChargeSequence::battery",
+    "targetId": "Dynamics::ChargeSequence::Charger",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg6",
+    "name": "sessionAccepted",
+    "sourceId": "Dynamics::ChargeSequence::Charger",
+    "targetId": "Dynamics::ChargeSequence::battery",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg7",
+    "name": "deliverEnergy",
+    "sourceId": "Dynamics::ChargeSequence::Charger",
+    "targetId": "Dynamics::ChargeSequence::chargeInlet",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg8",
+    "name": "storeEnergy",
+    "sourceId": "Dynamics::ChargeSequence::chargeInlet",
+    "targetId": "Dynamics::ChargeSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg9",
+    "name": "stateOfCharge",
+    "sourceId": "Dynamics::ChargeSequence::battery",
+    "targetId": "Dynamics::ChargeSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg10",
+    "name": "showStateOfCharge",
+    "sourceId": "Dynamics::ChargeSequence::vehicleController",
+    "targetId": "Dynamics::ChargeSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChargeSequence::msg11",
+    "name": "indicateCharging",
+    "sourceId": "Dynamics::ChargeSequence::instrumentCluster",
+    "targetId": "Dynamics::ChargeSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::EndChargeSequence": {
+  "lifelines": [
+   "Dynamics::EndChargeSequence::Driver",
+   "Dynamics::EndChargeSequence::Charger",
+   "Dynamics::EndChargeSequence::keyFob",
+   "Dynamics::EndChargeSequence::vehicleController",
+   "Dynamics::EndChargeSequence::battery",
+   "Dynamics::EndChargeSequence::chargeInlet",
+   "Dynamics::EndChargeSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::EndChargeSequence::Driver",
+   "Dynamics::EndChargeSequence::keyFob",
+   "Dynamics::EndChargeSequence::vehicleController",
+   "Dynamics::EndChargeSequence::battery",
+   "Dynamics::EndChargeSequence::Charger",
+   "Dynamics::EndChargeSequence::chargeInlet",
+   "Dynamics::EndChargeSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg1",
+    "name": "pressUnlock",
+    "sourceId": "Dynamics::EndChargeSequence::Driver",
+    "targetId": "Dynamics::EndChargeSequence::keyFob",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg2",
+    "name": "credential",
+    "sourceId": "Dynamics::EndChargeSequence::keyFob",
+    "targetId": "Dynamics::EndChargeSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg3",
+    "name": "stopSession",
+    "sourceId": "Dynamics::EndChargeSequence::vehicleController",
+    "targetId": "Dynamics::EndChargeSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg4",
+    "name": "endSession",
+    "sourceId": "Dynamics::EndChargeSequence::battery",
+    "targetId": "Dynamics::EndChargeSequence::Charger",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg5",
+    "name": "sessionEnded",
+    "sourceId": "Dynamics::EndChargeSequence::Charger",
+    "targetId": "Dynamics::EndChargeSequence::battery",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg6",
+    "name": "unlockPlug",
+    "sourceId": "Dynamics::EndChargeSequence::vehicleController",
+    "targetId": "Dynamics::EndChargeSequence::chargeInlet",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg7",
+    "name": "finalStateOfCharge",
+    "sourceId": "Dynamics::EndChargeSequence::battery",
+    "targetId": "Dynamics::EndChargeSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg8",
+    "name": "showStateOfCharge",
+    "sourceId": "Dynamics::EndChargeSequence::vehicleController",
+    "targetId": "Dynamics::EndChargeSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EndChargeSequence::msg9",
+    "name": "plugReleased",
+    "sourceId": "Dynamics::EndChargeSequence::chargeInlet",
+    "targetId": "Dynamics::EndChargeSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::StartVehicleSequence": {
+  "lifelines": [
+   "Dynamics::StartVehicleSequence::Driver",
+   "Dynamics::StartVehicleSequence::brakePedal",
+   "Dynamics::StartVehicleSequence::startButton",
+   "Dynamics::StartVehicleSequence::vehicleController",
+   "Dynamics::StartVehicleSequence::keyFob",
+   "Dynamics::StartVehicleSequence::battery",
+   "Dynamics::StartVehicleSequence::driveController",
+   "Dynamics::StartVehicleSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::StartVehicleSequence::Driver",
+   "Dynamics::StartVehicleSequence::brakePedal",
+   "Dynamics::StartVehicleSequence::startButton",
+   "Dynamics::StartVehicleSequence::vehicleController",
+   "Dynamics::StartVehicleSequence::keyFob",
+   "Dynamics::StartVehicleSequence::battery",
+   "Dynamics::StartVehicleSequence::driveController",
+   "Dynamics::StartVehicleSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg1",
+    "name": "holdBrake",
+    "sourceId": "Dynamics::StartVehicleSequence::Driver",
+    "targetId": "Dynamics::StartVehicleSequence::brakePedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg2",
+    "name": "pressStart",
+    "sourceId": "Dynamics::StartVehicleSequence::Driver",
+    "targetId": "Dynamics::StartVehicleSequence::startButton",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg3",
+    "name": "startRequest",
+    "sourceId": "Dynamics::StartVehicleSequence::startButton",
+    "targetId": "Dynamics::StartVehicleSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg4",
+    "name": "brakeHeld",
+    "sourceId": "Dynamics::StartVehicleSequence::brakePedal",
+    "targetId": "Dynamics::StartVehicleSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg5",
+    "name": "challenge",
+    "sourceId": "Dynamics::StartVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StartVehicleSequence::keyFob",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg6",
+    "name": "credential",
+    "sourceId": "Dynamics::StartVehicleSequence::keyFob",
+    "targetId": "Dynamics::StartVehicleSequence::vehicleController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg7",
+    "name": "closeContactor",
+    "sourceId": "Dynamics::StartVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StartVehicleSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg8",
+    "name": "highVoltageOn",
+    "sourceId": "Dynamics::StartVehicleSequence::battery",
+    "targetId": "Dynamics::StartVehicleSequence::vehicleController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg9",
+    "name": "releaseImmobilizer",
+    "sourceId": "Dynamics::StartVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StartVehicleSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg10",
+    "name": "driveReady",
+    "sourceId": "Dynamics::StartVehicleSequence::driveController",
+    "targetId": "Dynamics::StartVehicleSequence::vehicleController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg11",
+    "name": "showReady",
+    "sourceId": "Dynamics::StartVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StartVehicleSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StartVehicleSequence::msg12",
+    "name": "indicateReady",
+    "sourceId": "Dynamics::StartVehicleSequence::instrumentCluster",
+    "targetId": "Dynamics::StartVehicleSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::StopVehicleSequence": {
+  "lifelines": [
+   "Dynamics::StopVehicleSequence::Driver",
+   "Dynamics::StopVehicleSequence::startButton",
+   "Dynamics::StopVehicleSequence::vehicleController",
+   "Dynamics::StopVehicleSequence::driveController",
+   "Dynamics::StopVehicleSequence::battery",
+   "Dynamics::StopVehicleSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::StopVehicleSequence::Driver",
+   "Dynamics::StopVehicleSequence::startButton",
+   "Dynamics::StopVehicleSequence::vehicleController",
+   "Dynamics::StopVehicleSequence::driveController",
+   "Dynamics::StopVehicleSequence::battery",
+   "Dynamics::StopVehicleSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg1",
+    "name": "pressStart",
+    "sourceId": "Dynamics::StopVehicleSequence::Driver",
+    "targetId": "Dynamics::StopVehicleSequence::startButton",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg2",
+    "name": "stopRequest",
+    "sourceId": "Dynamics::StopVehicleSequence::startButton",
+    "targetId": "Dynamics::StopVehicleSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg3",
+    "name": "queryGear",
+    "sourceId": "Dynamics::StopVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StopVehicleSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg4",
+    "name": "parkSelected",
+    "sourceId": "Dynamics::StopVehicleSequence::driveController",
+    "targetId": "Dynamics::StopVehicleSequence::vehicleController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg5",
+    "name": "disableDrive",
+    "sourceId": "Dynamics::StopVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StopVehicleSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg6",
+    "name": "openContactor",
+    "sourceId": "Dynamics::StopVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StopVehicleSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg7",
+    "name": "highVoltageOff",
+    "sourceId": "Dynamics::StopVehicleSequence::battery",
+    "targetId": "Dynamics::StopVehicleSequence::vehicleController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg8",
+    "name": "showOff",
+    "sourceId": "Dynamics::StopVehicleSequence::vehicleController",
+    "targetId": "Dynamics::StopVehicleSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::StopVehicleSequence::msg9",
+    "name": "indicateOff",
+    "sourceId": "Dynamics::StopVehicleSequence::instrumentCluster",
+    "targetId": "Dynamics::StopVehicleSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::ChangeGearSequence": {
+  "lifelines": [
+   "Dynamics::ChangeGearSequence::Driver",
+   "Dynamics::ChangeGearSequence::gearStick",
+   "Dynamics::ChangeGearSequence::driveController",
+   "Dynamics::ChangeGearSequence::wheels",
+   "Dynamics::ChangeGearSequence::engine",
+   "Dynamics::ChangeGearSequence::vehicleController",
+   "Dynamics::ChangeGearSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::ChangeGearSequence::Driver",
+   "Dynamics::ChangeGearSequence::gearStick",
+   "Dynamics::ChangeGearSequence::driveController",
+   "Dynamics::ChangeGearSequence::wheels",
+   "Dynamics::ChangeGearSequence::engine",
+   "Dynamics::ChangeGearSequence::vehicleController",
+   "Dynamics::ChangeGearSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg1",
+    "name": "selectDrive",
+    "sourceId": "Dynamics::ChangeGearSequence::Driver",
+    "targetId": "Dynamics::ChangeGearSequence::gearStick",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg2",
+    "name": "gearRequest",
+    "sourceId": "Dynamics::ChangeGearSequence::gearStick",
+    "targetId": "Dynamics::ChangeGearSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg3",
+    "name": "queryWheelSpeed",
+    "sourceId": "Dynamics::ChangeGearSequence::driveController",
+    "targetId": "Dynamics::ChangeGearSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg4",
+    "name": "standingStill",
+    "sourceId": "Dynamics::ChangeGearSequence::wheels",
+    "targetId": "Dynamics::ChangeGearSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg5",
+    "name": "setMotorMode",
+    "sourceId": "Dynamics::ChangeGearSequence::driveController",
+    "targetId": "Dynamics::ChangeGearSequence::engine",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg6",
+    "name": "modeSet",
+    "sourceId": "Dynamics::ChangeGearSequence::engine",
+    "targetId": "Dynamics::ChangeGearSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg7",
+    "name": "gearChanged",
+    "sourceId": "Dynamics::ChangeGearSequence::driveController",
+    "targetId": "Dynamics::ChangeGearSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg8",
+    "name": "showGear",
+    "sourceId": "Dynamics::ChangeGearSequence::vehicleController",
+    "targetId": "Dynamics::ChangeGearSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ChangeGearSequence::msg9",
+    "name": "indicateGear",
+    "sourceId": "Dynamics::ChangeGearSequence::instrumentCluster",
+    "targetId": "Dynamics::ChangeGearSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::AccelerateSequence": {
+  "lifelines": [
+   "Dynamics::AccelerateSequence::Driver",
+   "Dynamics::AccelerateSequence::acceleratorPedal",
+   "Dynamics::AccelerateSequence::driveController",
+   "Dynamics::AccelerateSequence::battery",
+   "Dynamics::AccelerateSequence::engine",
+   "Dynamics::AccelerateSequence::wheels",
+   "Dynamics::AccelerateSequence::vehicleController",
+   "Dynamics::AccelerateSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::AccelerateSequence::Driver",
+   "Dynamics::AccelerateSequence::acceleratorPedal",
+   "Dynamics::AccelerateSequence::driveController",
+   "Dynamics::AccelerateSequence::battery",
+   "Dynamics::AccelerateSequence::engine",
+   "Dynamics::AccelerateSequence::wheels",
+   "Dynamics::AccelerateSequence::vehicleController",
+   "Dynamics::AccelerateSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg1",
+    "name": "pressPedal",
+    "sourceId": "Dynamics::AccelerateSequence::Driver",
+    "targetId": "Dynamics::AccelerateSequence::acceleratorPedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg2",
+    "name": "torqueRequest",
+    "sourceId": "Dynamics::AccelerateSequence::acceleratorPedal",
+    "targetId": "Dynamics::AccelerateSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg3",
+    "name": "queryDischargeLimit",
+    "sourceId": "Dynamics::AccelerateSequence::driveController",
+    "targetId": "Dynamics::AccelerateSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg4",
+    "name": "dischargeLimit",
+    "sourceId": "Dynamics::AccelerateSequence::battery",
+    "targetId": "Dynamics::AccelerateSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg5",
+    "name": "torqueCommand",
+    "sourceId": "Dynamics::AccelerateSequence::driveController",
+    "targetId": "Dynamics::AccelerateSequence::engine",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg6",
+    "name": "drawPower",
+    "sourceId": "Dynamics::AccelerateSequence::engine",
+    "targetId": "Dynamics::AccelerateSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg7",
+    "name": "driveTorque",
+    "sourceId": "Dynamics::AccelerateSequence::engine",
+    "targetId": "Dynamics::AccelerateSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg8",
+    "name": "wheelSpeed",
+    "sourceId": "Dynamics::AccelerateSequence::wheels",
+    "targetId": "Dynamics::AccelerateSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg9",
+    "name": "speedChanged",
+    "sourceId": "Dynamics::AccelerateSequence::driveController",
+    "targetId": "Dynamics::AccelerateSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg10",
+    "name": "showSpeed",
+    "sourceId": "Dynamics::AccelerateSequence::vehicleController",
+    "targetId": "Dynamics::AccelerateSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::AccelerateSequence::msg11",
+    "name": "indicateSpeed",
+    "sourceId": "Dynamics::AccelerateSequence::instrumentCluster",
+    "targetId": "Dynamics::AccelerateSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::BrakeSequence": {
+  "lifelines": [
+   "Dynamics::BrakeSequence::Driver",
+   "Dynamics::BrakeSequence::brakePedal",
+   "Dynamics::BrakeSequence::driveController",
+   "Dynamics::BrakeSequence::bodyController",
+   "Dynamics::BrakeSequence::lamps",
+   "Dynamics::BrakeSequence::engine",
+   "Dynamics::BrakeSequence::frictionBrakes",
+   "Dynamics::BrakeSequence::wheels",
+   "Dynamics::BrakeSequence::battery"
+  ],
+  "defaultOrder": [
+   "Dynamics::BrakeSequence::Driver",
+   "Dynamics::BrakeSequence::brakePedal",
+   "Dynamics::BrakeSequence::driveController",
+   "Dynamics::BrakeSequence::bodyController",
+   "Dynamics::BrakeSequence::lamps",
+   "Dynamics::BrakeSequence::engine",
+   "Dynamics::BrakeSequence::battery",
+   "Dynamics::BrakeSequence::frictionBrakes",
+   "Dynamics::BrakeSequence::wheels"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::BrakeSequence::msg1",
+    "name": "pressPedal",
+    "sourceId": "Dynamics::BrakeSequence::Driver",
+    "targetId": "Dynamics::BrakeSequence::brakePedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg2",
+    "name": "decelerationRequest",
+    "sourceId": "Dynamics::BrakeSequence::brakePedal",
+    "targetId": "Dynamics::BrakeSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg3",
+    "name": "brakeLampsOn",
+    "sourceId": "Dynamics::BrakeSequence::driveController",
+    "targetId": "Dynamics::BrakeSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg4",
+    "name": "lightBrakeLamps",
+    "sourceId": "Dynamics::BrakeSequence::bodyController",
+    "targetId": "Dynamics::BrakeSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg5",
+    "name": "regenTorque",
+    "sourceId": "Dynamics::BrakeSequence::driveController",
+    "targetId": "Dynamics::BrakeSequence::engine",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg6",
+    "name": "chargePower",
+    "sourceId": "Dynamics::BrakeSequence::engine",
+    "targetId": "Dynamics::BrakeSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg7",
+    "name": "frictionPressure",
+    "sourceId": "Dynamics::BrakeSequence::driveController",
+    "targetId": "Dynamics::BrakeSequence::frictionBrakes",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg8",
+    "name": "brakingForce",
+    "sourceId": "Dynamics::BrakeSequence::frictionBrakes",
+    "targetId": "Dynamics::BrakeSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg9",
+    "name": "wheelSpeed",
+    "sourceId": "Dynamics::BrakeSequence::wheels",
+    "targetId": "Dynamics::BrakeSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::BrakeSequence::msg10",
+    "name": "pedalFeedback",
+    "sourceId": "Dynamics::BrakeSequence::brakePedal",
+    "targetId": "Dynamics::BrakeSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::EmergencyStopSequence": {
+  "lifelines": [
+   "Dynamics::EmergencyStopSequence::Driver",
+   "Dynamics::EmergencyStopSequence::brakePedal",
+   "Dynamics::EmergencyStopSequence::driveController",
+   "Dynamics::EmergencyStopSequence::bodyController",
+   "Dynamics::EmergencyStopSequence::lamps",
+   "Dynamics::EmergencyStopSequence::engine",
+   "Dynamics::EmergencyStopSequence::frictionBrakes",
+   "Dynamics::EmergencyStopSequence::wheels",
+   "Dynamics::EmergencyStopSequence::battery"
+  ],
+  "defaultOrder": [
+   "Dynamics::EmergencyStopSequence::Driver",
+   "Dynamics::EmergencyStopSequence::brakePedal",
+   "Dynamics::EmergencyStopSequence::driveController",
+   "Dynamics::EmergencyStopSequence::bodyController",
+   "Dynamics::EmergencyStopSequence::lamps",
+   "Dynamics::EmergencyStopSequence::engine",
+   "Dynamics::EmergencyStopSequence::battery",
+   "Dynamics::EmergencyStopSequence::frictionBrakes",
+   "Dynamics::EmergencyStopSequence::wheels"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg1",
+    "name": "pressPedal",
+    "sourceId": "Dynamics::EmergencyStopSequence::Driver",
+    "targetId": "Dynamics::EmergencyStopSequence::brakePedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg2",
+    "name": "decelerationRequest",
+    "sourceId": "Dynamics::EmergencyStopSequence::brakePedal",
+    "targetId": "Dynamics::EmergencyStopSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg3",
+    "name": "maximumDeceleration",
+    "sourceId": "Dynamics::EmergencyStopSequence::brakePedal",
+    "targetId": "Dynamics::EmergencyStopSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg4",
+    "name": "brakeLampsOn",
+    "sourceId": "Dynamics::EmergencyStopSequence::driveController",
+    "targetId": "Dynamics::EmergencyStopSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg5",
+    "name": "lightBrakeLamps",
+    "sourceId": "Dynamics::EmergencyStopSequence::bodyController",
+    "targetId": "Dynamics::EmergencyStopSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg6",
+    "name": "hazardLightsOn",
+    "sourceId": "Dynamics::EmergencyStopSequence::bodyController",
+    "targetId": "Dynamics::EmergencyStopSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg7",
+    "name": "regenTorque",
+    "sourceId": "Dynamics::EmergencyStopSequence::driveController",
+    "targetId": "Dynamics::EmergencyStopSequence::engine",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg8",
+    "name": "chargePower",
+    "sourceId": "Dynamics::EmergencyStopSequence::engine",
+    "targetId": "Dynamics::EmergencyStopSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg9",
+    "name": "frictionPressure",
+    "sourceId": "Dynamics::EmergencyStopSequence::driveController",
+    "targetId": "Dynamics::EmergencyStopSequence::frictionBrakes",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg10",
+    "name": "antiLockModulation",
+    "sourceId": "Dynamics::EmergencyStopSequence::driveController",
+    "targetId": "Dynamics::EmergencyStopSequence::frictionBrakes",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg11",
+    "name": "brakingForce",
+    "sourceId": "Dynamics::EmergencyStopSequence::frictionBrakes",
+    "targetId": "Dynamics::EmergencyStopSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg12",
+    "name": "wheelSpeed",
+    "sourceId": "Dynamics::EmergencyStopSequence::wheels",
+    "targetId": "Dynamics::EmergencyStopSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::EmergencyStopSequence::msg13",
+    "name": "pedalFeedback",
+    "sourceId": "Dynamics::EmergencyStopSequence::brakePedal",
+    "targetId": "Dynamics::EmergencyStopSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::TurnLeftSequence": {
+  "lifelines": [
+   "Dynamics::TurnLeftSequence::Driver",
+   "Dynamics::TurnLeftSequence::steeringWheel",
+   "Dynamics::TurnLeftSequence::driveController",
+   "Dynamics::TurnLeftSequence::wheels",
+   "Dynamics::TurnLeftSequence::bodyController",
+   "Dynamics::TurnLeftSequence::lamps"
+  ],
+  "defaultOrder": [
+   "Dynamics::TurnLeftSequence::Driver",
+   "Dynamics::TurnLeftSequence::steeringWheel",
+   "Dynamics::TurnLeftSequence::driveController",
+   "Dynamics::TurnLeftSequence::wheels",
+   "Dynamics::TurnLeftSequence::bodyController",
+   "Dynamics::TurnLeftSequence::lamps"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg1",
+    "name": "turnWheelLeft",
+    "sourceId": "Dynamics::TurnLeftSequence::Driver",
+    "targetId": "Dynamics::TurnLeftSequence::steeringWheel",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg2",
+    "name": "steeringAngle",
+    "sourceId": "Dynamics::TurnLeftSequence::steeringWheel",
+    "targetId": "Dynamics::TurnLeftSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg3",
+    "name": "queryWheelSpeed",
+    "sourceId": "Dynamics::TurnLeftSequence::driveController",
+    "targetId": "Dynamics::TurnLeftSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg4",
+    "name": "wheelSpeed",
+    "sourceId": "Dynamics::TurnLeftSequence::wheels",
+    "targetId": "Dynamics::TurnLeftSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg5",
+    "name": "applyLeftAngle",
+    "sourceId": "Dynamics::TurnLeftSequence::driveController",
+    "targetId": "Dynamics::TurnLeftSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg6",
+    "name": "indicateLeft",
+    "sourceId": "Dynamics::TurnLeftSequence::driveController",
+    "targetId": "Dynamics::TurnLeftSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg7",
+    "name": "flashLeftIndicator",
+    "sourceId": "Dynamics::TurnLeftSequence::bodyController",
+    "targetId": "Dynamics::TurnLeftSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnLeftSequence::msg8",
+    "name": "carTurnsLeft",
+    "sourceId": "Dynamics::TurnLeftSequence::wheels",
+    "targetId": "Dynamics::TurnLeftSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::TurnRightSequence": {
+  "lifelines": [
+   "Dynamics::TurnRightSequence::Driver",
+   "Dynamics::TurnRightSequence::steeringWheel",
+   "Dynamics::TurnRightSequence::driveController",
+   "Dynamics::TurnRightSequence::wheels",
+   "Dynamics::TurnRightSequence::bodyController",
+   "Dynamics::TurnRightSequence::lamps"
+  ],
+  "defaultOrder": [
+   "Dynamics::TurnRightSequence::Driver",
+   "Dynamics::TurnRightSequence::steeringWheel",
+   "Dynamics::TurnRightSequence::driveController",
+   "Dynamics::TurnRightSequence::wheels",
+   "Dynamics::TurnRightSequence::bodyController",
+   "Dynamics::TurnRightSequence::lamps"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg1",
+    "name": "turnWheelRight",
+    "sourceId": "Dynamics::TurnRightSequence::Driver",
+    "targetId": "Dynamics::TurnRightSequence::steeringWheel",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg2",
+    "name": "steeringAngle",
+    "sourceId": "Dynamics::TurnRightSequence::steeringWheel",
+    "targetId": "Dynamics::TurnRightSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg3",
+    "name": "queryWheelSpeed",
+    "sourceId": "Dynamics::TurnRightSequence::driveController",
+    "targetId": "Dynamics::TurnRightSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg4",
+    "name": "wheelSpeed",
+    "sourceId": "Dynamics::TurnRightSequence::wheels",
+    "targetId": "Dynamics::TurnRightSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg5",
+    "name": "applyRightAngle",
+    "sourceId": "Dynamics::TurnRightSequence::driveController",
+    "targetId": "Dynamics::TurnRightSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg6",
+    "name": "indicateRight",
+    "sourceId": "Dynamics::TurnRightSequence::driveController",
+    "targetId": "Dynamics::TurnRightSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg7",
+    "name": "flashRightIndicator",
+    "sourceId": "Dynamics::TurnRightSequence::bodyController",
+    "targetId": "Dynamics::TurnRightSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::TurnRightSequence::msg8",
+    "name": "carTurnsRight",
+    "sourceId": "Dynamics::TurnRightSequence::wheels",
+    "targetId": "Dynamics::TurnRightSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::CleanWindshieldSequence": {
+  "lifelines": [
+   "Dynamics::CleanWindshieldSequence::Driver",
+   "Dynamics::CleanWindshieldSequence::bodyController",
+   "Dynamics::CleanWindshieldSequence::driveController",
+   "Dynamics::CleanWindshieldSequence::wipers",
+   "Dynamics::CleanWindshieldSequence::windshield"
+  ],
+  "defaultOrder": [
+   "Dynamics::CleanWindshieldSequence::Driver",
+   "Dynamics::CleanWindshieldSequence::bodyController",
+   "Dynamics::CleanWindshieldSequence::driveController",
+   "Dynamics::CleanWindshieldSequence::wipers",
+   "Dynamics::CleanWindshieldSequence::windshield"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg1",
+    "name": "requestWipe",
+    "sourceId": "Dynamics::CleanWindshieldSequence::Driver",
+    "targetId": "Dynamics::CleanWindshieldSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg2",
+    "name": "queryVehicleSpeed",
+    "sourceId": "Dynamics::CleanWindshieldSequence::bodyController",
+    "targetId": "Dynamics::CleanWindshieldSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg3",
+    "name": "vehicleSpeed",
+    "sourceId": "Dynamics::CleanWindshieldSequence::driveController",
+    "targetId": "Dynamics::CleanWindshieldSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg4",
+    "name": "washPulse",
+    "sourceId": "Dynamics::CleanWindshieldSequence::bodyController",
+    "targetId": "Dynamics::CleanWindshieldSequence::wipers",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg5",
+    "name": "sweepAtRate",
+    "sourceId": "Dynamics::CleanWindshieldSequence::bodyController",
+    "targetId": "Dynamics::CleanWindshieldSequence::wipers",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg6",
+    "name": "clearGlass",
+    "sourceId": "Dynamics::CleanWindshieldSequence::wipers",
+    "targetId": "Dynamics::CleanWindshieldSequence::windshield",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg7",
+    "name": "bladesParked",
+    "sourceId": "Dynamics::CleanWindshieldSequence::wipers",
+    "targetId": "Dynamics::CleanWindshieldSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::CleanWindshieldSequence::msg8",
+    "name": "viewCleared",
+    "sourceId": "Dynamics::CleanWindshieldSequence::windshield",
+    "targetId": "Dynamics::CleanWindshieldSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::ToggleHeadlightsSequence": {
+  "lifelines": [
+   "Dynamics::ToggleHeadlightsSequence::Driver",
+   "Dynamics::ToggleHeadlightsSequence::bodyController",
+   "Dynamics::ToggleHeadlightsSequence::battery",
+   "Dynamics::ToggleHeadlightsSequence::lamps",
+   "Dynamics::ToggleHeadlightsSequence::vehicleController",
+   "Dynamics::ToggleHeadlightsSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::ToggleHeadlightsSequence::Driver",
+   "Dynamics::ToggleHeadlightsSequence::bodyController",
+   "Dynamics::ToggleHeadlightsSequence::battery",
+   "Dynamics::ToggleHeadlightsSequence::lamps",
+   "Dynamics::ToggleHeadlightsSequence::vehicleController",
+   "Dynamics::ToggleHeadlightsSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg1",
+    "name": "switchHeadlampsOn",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::Driver",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::bodyController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg2",
+    "name": "requestPower",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::bodyController",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::battery",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg3",
+    "name": "powerGranted",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::battery",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg4",
+    "name": "lightHeadlamps",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::bodyController",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::lamps",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg5",
+    "name": "headlampsLit",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::lamps",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::bodyController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg6",
+    "name": "headlampState",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::bodyController",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg7",
+    "name": "showBeamSymbol",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::vehicleController",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ToggleHeadlightsSequence::msg8",
+    "name": "roadLit",
+    "sourceId": "Dynamics::ToggleHeadlightsSequence::lamps",
+    "targetId": "Dynamics::ToggleHeadlightsSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::ParkSequence": {
+  "lifelines": [
+   "Dynamics::ParkSequence::Driver",
+   "Dynamics::ParkSequence::brakePedal",
+   "Dynamics::ParkSequence::gearStick",
+   "Dynamics::ParkSequence::driveController",
+   "Dynamics::ParkSequence::wheels",
+   "Dynamics::ParkSequence::engine",
+   "Dynamics::ParkSequence::frictionBrakes",
+   "Dynamics::ParkSequence::vehicleController",
+   "Dynamics::ParkSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::ParkSequence::Driver",
+   "Dynamics::ParkSequence::brakePedal",
+   "Dynamics::ParkSequence::driveController",
+   "Dynamics::ParkSequence::gearStick",
+   "Dynamics::ParkSequence::wheels",
+   "Dynamics::ParkSequence::engine",
+   "Dynamics::ParkSequence::frictionBrakes",
+   "Dynamics::ParkSequence::vehicleController",
+   "Dynamics::ParkSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::ParkSequence::msg1",
+    "name": "holdBrake",
+    "sourceId": "Dynamics::ParkSequence::Driver",
+    "targetId": "Dynamics::ParkSequence::brakePedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg2",
+    "name": "decelerationRequest",
+    "sourceId": "Dynamics::ParkSequence::brakePedal",
+    "targetId": "Dynamics::ParkSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg3",
+    "name": "selectPark",
+    "sourceId": "Dynamics::ParkSequence::Driver",
+    "targetId": "Dynamics::ParkSequence::gearStick",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg4",
+    "name": "gearRequest",
+    "sourceId": "Dynamics::ParkSequence::gearStick",
+    "targetId": "Dynamics::ParkSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg5",
+    "name": "queryWheelSpeed",
+    "sourceId": "Dynamics::ParkSequence::driveController",
+    "targetId": "Dynamics::ParkSequence::wheels",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg6",
+    "name": "standingStill",
+    "sourceId": "Dynamics::ParkSequence::wheels",
+    "targetId": "Dynamics::ParkSequence::driveController",
+    "reply": true
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg7",
+    "name": "setParkMode",
+    "sourceId": "Dynamics::ParkSequence::driveController",
+    "targetId": "Dynamics::ParkSequence::engine",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg8",
+    "name": "applyParkingBrake",
+    "sourceId": "Dynamics::ParkSequence::driveController",
+    "targetId": "Dynamics::ParkSequence::frictionBrakes",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg9",
+    "name": "gearChanged",
+    "sourceId": "Dynamics::ParkSequence::driveController",
+    "targetId": "Dynamics::ParkSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg10",
+    "name": "showPark",
+    "sourceId": "Dynamics::ParkSequence::vehicleController",
+    "targetId": "Dynamics::ParkSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::ParkSequence::msg11",
+    "name": "indicatePark",
+    "sourceId": "Dynamics::ParkSequence::instrumentCluster",
+    "targetId": "Dynamics::ParkSequence::Driver",
+    "reply": true
+   }
+  ]
+ },
+ "Dynamics::DriveSequence": {
+  "lifelines": [
+   "Dynamics::DriveSequence::Driver",
+   "Dynamics::DriveSequence::startButton",
+   "Dynamics::DriveSequence::vehicleController",
+   "Dynamics::DriveSequence::driveController",
+   "Dynamics::DriveSequence::gearStick",
+   "Dynamics::DriveSequence::acceleratorPedal",
+   "Dynamics::DriveSequence::steeringWheel",
+   "Dynamics::DriveSequence::brakePedal",
+   "Dynamics::DriveSequence::instrumentCluster"
+  ],
+  "defaultOrder": [
+   "Dynamics::DriveSequence::Driver",
+   "Dynamics::DriveSequence::startButton",
+   "Dynamics::DriveSequence::vehicleController",
+   "Dynamics::DriveSequence::driveController",
+   "Dynamics::DriveSequence::gearStick",
+   "Dynamics::DriveSequence::acceleratorPedal",
+   "Dynamics::DriveSequence::steeringWheel",
+   "Dynamics::DriveSequence::brakePedal",
+   "Dynamics::DriveSequence::instrumentCluster"
+  ],
+  "messages": [
+   {
+    "oldId": "Dynamics::DriveSequence::msg1",
+    "name": "pressStart",
+    "sourceId": "Dynamics::DriveSequence::Driver",
+    "targetId": "Dynamics::DriveSequence::startButton",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg2",
+    "name": "startRequest",
+    "sourceId": "Dynamics::DriveSequence::startButton",
+    "targetId": "Dynamics::DriveSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg3",
+    "name": "releaseImmobilizer",
+    "sourceId": "Dynamics::DriveSequence::vehicleController",
+    "targetId": "Dynamics::DriveSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg4",
+    "name": "selectDrive",
+    "sourceId": "Dynamics::DriveSequence::Driver",
+    "targetId": "Dynamics::DriveSequence::gearStick",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg5",
+    "name": "gearRequest",
+    "sourceId": "Dynamics::DriveSequence::gearStick",
+    "targetId": "Dynamics::DriveSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg6",
+    "name": "pressAccelerator",
+    "sourceId": "Dynamics::DriveSequence::Driver",
+    "targetId": "Dynamics::DriveSequence::acceleratorPedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg7",
+    "name": "torqueRequest",
+    "sourceId": "Dynamics::DriveSequence::acceleratorPedal",
+    "targetId": "Dynamics::DriveSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg8",
+    "name": "turnWheel",
+    "sourceId": "Dynamics::DriveSequence::Driver",
+    "targetId": "Dynamics::DriveSequence::steeringWheel",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg9",
+    "name": "steeringAngle",
+    "sourceId": "Dynamics::DriveSequence::steeringWheel",
+    "targetId": "Dynamics::DriveSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg10",
+    "name": "pressBrake",
+    "sourceId": "Dynamics::DriveSequence::Driver",
+    "targetId": "Dynamics::DriveSequence::brakePedal",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg11",
+    "name": "decelerationRequest",
+    "sourceId": "Dynamics::DriveSequence::brakePedal",
+    "targetId": "Dynamics::DriveSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg12",
+    "name": "selectPark",
+    "sourceId": "Dynamics::DriveSequence::Driver",
+    "targetId": "Dynamics::DriveSequence::gearStick",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg13",
+    "name": "parkRequest",
+    "sourceId": "Dynamics::DriveSequence::gearStick",
+    "targetId": "Dynamics::DriveSequence::driveController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg14",
+    "name": "gearChanged",
+    "sourceId": "Dynamics::DriveSequence::driveController",
+    "targetId": "Dynamics::DriveSequence::vehicleController",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg15",
+    "name": "showPark",
+    "sourceId": "Dynamics::DriveSequence::vehicleController",
+    "targetId": "Dynamics::DriveSequence::instrumentCluster",
+    "reply": false
+   },
+   {
+    "oldId": "Dynamics::DriveSequence::msg16",
+    "name": "indicatePark",
+    "sourceId": "Dynamics::DriveSequence::instrumentCluster",
+    "targetId": "Dynamics::DriveSequence::Driver",
+    "reply": true
+   }
+  ]
+ }
+}

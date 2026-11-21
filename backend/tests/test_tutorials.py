@@ -20,7 +20,9 @@ TUTORIALS = {
         "Requirements",
         "Use cases",
         "Sequences",
-        "#reply message",
+        "#Reply message",
+        "occurrence def",
+        "ref part",
     ],
     "use-cases-and-scenarios.md": [
         "# Use Cases and Scenarios",
@@ -28,7 +30,11 @@ TUTORIALS = {
         "CaseScenario",
         "Action as a scenario",
         "Sequences",
-        "then #reply message",
+        "#Reply message",
+        "Other ways to declare a lifeline",
+        "Events",
+        "occurrence def",
+        "ref part",
     ],
     "mbse.md": [
         "# Introduction to MBSE",

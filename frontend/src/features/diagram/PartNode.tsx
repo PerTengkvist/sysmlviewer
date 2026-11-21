@@ -315,10 +315,12 @@ export function partStereotypeKeyword(d: {
   return d.isDefinition ? 'abstract part def' : 'abstract part'
 }
 
-function typeShortTag(typeRef: string): string {
-  const caps = typeRef.replace(/[^A-Za-z]/g, '').match(/[A-Z]/g)
+/** Short tag of a type: the capitals of its name, not of the qualifier (`Types::KeyFob` is KF). */
+export function typeShortTag(typeRef: string): string {
+  const name = typeRef.split('::').filter(Boolean).pop() ?? typeRef
+  const caps = name.replace(/[^A-Za-z]/g, '').match(/[A-Z]/g)
   if (caps && caps.length >= 2) return caps.join('')
-  return typeRef.slice(0, 3).toUpperCase()
+  return name.slice(0, 3).toUpperCase()
 }
 
 /** Map pointer position (relative to node box) onto nearest border edge. */

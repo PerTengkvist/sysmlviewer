@@ -1,5 +1,6 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
-import { exampleProjectFile, fitView, openProject } from './helpers/diagram'
+import { exampleProjectFile, fitView, openProject, openView } from './helpers/diagram'
 import {
   dragLifelineOver,
   lifelineOrder,
@@ -13,7 +14,8 @@ import {
  * SysML v2 sequence diagrams written as `occurrence def`
  * (examples/diagrams/occurrence_sequences.sysml): every form of lifeline, the
  * Details of a lifeline and a message, a saved order, and the legacy
- * interaction form, which must still render.
+ * interaction form, which must still render. The last tests are the electric car
+ * after its migration: typed lifelines with the legacy ids, in the legacy order.
  */
 
 const P = 'OccurrenceSequences::'
@@ -125,4 +127,91 @@ test('a saved lifeline order survives a reload', async ({ page, request }) => {
 test('the legacy interaction still renders', async ({ page }) => {
   await openSequenceView(page, 'hbox::HBoxEventView', 4)
   await expect(page.locator('.react-flow__edge')).not.toHaveCount(0)
+})
+
+// ---- electric car after the migration to occurrence defs (phase 3) ----------
+
+const UNLOCK = 'Dynamics::UnlockSequence'
+const UNLOCK_VIEW = 'Dynamics::UnlockSequenceView'
+const FIXTURE = JSON.parse(
+  readFileSync(
+    new URL('../../backend/tests/fixtures/sequence_migration.json', import.meta.url),
+    'utf8',
+  ),
+) as Record<string, { defaultOrder: string[]; messages: { name: string; reply: boolean }[] }>
+
+test('electric car UnlockSequenceView after migration', async ({ page }) => {
+  await openProject(page, exampleProjectFile('electric_car'))
+  await openSequenceView(page, UNLOCK_VIEW, 7)
+  const legacy = FIXTURE[UNLOCK]
+  // The lifeline ids are the legacy ones, left to right in the default order.
+  expect(legacy.defaultOrder).toHaveLength(7)
+  expect(await lifelineOrder(page)).toEqual(legacy.defaultOrder)
+  await expect(page.locator('.react-flow__node-lifeline')).toHaveCount(7)
+  await expect(page.locator('.react-flow__edge')).toHaveCount(8)
+  expect(legacy.messages.filter((m) => m.reply)).toHaveLength(2)
+  for (const m of legacy.messages) {
+    const dash = await page
+      .locator(edgeSel(`${UNLOCK}::${m.name}`))
+      .locator('path.react-flow__edge-path')
+      .first()
+      .evaluate((el) => getComputedStyle(el).strokeDasharray)
+    expect(dash === 'none', `${m.name} is ${m.reply ? 'dashed' : 'solid'}`).toBe(!m.reply)
+  }
+  await selectNode(page, `${UNLOCK}::keyFob`)
+  await expect(detail(page, 'Type')).toContainText('KeyFob')
+  await expect(detail(page, 'Reference')).toHaveText('yes')
+  await selectNode(page, `${UNLOCK}::Driver`)
+  await expect(detail(page, 'Type')).toContainText('Driver')
+})
+
+test('a sequenceLayout saved on lifeline ids applies', async ({ page, request }) => {
+  const id = await openProject(page, exampleProjectFile('electric_car'))
+  const legacy = FIXTURE[UNLOCK].defaultOrder
+  const reversed = [...legacy].reverse()
+  try {
+    const res = await request.patch(`/api/projects/${id}/visualization`, {
+      data: {
+        viewId: UNLOCK_VIEW,
+        structureNotation: 'sysmlv2',
+        sequenceLayout: { order: reversed },
+      },
+    })
+    expect(res.ok(), await res.text()).toBeTruthy()
+    await openSequenceView(page, UNLOCK_VIEW, 7)
+    expect(await lifelineOrder(page)).toEqual(reversed)
+  } finally {
+    await resetSequenceLayout(request, id, UNLOCK_VIEW)
+  }
+})
+
+test('CarLogicalTree still renders all 27 parts, labelled by name', async ({ page, request }) => {
+  const id = await openProject(page, exampleProjectFile('electric_car'))
+  await openView(page, 'LogicalArchitecture::CarLogicalTree')
+  const view = await request.get(
+    `/api/projects/${id}/views/${encodeURIComponent('LogicalArchitecture::CarLogicalTree')}`,
+  )
+  const semantic = ((await view.json()) as {
+    semantic: Record<string, { kind: string; parentId?: string; name: string }>
+  }).semantic
+  const car = 'LogicalArchitecture::Car'
+  const parts = Object.entries(semantic).filter(([, e]) => e.kind === 'part' && e.parentId === car)
+  expect(parts).toHaveLength(27)
+  for (const [pid, e] of parts) {
+    const node = page.locator(nodeSel(pid))
+    await expect(node).toHaveCount(1)
+    // B14: the tree shows the usage name only, not `keyFob : KeyFob`.
+    await expect(node).toContainText(e.name)
+    await expect(node).not.toContainText(':')
+  }
+  // The new part defs live in LogicalArchitecture::Types and are not under Car.
+  await expect(page.locator(nodeSel('LogicalArchitecture::Types::KeyFob'))).toHaveCount(0)
+})
+
+test('a logical Car part is tagged by its type name, not the package', async ({ page }) => {
+  await openProject(page, exampleProjectFile('electric_car'))
+  await openView(page, 'LogicalArchitecture::CarLogicalView')
+  const key = page.locator(nodeSel('LogicalArchitecture::Car::keyFob'))
+  await expect(key.locator('.stereotype.type')).toHaveText('«KF»')
+  await expect(key.locator('.stereotype.type')).toHaveAttribute('title', 'KeyFob')
 })

@@ -11,6 +11,7 @@ import re
 
 import pytest
 
+from sequence_migration_fixture import load_fixture as load_migration_fixture
 from endpoint_snapshot import (
     collect_snapshot,
     diff_snapshots,
@@ -231,6 +232,42 @@ for _id in _OCCURRENCE_EXAMPLE_ADDED:
 for _id in _OCCURRENCE_EXAMPLE_RELATIONS:
     ACCEPTED_DIFFS.add(f"project:examples/diagrams: relation added {_id!r}")
 ACCEPTED_DIFFS.add(f"{_OCCURRENCE_FILE}: key added")
+
+# Phase 3: electric car's sequences are occurrence defs with typed lifelines, and
+# every logical part of Car gets a part def in LogicalArchitecture::Types.
+#   - Lifeline ids are unchanged (`Dynamics::<S>::keyFob` is now a `ref part`, not
+#     a `lifeline`), so they produce no line. No end of any message changes.
+#   - Each of the 206 messages changes id from `<S>::msgN` to `<S>::<name>`; both
+#     are relations, so each gives an element id and a relation removed/added.
+#     The ids come from fixtures/sequence_migration.json, frozen from the legacy
+#     model, and test_migrated_messages_keep_their_ends checks the ends.
+#   - New part defs: the three actors in Dynamics and Types plus 27 defs. The
+#     Car parts get `typeTargetId`s, but the snapshot only compares typeTargets of
+#     ids that had one before (the Car parts had none), so those give no line.
+_SEQ_FILE = "file:examples/electric_car/dynamics/sequences.sysml"
+_CAR_FILE = "file:examples/electric_car/logical_architecture/car.sysml"
+_PROJECT_EC = "project:examples/electric_car"
+for _seq in load_migration_fixture().values():
+    for _msg in _seq["messages"]:
+        _new = _msg["oldId"].rsplit("::", 1)[0] + "::" + _msg["name"]
+        for _scope in (_PROJECT_EC, _SEQ_FILE):
+            for _kind in ("element id", "relation"):
+                ACCEPTED_DIFFS.add(f"{_scope}: {_kind} removed {_msg['oldId']!r}")
+                ACCEPTED_DIFFS.add(f"{_scope}: {_kind} added {_new!r}")
+for _actor in ("Driver", "Passenger", "Charger"):
+    for _scope in (_PROJECT_EC, _SEQ_FILE):
+        ACCEPTED_DIFFS.add(f"{_scope}: element id added 'Dynamics::{_actor}'")
+_TYPE_DEFS = [
+    "KeyFob", "StartButton", "SteeringWheel", "GearStick", "AcceleratorPedal",
+    "BrakePedal", "VehicleController", "DriveController", "BodyController",
+    "InstrumentCluster", "ClimateSystem", "EntertainmentSystem", "Engine", "Battery",
+    "ChargeInlet", "Chassis", "Wheels", "FrictionBrakes", "Suspension", "Body", "Doors",
+    "Windows", "WindowLifts", "Windshield", "Wipers", "Locks", "Lamps",
+]
+for _scope in (_PROJECT_EC, _CAR_FILE):
+    ACCEPTED_DIFFS.add(f"{_scope}: element id added 'LogicalArchitecture::Types'")
+    for _name in _TYPE_DEFS:
+        ACCEPTED_DIFFS.add(f"{_scope}: element id added 'LogicalArchitecture::Types::{_name}'")
 
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 

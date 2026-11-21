@@ -3,8 +3,9 @@
 Usage (from the repo root or backend/):
     uv run --project backend python scripts/generate_example_docs.py examples/electric_car [--force] [--only=folder,folder]
 
-Writes one doc per package, part, view, requirement, use case, actor and
-interaction, next to the .sysml file in a docs/ folder, with the element's doc
+Writes one doc per package, part, view, requirement, use case, actor,
+interaction and occurrence def, next to the .sysml file in a docs/ folder (the
+parts of an occurrence are lifelines and get none), with the element's doc
 comment, its relations, the diagrams it appears in and its ports. Only missing
 files are written unless --force is given. --only limits the run to the listed
 top-level folders of the example.
@@ -15,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend" / "src"))
 from adapters.parser.subset_parser import SubsetSysmlParser
 from domain.models import ArtifactKind as K, SysmlFile
+from domain.occurrence import in_occurrence
 
 root = Path(sys.argv[1]).resolve()
 force = "--force" in sys.argv
@@ -25,7 +27,7 @@ files = [
     for f in sorted(root.rglob("*.sysml"))
 ]
 els = SubsetSysmlParser().parse_project(files).elements
-DOCUMENTED = {K.PACKAGE, K.PART, K.VIEW, K.REQUIREMENT, K.USE_CASE, K.ACTOR, K.INTERACTION}
+DOCUMENTED = {K.PACKAGE, K.PART, K.VIEW, K.REQUIREMENT, K.USE_CASE, K.ACTOR, K.INTERACTION, K.OCCURRENCE}
 
 
 def name(eid):
@@ -137,6 +139,8 @@ written = []
 for el in els.values():
     if el.kind not in DOCUMENTED or not el.file_id or "/" not in el.file_id:
         continue
+    if in_occurrence(els, el.id):
+        continue  # a lifeline of a sequence is an instance, not a documented element
     folder = el.file_id.rsplit("/", 1)[0]
     if only and folder not in only:
         continue

@@ -125,10 +125,23 @@ def _is_part_usage(el: SemanticElement, semantic: Mapping[str, SemanticElement])
 
 
 def _suggest(ref: str, elements: list[SemanticElement]) -> tuple[str, ...]:
-    last = [s for s in ref.replace(".", "::").split("::") if s][-1:] or [ref]
-    names = sorted({e.name for e in elements})
-    close = difflib.get_close_matches(last[0], names, n=3, cutoff=0.6)
-    return tuple(e.id for name in close for e in elements if e.name == name)
+    """Candidates for an unknown part def: first a def of exactly that name in any
+    package (the reference names the wrong package), then close names in the named
+    package, so that a type of a similar name elsewhere (the logical part types) does
+    not crowd the answer, and only then close names anywhere."""
+    segments = [s for s in ref.replace(".", "::").split("::") if s] or [ref]
+    leaf = segments[-1]
+    scope = "::".join(segments[:-1]) + "::" if len(segments) > 1 else ""
+
+    def close(pool: list[SemanticElement]) -> list[SemanticElement]:
+        names = sorted({e.name for e in pool})
+        found = difflib.get_close_matches(leaf, names, n=3, cutoff=0.6)
+        return [e for name in found for e in pool if e.name == name]
+
+    exact = [e for e in elements if e.name == leaf]
+    local = close([e for e in elements if scope and e.id.startswith(scope)])
+    ordered = exact + (local or close(elements))
+    return tuple(dict.fromkeys(e.id for e in ordered))
 
 
 def load_fmea(

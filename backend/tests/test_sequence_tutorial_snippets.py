@@ -1,0 +1,134 @@
+"""The tutorials teach sequences as `occurrence def` with typed instances (phase 3).
+
+A sysml block with `occurrence def` is checked in one of two ways:
+- with a marker `[//]: # (source: <path>)` on the line before it (the convention of
+  fmea.md; an HTML comment would show up as text in the viewer) it must be an ordered
+  subsequence of that file, so the tutorial quotes the model verbatim;
+- without a marker it is self-contained and must parse without warnings.
+"""
+
+from __future__ import annotations
+
+import re
+
+import pytest
+
+from adapters.api.static_paths import resolve_repo_root
+from adapters.parser.subset_parser import SubsetSysmlParser
+
+REPO = resolve_repo_root()
+TUTORIALS = REPO / "docs" / "tutorials"
+FILES = ("use-cases-and-scenarios.md", "cheatsheet.md", "mbse.md")
+FENCE = re.compile(r"^(?P<indent>[ ]*)```(?P<lang>[\w-]*)[ ]*$")
+MARKER = re.compile(r"^\[//\]: # \((?P<tag>[^)\n]*)\)$")
+
+
+def fenced_blocks(text: str):
+    """(tag, lang, body) of every fenced block; the tag is the marker on the line before."""
+    lines = text.split("\n")
+    out, i = [], 0
+    while i < len(lines):
+        m = FENCE.match(lines[i])
+        if m and m["lang"]:
+            tag = MARKER.match(lines[i - 1]) if i else None
+            j = i + 1
+            while j < len(lines) and not FENCE.match(lines[j]):
+                j += 1
+            body = "\n".join(ln[len(m["indent"]) :] if ln.startswith(m["indent"]) else ln for ln in lines[i + 1 : j])
+            out.append((tag["tag"] if tag else "", m["lang"], body))
+            i = j
+        i += 1
+    return out
+
+
+def _blocks():
+    out = []
+    for name in FILES:
+        text = (TUTORIALS / name).read_text(encoding="utf-8")
+        for tag, lang, body in fenced_blocks(text):
+            if lang == "sysml" and "occurrence def" in body:
+                out.append(pytest.param(name, tag, body, id=f"{name}:{body.splitlines()[0][:30]}"))
+    return out
+
+
+BLOCKS = _blocks()
+
+
+def _significant(text: str) -> list[str]:
+    lines = [ln.strip() for ln in text.split("\n")]
+    return [ln for ln in lines if ln and not ln.startswith("//")]
+
+
+def test_every_tutorial_teaches_sequences_with_occurrence_defs():
+    assert {b.values[0] for b in BLOCKS} == set(FILES)
+
+
+@pytest.mark.parametrize("name,tag,body", [b for b in BLOCKS if not b.values[1]])
+def test_sequence_snippets_parse_clean(name, tag, body):
+    result = SubsetSysmlParser().parse(body, "snippet.sysml")
+    assert result.warnings == []
+
+
+OCCURRENCE_HEAD = re.compile(r"^occurrence def (\w+)")
+
+
+def _in_order(wanted: list[str], available: list[str]) -> list[str]:
+    it = iter(available)
+    return [ln for ln in wanted if ln not in it]
+
+
+def missing_lines(body: str, source_text: str) -> list[str]:
+    """Lines of the snippet that the source does not have, in order. What comes
+    before the snippet's `occurrence def` must precede that def in the source; the def
+    itself is compared only with the same def in the source, up to its closing brace
+    (so lines of another sequence cannot stand in for it)."""
+    wanted, source = _significant(body), _significant(source_text)
+    head = next((i for i, ln in enumerate(wanted) if OCCURRENCE_HEAD.match(ln)), None)
+    if head is None:
+        return _in_order(wanted, source)
+    name = OCCURRENCE_HEAD.match(wanted[head])[1]
+    start = next((i for i, ln in enumerate(source) if OCCURRENCE_HEAD.match(ln) and f"def {name} " in ln + " "), None)
+    if start is None:
+        return wanted[head:]
+    depth, end = 0, len(source)
+    for i in range(start, len(source)):
+        depth += source[i].count("{") - source[i].count("}")
+        if depth <= 0:
+            end = i + 1
+            break
+    return _in_order(wanted[:head], source[:start]) + _in_order(wanted[head:], source[start:end])
+
+
+@pytest.mark.parametrize("name,tag,body", [b for b in BLOCKS if b.values[1]])
+def test_sequence_snippets_follow_source(name, tag, body):
+    assert tag.startswith("source: "), tag
+    source = (REPO / tag[len("source: ") :]).read_text(encoding="utf-8")
+    assert missing_lines(body, source) == [], "lines not found, in order, in the same def of the source"
+
+
+def test_snippet_check_ignores_lines_of_other_sequences():
+    path = REPO / "examples" / "electric_car" / "dynamics" / "sequences.sysml"
+    source = path.read_text(encoding="utf-8")
+    snippet = next(b.values[2] for b in BLOCKS if "BrakeSequence" in b.values[2])
+    assert missing_lines(snippet, source) == []
+    # EmergencyStopSequence has the same message lines; they must not satisfy BrakeSequence.
+    head = source.index("occurrence def BrakeSequence")
+    end = source.index("\n  }", head)
+    mutated = source[:head] + "\n".join(
+        ln
+        for ln in source[head:end].split("\n")
+        if "message frictionPressure" not in ln and "message wheelSpeed" not in ln and "#Reply message wheelSpeed" not in ln
+    ) + source[end:]
+    assert "frictionPressure" in mutated
+    assert any("frictionPressure" in ln for ln in missing_lines(snippet, mutated))
+    assert any("wheelSpeed" in ln for ln in missing_lines(snippet, mutated))
+
+
+def test_no_tutorial_teaches_lifeline_as_primary():
+    for name in FILES:
+        text = (TUTORIALS / name).read_text(encoding="utf-8")
+        assert "then #reply" not in text and "#reply message" not in text, name
+        for _, lang, body in fenced_blocks(text):
+            if lang == "sysml":
+                assert not re.search(r"^\s*lifeline \w+;", body, re.M), name
+                assert "interaction def" not in body, name
