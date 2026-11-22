@@ -714,6 +714,13 @@ def create_api_app(
             raise HTTPException(status_code=404, detail="Project not found")
         return tree
 
+    @app.get("/projects/{project_id}/realization")
+    def get_realization(project_id: str) -> dict:
+        payload = _service().get_realization(project_id)
+        if payload is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return payload
+
     @app.get("/projects/{project_id}/documentation")
     def list_documentation(project_id: str) -> dict:
         paths = _service().list_documentation(project_id)

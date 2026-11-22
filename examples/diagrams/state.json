@@ -57,6 +57,12 @@
       "warnings": []
     },
     {
+      "id": "use_case_realization.sysml",
+      "name": "use_case_realization.sysml",
+      "path": "use_case_realization.sysml",
+      "warnings": []
+    },
+    {
       "id": "use_cases.sysml",
       "name": "use_cases.sysml",
       "path": "use_cases.sysml",
@@ -6000,6 +6006,1251 @@
       "children": [],
       "fileId": "tree_view.sysml"
     },
+    "UseCaseRealization": {
+      "id": "UseCaseRealization",
+      "kind": "package",
+      "name": "UseCaseRealization",
+      "parentId": null,
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::UC",
+        "UseCaseRealization::F",
+        "UseCaseRealization::L",
+        "UseCaseRealization::alloc1",
+        "UseCaseRealization::alloc2",
+        "UseCaseRealization::alloc3",
+        "UseCaseRealization::dep1",
+        "UseCaseRealization::dep2",
+        "UseCaseRealization::dep3",
+        "UseCaseRealization::dep4",
+        "UseCaseRealization::UseCaseRealizationView"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC": {
+      "id": "UseCaseRealization::UC",
+      "kind": "package",
+      "name": "UC",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::UC::Start",
+        "UseCaseRealization::UC::Unlock",
+        "UseCaseRealization::UC::Lock",
+        "UseCaseRealization::UC::Drive"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start": {
+      "id": "UseCaseRealization::UC::Start",
+      "kind": "useCase",
+      "name": "Start",
+      "parentId": "UseCaseRealization::UC",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": "UCA",
+      "children": [
+        "UseCaseRealization::UC::Start::Driver",
+        "UseCaseRealization::UC::Start::pressStart",
+        "UseCaseRealization::UC::Start::checkKey",
+        "UseCaseRealization::UC::Start::showReady",
+        "UseCaseRealization::UC::Start::askForBrake",
+        "UseCaseRealization::UC::Start::start",
+        "UseCaseRealization::UC::Start::succ1",
+        "UseCaseRealization::UC::Start::succ2",
+        "UseCaseRealization::UC::Start::succ3",
+        "UseCaseRealization::UC::Start::done",
+        "UseCaseRealization::UC::Start::succ4"
+      ],
+      "fileId": "use_case_realization.sysml",
+      "isDefinition": true
+    },
+    "UseCaseRealization::UC::Start::Driver": {
+      "id": "UseCaseRealization::UC::Start::Driver",
+      "kind": "actor",
+      "name": "Driver",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::UC::Start::Driver::perform_pressStart"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::Driver::perform_pressStart": {
+      "id": "UseCaseRealization::UC::Start::Driver::perform_pressStart",
+      "kind": "action",
+      "name": "pressStart",
+      "parentId": "UseCaseRealization::UC::Start::Driver",
+      "typeRef": "pressStart",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml",
+      "performTargetId": "UseCaseRealization::UC::Start::pressStart"
+    },
+    "UseCaseRealization::UC::Start::pressStart": {
+      "id": "UseCaseRealization::UC::Start::pressStart",
+      "kind": "action",
+      "name": "pressStart",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::checkKey": {
+      "id": "UseCaseRealization::UC::Start::checkKey",
+      "kind": "action",
+      "name": "checkKey",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::showReady": {
+      "id": "UseCaseRealization::UC::Start::showReady",
+      "kind": "action",
+      "name": "showReady",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::askForBrake": {
+      "id": "UseCaseRealization::UC::Start::askForBrake",
+      "kind": "action",
+      "name": "askForBrake",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::start": {
+      "id": "UseCaseRealization::UC::Start::start",
+      "kind": "action",
+      "name": "start",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": "start",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::succ1": {
+      "id": "UseCaseRealization::UC::Start::succ1",
+      "kind": "succession",
+      "name": "succ1",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::UC::Start::start",
+      "targetId": "UseCaseRealization::UC::Start::pressStart",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::succ2": {
+      "id": "UseCaseRealization::UC::Start::succ2",
+      "kind": "succession",
+      "name": "succ2",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::UC::Start::pressStart",
+      "targetId": "UseCaseRealization::UC::Start::checkKey",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::succ3": {
+      "id": "UseCaseRealization::UC::Start::succ3",
+      "kind": "succession",
+      "name": "succ3",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::UC::Start::checkKey",
+      "targetId": "UseCaseRealization::UC::Start::showReady",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::done": {
+      "id": "UseCaseRealization::UC::Start::done",
+      "kind": "action",
+      "name": "done",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": "done",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Start::succ4": {
+      "id": "UseCaseRealization::UC::Start::succ4",
+      "kind": "succession",
+      "name": "succ4",
+      "parentId": "UseCaseRealization::UC::Start",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::UC::Start::showReady",
+      "targetId": "UseCaseRealization::UC::Start::done",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Unlock": {
+      "id": "UseCaseRealization::UC::Unlock",
+      "kind": "useCase",
+      "name": "Unlock",
+      "parentId": "UseCaseRealization::UC",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": "UCB",
+      "children": [
+        "UseCaseRealization::UC::Unlock::Driver",
+        "UseCaseRealization::UC::Unlock::pressUnlock",
+        "UseCaseRealization::UC::Unlock::unlockDoors"
+      ],
+      "fileId": "use_case_realization.sysml",
+      "isDefinition": true
+    },
+    "UseCaseRealization::UC::Unlock::Driver": {
+      "id": "UseCaseRealization::UC::Unlock::Driver",
+      "kind": "actor",
+      "name": "Driver",
+      "parentId": "UseCaseRealization::UC::Unlock",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock": {
+      "id": "UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock",
+      "kind": "action",
+      "name": "pressUnlock",
+      "parentId": "UseCaseRealization::UC::Unlock::Driver",
+      "typeRef": "pressUnlock",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml",
+      "performTargetId": "UseCaseRealization::UC::Unlock::pressUnlock"
+    },
+    "UseCaseRealization::UC::Unlock::pressUnlock": {
+      "id": "UseCaseRealization::UC::Unlock::pressUnlock",
+      "kind": "action",
+      "name": "pressUnlock",
+      "parentId": "UseCaseRealization::UC::Unlock",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Unlock::unlockDoors": {
+      "id": "UseCaseRealization::UC::Unlock::unlockDoors",
+      "kind": "action",
+      "name": "unlockDoors",
+      "parentId": "UseCaseRealization::UC::Unlock",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Lock": {
+      "id": "UseCaseRealization::UC::Lock",
+      "kind": "useCase",
+      "name": "Lock",
+      "parentId": "UseCaseRealization::UC",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": "UCC",
+      "children": [
+        "UseCaseRealization::UC::Lock::lockDoors"
+      ],
+      "fileId": "use_case_realization.sysml",
+      "isDefinition": true
+    },
+    "UseCaseRealization::UC::Lock::lockDoors": {
+      "id": "UseCaseRealization::UC::Lock::lockDoors",
+      "kind": "action",
+      "name": "lockDoors",
+      "parentId": "UseCaseRealization::UC::Lock",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Drive": {
+      "id": "UseCaseRealization::UC::Drive",
+      "kind": "useCase",
+      "name": "Drive",
+      "parentId": "UseCaseRealization::UC",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": "UCD",
+      "children": [
+        "UseCaseRealization::UC::Drive::include_Start",
+        "UseCaseRealization::UC::Drive::include_Unlock"
+      ],
+      "fileId": "use_case_realization.sysml",
+      "isDefinition": true
+    },
+    "UseCaseRealization::UC::Drive::include_Start": {
+      "id": "UseCaseRealization::UC::Drive::include_Start",
+      "kind": "include",
+      "name": "include_Start",
+      "parentId": "UseCaseRealization::UC::Drive",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::UC::Drive",
+      "targetId": "UseCaseRealization::UC::Start",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UC::Drive::include_Unlock": {
+      "id": "UseCaseRealization::UC::Drive::include_Unlock",
+      "kind": "include",
+      "name": "include_Unlock",
+      "parentId": "UseCaseRealization::UC::Drive",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::UC::Drive",
+      "targetId": "UseCaseRealization::UC::Unlock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F": {
+      "id": "UseCaseRealization::F",
+      "kind": "package",
+      "name": "F",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security": {
+      "id": "UseCaseRealization::F::Security",
+      "kind": "part",
+      "name": "Security",
+      "parentId": "UseCaseRealization::F",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security::auth",
+        "UseCaseRealization::F::Security::immo",
+        "UseCaseRealization::F::Security::locks",
+        "UseCaseRealization::F::Security::startFlow",
+        "UseCaseRealization::F::Security::unlockFlow"
+      ],
+      "fileId": "use_case_realization.sysml",
+      "isDefinition": true
+    },
+    "UseCaseRealization::F::Security::auth": {
+      "id": "UseCaseRealization::F::Security::auth",
+      "kind": "part",
+      "name": "auth",
+      "parentId": "UseCaseRealization::F::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin": {
+      "id": "UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin",
+      "kind": "action",
+      "name": "checkKeyInCabin",
+      "parentId": "UseCaseRealization::F::Security::auth",
+      "typeRef": "startFlow.checkKeyInCabin",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml",
+      "performTargetId": "UseCaseRealization::F::Security::startFlow::checkKeyInCabin"
+    },
+    "UseCaseRealization::F::Security::immo": {
+      "id": "UseCaseRealization::F::Security::immo",
+      "kind": "part",
+      "name": "immo",
+      "parentId": "UseCaseRealization::F::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer",
+        "UseCaseRealization::F::Security::immo::perform_startFlow_logStart"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer": {
+      "id": "UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer",
+      "kind": "action",
+      "name": "releaseImmobilizer",
+      "parentId": "UseCaseRealization::F::Security::immo",
+      "typeRef": "startFlow.releaseImmobilizer",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml",
+      "performTargetId": "UseCaseRealization::F::Security::startFlow::releaseImmobilizer"
+    },
+    "UseCaseRealization::F::Security::immo::perform_startFlow_logStart": {
+      "id": "UseCaseRealization::F::Security::immo::perform_startFlow_logStart",
+      "kind": "action",
+      "name": "logStart",
+      "parentId": "UseCaseRealization::F::Security::immo",
+      "typeRef": "startFlow.logStart",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml",
+      "performTargetId": "UseCaseRealization::F::Security::startFlow::logStart"
+    },
+    "UseCaseRealization::F::Security::locks": {
+      "id": "UseCaseRealization::F::Security::locks",
+      "kind": "part",
+      "name": "locks",
+      "parentId": "UseCaseRealization::F::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security::locks::perform_unlockFlow_release"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::locks::perform_unlockFlow_release": {
+      "id": "UseCaseRealization::F::Security::locks::perform_unlockFlow_release",
+      "kind": "action",
+      "name": "release",
+      "parentId": "UseCaseRealization::F::Security::locks",
+      "typeRef": "unlockFlow.release",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "perform"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml",
+      "performTargetId": "UseCaseRealization::F::Security::unlockFlow::release"
+    },
+    "UseCaseRealization::F::Security::startFlow": {
+      "id": "UseCaseRealization::F::Security::startFlow",
+      "kind": "action",
+      "name": "startFlow",
+      "parentId": "UseCaseRealization::F::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+        "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+        "UseCaseRealization::F::Security::startFlow::logStart",
+        "UseCaseRealization::F::Security::startFlow::start",
+        "UseCaseRealization::F::Security::startFlow::succ1",
+        "UseCaseRealization::F::Security::startFlow::succ2",
+        "UseCaseRealization::F::Security::startFlow::succ3",
+        "UseCaseRealization::F::Security::startFlow::done",
+        "UseCaseRealization::F::Security::startFlow::succ4"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::checkKeyInCabin": {
+      "id": "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+      "kind": "action",
+      "name": "checkKeyInCabin",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::releaseImmobilizer": {
+      "id": "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+      "kind": "action",
+      "name": "releaseImmobilizer",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::logStart": {
+      "id": "UseCaseRealization::F::Security::startFlow::logStart",
+      "kind": "action",
+      "name": "logStart",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::start": {
+      "id": "UseCaseRealization::F::Security::startFlow::start",
+      "kind": "action",
+      "name": "start",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": "start",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::succ1": {
+      "id": "UseCaseRealization::F::Security::startFlow::succ1",
+      "kind": "succession",
+      "name": "succ1",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::startFlow::start",
+      "targetId": "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::succ2": {
+      "id": "UseCaseRealization::F::Security::startFlow::succ2",
+      "kind": "succession",
+      "name": "succ2",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+      "targetId": "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::succ3": {
+      "id": "UseCaseRealization::F::Security::startFlow::succ3",
+      "kind": "succession",
+      "name": "succ3",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+      "targetId": "UseCaseRealization::F::Security::startFlow::logStart",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::done": {
+      "id": "UseCaseRealization::F::Security::startFlow::done",
+      "kind": "action",
+      "name": "done",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": "done",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::startFlow::succ4": {
+      "id": "UseCaseRealization::F::Security::startFlow::succ4",
+      "kind": "succession",
+      "name": "succ4",
+      "parentId": "UseCaseRealization::F::Security::startFlow",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::startFlow::logStart",
+      "targetId": "UseCaseRealization::F::Security::startFlow::done",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::unlockFlow": {
+      "id": "UseCaseRealization::F::Security::unlockFlow",
+      "kind": "action",
+      "name": "unlockFlow",
+      "parentId": "UseCaseRealization::F::Security",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::F::Security::unlockFlow::release"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::F::Security::unlockFlow::release": {
+      "id": "UseCaseRealization::F::Security::unlockFlow::release",
+      "kind": "action",
+      "name": "release",
+      "parentId": "UseCaseRealization::F::Security::unlockFlow",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::L": {
+      "id": "UseCaseRealization::L",
+      "kind": "package",
+      "name": "L",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [
+        "UseCaseRealization::L::vc",
+        "UseCaseRealization::L::bc"
+      ],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::L::vc": {
+      "id": "UseCaseRealization::L::vc",
+      "kind": "part",
+      "name": "vc",
+      "parentId": "UseCaseRealization::L",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::L::bc": {
+      "id": "UseCaseRealization::L::bc",
+      "kind": "part",
+      "name": "bc",
+      "parentId": "UseCaseRealization::L",
+      "typeRef": null,
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::alloc1": {
+      "id": "UseCaseRealization::alloc1",
+      "kind": "allocation",
+      "name": "alloc1",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::auth",
+      "targetId": "UseCaseRealization::L::vc",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::alloc2": {
+      "id": "UseCaseRealization::alloc2",
+      "kind": "allocation",
+      "name": "alloc2",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::immo",
+      "targetId": "UseCaseRealization::L::vc",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::alloc3": {
+      "id": "UseCaseRealization::alloc3",
+      "kind": "allocation",
+      "name": "alloc3",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::locks",
+      "targetId": "UseCaseRealization::L::bc",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::dep1": {
+      "id": "UseCaseRealization::dep1",
+      "kind": "dependency",
+      "name": "dep1",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+      "targetId": "UseCaseRealization::UC::Start::checkKey",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::dep2": {
+      "id": "UseCaseRealization::dep2",
+      "kind": "dependency",
+      "name": "dep2",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+      "targetId": "UseCaseRealization::UC::Start::showReady",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::dep3": {
+      "id": "UseCaseRealization::dep3",
+      "kind": "dependency",
+      "name": "dep3",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security::unlockFlow",
+      "targetId": "UseCaseRealization::UC::Unlock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::dep4": {
+      "id": "UseCaseRealization::dep4",
+      "kind": "dependency",
+      "name": "dep4",
+      "parentId": "UseCaseRealization",
+      "typeRef": null,
+      "sourceId": "UseCaseRealization::F::Security",
+      "targetId": "UseCaseRealization::UC::Lock",
+      "exposeRef": null,
+      "exposeRefs": [],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [
+        "refine"
+      ],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
+    "UseCaseRealization::UseCaseRealizationView": {
+      "id": "UseCaseRealization::UseCaseRealizationView",
+      "kind": "view",
+      "name": "UseCaseRealizationView",
+      "parentId": "UseCaseRealization",
+      "typeRef": "UseCaseView",
+      "sourceId": null,
+      "targetId": null,
+      "exposeRef": "UseCaseRealization::UC",
+      "exposeRefs": [
+        "UseCaseRealization::UC"
+      ],
+      "viewFilters": [],
+      "defaultValue": null,
+      "multiplicity": null,
+      "isReference": false,
+      "metadataKeywords": [],
+      "documentation": null,
+      "shortId": null,
+      "children": [],
+      "fileId": "use_case_realization.sysml"
+    },
     "UseCasesExample": {
       "id": "UseCasesExample",
       "kind": "package",
@@ -10261,6 +11512,396 @@
         "side": null,
         "offset": null
       },
+      "UseCaseRealization": {
+        "artifactId": "UseCaseRealization",
+        "x": 80.0,
+        "y": 7100.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC": {
+        "artifactId": "UseCaseRealization::UC",
+        "x": 360.0,
+        "y": 7100.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start": {
+        "artifactId": "UseCaseRealization::UC::Start",
+        "x": 640.0,
+        "y": 7100.0,
+        "width": 168.0,
+        "height": 72.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::Driver": {
+        "artifactId": "UseCaseRealization::UC::Start::Driver",
+        "x": 80.0,
+        "y": 7280.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::Driver::perform_pressStart": {
+        "artifactId": "UseCaseRealization::UC::Start::Driver::perform_pressStart",
+        "x": 24280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::pressStart": {
+        "artifactId": "UseCaseRealization::UC::Start::pressStart",
+        "x": 24480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::checkKey": {
+        "artifactId": "UseCaseRealization::UC::Start::checkKey",
+        "x": 24680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::showReady": {
+        "artifactId": "UseCaseRealization::UC::Start::showReady",
+        "x": 24880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::askForBrake": {
+        "artifactId": "UseCaseRealization::UC::Start::askForBrake",
+        "x": 25080.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::start": {
+        "artifactId": "UseCaseRealization::UC::Start::start",
+        "x": 25280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Start::done": {
+        "artifactId": "UseCaseRealization::UC::Start::done",
+        "x": 25480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Unlock": {
+        "artifactId": "UseCaseRealization::UC::Unlock",
+        "x": 640.0,
+        "y": 7640.0,
+        "width": 168.0,
+        "height": 72.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Unlock::Driver": {
+        "artifactId": "UseCaseRealization::UC::Unlock::Driver",
+        "x": 80.0,
+        "y": 7820.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock": {
+        "artifactId": "UseCaseRealization::UC::Unlock::Driver::perform_pressUnlock",
+        "x": 26080.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Unlock::pressUnlock": {
+        "artifactId": "UseCaseRealization::UC::Unlock::pressUnlock",
+        "x": 26280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Unlock::unlockDoors": {
+        "artifactId": "UseCaseRealization::UC::Unlock::unlockDoors",
+        "x": 26480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Lock": {
+        "artifactId": "UseCaseRealization::UC::Lock",
+        "x": 360.0,
+        "y": 8000.0,
+        "width": 168.0,
+        "height": 72.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Lock::lockDoors": {
+        "artifactId": "UseCaseRealization::UC::Lock::lockDoors",
+        "x": 26880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::UC::Drive": {
+        "artifactId": "UseCaseRealization::UC::Drive",
+        "x": 80.0,
+        "y": 8180.0,
+        "width": 168.0,
+        "height": 72.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F": {
+        "artifactId": "UseCaseRealization::F",
+        "x": 360.0,
+        "y": 8180.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security": {
+        "artifactId": "UseCaseRealization::F::Security",
+        "x": 640.0,
+        "y": 8180.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::auth": {
+        "artifactId": "UseCaseRealization::F::Security::auth",
+        "x": 80.0,
+        "y": 8360.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin": {
+        "artifactId": "UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin",
+        "x": 27880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::immo": {
+        "artifactId": "UseCaseRealization::F::Security::immo",
+        "x": 640.0,
+        "y": 8360.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer": {
+        "artifactId": "UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer",
+        "x": 28280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::immo::perform_startFlow_logStart": {
+        "artifactId": "UseCaseRealization::F::Security::immo::perform_startFlow_logStart",
+        "x": 28480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::locks": {
+        "artifactId": "UseCaseRealization::F::Security::locks",
+        "x": 640.0,
+        "y": 8540.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::locks::perform_unlockFlow_release": {
+        "artifactId": "UseCaseRealization::F::Security::locks::perform_unlockFlow_release",
+        "x": 28880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::startFlow": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow",
+        "x": 29080.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::startFlow::checkKeyInCabin": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::checkKeyInCabin",
+        "x": 29280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::startFlow::releaseImmobilizer": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::releaseImmobilizer",
+        "x": 29480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::startFlow::logStart": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::logStart",
+        "x": 29680.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::startFlow::start": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::start",
+        "x": 29880.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::startFlow::done": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::done",
+        "x": 30080.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::unlockFlow": {
+        "artifactId": "UseCaseRealization::F::Security::unlockFlow",
+        "x": 30280.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::F::Security::unlockFlow::release": {
+        "artifactId": "UseCaseRealization::F::Security::unlockFlow::release",
+        "x": 30480.0,
+        "y": 120.0,
+        "width": 140.0,
+        "height": 56.0,
+        "symbolRef": "default-action",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::L": {
+        "artifactId": "UseCaseRealization::L",
+        "x": 80.0,
+        "y": 9260.0,
+        "width": 320.0,
+        "height": 220.0,
+        "symbolRef": "default-package",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::L::vc": {
+        "artifactId": "UseCaseRealization::L::vc",
+        "x": 360.0,
+        "y": 9260.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
+      "UseCaseRealization::L::bc": {
+        "artifactId": "UseCaseRealization::L::bc",
+        "x": 640.0,
+        "y": 9260.0,
+        "width": 200.0,
+        "height": 120.0,
+        "symbolRef": "default-part",
+        "side": null,
+        "offset": null
+      },
       "UseCasesExample": {
         "artifactId": "UseCasesExample",
         "x": 640.0,
@@ -12165,6 +13806,249 @@
           "y": 0.0
         }
       },
+      "UseCaseRealization::UC::Start::succ1": {
+        "artifactId": "UseCaseRealization::UC::Start::succ1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::UC::Start::succ2": {
+        "artifactId": "UseCaseRealization::UC::Start::succ2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::UC::Start::succ3": {
+        "artifactId": "UseCaseRealization::UC::Start::succ3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::UC::Start::succ4": {
+        "artifactId": "UseCaseRealization::UC::Start::succ4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::UC::Drive::include_Start": {
+        "artifactId": "UseCaseRealization::UC::Drive::include_Start",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCaseRealization::UC::Drive::include_Unlock": {
+        "artifactId": "UseCaseRealization::UC::Drive::include_Unlock",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCaseRealization::F::Security::startFlow::succ1": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::succ1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::F::Security::startFlow::succ2": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::succ2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::F::Security::startFlow::succ3": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::succ3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::F::Security::startFlow::succ4": {
+        "artifactId": "UseCaseRealization::F::Security::startFlow::succ4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      "UseCaseRealization::alloc1": {
+        "artifactId": "UseCaseRealization::alloc1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "UseCaseRealization::alloc2": {
+        "artifactId": "UseCaseRealization::alloc2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "UseCaseRealization::alloc3": {
+        "artifactId": "UseCaseRealization::alloc3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "arrow"
+          }
+        }
+      },
+      "UseCaseRealization::dep1": {
+        "artifactId": "UseCaseRealization::dep1",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCaseRealization::dep2": {
+        "artifactId": "UseCaseRealization::dep2",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCaseRealization::dep3": {
+        "artifactId": "UseCaseRealization::dep3",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
+      "UseCaseRealization::dep4": {
+        "artifactId": "UseCaseRealization::dep4",
+        "routing": "direct",
+        "waypoints": [],
+        "labelOffset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "style": {
+          "light": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          },
+          "dark": {
+            "lineStyle": "dashed",
+            "markerEnd": "openArrow"
+          }
+        }
+      },
       "UseCasesExample::Login::include_Authenticate": {
         "artifactId": "UseCasesExample::Login::include_Authenticate",
         "routing": "direct",
@@ -12531,6 +14415,13 @@
       "rootArtifactId": "TreeExample::Vehicle",
       "parentViewId": "TreeExample::PackageTree",
       "typeRef": "TreeView"
+    },
+    {
+      "id": "UseCaseRealization::UseCaseRealizationView",
+      "name": "UseCaseRealizationView",
+      "rootArtifactId": "UseCaseRealization::UC",
+      "parentViewId": null,
+      "typeRef": "UseCaseView"
     },
     {
       "id": "UseCasesExample::UseCasesStructureView",

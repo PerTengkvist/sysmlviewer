@@ -5,11 +5,13 @@ import {
   type ExampleProject,
   type PortSide,
   type Project,
+  type Realization,
   type RoutingType,
   type ViewPayload,
   type VisualizationEdge,
   type VisualizationNode,
 } from './api'
+import { createRealizationLoader } from './features/details/realizationLoader'
 import { DiagramCanvas, type DiagramCanvasApi } from './features/diagram/DiagramCanvas'
 import { EventsDrawer } from './features/events/EventsDrawer'
 import { useEventLog } from './features/events/useEventLog'
@@ -183,6 +185,7 @@ export default function App() {
     seq: number
   } | null>(null)
   const [docPaths, setDocPaths] = useState<string[]>([])
+  const [realization, setRealization] = useState<Realization | null>(null)
   const canvasApiRef = useRef<DiagramCanvasApi | null>(null)
   const pendingWrites = useRef(createPendingWrites()).current
   const eventLog = useEventLog(project?.id ?? null)
@@ -403,6 +406,15 @@ export default function App() {
       cancelled = true
     }
   }, [project?.id, project?.updatedAt])
+
+  const realizationLoader = useMemo(
+    () => createRealizationLoader(api.getRealization, setRealization),
+    [],
+  )
+  useEffect(() => {
+    realizationLoader.update(project)
+  }, [realizationLoader, project?.id, project?.semantic]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => realizationLoader.dispose(), [realizationLoader])
 
   const updateHorizontalLayout = useCallback((sizes: [number, number, number]) => {
     setSettings((prev) => {
@@ -1512,6 +1524,7 @@ export default function App() {
     },
     onOpenRelated: openRelatedDetails,
     onOpenDependencyTree: openDependencyTree,
+    realization,
     onLocateInModelView: (artifactId) => {
       setLeftTab('views')
       setSelectedId(artifactId)
