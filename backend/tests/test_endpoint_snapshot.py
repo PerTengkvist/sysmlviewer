@@ -301,6 +301,7 @@ _REALIZATION_ADDED = [
     "UseCaseRealization::L",
     "UseCaseRealization::L::bc",
     "UseCaseRealization::L::vc",
+    "UseCaseRealization::RealizationMatrix",
     "UseCaseRealization::UC",
     "UseCaseRealization::UC::Drive",
     "UseCaseRealization::UC::Drive::include_Start",

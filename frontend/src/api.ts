@@ -40,6 +40,7 @@ export type DiagramMode =
   | 'allocation'
   | 'requirementTable'
   | 'useCase'
+  | 'realizationMatrix'
 
 export interface SemanticElement {
   id: string
@@ -341,6 +342,12 @@ export type SequenceLayout = {
   widths?: Record<string, number>
 }
 
+/** Per-view realization matrix choice: what the rows and the columns list. */
+export type RealizationMatrixLayout = {
+  rows?: 'useCases' | 'steps'
+  columns?: 'nodes' | 'parts'
+}
+
 export type AutoLayoutEdgeKinds = {
   connections: boolean
   bindings: boolean
@@ -374,6 +381,12 @@ export interface ViewPayload {
   autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
   /** Sequence diagrams: saved lifeline order / header widths; null when never set. */
   sequenceLayout?: SequenceLayout | null
+  /** Realization matrix: saved rows / columns choice; null when never set. */
+  realizationMatrix?: RealizationMatrixLayout | null
+  /** realizationMatrix only: the realization of the exposed use cases. */
+  realization?: Realization
+  /** realizationMatrix only: every function node of the model, with its owning function. */
+  matrixColumns?: { nodes: MatrixNodeColumn[] }
   modeError?: string | null
   /**
    * actionFlow only: the parts that perform each step (`perform flow.step;`
@@ -517,12 +530,21 @@ export interface UseCaseRealization {
   origin: Record<string, string>
   /** Function node -> the functions it is realized through; empty for a node that refines the use case itself. */
   nodeFunctions: Record<string, string[]>
+  /**
+   * Function node -> function, for a function that refines the use case while none of its
+   * nodes serves it itself: the function stands for all its nodes.
+   */
+  functionNodes: Record<string, string>
+  /** Logical part -> function: the parts of those nodes that the use case does not reach otherwise. */
+  functionParts: Record<string, string>
 }
 
 export interface RealizationFinding {
   code: string
   elementId: string
   message: string
+  /** The use case the finding is about; null for a finding about a link or a function step. */
+  useCaseId: string | null
 }
 
 /** `GET /projects/{id}/realization`. */
@@ -542,6 +564,13 @@ export interface Realization {
   useCases: Record<string, UseCaseRealization>
   inScope: string[]
   findings: RealizationFinding[]
+}
+
+/** A function node column of the realization matrix. */
+export interface MatrixNodeColumn {
+  id: string
+  /** The function part that owns the node; null when none does. */
+  functionId: string | null
 }
 
 const BASE = '/api'
@@ -676,6 +705,8 @@ export const api = {
       autoLayoutEdgeKinds?: AutoLayoutEdgeKinds | null
       /** Sequence lifeline order / widths; null clears. */
       sequenceLayout?: SequenceLayout | null
+      /** Realization matrix rows / columns choice; null clears. */
+      realizationMatrix?: RealizationMatrixLayout | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {

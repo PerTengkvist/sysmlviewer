@@ -157,3 +157,95 @@ def test_deterministic():
     assert a == b
     assert list(a.uc_nodes[START]) == [AUTH, IMMO]
     assert [l.refine_id for l in a.links] == [f"{P}::dep{i}" for i in (1, 2, 3, 4)]
+
+
+def test_function_nodes_in_model_order_with_their_function():
+    from domain.realization import FunctionNode, function_nodes
+
+    assert function_nodes(probe()) == [
+        FunctionNode(AUTH, SEC),
+        FunctionNode(IMMO, SEC),
+        FunctionNode(LOCKS, SEC),
+    ]
+
+
+def test_function_nodes_skip_parts_that_only_allocate():
+    from domain.realization import function_nodes
+
+    sem = probe("part lg; part ph; allocate lg to ph;")
+    assert [n.id for n in function_nodes(sem)] == [AUTH, IMMO, LOCKS]
+
+
+def test_explicit_function_link_projects_onto_its_nodes():
+    r = derive_realization(probe())
+    assert r.uc_function_nodes[LOCK] == {AUTH: SEC, IMMO: SEC, LOCKS: SEC}
+    # Nothing else changes: the nodes are not realizers of Lock.
+    assert r.uc_nodes.get(LOCK, {}) == {}
+    assert r.uc_parts.get(LOCK, {}) == {}
+    assert START not in r.uc_function_nodes and UNLOCK not in r.uc_function_nodes
+
+
+def test_no_projection_when_a_node_of_the_function_serves_the_use_case_itself():
+    # The electric car form: the function and its nodes both refine the use case.
+    both = probe(f"#refine dependency from {AUTH} to {LOCK};")
+    r = derive_realization(both)
+    assert LOCK not in r.uc_function_nodes
+    steps = derive_realization(probe())
+    # A step-level link of one node of the function also stops it (Start has step links).
+    assert START not in steps.uc_function_nodes
+    explicit_and_steps = derive_realization(probe(f"#refine dependency from {SEC} to {START};"))
+    assert START not in explicit_and_steps.uc_function_nodes
+
+
+def test_projection_through_include_is_inherited():
+    r = derive_realization(probe("use case def Big { include use case UC::Lock; }"))
+    big = f"{P}::Big"
+    assert r.uc_function_nodes[big] == {AUTH: SEC, IMMO: SEC, LOCKS: SEC}
+    assert SEC in r.via_include[big]
+
+
+def test_electric_car_projects_no_function_onto_nodes():
+    """There the function and its nodes both refine the use case: no cell is projected."""
+    from adapters.api.static_paths import resolve_repo_root
+
+    root = resolve_repo_root() / "examples" / "electric_car"
+    files = [
+        SysmlFile(
+            id=p.relative_to(root).as_posix(), name=p.name,
+            content=p.read_text(encoding="utf-8"), path=p.relative_to(root).as_posix(),
+        )
+        for p in sorted(root.rglob("*.sysml"))
+    ]
+    r = derive_realization(SubsetSysmlParser().parse_project(files).elements)
+    assert r.uc_function_nodes == {}
+
+
+def test_projection_reaches_the_parts_of_the_nodes():
+    r = derive_realization(probe())
+    assert r.uc_function_parts[LOCK] == {VC: SEC, BC: SEC}
+    assert START not in r.uc_function_parts  # Start's parts are realized directly
+
+
+def test_composite_inherits_the_projection_of_an_included_use_case():
+    text = FIXTURE.read_text(encoding="utf-8").replace("include use case Unlock;", "include use case Lock;")
+    r = derive_realization(parse(text))
+    drive = DRIVE
+    # auth and immo serve Drive through Start already; only locks is projected, via include.
+    assert r.uc_function_nodes[drive] == {LOCKS: SEC}
+    assert r.uc_function_parts[drive] == {BC: SEC}
+    assert SEC in r.via_include[drive]
+    assert AUTH not in r.uc_function_nodes[drive]
+
+
+def test_findings_name_their_use_case():
+    text = FIXTURE.read_text(encoding="utf-8").rstrip().removesuffix("}") + (
+        "package G { part def Gf { part g1 { perform gflow.a; } action gflow { action a; } } }\n"
+        "#refine dependency from F::Security::unlockFlow::release to UC::Unlock::unlockDoors;\n"
+        "#refine dependency from G::Gf to UC::Start;\n"
+        "#refine dependency from G::Gf to UC::Unlock;\n}\n"
+    )
+    r = derive_realization(parse(text))
+    mine = {(f.code, f.use_case_id) for f in r.findings if f.code == "refine-without-step"}
+    assert mine == {("refine-without-step", START), ("refine-without-step", UNLOCK)}
+    unrealized = [f for f in r.findings if f.code == "unrealized-system-step"]
+    assert unrealized and all(f.use_case_id in (START, UNLOCK) for f in unrealized)

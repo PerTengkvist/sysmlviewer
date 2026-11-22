@@ -35,6 +35,7 @@ import type {
   RoutingType,
   SemanticElement,
   SequenceLayout,
+  RealizationMatrixLayout,
   ViewPayload,
   ViewSnapshot,
   VisualizationEdge,
@@ -62,6 +63,7 @@ import { applyRelationEndDrag } from './applyRelationEndDrag'
 import { selectionIdForPaneClick } from './canvasSelection'
 import { edgeStackZIndex } from './edgeEditZIndex'
 import { applyViewFilters } from './viewFilters'
+import { downloadText } from './downloadText'
 import { LayoutWizardDialog } from './LayoutWizardDialog'
 import type { LayoutArtefact } from './layoutWizard'
 import { resolveAnchors, type BoundaryAnchor } from './boundaryAnchors'
@@ -133,6 +135,12 @@ import { buildTreeGraph } from './modes/tree/buildTreeGraph'
 import { TreeDiagramNode } from './modes/tree/TreeNode'
 import { buildAllocationGraph } from './modes/allocation/buildAllocationGraph'
 import { RequirementNode } from './modes/requirements/RequirementNode'
+import { buildRealizationMatrix } from './modes/realization/buildRealizationMatrix'
+import { RealizationMatrix } from './modes/realization/RealizationMatrix'
+import {
+  matrixFileName,
+  matrixOptions,
+} from './modes/realization/matrixSelection'
 import { buildRequirementRows } from './modes/requirements/buildRequirementRows'
 import { RequirementTable } from './modes/requirements/RequirementTable'
 import { ActorNode } from './modes/useCase/ActorNode'
@@ -334,6 +342,7 @@ export const DIAGRAM_MODE_LABELS: Record<DiagramMode, string> = {
   allocation: 'Allocation',
   requirementTable: 'Requirements table',
   useCase: 'Use case',
+  realizationMatrix: 'Realization matrix',
 }
 
 function routingToConnectionLine(routing: RoutingType): ConnectionLineType {
@@ -596,6 +605,8 @@ type Props = {
   onAutoLayoutEdgeKindsChange?: (kinds: LayoutEdgeKinds) => void
   /** Sequence diagrams: save the lifeline order / widths with the view (null resets). */
   onSequenceLayoutChange?: (layout: SequenceLayout | null) => void
+  /** Realization matrix: the rows / columns choice changed (saved with the view). */
+  onRealizationMatrixChange?: (layout: RealizationMatrixLayout) => void
   onPortMoved: (portId: string, side: PortSide, offset: number) => void
   /** Batch port placement persist (port defaults). Prefer over onNodesMoved for ports. */
   onPortsMoved?: (
@@ -663,6 +674,7 @@ export function DiagramCanvas({
   onLayoutScopesChange,
   onAutoLayoutEdgeKindsChange,
   onSequenceLayoutChange,
+  onRealizationMatrixChange,
   onPortMoved,
   onPortsMoved,
   onRelationEndMoved,
@@ -1079,6 +1091,7 @@ export function DiagramCanvas({
         )
         break
       case 'requirementTable':
+      case 'realizationMatrix':
         built = { nodes: [], edges: [] }
         break
       default:
@@ -2850,6 +2863,36 @@ export function DiagramCanvas({
               ? undefined
               : (id) => onNodeDoubleClick(id, 'requirement')
           }
+        />
+      </div>
+    )
+  }
+
+  if (mode === 'realizationMatrix' && view.realization && view.matrixColumns) {
+    const matrix = buildRealizationMatrix(
+      {
+        semantic: view.semantic,
+        realization: view.realization,
+        matrixColumns: view.matrixColumns,
+      },
+      matrixOptions(view.realizationMatrix),
+    )
+    return (
+      <div className="diagram-canvas requirement-table-canvas">
+        {!printMode && (
+          <div className="diagram-canvas-header">
+            <strong className="diagram-view-name">{view.view.name}</strong>
+            <span className="diagram-mode-badge">
+              {DIAGRAM_MODE_LABELS.realizationMatrix}
+            </span>
+          </div>
+        )}
+        <RealizationMatrix
+          matrix={matrix}
+          selectedIds={selectedIds}
+          onSelect={onSelectArtifact}
+          onOptionsChange={(layout) => onRealizationMatrixChange?.(layout)}
+          onExport={(text) => downloadText(matrixFileName(view.view.name), text)}
         />
       </div>
     )

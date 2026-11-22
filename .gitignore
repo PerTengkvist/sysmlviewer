@@ -23,6 +23,7 @@ running-session.json
 frontend/e2e/*
 !frontend/e2e/traceability.spec.ts
 !frontend/e2e/realization_details.spec.ts
+!frontend/e2e/realization_matrix.spec.ts
 !frontend/e2e/fmea_report.spec.ts
 !frontend/e2e/save_verification.spec.ts
 !frontend/e2e/view_filter.spec.ts

@@ -50,4 +50,9 @@ package UseCaseRealization {
   view UseCaseRealizationView : UseCaseView {
     expose UseCaseRealization::UC;
   }
+
+  // A GridView that exposes use cases is the traceability matrix.
+  view RealizationMatrix : GridView {
+    expose UseCaseRealization::UC;
+  }
 }

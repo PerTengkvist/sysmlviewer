@@ -3131,6 +3131,109 @@ button.linkish {
   cursor: pointer;
 }
 
+/* Realization matrix */
+.realization-matrix-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.5rem 1rem 1rem;
+}
+.realization-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.realization-controls button.active {
+  background: color-mix(in srgb, var(--accent, #2563eb) 18%, transparent);
+}
+.realization-controls-gap {
+  width: 0.75rem;
+}
+.realization-export {
+  margin-left: auto;
+}
+.realization-matrix {
+  --realization-head-height: 28px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+.realization-matrix th,
+.realization-matrix td {
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 0.3rem 0.5rem;
+  height: var(--realization-head-height);
+  box-sizing: border-box;
+  white-space: nowrap;
+  background: var(--panel);
+}
+.realization-matrix thead tr:first-child th {
+  border-top: 1px solid var(--panel-border);
+}
+.realization-matrix th:first-child,
+.realization-matrix td:first-child {
+  border-left: 1px solid var(--panel-border);
+}
+.realization-matrix th {
+  text-align: left;
+  font-weight: 600;
+}
+.realization-matrix .realization-sticky-row {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.realization-matrix thead tr:nth-child(2) .realization-sticky-row {
+  top: var(--realization-head-height);
+}
+.realization-matrix .realization-sticky-column {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.realization-matrix thead .realization-sticky-column {
+  z-index: 3;
+}
+.realization-matrix .realization-group {
+  text-align: center;
+}
+.realization-matrix .realization-cell,
+.realization-matrix .realization-coverage {
+  text-align: center;
+}
+.realization-matrix .realization-cell.linked {
+  cursor: pointer;
+}
+.realization-matrix .realization-cell.via-include {
+  font-style: italic;
+  opacity: 0.7;
+}
+.realization-matrix .realization-gap {
+  color: var(--danger, #b91c1c);
+  font-weight: 600;
+}
+.realization-matrix th.selected,
+.realization-matrix tr.selected th,
+.realization-matrix tr.selected td {
+  background: color-mix(in srgb, var(--accent, #2563eb) 18%, var(--panel));
+}
+.realization-findings {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 13px;
+  color: var(--danger, #b91c1c);
+}
+.realization-findings li {
+  cursor: pointer;
+}
+.realization-matrix th[data-column-id],
+.realization-matrix tbody th {
+  cursor: pointer;
+}
+
 /* Layout Rules: layered layout section */
 .layered-layout-fieldset {
   margin-bottom: 0.75rem;
