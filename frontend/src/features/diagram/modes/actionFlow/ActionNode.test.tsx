@@ -103,3 +103,33 @@ describe('ActionNode connection handles', () => {
     }
   })
 })
+
+describe('ActionNode in a use case realization', () => {
+  it('draws an unrealized step with a warning and a red frame class', () => {
+    const html = render({ label: 'Ask For Brake', unrealized: true })
+    expect(html).toContain('action-node unrealized')
+    expect(html).toContain('⚠')
+    expect(html).toContain('Ask For Brake')
+  })
+
+  it('draws a coarse step dashed, and a plain step with neither mark', () => {
+    expect(render({ coarse: true })).toContain('action-node coarse')
+    const plain = render({})
+    expect(plain).not.toContain('unrealized')
+    expect(plain).not.toContain('coarse')
+    expect(plain).not.toContain('⚠')
+    expect(plain).not.toContain('action-badge')
+  })
+
+  it('shows the +n badge, and a call node without the action stereotype', () => {
+    expect(render({ badge: '+2' })).toContain('<span class="action-badge">+2</span>')
+    const call = render({ isCall: true, label: '▸ Start' })
+    expect(call).toContain('action-node call')
+    expect(call).not.toContain('«action»')
+    expect(call).toContain('▸ Start')
+  })
+
+  it('tells the lane it sits in', () => {
+    expect(render({ laneId: 'lane-a' })).toContain('data-lane-id="lane-a"')
+  })
+})

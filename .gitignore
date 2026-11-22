@@ -25,6 +25,7 @@ frontend/e2e/*
 !frontend/e2e/realization_details.spec.ts
 !frontend/e2e/realization_matrix.spec.ts
 !frontend/e2e/realization_chain.spec.ts
+!frontend/e2e/realization_lanes.spec.ts
 !frontend/e2e/fmea_report.spec.ts
 !frontend/e2e/save_verification.spec.ts
 !frontend/e2e/view_filter.spec.ts

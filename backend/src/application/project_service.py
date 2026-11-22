@@ -16,6 +16,7 @@ from domain.dependency_tree import build_dependency_tree
 from domain.realization import Realization, derive_realization
 from domain.realization_chain import Chain, build_chain, is_chain_view
 from domain.realization_labels import unambiguous_labels
+from domain.use_case_realization_view import RealizationFlow, build_realization_flow
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -100,7 +101,11 @@ def _split_use_edge(relation_id: str) -> tuple[str, str] | None:
 
 
 # Diagram modes that draw no canvas, so there is no geometry to save or compare.
-_MODES_WITHOUT_GEOMETRY = frozenset({"requirementTable", "realizationMatrix"})
+# The swimlane activity has no node geometry either: its nodes are placed by the client and
+# only the lane order and widths are saved (useCaseRealizationLayout).
+_MODES_WITHOUT_GEOMETRY = frozenset(
+    {"requirementTable", "realizationMatrix", "useCaseRealization"}
+)
 _MAX_NAMED_ELEMENTS = 10
 
 
@@ -1660,6 +1665,7 @@ class ProjectService:
             apply_auto_layout_edge_kinds,
             apply_realization_matrix,
             apply_sequence_layout,
+            apply_use_case_realization_layout,
             apply_layout_scopes,
             apply_legacy_layout_rules,
             apply_view_filters,
@@ -1679,6 +1685,7 @@ class ProjectService:
         edge_kinds_patch = "autoLayoutEdgeKinds" in patch
         sequence_layout_patch = "sequenceLayout" in patch
         matrix_patch = "realizationMatrix" in patch
+        realization_layout_patch = "useCaseRealizationLayout" in patch
         # True when the only disk write needed is views/<name>.json (already done).
         layout_only = False
 
@@ -1754,6 +1761,16 @@ class ProjectService:
             if matrix_patch:
                 working = apply_realization_matrix(
                     working, view_id, patch.get("realizationMatrix")
+                )
+                if notation != "arcadia":
+                    project.view_layouts = working
+
+            if realization_layout_patch:
+                working = apply_use_case_realization_layout(
+                    working,
+                    view_id,
+                    patch.get("useCaseRealizationLayout"),
+                    set(project.semantic),
                 )
                 if notation != "arcadia":
                     project.view_layouts = working
@@ -1835,6 +1852,7 @@ class ProjectService:
                 or edge_kinds_patch
                 or sequence_layout_patch
                 or matrix_patch
+                or realization_layout_patch
             ):
                 layout = working.by_view.get(view_id)
                 if layout is not None:
@@ -2125,6 +2143,10 @@ class ProjectService:
             exposed_kinds = {
                 project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
+        if view.type_ref == "ActionFlowView":
+            # By what the view exposes, whichever comes first: use cases (and no action) draw
+            # the swimlane activity of a use case.
+            exposed_kinds = {r.kind for r in expose_roots}
         chain_view = False
         realization: Realization | None = None  # derived once, for the mode and the chain
         if view.type_ref == "AllocationView":
@@ -2168,6 +2190,16 @@ class ProjectService:
             diagram_mode = "structure"
         mode_error: str | None = None
         expected = expected_root_kinds(diagram_mode)
+        flow_roots = [r for r in expose_roots if r.kind == ArtifactKind.USE_CASE]
+        if diagram_mode == "useCaseRealization":
+            # One use case per view; the other exposes (its actor, say) are only along for the
+            # ride. Counted by use cases, not by exposes.
+            expected = None
+            if len(flow_roots) != 1:
+                mode_error = (
+                    f"{view.type_ref} draws the activity of one use case; "
+                    f"this view exposes {len(flow_roots)}. Use one view per use case"
+                )
         if expected is not None and root.kind not in expected:
             mode_error = (
                 f"{view.type_ref or diagram_mode} requires expose of kind "
@@ -2187,6 +2219,7 @@ class ProjectService:
 
         artifact_ids: set[str] = set()
         chain: Chain | None = None
+        realization_flow: RealizationFlow | None = None
         lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
@@ -2240,6 +2273,11 @@ class ProjectService:
                     }:
                         extra.add(cid)
             artifact_ids |= extra
+        elif diagram_mode == "useCaseRealization" and mode_error is None:
+            realization_flow = build_realization_flow(
+                project.semantic, derive_realization(project.semantic), flow_roots[0].id, project.views
+            )
+            artifact_ids |= set(realization_flow.ids)
         elif diagram_mode == "realizationChain":
             chain = build_chain(
                 project.semantic,
@@ -2428,7 +2466,9 @@ class ProjectService:
                 pending_local.append(aid)
                 continue
             resolved = resolve_view_node(global_node, overlay)
-            if diagram_mode == "realizationChain" and not overlay_has_xy(overlay):
+            if diagram_mode == "useCaseRealization" or (
+                diagram_mode == "realizationChain" and not overlay_has_xy(overlay)
+            ):
                 # Only a position the view saved counts; the client lays the rest out.
                 for key in ("x", "y", "width", "height"):
                     resolved.pop(key, None)
@@ -2611,6 +2651,20 @@ class ProjectService:
             ]
             result["chainRoles"] = {i: chain.roles[i] for i in shown}
             result["chainLabels"] = unambiguous_labels(project.semantic, shown)
+        if realization_flow is not None:
+            from domain.view_layouts import prune_use_case_realization_layout
+
+            result["useCaseRealizationLayout"] = prune_use_case_realization_layout(
+                layout_for_view.to_dict().get("useCaseRealizationLayout")
+                if layout_for_view
+                else None,
+                set(project.semantic),
+            )
+            # Only what the view shows, after its filters.
+            shown_flow = realization_flow.restricted_to(artifact_ids)
+            result["flowRealization"] = shown_flow.realization
+            result["laneTargets"] = shown_flow.lane_targets
+            result["realizationLabels"] = shown_flow.labels
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

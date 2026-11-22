@@ -110,6 +110,8 @@ def layout_document(
         doc["sequenceLayout"] = layout.to_dict()["sequenceLayout"]
     if layout.realization_matrix is not None:
         doc["realizationMatrix"] = dict(layout.realization_matrix)
+    if layout.use_case_realization_layout is not None:
+        doc["useCaseRealizationLayout"] = layout.to_dict()["useCaseRealizationLayout"]
     return doc
 
 
@@ -291,6 +293,7 @@ def read_all(
                 "autoLayoutEdgeKinds": doc.get("autoLayoutEdgeKinds"),
                 "sequenceLayout": doc.get("sequenceLayout"),
                 "realizationMatrix": doc.get("realizationMatrix"),
+                "useCaseRealizationLayout": doc.get("useCaseRealizationLayout"),
             }
         )
     return ViewLayouts(by_view=by_view)

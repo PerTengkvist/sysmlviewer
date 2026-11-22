@@ -42,6 +42,7 @@ export type DiagramMode =
   | 'useCase'
   | 'realizationMatrix'
   | 'realizationChain'
+  | 'useCaseRealization'
 
 export interface SemanticElement {
   id: string
@@ -380,6 +381,57 @@ export interface MatrixLabels {
   functions: Record<string, string>
 }
 
+/** What the lanes of a useCaseRealization view stand for. */
+export type RealizationLaneMode = 'blackbox' | 'whitebox' | 'logical'
+
+/**
+ * Per-view layout of a useCaseRealization view: only what the user changed. The nodes are
+ * placed by the client; the lane order (per mode) and widths are all that is saved.
+ */
+export type UseCaseRealizationLayout = {
+  lanes?: RealizationLaneMode
+  /** Lane ids, left to right, per mode. */
+  order?: Partial<Record<RealizationLaneMode, string[]>>
+  /** Width per lane id, in px. */
+  widths?: Record<string, number>
+}
+
+/** The realization of the use case of a useCaseRealization view (read, never derived). */
+export interface UseCaseFlowRealization {
+  useCaseId: string
+  /** The use case's `subject` part, when it has one. */
+  subject: string | null
+  /** The use case has step links (opt-in), so an unrealized step is a finding. */
+  inScope: boolean
+  /** Actors that perform steps, in declaration order. */
+  actors: string[]
+  /** Step -> the actor that performs it. */
+  actorSteps: Record<string, string>
+  /** Steps no actor performs, in declaration order. */
+  systemSteps: string[]
+  unrealizedSteps: string[]
+  /** System step -> the flows or function steps that realize it coarsely. */
+  coarseSteps: Record<string, string[]>
+  /** System step -> the function steps that realize it. */
+  stepRealizers: Record<string, string[]>
+  /** Function step | flow -> the function nodes that perform it. */
+  realizerNodes: Record<string, string[]>
+  /** Function step | flow -> the function that owns its flow. */
+  realizerFunctions: Record<string, string>
+  /** Function node -> the functions it is realized through. */
+  nodeFunctions: Record<string, string[]>
+  /** Function node -> its function, for the nodes a function that refines the use case as a whole stands for. */
+  functionNodes: Record<string, string>
+  /** Logical part -> function, for the parts of those nodes that the use case reaches no other way. */
+  functionParts: Record<string, string>
+  /** Function node -> precision, for the nodes a `#refine` from the node itself gives the use case, no step reaching them. */
+  explicitNodes: Record<string, RealizationPrecision>
+  /** Logical part -> precision, for the parts the use case reaches without a step of its own. */
+  explicitParts: Record<string, RealizationPrecision>
+  /** `perform X;` and `include use case X;` steps of a composite use case, in order. `viewId`: the view to open for the call (its activity view first), if the use case has one. */
+  calls: { id: string; calledUseCaseId: string; viewId: string | null }[]
+}
+
 export interface ViewPayload {
   view: ViewDef
   /**
@@ -413,6 +465,14 @@ export interface ViewPayload {
   matrixColumns?: { nodes: MatrixNodeColumn[] }
   /** realizationMatrix only: unambiguous labels of rows, node and part columns and functions. */
   matrixLabels?: MatrixLabels
+  /** useCaseRealization only: the use case's realization, as derived by the backend. */
+  flowRealization?: UseCaseFlowRealization
+  /** useCaseRealization only: function node -> the logical parts it is allocated to. */
+  laneTargets?: Record<string, string[]>
+  /** useCaseRealization only: unambiguous labels of actors, nodes, parts, functions and steps. */
+  realizationLabels?: Record<string, string>
+  /** useCaseRealization only: saved lane mode, order and widths; null when never set. */
+  useCaseRealizationLayout?: UseCaseRealizationLayout | null
   modeError?: string | null
   /**
    * actionFlow only: the parts that perform each step (`perform flow.step;`
@@ -739,6 +799,8 @@ export const api = {
       sequenceLayout?: SequenceLayout | null
       /** Realization matrix rows / columns choice; null clears. */
       realizationMatrix?: RealizationMatrixLayout | null
+      /** Lane mode / order / widths of a useCaseRealization view; null clears. */
+      useCaseRealizationLayout?: UseCaseRealizationLayout | null
     },
   ) =>
     request<Project>(`/projects/${projectId}/visualization`, {

@@ -77,6 +77,8 @@ class VisualizationPatch(BaseModel):
     sequenceLayout: dict[str, Any] | None = None
     # Realization matrix {rows?, columns?}; null clears.
     realizationMatrix: dict[str, Any] | None = None
+    # Use case realization {lanes?, order?, widths?}; null clears.
+    useCaseRealizationLayout: dict[str, Any] | None = None
 
 
 class ViewSnapshotBody(BaseModel):
