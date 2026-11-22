@@ -35,16 +35,6 @@ describe('rows', () => {
     ])
     expect(m.rows.filter((r) => r.kind === 'step').every((r) => r.useCaseId !== r.id)).toBe(true)
   })
-
-  it('qualifies colliding names', () => {
-    const view = probeView()
-    view.semantic['Other::UC::Start'] = el('Other::UC::Start', 'useCase', 'Other::UC')
-    view.semantic[START] = { ...view.semantic[START], shortId: null }
-    const m = buildRealizationMatrix(view, nodesByUc)
-    const labels = m.rows.map((r) => r.label)
-    expect(labels).toContain('Other::UC::Start')
-    expect(labels).toContain('RealizationProbe::UC::Start')
-  })
 })
 
 describe('columns', () => {
@@ -237,14 +227,14 @@ describe('matrixToCsv', () => {
 
   it('quotes carriage returns', () => {
     const view = probeView()
-    view.semantic[START] = { ...view.semantic[START], name: 'A\rB', shortId: null }
+    view.matrixLabels.rows[START] = 'A\rB'
     expect(matrixToCsv(buildRealizationMatrix(view, nodesByUc))).toContain('"A\rB",')
   })
 
   it('neutralizes fields that a spreadsheet would run as a formula', () => {
     const view = probeView()
     for (const [name, shown] of [['=SUM(A1)', "'=SUM(A1)"], ['+1', "'+1"], ['-x', "'-x"], ['@x', "'@x"]]) {
-      view.semantic[START] = { ...view.semantic[START], name, shortId: null }
+      view.matrixLabels.rows[START] = name
       const lines = matrixToCsv(buildRealizationMatrix(view, nodesByUc)).split('\n')
       expect(lines[1].startsWith(shown + ',')).toBe(true)
     }
@@ -252,7 +242,7 @@ describe('matrixToCsv', () => {
 
   it('quotes fields with commas and quotes', () => {
     const view = probeView()
-    view.semantic[START] = { ...view.semantic[START], name: 'A, "B"', shortId: null }
+    view.matrixLabels.rows[START] = 'A, "B"'
     const csv = matrixToCsv(buildRealizationMatrix(view, nodesByUc))
     expect(csv).toContain('"A, ""B""",')
   })
@@ -313,14 +303,14 @@ describe('matrixToCsv', () => {
 
   it('quotes carriage returns', () => {
     const view = probeView()
-    view.semantic[START] = { ...view.semantic[START], name: 'A\rB', shortId: null }
+    view.matrixLabels.rows[START] = 'A\rB'
     expect(matrixToCsv(buildRealizationMatrix(view, nodesByUc))).toContain('"A\rB",')
   })
 
   it('neutralizes fields that a spreadsheet would run as a formula', () => {
     const view = probeView()
     for (const [name, shown] of [['=SUM(A1)', "'=SUM(A1)"], ['+1', "'+1"], ['-x', "'-x"], ['@x', "'@x"]]) {
-      view.semantic[START] = { ...view.semantic[START], name, shortId: null }
+      view.matrixLabels.rows[START] = name
       const lines = matrixToCsv(buildRealizationMatrix(view, nodesByUc)).split('\n')
       expect(lines[1].startsWith(shown + ',')).toBe(true)
     }
@@ -328,7 +318,7 @@ describe('matrixToCsv', () => {
 
   it('quotes fields with commas and quotes', () => {
     const view = probeView()
-    view.semantic[START] = { ...view.semantic[START], name: 'A, "B"', shortId: null }
+    view.matrixLabels.rows[START] = 'A, "B"'
     const csv = matrixToCsv(buildRealizationMatrix(view, nodesByUc))
     expect(csv).toContain('"A, ""B""",')
   })

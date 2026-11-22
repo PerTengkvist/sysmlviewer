@@ -1,11 +1,11 @@
 import type {
+  MatrixLabels,
   Realization,
   RealizationMatrixLayout,
   RealizationPrecision,
   SemanticElement,
   ViewPayload,
 } from '../../../../api'
-import { labelMap } from '../../labels'
 
 /**
  * Rows, columns and cells of the realization matrix. Everything is read from the view
@@ -22,6 +22,8 @@ export type MatrixSource = {
   semantic: Record<string, SemanticElement>
   realization: Realization
   matrixColumns: NonNullable<ViewPayload['matrixColumns']>
+  /** From the backend, unambiguous; a header without one shows the element's name. */
+  matrixLabels?: MatrixLabels
 }
 
 export type MatrixRow = {
@@ -111,10 +113,7 @@ export function buildRealizationMatrix(
   const columnIds = byNodes
     ? nodes.map((n) => n.id)
     : [...new Set(nodes.flatMap((n) => nodeParts[n.id] ?? []))]
-  const columnLabels = labelMap(
-    columnIds.map((id) => ({ id, name: nameOf(semantic, id) })),
-    'name',
-  )
+  const columnLabels = source.matrixLabels?.[byNodes ? 'nodes' : 'parts'] ?? {}
   const nodeById = new Map(nodes.map((n) => [n.id, n]))
   let ordered = columnIds
   const groups: MatrixGroup[] = []
@@ -123,14 +122,11 @@ export function buildRealizationMatrix(
     ordered = functionIds.flatMap((f) =>
       nodes.filter((n) => n.functionId === f).map((n) => n.id),
     )
-    const functionLabels = labelMap(
-      functionIds.flatMap((id) => (id ? [{ id, name: nameOf(semantic, id) }] : [])),
-      'name',
-    )
+    const functionLabels = source.matrixLabels?.functions ?? {}
     for (const f of functionIds) {
       groups.push({
         id: f,
-        label: f ? (functionLabels.get(f) ?? '') : '',
+        label: f ? (functionLabels[f] ?? nameOf(semantic, f)) : '',
         span: nodes.filter((n) => n.functionId === f).length,
       })
     }
@@ -174,7 +170,7 @@ export function buildRealizationMatrix(
   const useCases = Object.values(semantic).filter(
     (e) => e.kind === 'useCase' && !(e.parentId && semantic[e.parentId]?.kind === 'useCase'),
   )
-  const rowLabels = labelMap(useCases, 'label')
+  const rowLabels = source.matrixLabels?.rows ?? {}
   const rows: MatrixRow[] = []
   const cells: MatrixCell[][] = []
   const columnRealizes = new Map<string, boolean>(ordered.map((c) => [c, false]))
@@ -198,7 +194,7 @@ export function buildRealizationMatrix(
       id: uc.id,
       kind: 'useCase',
       useCaseId: uc.id,
-      label: rowLabels.get(uc.id) ?? uc.name,
+      label: rowLabels[uc.id] ?? uc.name,
       depth: 0,
       coverage: system.length ? `${system.length - gaps.length}/${system.length}${scoped && gaps.length ? ' ✗' : ''}` : '',
       gap: scoped && gaps.length > 0,
@@ -244,7 +240,7 @@ export function buildRealizationMatrix(
 
   const columns: MatrixColumn[] = ordered.map((id) => ({
     id,
-    label: columnLabels.get(id) ?? id,
+    label: columnLabels[id] ?? nameOf(semantic, id),
     groupId: byNodes ? (nodeById.get(id)?.functionId ?? null) : null,
     gap: !columnRealizes.get(id),
   }))

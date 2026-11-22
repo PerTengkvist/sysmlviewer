@@ -134,6 +134,11 @@ import { ActionNode } from './modes/actionFlow/ActionNode'
 import { buildTreeGraph } from './modes/tree/buildTreeGraph'
 import { TreeDiagramNode } from './modes/tree/TreeNode'
 import { buildAllocationGraph } from './modes/allocation/buildAllocationGraph'
+import { ChainNode } from './modes/realization/ChainNode'
+import {
+  buildRealizationChain,
+  redrawRealizationChain,
+} from './modes/realization/buildRealizationChain'
 import { RequirementNode } from './modes/requirements/RequirementNode'
 import { buildRealizationMatrix } from './modes/realization/buildRealizationMatrix'
 import { RealizationMatrix } from './modes/realization/RealizationMatrix'
@@ -225,6 +230,7 @@ const allNodeTypes: NodeTypes = {
   requirement: RequirementNode,
   useCase: UseCaseNode,
   actor: ActorNode,
+  chain: ChainNode,
 }
 
 const allEdgeTypes: EdgeTypes = {
@@ -343,6 +349,7 @@ export const DIAGRAM_MODE_LABELS: Record<DiagramMode, string> = {
   requirementTable: 'Requirements table',
   useCase: 'Use case',
   realizationMatrix: 'Realization matrix',
+  realizationChain: 'Realization chain',
 }
 
 function routingToConnectionLine(routing: RoutingType): ConnectionLineType {
@@ -1090,6 +1097,14 @@ export function DiagramCanvas({
           requirementDisplay,
         )
         break
+      case 'realizationChain':
+        built = buildRealizationChain({
+          view: filteredView,
+          viewMode: renderViewMode,
+          selectedConnectionColor,
+          selectedConnectionLinewidthFactor,
+        })
+        break
       case 'requirementTable':
       case 'realizationMatrix':
         built = { nodes: [], edges: [] }
@@ -1736,6 +1751,32 @@ export function DiagramCanvas({
         setLayoutEpoch((n) => n + 1)
         return
       }
+      if (mode === 'realizationChain' && view) {
+        // The columns are fixed: Redraw forgets the saved positions and lays them out again.
+        const filtered = applyViewFilters(
+          view.semantic,
+          view.visualization,
+          view.viewFilters || [],
+        )
+        const moved = redrawRealizationChain(
+          {
+            view: { ...view, semantic: filtered.semantic, visualization: filtered.visualization },
+            viewMode: renderViewMode,
+            selectedConnectionColor,
+            selectedConnectionLinewidthFactor,
+          },
+          nodes,
+        )
+        setNodes(moved)
+        const chainPatch: Record<string, Partial<VisualizationNode>> = {}
+        for (const n of moved) {
+          const { width, height } = nodeExtentSize(n)
+          chainPatch[n.id] = { artifactId: n.id, x: n.position.x, y: n.position.y, width, height }
+        }
+        onNodesMovedRef.current(chainPatch)
+        setLayoutEpoch((n) => n + 1)
+        return
+      }
       setFlowDir(direction)
       const { positions } = layoutByDependency(nodes, edges, direction)
       const nextNodes = nodes.map((n) => {
@@ -1773,7 +1814,16 @@ export function DiagramCanvas({
       onNodesMovedRef.current(patch)
       setLayoutEpoch((n) => n + 1)
     },
-    [nodes, edges, mode, applySequenceLayout],
+    [
+      nodes,
+      edges,
+      mode,
+      applySequenceLayout,
+      view,
+      renderViewMode,
+      selectedConnectionColor,
+      selectedConnectionLinewidthFactor,
+    ],
   )
 
   const currentViewBounds = useCallback(() => {
@@ -2874,6 +2924,7 @@ export function DiagramCanvas({
         semantic: view.semantic,
         realization: view.realization,
         matrixColumns: view.matrixColumns,
+        matrixLabels: view.matrixLabels,
       },
       matrixOptions(view.realizationMatrix),
     )

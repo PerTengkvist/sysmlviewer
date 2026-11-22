@@ -129,6 +129,17 @@ def function_nodes(
     return _Deriver(semantic, performers).function_nodes()
 
 
+def function_ids(
+    semantic: Mapping[str, SemanticElement],
+    performers: Mapping[str, list[str]] | None = None,
+) -> set[str]:
+    """Every function of the model: a part that owns a function flow, linked or not."""
+    if performers is None:
+        performers = resolve_performers(dict(semantic))
+    deriver = _Deriver(semantic, performers)
+    return {eid for eid, el in semantic.items() if deriver._is_function(el)}
+
+
 def _put(
     target: dict[str, Precision],
     key: str,

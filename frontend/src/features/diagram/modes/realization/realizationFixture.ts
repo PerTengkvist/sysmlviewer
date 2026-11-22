@@ -156,6 +156,7 @@ export type ProbeView = {
   semantic: Record<string, SemanticElement>
   realization: Realization
   matrixColumns: NonNullable<ViewPayload['matrixColumns']>
+  matrixLabels: NonNullable<ViewPayload['matrixLabels']>
 }
 
 export function probeView(): ProbeView {
@@ -182,5 +183,17 @@ export function probeView(): ProbeView {
     semantic,
     realization: probeRealization(),
     matrixColumns: { nodes: probeNodes.map((n) => ({ ...n })) },
+    // As the backend serves them for this model: no name is shared, so nothing is qualified.
+    matrixLabels: {
+      rows: {
+        [START]: 'UCA Start',
+        [UNLOCK]: 'UCB Unlock',
+        [LOCK]: 'UCC Lock',
+        [DRIVE]: 'UCD Drive',
+      },
+      nodes: { [AUTH]: 'auth', [IMMO]: 'immo', [LOCKS]: 'locks' },
+      parts: { [VC]: 'vc', [BC]: 'bc' },
+      functions: { [SEC]: 'Security' },
+    },
   }
 }

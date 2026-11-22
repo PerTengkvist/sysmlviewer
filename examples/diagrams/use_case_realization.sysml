@@ -3,6 +3,8 @@
 // use case step; the rest (function, function node, logical part) is derived from it.
 // Start is realized step by step (askForBrake is deliberately left unrealized),
 // Unlock and Lock by coarser links, and Drive through its `include`s.
+// StartChain and SecurityChain draw the chain as columns: use case | function |
+// function node | logical part.
 package UseCaseRealization {
   package UC {
     use case def <'UCA'> Start {
@@ -54,5 +56,13 @@ package UseCaseRealization {
   // A GridView that exposes use cases is the traceability matrix.
   view RealizationMatrix : GridView {
     expose UseCaseRealization::UC;
+  }
+
+  view StartChain : AllocationView {
+    expose UseCaseRealization::UC::Start;
+  }
+
+  view SecurityChain : AllocationView {
+    expose UseCaseRealization::F::Security;
   }
 }

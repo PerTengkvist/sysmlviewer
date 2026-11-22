@@ -41,6 +41,7 @@ export type DiagramMode =
   | 'requirementTable'
   | 'useCase'
   | 'realizationMatrix'
+  | 'realizationChain'
 
 export interface SemanticElement {
   id: string
@@ -127,6 +128,7 @@ export interface BoundaryAnchor {
 
 export interface VisualizationNode {
   artifactId: string
+  /** Absent in a realizationChain view until the view has saved a position. */
   x: number
   y: number
   width: number
@@ -356,6 +358,28 @@ export type AutoLayoutEdgeKinds = {
 
 export type ExposeKind = 'member' | 'members' | 'recursive' | 'membersRecursive'
 
+/** Column of an element in a realizationChain view. */
+export type ChainRole = 'useCase' | 'function' | 'node' | 'part'
+
+export interface ChainEdge {
+  source: string
+  target: string
+  kind: 'refine' | 'owns' | 'allocate'
+  precision: 'step' | 'coarse' | 'explicit'
+  /** The link is inherited through `include` (a composite use case). */
+  viaInclude: boolean
+  /** A function that refines the use case stands for its nodes and parts ("through its function"). */
+  projected: boolean
+}
+
+/** Unambiguous header labels of a realization matrix, by element id (decision B11). */
+export interface MatrixLabels {
+  rows: Record<string, string>
+  nodes: Record<string, string>
+  parts: Record<string, string>
+  functions: Record<string, string>
+}
+
 export interface ViewPayload {
   view: ViewDef
   /**
@@ -387,6 +411,8 @@ export interface ViewPayload {
   realization?: Realization
   /** realizationMatrix only: every function node of the model, with its owning function. */
   matrixColumns?: { nodes: MatrixNodeColumn[] }
+  /** realizationMatrix only: unambiguous labels of rows, node and part columns and functions. */
+  matrixLabels?: MatrixLabels
   modeError?: string | null
   /**
    * actionFlow only: the parts that perform each step (`perform flow.step;`
@@ -398,6 +424,12 @@ export interface ViewPayload {
    * (views/<name>.json), false when they are project defaults.
    */
   hasViewLayout?: boolean
+  /** realizationChain only: the column of each element, from the realization. */
+  chainRoles?: Record<string, ChainRole>
+  /** realizationChain only: the links between the columns. */
+  chainEdges?: ChainEdge[]
+  /** realizationChain only: unambiguous label per element. */
+  chainLabels?: Record<string, string>
   semantic: Record<string, SemanticElement>
   visualization: {
     nodes: Record<string, VisualizationNode>

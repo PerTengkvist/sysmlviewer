@@ -14,6 +14,8 @@ from domain.interface_naming import (
 )
 from domain.dependency_tree import build_dependency_tree
 from domain.realization import Realization, derive_realization
+from domain.realization_chain import Chain, build_chain, is_chain_view
+from domain.realization_labels import unambiguous_labels
 from domain.merge import child_view_ids, merge_visualization, rebuild_views
 from domain.expose import MEMBER as EXPOSE_MEMBER
 from domain.expose import MEMBERS as EXPOSE_MEMBERS
@@ -790,11 +792,22 @@ class ProjectService:
         for eid in needed:
             if eid in project.semantic and eid not in semantic:
                 semantic[eid] = project.semantic[eid].to_dict()
+        # Unambiguous labels, one set per kind of header; the client only reads them.
+        node_ids = [n.id for n in nodes]
+        part_ids = list(dict.fromkeys(p for n in node_ids for p in realization["nodeParts"].get(n, [])))
+        function_ids_ = list(dict.fromkeys(n.function_id for n in nodes if n.function_id))
+        labels = {
+            "rows": unambiguous_labels(project.semantic, rows, tagged=True),
+            "nodes": unambiguous_labels(project.semantic, node_ids, tagged=False),
+            "parts": unambiguous_labels(project.semantic, part_ids, tagged=False),
+            "functions": unambiguous_labels(project.semantic, function_ids_, tagged=False),
+        }
         return {
             "realization": realization,
             "matrixColumns": {
                 "nodes": [{"id": n.id, "functionId": n.function_id} for n in nodes]
             },
+            "matrixLabels": labels,
         }
 
     def list_documentation(self, project_id: str) -> list[str] | None:
@@ -2112,7 +2125,42 @@ class ProjectService:
             exposed_kinds = {
                 project.semantic[aid].kind for aid in grid_ids if aid in project.semantic
             }
-        diagram_mode = resolve_diagram_mode(view, root, exposed_kinds)
+        chain_view = False
+        realization: Realization | None = None  # derived once, for the mode and the chain
+        if view.type_ref == "AllocationView":
+            # The chain or the allocation, by everything the view exposes: all the way down,
+            # after the view's filters, whatever the diagram levels or the order of the exposes.
+            from domain.view_filter import (
+                apply_view_filters,
+                element_matches_filters,
+                parse_stored_filters,
+            )
+
+            alloc_filters = parse_stored_filters(stored_filters)
+            exposed_content: list[tuple[str, set[str], bool]] = []
+            for eroot in expose_roots:
+                ids = collect_exposed(
+                    project.semantic,
+                    eroot.id,
+                    expose_kinds[eroot.id],
+                    structural_depth(project.semantic, eroot.id),
+                )
+                if alloc_filters:
+                    ids = apply_view_filters(
+                        project.semantic,
+                        ids,
+                        alloc_filters,
+                        root_id=root.id,
+                        root_ids=set(expose_root_ids),
+                    )
+                exposed_content.append(
+                    (eroot.id, ids, element_matches_filters(eroot, alloc_filters))
+                )
+            realization = derive_realization(project.semantic)
+            chain_view = is_chain_view(project.semantic, realization, exposed_content)
+        diagram_mode = resolve_diagram_mode(
+            view, root, exposed_kinds, chain_view
+        )
         # `expose Car::*;` shows Car's members without Car: no frame to draw.
         if diagram_mode == "whitebox" and not includes_root(
             expose_kinds.get(root.id, EXPOSE_MEMBER)
@@ -2138,6 +2186,7 @@ class ProjectService:
             )
 
         artifact_ids: set[str] = set()
+        chain: Chain | None = None
         lift_use_case_members = False
         if diagram_mode in {"sequence", "state", "actionFlow"}:
             # Root + direct children (lifelines/messages, states/transitions, …)
@@ -2191,6 +2240,13 @@ class ProjectService:
                     }:
                         extra.add(cid)
             artifact_ids |= extra
+        elif diagram_mode == "realizationChain":
+            chain = build_chain(
+                project.semantic,
+                realization or derive_realization(project.semantic),
+                [r.id for r in expose_roots],
+            )
+            artifact_ids |= set(chain.ids)
         elif diagram_mode == "allocation":
             for eroot in expose_roots:
                 artifact_ids.add(eroot.id)
@@ -2372,6 +2428,10 @@ class ProjectService:
                 pending_local.append(aid)
                 continue
             resolved = resolve_view_node(global_node, overlay)
+            if diagram_mode == "realizationChain" and not overlay_has_xy(overlay):
+                # Only a position the view saved counts; the client lays the rest out.
+                for key in ("x", "y", "width", "height"):
+                    resolved.pop(key, None)
             if diagram_mode == "tree":
                 if overlay is None or overlay.width is None:
                     resolved["width"] = DEFAULT_TREE_WIDTH
@@ -2540,6 +2600,17 @@ class ProjectService:
         }
         if matrix is not None:
             result.update(matrix)
+        if chain is not None:
+            # Only what the view shows (after its filters): labels are made unambiguous
+            # among these, not against hidden elements.
+            shown = [i for i in chain.ids if i in artifact_ids]
+            result["chainEdges"] = [
+                e.to_dict()
+                for e in chain.edges
+                if e.source in artifact_ids and e.target in artifact_ids
+            ]
+            result["chainRoles"] = {i: chain.roles[i] for i in shown}
+            result["chainLabels"] = unambiguous_labels(project.semantic, shown)
         if performers is not None:
             result["performers"] = performers
             # Whether the positions are the view's own (views/<name>.json) or

@@ -327,6 +327,9 @@ _REALIZATION_ADDED = [
     "UseCaseRealization::UC::Unlock::pressUnlock",
     "UseCaseRealization::UC::Unlock::unlockDoors",
     "UseCaseRealization::UseCaseRealizationView",
+    # The two AllocationViews that draw the realization chain (steps 15-17): views only.
+    "UseCaseRealization::SecurityChain",
+    "UseCaseRealization::StartChain",
     "UseCaseRealization::alloc1",
     "UseCaseRealization::alloc2",
     "UseCaseRealization::alloc3",

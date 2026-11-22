@@ -88,9 +88,11 @@ def snapshot_from_view_payload(payload: dict[str, Any]) -> GeometrySnapshot:
     nodes: dict[str, dict[str, Any]] = visualization.get("nodes") or {}
     edges: dict[str, dict[str, Any]] = visualization.get("edges") or {}
     return GeometrySnapshot(
+        # A node nothing has placed (a realization chain node) has no geometry to confirm.
         parts={
             artifact_id: {name: node.get(name) for name, _ in _PART_FIELDS}
             for artifact_id, node in nodes.items()
+            if any(node.get(name) is not None for name, _ in _PART_FIELDS)
         },
         ports={
             artifact_id: {key: node.get(key) for key in _PORT_KEYS}
