@@ -5,6 +5,7 @@ Every edge runs from an upper (more abstract) element to a lower one:
 | relation                                   | upper            | lower  | label              |
 |--------------------------------------------|------------------|--------|--------------------|
 | dependency (`#kw`, objective, refine, …)   | target           | source | keyword/dependency |
+| step-level refine (function step → UC step)| use case         | function, function node | refine |
 | satisfy                                    | target (req.)    | source | satisfy            |
 | specialization / subsetting / redefinition | target           | source | kind               |
 | typing `: T`                               | definition       | usage  | typed by           |
@@ -30,6 +31,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from domain.models import ArtifactKind, SemanticElement
+from domain.realization import derive_realization
 from domain.relationships import is_relation_element
 
 # Upward chain priority (lower wins). The chain follows the trace from a
@@ -272,6 +274,22 @@ def _collect_edges(
             add(_Edge(src, tgt, rel.id, label, _PRIORITY_ALLOCATE))
         elif rel.kind == ArtifactKind.INCLUDE:
             add(_Edge(src, tgt, rel.id, label, _PRIORITY_USAGE))
+
+    # Use case realization: a function step refining a use case step makes its
+    # function and function nodes refine the use case, as an explicit `#refine`
+    # would. Added after the explicit edges and skipped where one exists.
+    refined = {(e.upper, e.lower) for e in edges if e.label == "refine"}
+    real = derive_realization(semantic)
+    for table in (real.uc_functions, real.uc_nodes):
+        for uc, members in table.items():
+            for member, precision in members.items():
+                if (
+                    precision == "explicit"
+                    or member in real.via_include.get(uc, ())
+                    or (uc, member) in refined
+                ):
+                    continue
+                add(_Edge(uc, member, real.origin.get((uc, member)), "refine", _PRIORITY_TRACE))
 
     # perform (PR A): the performing part is upper, the action lower, label
     # "perform", priority `_PRIORITY_USAGE`. Add the edges here from

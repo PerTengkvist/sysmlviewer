@@ -75,6 +75,51 @@ action chargeSequence {
 
 Call it from a use case with `then perform chargeSequence;`. In the viewer it opens as a separate diagram.
 
+## Realizing a use case
+
+A use case is a black box: its steps say what the system does for the actor. A function realizes it from the inside. Write one link by hand, a `#refine` from a function step to the use case step it carries out, and the viewer derives the rest: the function, the function nodes that perform the step and the logical parts they are allocated to.
+
+An actor that performs a step is written in the use case, `actor Driver { perform pressStart; }`. The other steps are system steps, and those are the ones a function has to realize.
+
+[//]: # (realization-snippet)
+```sysml
+package Realize {
+  package UC {
+    use case def <'UC001'> StartVehicle {
+      actor Driver { perform pressStart; }
+      action pressStart;
+      action checkKey;
+      action showReady;
+    }
+  }
+  package Functions {
+    part def Security {
+      part authenticate { perform startFlow.checkKeyInCabin; }
+      part indicate { perform startFlow.releaseImmobilizer; }
+      action startFlow {
+        action checkKeyInCabin;
+        action releaseImmobilizer;
+        first start;
+        then checkKeyInCabin;
+        then releaseImmobilizer;
+        then done;
+      }
+    }
+  }
+  package Logical { part vehicleController; }
+  allocate Functions::Security::authenticate to Logical::vehicleController;
+  allocate Functions::Security::indicate to Logical::vehicleController;
+  #refine dependency from Functions::Security::startFlow::checkKeyInCabin
+                       to UC::StartVehicle::checkKey;
+  #refine dependency from Functions::Security::startFlow::releaseImmobilizer
+                       to UC::StartVehicle::showReady;
+}
+```
+
+Roles come from the relations, not from names: a function is a part that owns an action flow, a function node is a part that performs one of its steps, and a logical part is the target of the node's `allocate`. A `#refine` from a function or a function node straight to a use case still works, and so does one from a whole flow (a coarse link). The most precise link wins, and a function (node) that refines a use case directly counts the same in failure and FMEA reports as one found through the steps.
+
+A use case with at least one step link is checked. `scripts/check_sysml.py` then reports system steps nobody realizes (`unrealized-system-step`), steps in a linked flow that refine nothing (`untraced-function-step`) and links with a wrong end (`bad-realization-end`, for example a function node that refines a use case step). Use cases without step links are not checked.
+
 ## Sequences
 
 A scenario drawn as a sequence diagram is an `occurrence def`. It describes the system while it runs, so its lifelines are not declared as such: a lifeline is a part of the occurrence, an instance, that a message uses as an end. The messages are the arrows, drawn in the order they are written (no `first` or `then` is needed). An acknowledgement carries the `#Reply` keyword, defined once with `metadata def Reply;`, and is drawn dashed.
