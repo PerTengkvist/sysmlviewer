@@ -28,33 +28,21 @@
       "width": 140.0,
       "height": 90.0
     },
+    "Functions::Security::securityFlow::rejectKey": {
+      "x": 328.0,
+      "y": 536.0,
+      "width": 140.0,
+      "height": 90.0
+    },
     "Functions::Security::securityFlow::wakeCabin": {
       "x": 48.0,
       "y": 536.0,
       "width": 140.0,
       "height": 90.0
     },
-    "Functions::Security::securityFlow::releaseImmobilizer": {
-      "x": 48.0,
-      "y": 676.0,
-      "width": 140.0,
-      "height": 90.0
-    },
-    "Functions::Security::securityFlow::showReady": {
-      "x": 48.0,
-      "y": 816.0,
-      "width": 140.0,
-      "height": 90.0
-    },
-    "Functions::Security::securityFlow::rejectKey": {
-      "x": 328.0,
-      "y": 816.0,
-      "width": 140.0,
-      "height": 90.0
-    },
     "Functions::Security::securityFlow::done": {
       "x": 104.0,
-      "y": 956.0,
+      "y": 676.0,
       "width": 28.0,
       "height": 28.0
     }
