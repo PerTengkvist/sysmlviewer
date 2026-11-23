@@ -9,8 +9,16 @@ use case step, and the explicit function and entity refines equal what the steps
 
 from __future__ import annotations
 
-import pytest
+import json
+import re
+import shutil
+from pathlib import Path
 
+import pytest
+from fastapi.testclient import TestClient
+from helpers import api_url
+
+from adapters.api.app import create_app
 from adapters.api.static_paths import resolve_repo_root
 from adapters.parser.subset_parser import SubsetSysmlParser
 from domain.models import ArtifactKind, SysmlFile
@@ -482,3 +490,86 @@ def test_a_sequence_climbs_to_its_use_case(elements):
         "Requirements::Performance", "Requirements::PowerModes",
         "UseCases::Driving::StartVehicle", "Functions::Security::authenticate",
     ]
+
+
+# -- the tutorials quote the model ---------------------------------------------
+
+
+def test_tutorial_excerpts_of_the_car_are_verbatim():
+    """A sysml block marked `[//]: # (source: examples/electric_car/...)` in the tutorials
+    is an ordered subsequence of that file (comments and blank lines aside)."""
+    from test_sequence_tutorial_snippets import TUTORIALS, _in_order, _significant, fenced_blocks
+
+    repo = resolve_repo_root()
+    checked = 0
+    for name in ("use-cases-and-scenarios.md", "mbse.md"):
+        for tag, lang, body in fenced_blocks((TUTORIALS / name).read_text(encoding="utf-8")):
+            if lang != "sysml" or not tag.startswith("source: examples/electric_car/"):
+                continue
+            if "occurrence def" in body:
+                continue  # test_sequence_tutorial_snippets checks the sequences
+            source = (repo / tag.removeprefix("source: ")).read_text(encoding="utf-8")
+            assert _in_order(_significant(body), _significant(source)) == [], (name, body[:60])
+            checked += 1
+    assert checked >= 2
+
+
+# -- layouts and use case views ----------------------------------------------
+
+UC_FILE = "use_cases/use_cases.sysml"
+
+
+def _without_actor_blocks(text: str) -> str:
+    """Every `actor X { perform …; }` of the use cases written back as `actor X;`."""
+    return re.sub(r"actor (\w+) \{[^}]*\}", r"actor \1;", text)
+
+
+def test_stale_layout_keys_are_harmless(tmp_path: Path):
+    """SecurityFlowView and ManeuvrabilityFlowView keep the saved keys of steps that moved out
+    of their flows (B11): a key for a step that no longer exists loads without a warning,
+    and opening the project does not rewrite the layout file."""
+    copy = tmp_path / "electric_car"
+    shutil.copytree(ROOT, copy)
+    layout = copy / "views" / "SecurityFlowView.json"
+    data = json.loads(layout.read_text(encoding="utf-8"))
+    data["nodes"]["Functions::Security::securityFlow::noSuchStep"] = {
+        "x": 10.0, "y": 10.0, "width": 140.0, "height": 90.0,
+    }
+    layout.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    saved = layout.read_bytes()
+
+    client = TestClient(create_app(workspace=tmp_path))
+    opened = client.post(api_url("/session/open"), json={"folder": str(copy)})
+    assert opened.status_code == 200, opened.text
+    project = opened.json()["project"]
+    assert all(not f.get("warnings") for f in project["files"])
+    view = client.get(api_url(f"/projects/{project['id']}/views/Functions::SecurityFlowView")).json()
+    assert view["diagramMode"] == "actionFlow"
+    assert "modeError" not in view
+    assert view["hasViewLayout"] is True
+    assert "Functions::Security::securityFlow::noSuchStep" not in view["semantic"]
+    assert layout.read_bytes() == saved
+
+
+def _use_case_views(tmp_path: Path, text: str | None) -> dict:
+    copy = tmp_path / "electric_car"
+    shutil.copytree(ROOT, copy)
+    if text is not None:
+        (copy / UC_FILE).write_text(text, encoding="utf-8")
+    client = TestClient(create_app(workspace=tmp_path))
+    pid = client.post(api_url("/session/open"), json={"folder": str(copy)}).json()["project"]["id"]
+    out = {}
+    for view_id in ("UseCases::VehicleUseCaseView", "UseCases::UseCaseTraceabilityView"):
+        body = client.get(api_url(f"/projects/{pid}/views/{view_id}")).json()
+        viz = body["visualization"]
+        out[view_id] = (set(body["semantic"]), set(viz["nodes"]), set(viz["edges"]))
+    return out
+
+
+def test_actor_blocks_do_not_change_the_use_case_views(tmp_path: Path):
+    """B11: VehicleUseCaseView.json is not touched, so an actor block must add nothing to
+    the use case diagrams (the perform is not drawn)."""
+    text = (ROOT / UC_FILE).read_text(encoding="utf-8")
+    assert _without_actor_blocks(text) != text
+    without = _use_case_views(tmp_path / "a", _without_actor_blocks(text))
+    assert _use_case_views(tmp_path / "b", None) == without

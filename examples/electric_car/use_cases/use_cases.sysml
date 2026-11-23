@@ -273,7 +273,7 @@ package UseCases {
       objective Requirements::LockIndication;
       include use case StopVehicle;
       include use case UseCases::Managing::Lock;
-      doc /* The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock. */
+      doc /* The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock. Its own two steps are the driver's, so the car's part of parking is realized through the use cases it includes; the P on the cluster is shown by ChangeGear. */
 
       action stopCar {
         doc /* The driver brakes the car to a standstill. */

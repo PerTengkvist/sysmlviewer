@@ -9869,7 +9869,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Each function also «refine»s the use cases it carries out; those dependencies are collected in the FunctionTraceability package. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function has one or more action flows, and every step of a flow is performed by one of the function's functional entities; a FlowView per flow shows it with the performer on each step.",
+      "documentation": "Functional architecture of the electric car. Each top-level part is a function the car performs for its users; the parts nested inside it are the functional entities the function decomposes into. A dashed «keyword» dependency points from the function that needs another function to the function it depends on. Each function realizes the use cases it carries out: a step of its flows «refine»s the use case step it carries out, and those dependencies are collected in the FunctionTraceability package. Security and Charging are roots: driving, comfort and visibility depend on an authenticated vehicle and on energy. Every functional entity is allocated to exactly one logical part, and a logical part comprises one or more entities. That allocation is how the logical architecture is synthesized from the use cases. Each function has one or more action flows, and every step of a flow is performed by one of the function's functional entities; a FlowView per flow shows it with the performer on each step.",
       "shortId": null,
       "children": [
         "Functions::Function",
@@ -39286,7 +39286,7 @@
       "multiplicity": null,
       "isReference": false,
       "metadataKeywords": [],
-      "documentation": "The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock.",
+      "documentation": "The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock. Its own two steps are the driver's, so the car's part of parking is realized through the use cases it includes; the P on the cluster is shown by ChangeGear.",
       "shortId": "UC012",
       "children": [
         "UseCases::Driving::Park::Driver",
