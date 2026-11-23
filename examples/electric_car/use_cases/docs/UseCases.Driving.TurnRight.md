@@ -4,6 +4,7 @@ The driver turns the steering wheel right and the car follows, with the right in
 
 ## Relations
 
+- Refined by `TurnRightSequence`.
 - Refined by `Maneuvrability`.
 - Refined by `Lighting`.
 - Refined by `steeringControl`.

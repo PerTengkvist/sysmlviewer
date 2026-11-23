@@ -432,3 +432,53 @@ def test_instrument_cluster_loss_keeps_security(elements):
             "OpenDoor", "CloseDoor", "AdjustClimate", "Charge", "Drive", "Park",
         )
     }
+
+
+# -- sequences refine their use cases (B10) ----------------------------------
+
+
+def _sequence_refines(elements) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and elements.get(e.source_id or "") is not None
+            and elements[e.source_id].kind == ArtifactKind.OCCURRENCE
+        ):
+            out.setdefault(e.source_id, []).append(e.target_id)
+    return out
+
+
+def test_every_sequence_refines_one_use_case(elements):
+    sequences = [e.id for e in elements.values() if e.kind == ArtifactKind.OCCURRENCE and e.parent_id == "Dynamics"]
+    assert len(sequences) == 23
+    refines = _sequence_refines(elements)
+    assert set(refines) == set(sequences)
+    for seq, targets in refines.items():
+        assert len(targets) == 1, seq
+        assert elements[targets[0]].kind == ArtifactKind.USE_CASE, seq
+    named = {"Dynamics::UnlockDeniedSequence": "Unlock", "Dynamics::EndChargeSequence": "Charge"}
+    for seq, (target,) in refines.items():
+        expected = named.get(seq, seq.removeprefix("Dynamics::").removesuffix("Sequence"))
+        assert target == uc_id(expected), seq
+
+
+def test_every_use_case_has_a_sequence(elements):
+    covered = {t for targets in _sequence_refines(elements).values() for t in targets}
+    assert covered == {uc_id(n) for n in USE_CASES}
+
+
+def test_a_sequence_climbs_to_its_use_case(elements):
+    from domain.dependency_tree import build_dependency_tree
+
+    def up(eid):
+        return [n["id"] for n in build_dependency_tree(elements, eid)["up"]]
+
+    assert up("Dynamics::UnlockSequence") == [
+        "Requirements::Security", "Requirements::AccessControl", "UseCases::Managing::Unlock",
+    ]
+    assert up("LogicalArchitecture::Car::vehicleController") == [
+        "Requirements::Performance", "Requirements::PowerModes",
+        "UseCases::Driving::StartVehicle", "Functions::Security::authenticate",
+    ]

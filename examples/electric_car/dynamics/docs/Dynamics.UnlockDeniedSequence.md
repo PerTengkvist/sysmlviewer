@@ -2,6 +2,10 @@
 
 Precondition Locked. Postcondition Locked. Alternative to Unlock: the credential does not match. The vehicle controller refuses, the latches stay engaged and the driver sees no indicator flash.
 
+## Relations
+
+- Refines `Unlock`.
+
 ## Diagrams
 
 - `UnlockDeniedSequenceView`

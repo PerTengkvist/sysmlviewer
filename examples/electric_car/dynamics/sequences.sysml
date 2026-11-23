@@ -587,4 +587,32 @@ package Dynamics {
     doc /* Sequence for the Drive use case: the whole journey. */
     expose DriveSequence;
   }
+
+  // ---------------------------------------------------------------- Use cases
+
+  // Each sequence refines the use case it draws; UnlockDenied and EndCharge are
+  // alternative and closing flows of Unlock and Charge.
+  #refine dependency from UnlockSequence to UseCases::Managing::Unlock;
+  #refine dependency from UnlockDeniedSequence to UseCases::Managing::Unlock;
+  #refine dependency from LockSequence to UseCases::Managing::Lock;
+  #refine dependency from OpenDoorSequence to UseCases::Managing::OpenDoor;
+  #refine dependency from CloseDoorSequence to UseCases::Managing::CloseDoor;
+  #refine dependency from OpenWindowSequence to UseCases::Managing::OpenWindow;
+  #refine dependency from CloseWindowSequence to UseCases::Managing::CloseWindow;
+  #refine dependency from AdjustClimateSequence to UseCases::Managing::AdjustClimate;
+  #refine dependency from PlayMediaSequence to UseCases::Managing::PlayMedia;
+  #refine dependency from ChargeSequence to UseCases::Managing::Charge;
+  #refine dependency from EndChargeSequence to UseCases::Managing::Charge;
+  #refine dependency from StartVehicleSequence to UseCases::Driving::StartVehicle;
+  #refine dependency from StopVehicleSequence to UseCases::Driving::StopVehicle;
+  #refine dependency from ChangeGearSequence to UseCases::Driving::ChangeGear;
+  #refine dependency from AccelerateSequence to UseCases::Driving::Accelerate;
+  #refine dependency from BrakeSequence to UseCases::Driving::Brake;
+  #refine dependency from EmergencyStopSequence to UseCases::Driving::EmergencyStop;
+  #refine dependency from TurnLeftSequence to UseCases::Driving::TurnLeft;
+  #refine dependency from TurnRightSequence to UseCases::Driving::TurnRight;
+  #refine dependency from CleanWindshieldSequence to UseCases::Driving::CleanWindshield;
+  #refine dependency from ToggleHeadlightsSequence to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from ParkSequence to UseCases::Driving::Park;
+  #refine dependency from DriveSequence to UseCases::Driving::Drive;
 }

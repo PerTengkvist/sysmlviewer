@@ -4,6 +4,7 @@ An occupant pulls a door handle and the door releases. The inside handle always 
 
 ## Relations
 
+- Refined by `OpenDoorSequence`.
 - Refined by `Security`.
 - Refined by `lockControl`.
 - Refined by `doorControl`.

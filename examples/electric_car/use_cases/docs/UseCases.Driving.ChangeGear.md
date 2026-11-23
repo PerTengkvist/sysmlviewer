@@ -4,6 +4,7 @@ The driver selects park, reverse, neutral or drive. The drive controller only ac
 
 ## Relations
 
+- Refined by `ChangeGearSequence`.
 - Refined by `Maneuvrability`.
 - Refined by `gearSelection`.
 - Refined by `DriverFeedback`.

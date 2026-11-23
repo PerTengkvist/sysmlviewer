@@ -4,6 +4,7 @@ The driver or a passenger sets cabin temperature and airflow.
 
 ## Relations
 
+- Refined by `AdjustClimateSequence`.
 - Refined by `Climate`.
 - Refined by `cabinTemperature`.
 - Refined by `DriverFeedback`.

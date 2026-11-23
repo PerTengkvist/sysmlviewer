@@ -94,3 +94,24 @@ def test_suggestions_put_an_exact_name_in_another_package_first():
     assert got[0] == "Physical::BatteryModule"
     assert "Logical::BatteryMod" in got
     assert len(got) == len(set(got))
+
+
+def test_sequence_refines_do_not_reach_failure(model):
+    """Plan 2, B10: a sequence refines its use case, but an occurrence is no function, so the
+    impact graph (nodes and inputs, in order) is the same without those refines."""
+    import re
+
+    elements, _ = model
+    files = []
+    for path in sorted(ROOT.rglob("*.sysml")):
+        rel = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        if rel == "dynamics/sequences.sysml":
+            stripped = re.sub(r"  #refine dependency from \w+Sequence to UseCases::[\w:]+;\n", "", text)
+            assert stripped.count("\n") == text.count("\n") - 23
+            text = stripped
+        files.append(SysmlFile(id=rel, name=path.name, content=text, path=rel))
+    without = SubsetSysmlParser().parse_project(files).elements
+    a, b = build_impact_graph(elements), build_impact_graph(without)
+    assert a.nodes == b.nodes
+    assert [(k, list(v)) for k, v in a.inputs.items()] == [(k, list(v)) for k, v in b.inputs.items()]

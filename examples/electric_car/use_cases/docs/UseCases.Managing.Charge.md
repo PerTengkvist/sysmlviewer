@@ -4,6 +4,8 @@ The driver connects a home or fast charger. The car and the charger negotiate a 
 
 ## Relations
 
+- Refined by `ChargeSequence`.
+- Refined by `EndChargeSequence`.
 - Refined by `Charging`.
 - Refined by `chargeConnection`.
 - Refined by `chargeSession`.

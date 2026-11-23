@@ -4,6 +4,7 @@ The driver stops, selects park, shuts the car down and locks it. Includes StopVe
 
 ## Relations
 
+- Refined by `ParkSequence`.
 - Pursues requirement `LockIndication`.
 - Includes `StopVehicle`.
 - Includes `Lock`.

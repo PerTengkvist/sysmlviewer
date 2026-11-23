@@ -4,6 +4,7 @@ The driver turns the steering wheel left and the car follows, with the left indi
 
 ## Relations
 
+- Refined by `TurnLeftSequence`.
 - Refined by `Maneuvrability`.
 - Refined by `Lighting`.
 - Refined by `steeringControl`.

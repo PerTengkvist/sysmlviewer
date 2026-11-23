@@ -4,6 +4,7 @@ The driver takes the car from origin to destination. Includes starting, gear sel
 
 ## Relations
 
+- Refined by `DriveSequence`.
 - Pursues requirement `Range`.
 - Includes `StartVehicle`.
 - Includes `ChangeGear`.

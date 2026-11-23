@@ -4,6 +4,7 @@ The driver presses the start button with the brake held. The car authenticates t
 
 ## Relations
 
+- Refined by `StartVehicleSequence`.
 - Refined by `Security`.
 - Refined by `authenticate`.
 - Refined by `immobilizer`.
