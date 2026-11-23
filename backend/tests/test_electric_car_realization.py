@@ -216,7 +216,7 @@ ACTOR_STEPS: dict[str, dict[str, set[str]]] = {
     "Charge": {"connectCharger": {D}},
 }
 
-# Every function flow after phase A.
+# Every function flow.
 FLOWS = [
     f"{SEC}::securityFlow", f"{SEC}::cabinAccessFlow", f"{SEC}::startFlow", f"{SEC}::stopFlow",
     f"{SEC}::lockFlow", f"{CHA}::chargingFlow", f"{SPD}::speedControlFlow",
@@ -225,31 +225,6 @@ FLOWS = [
     f"{LIG}::indicatorFlow", f"{LIG}::brakeLampFlow", f"{DI}::powerModeFlow",
     f"{DI}::driverFeedbackFlow", f"{DI}::cabinStatusFlow", f"{DI}::chargeStatusFlow",
 ]
-
-# What the model realizes so far (phase A lands step by step); the rest is xfail.
-DONE_USE_CASES: set[str] = {
-    "StartVehicle", "StopVehicle", "Unlock", "Lock", "OpenDoor", "CloseDoor", "OpenWindow",
-    "CloseWindow", "AdjustClimate", "ChangeGear", "TurnLeft", "TurnRight", "Brake",
-    "Accelerate", "EmergencyStop", "ToggleHeadlights",
-}
-DONE_FLOWS: set[str] = {
-    f"{SEC}::securityFlow", f"{SEC}::startFlow", f"{SEC}::stopFlow", f"{SEC}::lockFlow",
-    f"{SEC}::cabinAccessFlow", f"{CLI}::climateFlow", f"{DI}::powerModeFlow",
-    f"{DI}::cabinStatusFlow", f"{SPD}::speedControlFlow", f"{MNV}::maneuvrabilityFlow",
-    f"{MNV}::gearSelectionFlow", f"{LIG}::lightingFlow", f"{LIG}::indicatorFlow",
-    f"{LIG}::brakeLampFlow", f"{DI}::driverFeedbackFlow",
-}
-
-
-def _todo(name: str, done: set[str]):
-    return pytest.param(
-        name, marks=() if name in done else pytest.mark.xfail(strict=True, reason="not yet realized")
-    )
-
-
-def _ucs(names):
-    return [_todo(n, DONE_USE_CASES) for n in names]
-
 
 @pytest.fixture(scope="module")
 def elements():
@@ -291,7 +266,7 @@ def _explicit(elements, kind: str) -> dict[str, set[str]]:
 # -- the realization table ---------------------------------------------------
 
 
-@pytest.mark.parametrize("name", _ucs(LEAVES))
+@pytest.mark.parametrize("name", LEAVES)
 def test_realization_table(real, name):
     uc = uc_id(name)
     got = {
@@ -302,7 +277,7 @@ def test_realization_table(real, name):
     assert got == REALIZATION[name]
 
 
-@pytest.mark.parametrize("name", _ucs(USE_CASES))
+@pytest.mark.parametrize("name", list(USE_CASES))
 def test_actor_steps_are_the_intended_ones(elements, name):
     uc = uc_id(name)
     performers = resolve_performers(elements)
@@ -321,7 +296,7 @@ def test_actor_steps_count():
     assert sum(len(steps) for steps in ACTOR_STEPS.values()) == 22
 
 
-@pytest.mark.parametrize("name", _ucs(LEAVES))
+@pytest.mark.parametrize("name", LEAVES)
 def test_every_system_step_is_realized(real, name):
     uc = uc_id(name)
     system = real.system_steps.get(uc, [])
@@ -332,7 +307,7 @@ def test_every_system_step_is_realized(real, name):
     assert set(REALIZATION[name]) <= steps
 
 
-@pytest.mark.parametrize("flow", [_todo(f, DONE_FLOWS) for f in FLOWS])
+@pytest.mark.parametrize("flow", FLOWS)
 def test_every_function_step_realizes_a_use_case_step(elements, real, flow):
     """Requirement 2 of plan 2 (plan 1's untraced-function-step)."""
     assert flow in elements
@@ -357,7 +332,7 @@ def test_realizing_steps_are_function_steps(elements, real):
         assert elements[elements[link.target_id].parent_id].kind == ArtifactKind.USE_CASE, link
 
 
-@pytest.mark.parametrize("name", _ucs(LEAVES))
+@pytest.mark.parametrize("name", LEAVES)
 def test_explicit_refines_match_step_realization(elements, real, name):
     """Requirement 3 (plan 1's explicit-mismatch): during phase A the explicit refines from
     functions and function nodes are exactly what the step links give."""
@@ -372,8 +347,35 @@ def test_no_realization_findings(real):
     assert [(f.code, f.element_id) for f in real.findings] == []
 
 
-def test_use_cases_in_scope(real):
-    assert real.in_scope == {uc_id(n) for n in DONE_USE_CASES}
+def test_all_leaf_use_cases_in_scope(real):
+    """Drive and Park have no realization of their own: they reach it through include."""
+    assert real.in_scope == {uc_id(n) for n in LEAVES}
+    assert len(real.in_scope) == 19
+
+
+def test_flows_are_the_intended_ones(elements):
+    functions = {
+        e.id for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id == "Functions" and not e.is_abstract
+    }
+    flows = {
+        c for f in functions for c in elements[f].children if elements[c].kind == ArtifactKind.ACTION
+    }
+    assert flows == set(FLOWS)
+
+
+def test_check_sysml_summary():
+    import subprocess
+    import sys
+
+    repo = resolve_repo_root()
+    proc = subprocess.run(
+        [sys.executable, str(repo / "scripts" / "check_sysml.py"), str(ROOT)],
+        capture_output=True, text=True, env={"PYTHONPATH": str(repo / "backend" / "src")},
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "WARNING" not in proc.stdout and "REALIZATION" not in proc.stdout
+    assert proc.stdout.rstrip().endswith("realization: 19 use cases in scope, 0 findings")
 
 
 # -- model findings F1, F3, F6, F7 -------------------------------------------

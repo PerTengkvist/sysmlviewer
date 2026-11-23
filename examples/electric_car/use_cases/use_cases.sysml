@@ -193,7 +193,7 @@ package UseCases {
     }
 
     use case def <'UC009'> CleanWindshield {
-      actor Driver;
+      actor Driver { perform moveStalk; }
       objective Requirements::ForwardVisibility;
       doc /* The driver starts the wipers and washer and the windshield is cleared. */
 
@@ -242,7 +242,7 @@ package UseCases {
     }
 
     use case def <'UC011'> Drive {
-      actor Driver;
+      actor Driver { perform arrive; }
       actor Passenger;
       objective Requirements::Range;
       include use case StartVehicle;
@@ -269,7 +269,7 @@ package UseCases {
     }
 
     use case def <'UC012'> Park {
-      actor Driver;
+      actor Driver { perform stopCar; perform selectPark; }
       objective Requirements::LockIndication;
       include use case StopVehicle;
       include use case UseCases::Managing::Lock;
@@ -466,8 +466,8 @@ package UseCases {
     }
 
     use case def <'UC020'> PlayMedia {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform selectTitle; }
+      actor Passenger { perform selectTitle; }
       objective Requirements::CabinMedia;
       doc /* The driver or a passenger plays audio or video on the cabin system. */
 
@@ -489,7 +489,7 @@ package UseCases {
     }
 
     use case def <'UC021'> Charge {
-      actor Driver;
+      actor Driver { perform connectCharger; }
       actor Charger;
       objective Requirements::ChargeTime;
       doc /* The driver connects a home or fast charger. The car and the charger negotiate a session, the battery takes energy and the state of charge is reported until the driver unplugs. */

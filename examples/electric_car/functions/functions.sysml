@@ -217,7 +217,7 @@ package Functions {
       perform chargingFlow.storeEnergy;
     }
     action chargingFlow {
-      doc /* One charging session: from plugging in to stopping at the target state of charge. */
+      doc /* One charging session: from plugging in to stopping, at the target state of charge or when the driver ends it. */
       action detectPlug {
         doc /* Starts the session: the inlet senses a charger plug and locks it in place. Output: plug present and locked. */
       }
@@ -231,7 +231,7 @@ package Functions {
         doc /* Input: the charging current. The cells take up the energy and the state of charge is updated. */
       }
       action stopAtTarget {
-        doc /* When the state of charge reaches the driver's target: the charger is told to stop and the plug is unlocked. */
+        doc /* When the state of charge reaches the driver's target, or the driver ends the session: the charger is told to stop and the plug is unlocked. */
       }
       first start;
       then detectPlug;
@@ -338,18 +338,23 @@ package Functions {
       doc /* Select and play titles on the cabin display and speakers. Allocated to the entertainment system. */
       perform entertainmentFlow.selectTitle;
       perform entertainmentFlow.playMedia;
+      perform entertainmentFlow.stopPlayback;
     }
     action entertainmentFlow {
-      doc /* Pick something to play and play it in the cabin. */
+      doc /* Pick something to play, play it in the cabin, and stop. */
       action selectTitle {
         doc /* Input: a choice on the cabin display by the driver or a passenger. Output: the title to play. */
       }
       action playMedia {
         doc /* The chosen title streams to the display and speakers until it ends or another title is chosen. */
       }
+      action stopPlayback {
+        doc /* The title ends or an occupant stops it: the stream stops and the speakers fall silent. */
+      }
       first start;
       then selectTitle;
       then playMedia;
+      then stopPlayback;
       then done;
     }
   }
@@ -383,26 +388,31 @@ package Functions {
       perform windshieldCleaningFlow.readStalk;
     }
     part wipeSweep : FunctionNode {
-      doc /* Sweep the glass and park the blades. Allocated to the wipers. */
+      doc /* Spray washer fluid, sweep the glass and park the blades. Allocated to the wipers. */
+      perform windshieldCleaningFlow.sprayWasher;
       perform windshieldCleaningFlow.sweepGlass;
       perform windshieldCleaningFlow.parkBlades;
     }
     action windshieldCleaningFlow {
-      doc /* From the stalk position to a clean windshield and parked blades. */
+      doc /* From the stalk position to a clean windshield and parked blades; a wash request sprays the glass before the sweep. */
       action readStalk {
         doc /* Input: the stalk position (off, intermittent, slow, fast or wash). Output: the requested wipe speed and any washer pulse. */
       }
+      action sprayWasher {
+        doc /* Wash is selected: the washer pump sprays fluid onto the glass ahead of the blades. */
+      }
       action sweepGlass {
-        doc /* At the requested speed: the blades cross the glass, with washer fluid sprayed on a wash pulse. */
+        doc /* At the requested speed: the blades cross the glass. */
       }
       action parkBlades {
         doc /* When the stalk returns to off: the current sweep is finished and the blades stop in their rest position below the windshield. */
       }
       first start;
       then readStalk;
-      then sweepGlass;
-      then parkBlades;
-      then done;
+      then if washSelected then sprayWasher else sweepGlass;
+      first sprayWasher then sweepGlass;
+      first sweepGlass then parkBlades;
+      first parkBlades then done;
     }
   }
 
@@ -649,7 +659,7 @@ package Functions {
   }
 
   view EntertainmentFlowView : ActionFlowView {
-    doc /* Entertainment flow: title selection and playback. Each step shows the functional entity that performs it. */
+    doc /* Entertainment flow: title selection, playback and stop. Each step shows the functional entity that performs it. */
     expose Entertainment::entertainmentFlow;
   }
 
@@ -659,7 +669,7 @@ package Functions {
   }
 
   view WindshieldCleaningFlowView : ActionFlowView {
-    doc /* Windshield cleaning flow: stalk reading, sweeping and blade parking. Each step shows the functional entity that performs it. */
+    doc /* Windshield cleaning flow: stalk reading, washer spray on a wash request, sweeping and blade parking. Each step shows the functional entity that performs it. */
     expose WindshieldCleaning::windshieldCleaningFlow;
   }
 
@@ -839,6 +849,12 @@ package FunctionTraceability {
   #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::raiseWindow;
   #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::stopWindow;
   #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::reverseWindow;
+  // Charging.
+  #refine dependency from Functions::Charging::chargingFlow::detectPlug to UseCases::Managing::Charge::connectCharger;
+  #refine dependency from Functions::Charging::chargingFlow::negotiateCurrent to UseCases::Managing::Charge::negotiateSession;
+  #refine dependency from Functions::Charging::chargingFlow::transferEnergy to UseCases::Managing::Charge::transferEnergy;
+  #refine dependency from Functions::Charging::chargingFlow::storeEnergy to UseCases::Managing::Charge::transferEnergy;
+  #refine dependency from Functions::Charging::chargingFlow::stopAtTarget to UseCases::Managing::Charge::endSession;
   // SpeedControl.
   #refine dependency from Functions::SpeedControl::speedControlFlow::arbitrateTorque to UseCases::Driving::Accelerate::pressAccelerator;
   #refine dependency from Functions::SpeedControl::speedControlFlow::driveWheels to UseCases::Driving::Accelerate::driveWheels;
@@ -869,9 +885,18 @@ package FunctionTraceability {
   #refine dependency from Functions::Lighting::brakeLampFlow::lightBrakeLamps to UseCases::Driving::Brake::applyBrakeLights;
   #refine dependency from Functions::Lighting::indicatorFlow::readIndicatorRequest to UseCases::Driving::EmergencyStop::flashHazards;
   #refine dependency from Functions::Lighting::indicatorFlow::flashHazards to UseCases::Driving::EmergencyStop::flashHazards;
+  // WindshieldCleaning.
+  #refine dependency from Functions::WindshieldCleaning::windshieldCleaningFlow::readStalk to UseCases::Driving::CleanWindshield::moveStalk;
+  #refine dependency from Functions::WindshieldCleaning::windshieldCleaningFlow::sprayWasher to UseCases::Driving::CleanWindshield::sprayWasher;
+  #refine dependency from Functions::WindshieldCleaning::windshieldCleaningFlow::sweepGlass to UseCases::Driving::CleanWindshield::sweepGlass;
+  #refine dependency from Functions::WindshieldCleaning::windshieldCleaningFlow::parkBlades to UseCases::Driving::CleanWindshield::parkBlades;
   // Climate.
   #refine dependency from Functions::Climate::climateFlow::readSetpoint to UseCases::Managing::AdjustClimate::setTemperature;
   #refine dependency from Functions::Climate::climateFlow::conditionCabin to UseCases::Managing::AdjustClimate::conditionCabin;
+  // Entertainment.
+  #refine dependency from Functions::Entertainment::entertainmentFlow::selectTitle to UseCases::Managing::PlayMedia::selectTitle;
+  #refine dependency from Functions::Entertainment::entertainmentFlow::playMedia to UseCases::Managing::PlayMedia::playTitle;
+  #refine dependency from Functions::Entertainment::entertainmentFlow::stopPlayback to UseCases::Managing::PlayMedia::stopPlayback;
   // DriverFeedback.
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StartVehicle::showReady;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StartVehicle::rejectKey;
@@ -887,4 +912,6 @@ package FunctionTraceability {
   #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::CloseDoor::clearDoorWarning;
   #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::CloseDoor::keepDoorWarning;
   #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showSetpoint to UseCases::Managing::AdjustClimate::showSetpoint;
+  #refine dependency from Functions::DriverFeedback::chargeStatusFlow::showStateOfCharge to UseCases::Managing::Charge::reportCharge;
+  #refine dependency from Functions::DriverFeedback::chargeStatusFlow::showFinalCharge to UseCases::Managing::Charge::endSession;
 }

@@ -1,3 +1,3 @@
 # EntertainmentFlowView
 
-Entertainment flow: title selection and playback. Each step shows the functional entity that performs it.
+Entertainment flow: title selection, playback and stop. Each step shows the functional entity that performs it.
