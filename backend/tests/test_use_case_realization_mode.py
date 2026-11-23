@@ -28,6 +28,12 @@ EXTRA = """
     #refine dependency from Mixed::Fn::n to Mixed::Ex;
   }
   allocate Mixed::Fn::n to L::vc;
+  package Act {
+    part def Fa { part n { perform flow.read; } action flow { action read; } }
+    use case def Uc { actor Driver { perform press; } action press; }
+    #refine dependency from Act::Fa::flow::read to Act::Uc::press;
+  }
+  allocate Act::Fa::n to L::bc;
 """
 VIEWS = """\
 package FlowViews {
@@ -43,6 +49,7 @@ package FlowViews {
   view ZActorFirst : ActionFlowView { expose RealizationProbe::UC::Start::Driver; expose RealizationProbe::UC::Start; }
   view ZOnlyParts : ActionFlowView { expose RealizationProbe::UC::Start; filter @SysML::PartUsage; }
   view ZKeepsUseCase : ActionFlowView { expose RealizationProbe::UC::Start; filter @SysML::ActionUsage; }
+  view ActFlow : ActionFlowView { expose RealizationProbe::Act::Uc; }
   view ExFlow : ActionFlowView { expose RealizationProbe::Mixed::Ex; }
   view OwnFlow : ActionFlowView { expose RealizationProbe::Nested::Deep::Own; }
 }
@@ -229,6 +236,26 @@ def test_two_function_steps_realize_one_step(tmp_path: Path):
     }
     assert real["unrealizedSteps"] == [f"{P}::Mixed::Uc::later"]
     assert f"{fn}::flow::succ2" in mixed["semantic"]
+
+
+def test_a_function_step_that_refines_an_actor_step_is_a_step_realizer(tmp_path: Path):
+    client, pid = _client(tmp_path)
+    act = _view(client, pid, "ActFlow")
+    real = act["flowRealization"]
+    uc, fa = f"{P}::Act::Uc", f"{P}::Act::Fa"
+    read, node = f"{fa}::flow::read", f"{fa}::n"
+    assert real["actorSteps"] == {f"{uc}::press": f"{uc}::Driver"}
+    assert real["stepRealizers"] == {f"{uc}::press": [read]}
+    assert real["unrealizedSteps"] == []  # an actor step is never unrealized
+    assert real["realizerNodes"] == {read: [node]}
+    assert real["realizerFunctions"] == {read: fa}
+    assert real["nodeFunctions"] == {node: [fa]}
+    assert real["explicitNodes"] == {}  # reached through a step, not an empty lane
+    assert act["laneTargets"] == {node: [BC]}
+    for eid in (read, f"{fa}::flow", node, fa, BC):
+        assert eid in act["semantic"], eid
+    api = client.get(api_url(f"/projects/{pid}/realization")).json()["useCases"][uc]
+    assert node in api["nodes"]
 
 
 def test_composite_use_case_has_call_nodes(tmp_path: Path):

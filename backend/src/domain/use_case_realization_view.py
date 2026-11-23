@@ -165,6 +165,10 @@ def build_realization_flow(
     flagged = {f.element_id for f in r.findings if f.code == UNREALIZED_SYSTEM_STEP}
     unrealized = [s for s in system_steps if s in flagged]
     uc_coarse = r.coarse_realizers.get(use_case_id, [])
+    # An actor step can be refined too: its realizers follow it, they do not replace it.
+    for step in actor_steps:
+        if r.step_realizers.get(step):
+            step_realizers[step] = list(r.step_realizers[step])
     for step in system_steps:
         stepwise = r.step_realizers.get(step, [])
         coarse = r.coarse_realizers.get(step, []) or uc_coarse
