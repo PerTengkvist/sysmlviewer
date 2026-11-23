@@ -11,7 +11,7 @@ package UseCases {
     doc /* Use cases performed from the driver's seat with the car Ready or Driving: start and stop, gear, speed, steering, visibility and parking. */
 
     use case def <'UC001'> StartVehicle {
-      actor Driver;
+      actor Driver { perform pressStart; }
       objective Requirements::PowerModes;
       objective Requirements::Immobilizer;
       doc /* The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. Starting is where the immobilizer requirement is met: the car becomes Ready only once the key has been approved. Without the brake held, or without an approved key in the cabin, the car stays Off and tells the driver why. */
@@ -42,7 +42,7 @@ package UseCases {
     }
 
     use case def <'UC002'> StopVehicle {
-      actor Driver;
+      actor Driver { perform pressStart; }
       objective Requirements::PowerModes;
       doc /* With the car in Park the driver presses the start button again. The car opens the high-voltage contactor, re-arms the immobilizer and shows Off. In any other gear the car stays Ready and asks for park. */
 
@@ -63,7 +63,7 @@ package UseCases {
     }
 
     use case def <'UC003'> ChangeGear {
-      actor Driver;
+      actor Driver { perform selectGear; }
       objective Requirements::PropulsionModes;
       doc /* The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear. An unsafe change is refused and the gear stays as it was. */
 
@@ -84,9 +84,9 @@ package UseCases {
     }
 
     use case def <'UC004'> TurnLeft {
-      actor Driver;
+      actor Driver { perform turnWheelLeft; }
       objective Requirements::DirectionalControl;
-      doc /* The driver turns the steering wheel left and the car follows. */
+      doc /* The driver turns the steering wheel left and the car follows, with the left indicators flashing so other road users see the turn. */
 
       action turnWheelLeft {
         doc /* The driver turns the steering wheel to the left. */
@@ -94,16 +94,20 @@ package UseCases {
       action steerWheels {
         doc /* The front wheels follow the steering wheel and the car turns left, with lighter steering at low speed. */
       }
+      action flashLeftIndicator {
+        doc /* The left indicators flash while the car turns. */
+      }
       first start;
       then turnWheelLeft;
       then steerWheels;
+      then flashLeftIndicator;
       then done;
     }
 
     use case def <'UC005'> TurnRight {
-      actor Driver;
+      actor Driver { perform turnWheelRight; }
       objective Requirements::DirectionalControl;
-      doc /* The driver turns the steering wheel right and the car follows. */
+      doc /* The driver turns the steering wheel right and the car follows, with the right indicators flashing so other road users see the turn. */
 
       action turnWheelRight {
         doc /* The driver turns the steering wheel to the right. */
@@ -111,14 +115,18 @@ package UseCases {
       action steerWheels {
         doc /* The front wheels follow the steering wheel and the car turns right, with lighter steering at low speed. */
       }
+      action flashRightIndicator {
+        doc /* The right indicators flash while the car turns. */
+      }
       first start;
       then turnWheelRight;
       then steerWheels;
+      then flashRightIndicator;
       then done;
     }
 
     use case def <'UC006'> Brake {
-      actor Driver;
+      actor Driver { perform pressBrake; }
       objective Requirements::BrakingDistance;
       doc /* The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit. */
 
@@ -139,7 +147,7 @@ package UseCases {
     }
 
     use case def <'UC007'> Accelerate {
-      actor Driver;
+      actor Driver { perform pressAccelerator; }
       objective Requirements::Acceleration;
       objective Requirements::TopSpeed;
       doc /* The driver presses the accelerator and the motor delivers torque within the battery's limit. The same use case carries the car up to its top speed, so it pursues both the acceleration and the top-speed requirement. With a cold or nearly empty battery the car delivers less torque and says so. */
@@ -164,7 +172,7 @@ package UseCases {
     }
 
     use case def <'UC008'> EmergencyStop {
-      actor Driver;
+      actor Driver { perform pressBrakeHard; }
       objective Requirements::BrakingDistance;
       doc /* The driver brakes hard from speed. Extends Brake with maximum deceleration, anti-lock modulation and hazard lights. */
 
@@ -185,7 +193,7 @@ package UseCases {
     }
 
     use case def <'UC009'> CleanWindshield {
-      actor Driver;
+      actor Driver { perform moveStalk; }
       objective Requirements::ForwardVisibility;
       doc /* The driver starts the wipers and washer and the windshield is cleared. */
 
@@ -210,7 +218,7 @@ package UseCases {
     }
 
     use case def <'UC010'> ToggleHeadlights {
-      actor Driver;
+      actor Driver { perform turnLightSwitch; }
       objective Requirements::NightVisibility;
       doc /* The driver switches the headlamps on or off, or between low and high beam. */
 
@@ -234,7 +242,7 @@ package UseCases {
     }
 
     use case def <'UC011'> Drive {
-      actor Driver;
+      actor Driver { perform arrive; }
       actor Passenger;
       objective Requirements::Range;
       include use case StartVehicle;
@@ -261,11 +269,11 @@ package UseCases {
     }
 
     use case def <'UC012'> Park {
-      actor Driver;
+      actor Driver { perform stopCar; perform selectPark; }
       objective Requirements::LockIndication;
       include use case StopVehicle;
       include use case UseCases::Managing::Lock;
-      doc /* The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock. */
+      doc /* The driver stops, selects park, shuts the car down and locks it. Includes StopVehicle and Lock. Its own two steps are the driver's, so the car's part of parking is realized through the use cases it includes; the P on the cluster is shown by ChangeGear. */
 
       action stopCar {
         doc /* The driver brakes the car to a standstill. */
@@ -301,8 +309,8 @@ package UseCases {
     doc /* Use cases performed with the car standing still: access, doors and windows, cabin comfort, media and charging. Driver and passenger share most of them. */
 
     use case def <'UC013'> Unlock {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pressUnlock; }
+      actor Passenger { perform pressUnlock; }
       objective Requirements::AccessControl;
       doc /* The driver presses unlock on the key fob. The car authenticates the credential, releases the latches, flashes the indicators and wakes the cabin. A key the car does not recognise is rejected and the car stays locked. */
 
@@ -327,8 +335,8 @@ package UseCases {
     }
 
     use case def <'UC014'> Lock {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pressLock; }
+      actor Passenger { perform pressLock; }
       objective Requirements::LockIndication;
       doc /* The driver presses lock on the key fob. The car checks that all doors are closed, engages the latches and flashes the indicators as confirmation. With a door open the car stays unlocked and gives no confirmation. */
 
@@ -349,8 +357,8 @@ package UseCases {
     }
 
     use case def <'UC015'> OpenDoor {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pullHandle; }
+      actor Passenger { perform pullHandle; }
       objective Requirements::CabinAccess;
       doc /* An occupant pulls a door handle and the door releases. The inside handle always opens the door, so nobody can be shut in; the outside handle opens it only on an unlocked car. */
 
@@ -371,8 +379,8 @@ package UseCases {
     }
 
     use case def <'UC016'> CloseDoor {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pushDoorShut; }
+      actor Passenger { perform pushDoorShut; }
       objective Requirements::CabinAccess;
       doc /* An occupant closes a door; the latch engages and the door-ajar warning clears. A door that is not pushed fully shut keeps the warning on. */
 
@@ -393,8 +401,8 @@ package UseCases {
     }
 
     use case def <'UC017'> OpenWindow {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform holdSwitchDown; }
+      actor Passenger { perform holdSwitchDown; }
       objective Requirements::CabinAccess;
       doc /* An occupant presses the window switch down and the window lowers. */
 
@@ -411,8 +419,8 @@ package UseCases {
     }
 
     use case def <'UC018'> CloseWindow {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform holdSwitchUp; }
+      actor Passenger { perform holdSwitchUp; }
       objective Requirements::CabinAccess;
       doc /* An occupant presses the window switch up and the window rises, backing off if something is caught in the gap. */
 
@@ -436,8 +444,8 @@ package UseCases {
     }
 
     use case def <'UC019'> AdjustClimate {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform setTemperature; }
+      actor Passenger { perform setTemperature; }
       objective Requirements::CabinClimate;
       doc /* The driver or a passenger sets cabin temperature and airflow. */
 
@@ -458,8 +466,8 @@ package UseCases {
     }
 
     use case def <'UC020'> PlayMedia {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform selectTitle; }
+      actor Passenger { perform selectTitle; }
       objective Requirements::CabinMedia;
       doc /* The driver or a passenger plays audio or video on the cabin system. */
 
@@ -481,7 +489,7 @@ package UseCases {
     }
 
     use case def <'UC021'> Charge {
-      actor Driver;
+      actor Driver { perform connectCharger; }
       actor Charger;
       objective Requirements::ChargeTime;
       doc /* The driver connects a home or fast charger. The car and the charger negotiate a session, the battery takes energy and the state of charge is reported until the driver unplugs. */

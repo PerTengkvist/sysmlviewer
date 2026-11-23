@@ -116,6 +116,30 @@ package Realize {
 }
 ```
 
+In `examples/electric_car` every use case is written this way. StartVehicle marks the driver's step, and its other steps are system steps:
+
+[//]: # (source: examples/electric_car/use_cases/use_cases.sysml)
+```sysml
+use case def <'UC001'> StartVehicle {
+  actor Driver { perform pressStart; }
+  objective Requirements::PowerModes;
+  objective Requirements::Immobilizer;
+  // ...
+}
+```
+
+A step may be realized by steps of more than one function, and a function step that reads the actor's input refines the actor's step:
+
+[//]: # (source: examples/electric_car/functions/functions.sysml)
+```sysml
+#refine dependency from Functions::Security::startFlow::readStartRequest to UseCases::Driving::StartVehicle::pressStart;
+#refine dependency from Functions::Security::startFlow::checkKeyInCabin to UseCases::Driving::StartVehicle::checkKey;
+#refine dependency from Functions::Security::startFlow::releaseImmobilizer to UseCases::Driving::StartVehicle::showReady;
+#refine dependency from Functions::Security::startFlow::switchOnHighVoltage to UseCases::Driving::StartVehicle::showReady;
+#refine dependency from Functions::Security::startFlow::enableDrive to UseCases::Driving::StartVehicle::showReady;
+#refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StartVehicle::showReady;
+```
+
 Roles come from the relations, not from names: a function is a part that owns an action flow, a function node is a part that performs one of its steps, and a logical part is the target of the node's `allocate`. A `#refine` from a function or a function node straight to a use case still works, and so does one from a whole flow (a coarse link). The most precise link wins, and a function (node) that refines a use case directly counts the same in failure and FMEA reports as one found through the steps.
 
 Three views show the result, all in `examples/diagrams/use_case_realization.sysml`: a `GridView` that exposes use cases is the traceability matrix, an `AllocationView` on a use case or a function draws the chain as four columns, and an `ActionFlowView` on a use case (`view StartRealization : ActionFlowView { expose UseCaseRealization::UC::Start; }`) draws the activity on swimlanes, in black box, white box or logical lanes.

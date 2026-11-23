@@ -1,6 +1,6 @@
 # authenticate
 
-Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller.
+Check the key fob credential before any unlock or lock, and look for an approved key in the cabin before a start. Allocated to the vehicle controller.
 
 Part of `Security`.
 

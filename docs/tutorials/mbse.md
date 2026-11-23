@@ -34,7 +34,7 @@ Use one package per layer and one folder per package. The order below is the ord
 
 ### Functions/
 
-(`functions/`) `functions.sysml` with the white box functions of the system. This layer is part of the trace, not an optional step. Each function is decomposed into function parts (composition), has at least one activity flow, and refines the use cases it carries out. Every action in a flow is performed by one of the function's parts (`perform`), and every function part is allocated to a logical part. Dependencies between functions (such as «Energy» or «Authorize») give a high-level structure view.
+(`functions/`) `functions.sysml` with the white box functions of the system. This layer is part of the trace, not an optional step. Each function is decomposed into function parts (composition), has at least one activity flow, and realizes the use cases it carries out: a step of a flow refines the use case step it carries out (`#refine`). Every action in a flow is performed by one of the function's parts (`perform`), and every function part is allocated to a logical part, so the function, its parts and their logical parts follow from the step links. Dependencies between functions (such as «Energy» or «Authorize») give a high-level structure view.
 
 ### LogicalArchitecture/
 
@@ -61,8 +61,12 @@ flowchart LR
   PP["Physical part"] -- "«implements»" --> LP["Logical part"]
   FP["Function part"] -- "«allocate»" --> LP
   FN["Function"] -- "owns" --> FP
-  FN -- "«refine»" --> UC["Use case"]
-  FP -- "«refine»" --> UC
+  FN -- "owns (flow)" --> FS["Function step"]
+  FP -- "«perform»" --> FS
+  FS -- "«refine»" --> US["Use case step"]
+  UC["Use case"] -- "owns" --> US
+  FN -. "«refine» (derived)" .-> UC
+  FP -. "«refine» (derived)" .-> UC
   UC -- "«objective»" --> RQ["Requirement"]
   LP -. "«satisfy» only where the chain does not reach" .-> RQ
 ```
@@ -152,7 +156,17 @@ part def SpeedControl :> Function {
 }
 ```
 
-A function, and each of its function parts, refines the use cases it carries out. SpeedControl takes part in Accelerate, Brake and EmergencyStop, and Brake is also refined by Lighting, which lights the brake lamps:
+A function step refines the use case step it carries out. In Brake, SpeedControl reads the pedal (`arbitrateTorque`, which refines the driver's step `pressBrake`) and slows the car (`blendRegen` and `applyFriction`), and Lighting lights the brake lamps:
+
+```sysml
+#refine dependency from Functions::SpeedControl::speedControlFlow::arbitrateTorque to UseCases::Driving::Brake::pressBrake;
+#refine dependency from Functions::SpeedControl::speedControlFlow::blendRegen to UseCases::Driving::Brake::applyBrake;
+#refine dependency from Functions::SpeedControl::speedControlFlow::applyFriction to UseCases::Driving::Brake::applyBrake;
+#refine dependency from Functions::Lighting::brakeLampFlow::readBrakeRequest to UseCases::Driving::Brake::applyBrakeLights;
+#refine dependency from Functions::Lighting::brakeLampFlow::lightBrakeLamps to UseCases::Driving::Brake::applyBrakeLights;
+```
+
+From these links the viewer derives that SpeedControl and Lighting realize Brake, and through `perform` and `allocate` which function parts and logical parts do. Every system step of every use case in the example is realized this way, which `scripts/check_sysml.py` checks. The example also keeps the explicit form, a function and each of its function parts refining the use cases they carry out, next to the step links; `check_sysml.py` reports any difference between the two:
 
 ```sysml
 #refine dependency from Functions::SpeedControl to UseCases::Driving::Brake;
@@ -317,7 +331,7 @@ The same works from the physical side. Select `vehicleEcu` in **PhysicalView** a
 | 5 | part vehicleController (logical part) | «implements» |
 | 6 | part vehicleEcu (physical part, selected) | |
 
-Several steps carry a **+N** badge. `vehicleController` has three function parts allocated to it (authenticate, immobilizer and wakeUp), and they serve several use cases, so there is more than one way up; the chain shows one of them.
+Several steps carry a **+N** badge. `vehicleController` has four function parts allocated to it (authenticate, immobilizer, powerControl and wakeUp), and they serve several use cases, so there is more than one way up; the chain shows one of them.
 
 #### When to use satisfy
 

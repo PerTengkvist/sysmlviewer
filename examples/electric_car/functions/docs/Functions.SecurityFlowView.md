@@ -1,3 +1,3 @@
 # SecurityFlowView
 
-Security flow: credential check, then unlock, wake-up, immobilizer release and ready indication, or rejection of the key. Each step shows the functional entity that performs it.
+Security flow: credential check, then unlock and wake-up, or rejection of the key. The immobilizer is not released here. Each step shows the functional entity that performs it.

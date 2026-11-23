@@ -24,29 +24,23 @@
     },
     "Functions::Security::wakeUp": {
       "x": 20.0,
-      "y": 180.0,
+      "y": 248.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::lockControl": {
       "x": 20.0,
-      "y": 248.0,
+      "y": 316.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::doorControl": {
       "x": 20.0,
-      "y": 316.0,
-      "width": 200.0,
-      "height": 56.0
-    },
-    "Functions::Security::windowControl": {
-      "x": 20.0,
       "y": 384.0,
       "width": 200.0,
       "height": 56.0
     },
-    "Functions::Security::driverInformation": {
+    "Functions::Security::windowControl": {
       "x": 20.0,
       "y": 452.0,
       "width": 200.0,
@@ -285,6 +279,24 @@
       "y": -60.59911019664108,
       "width": 120.0,
       "height": 72.0
+    },
+    "Functions::Security::powerControl": {
+      "x": 20.0,
+      "y": 180.0,
+      "width": 200.0,
+      "height": 56.0
+    },
+    "Functions::DriverFeedback": {
+      "x": 1105.0,
+      "y": 1012.0,
+      "width": 240.0,
+      "height": 124.0
+    },
+    "Functions::DriverFeedback::driverInformation": {
+      "x": 20.0,
+      "y": 44.0,
+      "width": 200.0,
+      "height": 56.0
     }
   },
   "edges": {

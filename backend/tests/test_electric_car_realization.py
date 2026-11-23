@@ -1,0 +1,593 @@
+"""Use case realization in the electric car: every system step is realized by function steps.
+
+The one link written by hand is a `#refine` from a function step to a use case step;
+`domain.realization.derive_realization` derives function, function node and logical part
+from it. These tests freeze the intended realization (REALIZATION, ACTOR_STEPS) and check
+the coverage rules of plan 2: every system step is realized, every function step refines a
+use case step, and the explicit function and entity refines equal what the steps give.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import shutil
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+from helpers import api_url
+
+from adapters.api.app import create_app
+from adapters.api.static_paths import resolve_repo_root
+from adapters.parser.subset_parser import SubsetSysmlParser
+from domain.models import ArtifactKind, SysmlFile
+from domain.perform import resolve_performers
+from domain.realization import derive_realization
+
+ROOT = resolve_repo_root() / "examples" / "electric_car"
+
+DRV = "UseCases::Driving"
+MAN = "UseCases::Managing"
+SEC = "Functions::Security"
+DI = "Functions::DriverFeedback"
+SPD = "Functions::SpeedControl"
+MNV = "Functions::Maneuvrability"
+LIG = "Functions::Lighting"
+WIN = "Functions::WindshieldCleaning"
+CHA = "Functions::Charging"
+CLI = "Functions::Climate"
+ENT = "Functions::Entertainment"
+
+USE_CASES = {
+    "StartVehicle": DRV, "StopVehicle": DRV, "ChangeGear": DRV, "TurnLeft": DRV,
+    "TurnRight": DRV, "Brake": DRV, "Accelerate": DRV, "EmergencyStop": DRV,
+    "CleanWindshield": DRV, "ToggleHeadlights": DRV, "Drive": DRV, "Park": DRV,
+    "Unlock": MAN, "Lock": MAN, "OpenDoor": MAN, "CloseDoor": MAN, "OpenWindow": MAN,
+    "CloseWindow": MAN, "AdjustClimate": MAN, "PlayMedia": MAN, "Charge": MAN,
+}
+COMPOSITES = {"Drive", "Park"}  # reached through include (B7, B9)
+LEAVES = [uc for uc in USE_CASES if uc not in COMPOSITES]
+
+
+def uc_id(name: str) -> str:
+    return f"{USE_CASES[name]}::{name}"
+
+
+# Use case step -> the function steps that realize it, in declaration order (B14).
+REALIZATION: dict[str, dict[str, list[str]]] = {
+    "StartVehicle": {
+        "pressStart": [f"{SEC}::startFlow::readStartRequest"],
+        "checkKey": [f"{SEC}::startFlow::checkKeyInCabin"],
+        "showReady": [
+            f"{SEC}::startFlow::releaseImmobilizer",
+            f"{SEC}::startFlow::switchOnHighVoltage",
+            f"{SEC}::startFlow::enableDrive",
+            f"{DI}::powerModeFlow::showPowerMode",
+        ],
+        "rejectKey": [f"{SEC}::startFlow::refuseStart", f"{DI}::powerModeFlow::showPrompt"],
+        "askForBrake": [f"{SEC}::startFlow::refuseStart", f"{DI}::powerModeFlow::showPrompt"],
+    },
+    "StopVehicle": {
+        "pressStart": [f"{SEC}::stopFlow::readStopRequest"],
+        "shutDown": [
+            f"{SEC}::stopFlow::disableDrive",
+            f"{SEC}::stopFlow::switchOffHighVoltage",
+            f"{SEC}::stopFlow::armImmobilizer",
+            f"{DI}::powerModeFlow::showPowerMode",
+        ],
+        "askForPark": [f"{SEC}::stopFlow::keepReady", f"{DI}::powerModeFlow::showPrompt"],
+    },
+    "ChangeGear": {
+        "selectGear": [f"{MNV}::gearSelectionFlow::selectGear"],
+        "engageGear": [
+            f"{MNV}::gearSelectionFlow::engageGear",
+            f"{DI}::driverFeedbackFlow::showGear",
+        ],
+        "refuseGear": [
+            f"{MNV}::gearSelectionFlow::refuseGear",
+            f"{DI}::driverFeedbackFlow::showWarnings",
+        ],
+    },
+    "TurnLeft": {
+        "steerWheels": [f"{MNV}::maneuvrabilityFlow::steerWheels", f"{MNV}::maneuvrabilityFlow::holdRoad"],
+        "flashLeftIndicator": [
+            f"{LIG}::indicatorFlow::readIndicatorRequest",
+            f"{LIG}::indicatorFlow::flashIndicator",
+        ],
+    },
+    "TurnRight": {
+        "steerWheels": [f"{MNV}::maneuvrabilityFlow::steerWheels", f"{MNV}::maneuvrabilityFlow::holdRoad"],
+        "flashRightIndicator": [
+            f"{LIG}::indicatorFlow::readIndicatorRequest",
+            f"{LIG}::indicatorFlow::flashIndicator",
+        ],
+    },
+    "Brake": {
+        "pressBrake": [f"{SPD}::speedControlFlow::arbitrateTorque"],
+        "applyBrake": [f"{SPD}::speedControlFlow::blendRegen", f"{SPD}::speedControlFlow::applyFriction"],
+        "applyBrakeLights": [
+            f"{LIG}::brakeLampFlow::readBrakeRequest",
+            f"{LIG}::brakeLampFlow::lightBrakeLamps",
+        ],
+    },
+    "Accelerate": {
+        "pressAccelerator": [f"{SPD}::speedControlFlow::arbitrateTorque"],
+        "driveWheels": [f"{SPD}::speedControlFlow::driveWheels"],
+        "limitTorque": [
+            f"{SPD}::speedControlFlow::arbitrateTorque",
+            f"{DI}::driverFeedbackFlow::showWarnings",
+        ],
+        "showSpeed": [f"{DI}::driverFeedbackFlow::showSpeed"],
+    },
+    "EmergencyStop": {
+        "pressBrakeHard": [f"{SPD}::speedControlFlow::arbitrateTorque"],
+        "brakeAtMaximum": [f"{SPD}::speedControlFlow::blendRegen", f"{SPD}::speedControlFlow::applyFriction"],
+        "flashHazards": [f"{LIG}::indicatorFlow::readIndicatorRequest", f"{LIG}::indicatorFlow::flashHazards"],
+    },
+    "CleanWindshield": {
+        "moveStalk": [f"{WIN}::windshieldCleaningFlow::readStalk"],
+        "sprayWasher": [f"{WIN}::windshieldCleaningFlow::sprayWasher"],
+        "sweepGlass": [f"{WIN}::windshieldCleaningFlow::sweepGlass"],
+        "parkBlades": [f"{WIN}::windshieldCleaningFlow::parkBlades"],
+    },
+    "ToggleHeadlights": {
+        "turnLightSwitch": [f"{LIG}::lightingFlow::selectLamps"],
+        "lightLamps": [f"{LIG}::lightingFlow::lightLamps"],
+        "switchOffLamps": [f"{LIG}::lightingFlow::switchOffLamps"],
+        "showBeamSymbol": [f"{DI}::driverFeedbackFlow::showBeamSymbol"],
+    },
+    "Unlock": {
+        "pressUnlock": [f"{SEC}::securityFlow::checkCredential"],
+        "unlockDoors": [f"{SEC}::securityFlow::unlockDoors"],
+        "wakeCabin": [f"{SEC}::securityFlow::wakeCabin"],
+        "rejectKey": [f"{SEC}::securityFlow::rejectKey"],
+    },
+    "Lock": {
+        "pressLock": [f"{SEC}::lockFlow::checkCredential"],
+        "lockDoors": [
+            f"{SEC}::lockFlow::checkDoorsClosed",
+            f"{SEC}::lockFlow::engageLatches",
+            f"{SEC}::lockFlow::confirmLock",
+        ],
+        "stayUnlocked": [f"{SEC}::lockFlow::checkDoorsClosed", f"{SEC}::lockFlow::keepUnlocked"],
+    },
+    "OpenDoor": {
+        "pullHandle": [f"{SEC}::cabinAccessFlow::readDoorHandle"],
+        "releaseDoor": [
+            f"{SEC}::cabinAccessFlow::checkUnlocked",
+            f"{SEC}::cabinAccessFlow::releaseDoor",
+            f"{DI}::cabinStatusFlow::showDoorState",
+        ],
+        "stayLatched": [f"{SEC}::cabinAccessFlow::checkUnlocked", f"{SEC}::cabinAccessFlow::stayLatched"],
+    },
+    "CloseDoor": {
+        "pushDoorShut": [f"{SEC}::cabinAccessFlow::closeDoor"],
+        "clearDoorWarning": [f"{SEC}::cabinAccessFlow::relatch", f"{DI}::cabinStatusFlow::showDoorState"],
+        "keepDoorWarning": [
+            f"{SEC}::cabinAccessFlow::keepDoorAjar",
+            f"{DI}::cabinStatusFlow::showDoorState",
+        ],
+    },
+    "OpenWindow": {
+        "holdSwitchDown": [f"{SEC}::cabinAccessFlow::runWindowLift"],
+        "lowerWindow": [f"{SEC}::cabinAccessFlow::runWindowLift"],
+    },
+    "CloseWindow": {
+        "holdSwitchUp": [f"{SEC}::cabinAccessFlow::runWindowLift"],
+        "raiseWindow": [f"{SEC}::cabinAccessFlow::runWindowLift"],
+        "stopWindow": [f"{SEC}::cabinAccessFlow::runWindowLift"],
+        "reverseWindow": [f"{SEC}::cabinAccessFlow::runWindowLift"],
+    },
+    "AdjustClimate": {
+        "setTemperature": [f"{CLI}::climateFlow::readSetpoint"],
+        "showSetpoint": [f"{DI}::cabinStatusFlow::showSetpoint"],
+        "conditionCabin": [f"{CLI}::climateFlow::conditionCabin"],
+    },
+    "PlayMedia": {
+        "selectTitle": [f"{ENT}::entertainmentFlow::selectTitle"],
+        "playTitle": [f"{ENT}::entertainmentFlow::playMedia"],
+        "stopPlayback": [f"{ENT}::entertainmentFlow::stopPlayback"],
+    },
+    "Charge": {
+        "connectCharger": [f"{CHA}::chargingFlow::detectPlug"],
+        "negotiateSession": [f"{CHA}::chargingFlow::negotiateCurrent"],
+        "transferEnergy": [f"{CHA}::chargingFlow::transferEnergy", f"{CHA}::chargingFlow::storeEnergy"],
+        "reportCharge": [f"{DI}::chargeStatusFlow::showStateOfCharge"],
+        "endSession": [f"{CHA}::chargingFlow::stopAtTarget", f"{DI}::chargeStatusFlow::showFinalCharge"],
+    },
+}
+
+D, P, C = "Driver", "Passenger", "Charger"
+# Use case step -> the actors that perform it (`actor X { perform step; }`, B1): 22 steps.
+ACTOR_STEPS: dict[str, dict[str, set[str]]] = {
+    "StartVehicle": {"pressStart": {D}},
+    "StopVehicle": {"pressStart": {D}},
+    "ChangeGear": {"selectGear": {D}},
+    "TurnLeft": {"turnWheelLeft": {D}},
+    "TurnRight": {"turnWheelRight": {D}},
+    "Brake": {"pressBrake": {D}},
+    "Accelerate": {"pressAccelerator": {D}},
+    "EmergencyStop": {"pressBrakeHard": {D}},
+    "CleanWindshield": {"moveStalk": {D}},
+    "ToggleHeadlights": {"turnLightSwitch": {D}},
+    "Drive": {"arrive": {D}},
+    "Park": {"stopCar": {D}, "selectPark": {D}},
+    "Unlock": {"pressUnlock": {D, P}},
+    "Lock": {"pressLock": {D, P}},
+    "OpenDoor": {"pullHandle": {D, P}},
+    "CloseDoor": {"pushDoorShut": {D, P}},
+    "OpenWindow": {"holdSwitchDown": {D, P}},
+    "CloseWindow": {"holdSwitchUp": {D, P}},
+    "AdjustClimate": {"setTemperature": {D, P}},
+    "PlayMedia": {"selectTitle": {D, P}},
+    "Charge": {"connectCharger": {D}},
+}
+
+# Every function flow.
+FLOWS = [
+    f"{SEC}::securityFlow", f"{SEC}::cabinAccessFlow", f"{SEC}::startFlow", f"{SEC}::stopFlow",
+    f"{SEC}::lockFlow", f"{CHA}::chargingFlow", f"{SPD}::speedControlFlow",
+    f"{MNV}::maneuvrabilityFlow", f"{MNV}::gearSelectionFlow", f"{ENT}::entertainmentFlow",
+    f"{CLI}::climateFlow", f"{WIN}::windshieldCleaningFlow", f"{LIG}::lightingFlow",
+    f"{LIG}::indicatorFlow", f"{LIG}::brakeLampFlow", f"{DI}::powerModeFlow",
+    f"{DI}::driverFeedbackFlow", f"{DI}::cabinStatusFlow", f"{DI}::chargeStatusFlow",
+]
+
+@pytest.fixture(scope="module")
+def elements():
+    files = []
+    for path in sorted(ROOT.rglob("*.sysml")):
+        rel = path.relative_to(ROOT).as_posix()
+        files.append(SysmlFile(id=rel, name=path.name, content=path.read_text(encoding="utf-8"), path=rel))
+    result = SubsetSysmlParser().parse_project(files)
+    assert result.warnings == []
+    return result.elements
+
+
+@pytest.fixture(scope="module")
+def real(elements):
+    return derive_realization(elements)
+
+
+def _explicit(elements, kind: str) -> dict[str, set[str]]:
+    """Use case -> sources of a `#refine` from a function (`kind="function"`) or a function node."""
+    functions = {
+        e.id for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id == "Functions" and not e.is_abstract
+    }
+    nodes = {e.id for e in elements.values() if e.kind == ArtifactKind.PART and e.parent_id in functions}
+    sources = functions if kind == "function" else nodes
+    out: dict[str, set[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and e.source_id in sources
+            and elements.get(e.target_id or "") is not None
+            and elements[e.target_id].kind == ArtifactKind.USE_CASE
+        ):
+            out.setdefault(e.target_id, set()).add(e.source_id)
+    return out
+
+
+# -- the realization table ---------------------------------------------------
+
+
+@pytest.mark.parametrize("name", LEAVES)
+def test_realization_table(real, name):
+    uc = uc_id(name)
+    got = {
+        step.rsplit("::", 1)[1]: realizers
+        for step, realizers in real.step_realizers.items()
+        if step.rsplit("::", 1)[0] == uc
+    }
+    assert got == REALIZATION[name]
+
+
+@pytest.mark.parametrize("name", list(USE_CASES))
+def test_actor_steps_are_the_intended_ones(elements, name):
+    uc = uc_id(name)
+    performers = resolve_performers(elements)
+    got: dict[str, set[str]] = {}
+    for sid in elements[uc].children:
+        step = elements[sid]
+        if step.kind != ArtifactKind.ACTION:
+            continue
+        actors = {elements[p].name for p in performers.get(sid, []) if elements[p].kind == ArtifactKind.ACTOR}
+        if actors:
+            got[step.name] = actors
+    assert got == ACTOR_STEPS[name]
+
+
+def test_actor_steps_count():
+    assert sum(len(steps) for steps in ACTOR_STEPS.values()) == 22
+
+
+@pytest.mark.parametrize("name", LEAVES)
+def test_every_system_step_is_realized(real, name):
+    uc = uc_id(name)
+    system = real.system_steps.get(uc, [])
+    assert system, name
+    assert [s for s in system if s not in real.step_realizers] == []
+    # Every system step and every actor step is in the table, and nothing else.
+    steps = {s.rsplit("::", 1)[1] for s in system} | set(ACTOR_STEPS[name])
+    assert set(REALIZATION[name]) <= steps
+
+
+@pytest.mark.parametrize("flow", FLOWS)
+def test_every_function_step_realizes_a_use_case_step(elements, real, flow):
+    """Requirement 2 of plan 2 (plan 1's untraced-function-step)."""
+    assert flow in elements
+    sources = {link.source_id for link in real.links if link.precision == "step"}
+    steps = [
+        c for c in elements[flow].children
+        if elements[c].kind == ArtifactKind.ACTION
+        and (elements[c].type_ref or "") not in {"start", "done", "decide", "decision", "condition"}
+    ]
+    assert len(steps) >= 2
+    assert [s for s in steps if s not in sources] == []
+
+
+def test_realizing_steps_are_function_steps(elements, real):
+    """Every step link goes from a step of a function flow to a step of a use case."""
+    for link in real.links:
+        if link.precision != "step":
+            continue
+        flow = elements[elements[link.source_id].parent_id]
+        assert elements[flow.parent_id].kind == ArtifactKind.PART, link
+        assert elements[flow.parent_id].parent_id == "Functions", link
+        assert elements[elements[link.target_id].parent_id].kind == ArtifactKind.USE_CASE, link
+
+
+@pytest.mark.parametrize("name", LEAVES)
+def test_explicit_refines_match_step_realization(elements, real, name):
+    """Requirement 3 (plan 1's explicit-mismatch): during phase A the explicit refines from
+    functions and function nodes are exactly what the step links give."""
+    uc = uc_id(name)
+    step_functions = {f for f, p in real.uc_functions.get(uc, {}).items() if p == "step"}
+    step_nodes = {n for n, p in real.uc_nodes.get(uc, {}).items() if p == "step"}
+    assert _explicit(elements, "function").get(uc, set()) == step_functions
+    assert _explicit(elements, "node").get(uc, set()) == step_nodes
+
+
+def test_no_realization_findings(real):
+    assert [(f.code, f.element_id) for f in real.findings] == []
+
+
+def test_all_leaf_use_cases_in_scope(real):
+    """Drive and Park have no realization of their own: they reach it through include."""
+    assert real.in_scope == {uc_id(n) for n in LEAVES}
+    assert len(real.in_scope) == 19
+
+
+def test_flows_are_the_intended_ones(elements):
+    functions = {
+        e.id for e in elements.values()
+        if e.kind == ArtifactKind.PART and e.parent_id == "Functions" and not e.is_abstract
+    }
+    flows = {
+        c for f in functions for c in elements[f].children if elements[c].kind == ArtifactKind.ACTION
+    }
+    assert flows == set(FLOWS)
+
+
+def test_check_sysml_summary():
+    import subprocess
+    import sys
+
+    repo = resolve_repo_root()
+    proc = subprocess.run(
+        [sys.executable, str(repo / "scripts" / "check_sysml.py"), str(ROOT)],
+        capture_output=True, text=True, env={"PYTHONPATH": str(repo / "backend" / "src")},
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "WARNING" not in proc.stdout and "REALIZATION" not in proc.stdout
+    assert proc.stdout.rstrip().endswith("realization: 19 use cases in scope, 0 findings")
+
+
+# -- model findings F1, F3, F6, F7 -------------------------------------------
+
+
+def _performed_by(elements, node_id: str) -> set[str]:
+    return {
+        step for step, parts in resolve_performers(elements).items() if node_id in parts
+    }
+
+
+def test_immobilizer_is_released_only_at_start(elements):
+    """F1: unlocking leaves the immobilizer engaged; only startFlow releases it."""
+    performed = _performed_by(elements, f"{SEC}::immobilizer")
+    assert performed == {f"{SEC}::startFlow::releaseImmobilizer", f"{SEC}::stopFlow::armImmobilizer"}
+    assert not any(s.startswith(f"{SEC}::securityFlow::") for s in performed)
+    unlock = "Dynamics::UnlockSequence"
+    messages = [e for e in elements.values() if e.kind == ArtifactKind.MESSAGE and e.parent_id == unlock]
+    assert messages
+    assert not any(m.target_id == f"{unlock}::driveController" for m in messages)
+
+
+def test_flows_have_one_trigger(elements):
+    """F3, F7: one flow per trigger in Lighting and Maneuvrability."""
+    def names(flow):
+        return {elements[c].name for c in elements[flow].children if elements[c].kind == ArtifactKind.ACTION}
+
+    assert names(f"{LIG}::lightingFlow") - {"start", "done", "lampsOn"} == {
+        "selectLamps", "lightLamps", "switchOffLamps",
+    }
+    assert "selectGear" not in names(f"{MNV}::maneuvrabilityFlow")
+    assert f"{LIG}::indicatorFlow" in elements and f"{LIG}::brakeLampFlow" in elements
+    assert f"{MNV}::gearSelectionFlow" in elements
+
+
+def test_instrument_cluster_loss_keeps_security(elements):
+    """F6: a broken instrument cluster takes away the indications, not the car."""
+    from domain.failure.extract import build_impact_graph
+    from domain.failure.model import Failure, FailureKind, Layer, Status
+    from domain.failure.propagate import evaluate
+
+    graph = build_impact_graph(elements)
+    impacts = evaluate(
+        graph, [Failure("PhysicalArchitecture::VehiclePhysical::instrumentClusterUnit", FailureKind.LOSS)]
+    )
+
+    def lost(layer):
+        return {n for n, node in graph.nodes.items() if node.layer is layer and impacts[n].status is Status.LOST}
+
+    assert lost(Layer.FUNCTION) == {DI}
+    assert lost(Layer.USE_CASE) == {
+        uc_id(n) for n in (
+            "StartVehicle", "StopVehicle", "ChangeGear", "Accelerate", "ToggleHeadlights",
+            "OpenDoor", "CloseDoor", "AdjustClimate", "Charge", "Drive", "Park",
+        )
+    }
+
+
+# -- sequences refine their use cases (B10) ----------------------------------
+
+
+def _sequence_refines(elements) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for e in elements.values():
+        if (
+            e.kind == ArtifactKind.DEPENDENCY
+            and "refine" in (e.metadata_keywords or [])
+            and elements.get(e.source_id or "") is not None
+            and elements[e.source_id].kind == ArtifactKind.OCCURRENCE
+        ):
+            out.setdefault(e.source_id, []).append(e.target_id)
+    return out
+
+
+def test_every_sequence_refines_one_use_case(elements):
+    sequences = [e.id for e in elements.values() if e.kind == ArtifactKind.OCCURRENCE and e.parent_id == "Dynamics"]
+    assert len(sequences) == 23
+    refines = _sequence_refines(elements)
+    assert set(refines) == set(sequences)
+    for seq, targets in refines.items():
+        assert len(targets) == 1, seq
+        assert elements[targets[0]].kind == ArtifactKind.USE_CASE, seq
+    named = {"Dynamics::UnlockDeniedSequence": "Unlock", "Dynamics::EndChargeSequence": "Charge"}
+    for seq, (target,) in refines.items():
+        expected = named.get(seq, seq.removeprefix("Dynamics::").removesuffix("Sequence"))
+        assert target == uc_id(expected), seq
+
+
+def test_every_use_case_has_a_sequence(elements):
+    covered = {t for targets in _sequence_refines(elements).values() for t in targets}
+    assert covered == {uc_id(n) for n in USE_CASES}
+
+
+def test_a_sequence_climbs_to_its_use_case(elements):
+    from domain.dependency_tree import build_dependency_tree
+
+    def up(eid):
+        return [n["id"] for n in build_dependency_tree(elements, eid)["up"]]
+
+    assert up("Dynamics::UnlockSequence") == [
+        "Requirements::Security", "Requirements::AccessControl", "UseCases::Managing::Unlock",
+    ]
+    assert up("LogicalArchitecture::Car::vehicleController") == [
+        "Requirements::Performance", "Requirements::PowerModes",
+        "UseCases::Driving::StartVehicle", "Functions::Security::authenticate",
+    ]
+
+
+# -- the tutorials quote the model ---------------------------------------------
+
+
+def test_tutorial_excerpts_of_the_car_are_verbatim():
+    """A sysml block marked `[//]: # (source: examples/electric_car/...)` in the tutorials
+    is an ordered subsequence of that file (comments and blank lines aside)."""
+    from test_sequence_tutorial_snippets import TUTORIALS, _in_order, _significant, fenced_blocks
+
+    repo = resolve_repo_root()
+    checked = 0
+    for name in ("use-cases-and-scenarios.md", "mbse.md"):
+        for tag, lang, body in fenced_blocks((TUTORIALS / name).read_text(encoding="utf-8")):
+            if lang != "sysml" or not tag.startswith("source: examples/electric_car/"):
+                continue
+            if "occurrence def" in body:
+                continue  # test_sequence_tutorial_snippets checks the sequences
+            source = (repo / tag.removeprefix("source: ")).read_text(encoding="utf-8")
+            assert _in_order(_significant(body), _significant(source)) == [], (name, body[:60])
+            checked += 1
+    assert checked >= 2
+
+
+# -- layouts and use case views ----------------------------------------------
+
+UC_FILE = "use_cases/use_cases.sysml"
+
+
+def _without_actor_blocks(text: str) -> str:
+    """Every `actor X { perform …; }` of the use cases written back as `actor X;`."""
+    return re.sub(r"actor (\w+) \{[^}]*\}", r"actor \1;", text)
+
+
+def test_stale_layout_keys_are_harmless(tmp_path: Path):
+    """SecurityFlowView and ManeuvrabilityFlowView keep the saved keys of steps that moved out
+    of their flows (B11): a key for a step that no longer exists loads without a warning,
+    and opening the project does not rewrite the layout file."""
+    copy = tmp_path / "electric_car"
+    shutil.copytree(ROOT, copy)
+    layout = copy / "views" / "SecurityFlowView.json"
+    data = json.loads(layout.read_text(encoding="utf-8"))
+    data["nodes"]["Functions::Security::securityFlow::noSuchStep"] = {
+        "x": 10.0, "y": 10.0, "width": 140.0, "height": 90.0,
+    }
+    layout.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    saved = layout.read_bytes()
+
+    client = TestClient(create_app(workspace=tmp_path))
+    opened = client.post(api_url("/session/open"), json={"folder": str(copy)})
+    assert opened.status_code == 200, opened.text
+    project = opened.json()["project"]
+    assert all(not f.get("warnings") for f in project["files"])
+    view = client.get(api_url(f"/projects/{project['id']}/views/Functions::SecurityFlowView")).json()
+    assert view["diagramMode"] == "actionFlow"
+    assert "modeError" not in view
+    assert view["hasViewLayout"] is True
+    assert "Functions::Security::securityFlow::noSuchStep" not in view["semantic"]
+    assert layout.read_bytes() == saved
+
+
+def _use_case_views(tmp_path: Path, text: str | None) -> dict:
+    copy = tmp_path / "electric_car"
+    shutil.copytree(ROOT, copy)
+    if text is not None:
+        (copy / UC_FILE).write_text(text, encoding="utf-8")
+    client = TestClient(create_app(workspace=tmp_path))
+    pid = client.post(api_url("/session/open"), json={"folder": str(copy)}).json()["project"]["id"]
+    out = {}
+    for view_id in ("UseCases::VehicleUseCaseView", "UseCases::UseCaseTraceabilityView"):
+        body = client.get(api_url(f"/projects/{pid}/views/{view_id}")).json()
+        viz = body["visualization"]
+        out[view_id] = (set(body["semantic"]), set(viz["nodes"]), set(viz["edges"]))
+    return out
+
+
+def test_actor_blocks_do_not_change_the_use_case_views(tmp_path: Path):
+    """B11: VehicleUseCaseView.json is not touched, so an actor block must add nothing to
+    the use case diagrams (the perform is not drawn)."""
+    text = (ROOT / UC_FILE).read_text(encoding="utf-8")
+    assert _without_actor_blocks(text) != text
+    without = _use_case_views(tmp_path / "a", _without_actor_blocks(text))
+    assert _use_case_views(tmp_path / "b", None) == without
+
+
+def test_start_sequence_follows_the_start_flow(elements):
+    """F12: the sequence of StartVehicle runs in the order of startFlow and of its own doc:
+    the immobilizer is released before the high-voltage contactor closes, and the drive
+    controller reports Ready once high voltage is on."""
+    seq = "Dynamics::StartVehicleSequence"
+    names = [elements[c].name for c in elements[seq].children if elements[c].kind == ArtifactKind.MESSAGE]
+    order = ["releaseImmobilizer", "closeContactor", "highVoltageOn", "driveReady", "showReady"]
+    assert [n for n in names if n in order] == order
+    flow = [
+        elements[c].name
+        for c in elements["Functions::Security::startFlow"].children
+        if elements[c].kind == ArtifactKind.ACTION
+    ]
+    assert flow.index("releaseImmobilizer") < flow.index("switchOnHighVoltage") < flow.index("enableDrive")
+    doc = elements[seq].documentation or ""
+    assert doc.index("releases the immobilizer") < doc.index("closes the high-voltage contactor")

@@ -1,6 +1,6 @@
 # lockControl
 
-Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller.
+Own the door latches: engage and release them on request, confirm every change with the indicators, and leave the car unlocked when locking is not possible. Allocated to the body controller.
 
 Part of `Security`.
 

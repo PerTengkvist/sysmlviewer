@@ -4,9 +4,11 @@ An occupant closes a door; the latch engages and the door-ajar warning clears. A
 
 ## Relations
 
+- Refined by `CloseDoorSequence`.
 - Refined by `Security`.
 - Refined by `lockControl`.
 - Refined by `doorControl`.
 - Refined by `driverInformation`.
+- Refined by `DriverFeedback`.
 - Pursues requirement `CabinAccess`.
 - Refines `EnterAndExit`.

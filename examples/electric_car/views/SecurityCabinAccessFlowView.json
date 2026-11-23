@@ -30,7 +30,7 @@
     },
     "Functions::Security::cabinAccessFlow::done": {
       "x": 48.0,
-      "y": 1746.0,
+      "y": 1736.0,
       "width": 28.0,
       "height": 28.0
     },
@@ -49,12 +49,6 @@
     "Functions::Security::cabinAccessFlow::checkUnlocked": {
       "x": 48.0,
       "y": 676.0,
-      "width": 140.0,
-      "height": 90.0
-    },
-    "Functions::Security::cabinAccessFlow::showDoorState": {
-      "x": 48.0,
-      "y": 1566.0,
       "width": 140.0,
       "height": 90.0
     },
@@ -78,9 +72,21 @@
     },
     "Functions::Security::cabinAccessFlow::relatch": {
       "x": 48.0,
-      "y": 1386.0,
+      "y": 1556.0,
       "width": 140.0,
       "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::keepDoorAjar": {
+      "x": 328.0,
+      "y": 1556.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::cabinAccessFlow::doorLatched": {
+      "x": 48.0,
+      "y": 1386.0,
+      "width": 120.0,
+      "height": 80.0
     }
   },
   "edges": {}

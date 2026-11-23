@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -40,8 +41,8 @@ def test_summary_line(tmp_path):
     assert "realization: 1 use cases in scope, 2 findings" in proc.stdout
 
 
-def test_electric_car_still_zero():
+def test_electric_car_has_no_findings():
     proc = run(REPO / "examples" / "electric_car")
     assert proc.returncode == 0, proc.stdout
     assert "REALIZATION" not in proc.stdout
-    assert "realization:" not in proc.stdout
+    assert re.search(r"^realization: 19 use cases in scope, 0 findings$", proc.stdout, re.M), proc.stdout

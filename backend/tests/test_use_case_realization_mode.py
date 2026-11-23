@@ -345,7 +345,7 @@ def test_nodes_carry_no_saved_position(tmp_path: Path):
 
 
 def test_electric_car_copy_with_a_use_case_flow_is_reasonable(tmp_path: Path):
-    """No step links in the car yet: white box shows coarse or empty realizations."""
+    """The car realizes StartVehicle step by step: every system step has its realizers."""
     src = Path(__file__).resolve().parents[2] / "examples" / "electric_car"
     ws = tmp_path / "ec"
     shutil.copytree(src, ws)
@@ -362,15 +362,30 @@ def test_electric_car_copy_with_a_use_case_flow_is_reasonable(tmp_path: Path):
     assert start.get("modeError") is None
     real = start["flowRealization"]
     assert real["useCaseId"] == "UseCases::Driving::StartVehicle"
-    assert real["stepRealizers"] == {}  # the car has no step links yet
-    assert real["unrealizedSteps"] == []  # not in scope: no step link, no finding
-    assert real["inScope"] is False
+    uc = "UseCases::Driving::StartVehicle"
+    # The system steps; the white box leaves out what realizes the actor step pressStart.
+    sec, fb = "Functions::Security::startFlow", "Functions::DriverFeedback::powerModeFlow"
+    assert real["stepRealizers"] == {
+        f"{uc}::checkKey": [f"{sec}::checkKeyInCabin"],
+        f"{uc}::showReady": [
+            f"{sec}::releaseImmobilizer",
+            f"{sec}::switchOnHighVoltage",
+            f"{sec}::enableDrive",
+            f"{fb}::showPowerMode",
+        ],
+        f"{uc}::rejectKey": [f"{sec}::refuseStart", f"{fb}::showPrompt"],
+        f"{uc}::askForBrake": [f"{sec}::refuseStart", f"{fb}::showPrompt"],
+    }
+    assert real["unrealizedSteps"] == []
+    assert real["inScope"] is True
     # Every node and part the endpoint (matrix, chain, Details) gives the use case has a lane.
     api = client.get(api_url(f"/projects/{project['id']}/realization")).json()["useCases"][
         "UseCases::Driving::StartVehicle"
     ]
     assert api["nodes"] or api["functionNodes"], "the car refines StartVehicle with nodes"
-    lanes = set(real["explicitNodes"]) | set(real["functionNodes"])
+    lanes = set(real["explicitNodes"]) | set(real["functionNodes"]) | {
+        n for ns in real["realizerNodes"].values() for n in ns
+    }
     assert set(api["nodes"]) | set(api["functionNodes"]) <= lanes
     parts = set(real["explicitParts"]) | set(real["functionParts"])
     assert set(api["parts"]) | set(api["functionParts"]) <= parts | {

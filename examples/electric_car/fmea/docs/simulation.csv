@@ -1,6 +1,7 @@
 Node,Layer,P(LOST),P(DEGRADED)
 Functions::Charging,function,0.0000,0.0470
 Functions::Climate,function,0.0015,0.0470
+Functions::DriverFeedback,function,0.0000,0.0000
 Functions::Entertainment,function,0.0015,0.0470
 Functions::Lighting,function,0.0010,0.0470
 Functions::Maneuvrability,function,0.0010,0.0470

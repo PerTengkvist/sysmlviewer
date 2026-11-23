@@ -4,6 +4,7 @@ An occupant presses the window switch up and the window rises, backing off if so
 
 ## Relations
 
+- Refined by `CloseWindowSequence`.
 - Refined by `Security`.
 - Refined by `windowControl`.
 - Pursues requirement `CabinAccess`.

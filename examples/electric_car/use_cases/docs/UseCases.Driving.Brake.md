@@ -4,6 +4,7 @@ The driver presses the brake pedal and the car slows, blending regeneration and 
 
 ## Relations
 
+- Refined by `BrakeSequence`.
 - Refined by `SpeedControl`.
 - Refined by `Lighting`.
 - Refined by `torqueArbitration`.

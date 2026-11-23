@@ -1,6 +1,6 @@
 # indicatorControl
 
-Flash direction indicators, brake lamps and hazard lights. Allocated to the body controller.
+Decide which direction indicators, hazard lights and brake lamps are lit, from the indicator stalk and the steering intention, the hazard switch, an emergency stop and the brake pedal. Allocated to the body controller.
 
 Part of `Lighting`.
 
@@ -10,6 +10,7 @@ Part of `Lighting`.
 - Refines `TurnLeft`.
 - Refines `TurnRight`.
 - Refines `Brake`.
+- Refines `EmergencyStop`.
 
 ## Diagrams
 

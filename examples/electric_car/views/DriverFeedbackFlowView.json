@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::DriverFeedbackFlowView",
+  "name": "DriverFeedbackFlowView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::DriverFeedback::driverFeedbackFlow::showGear": {
+      "x": 48.0,
+      "y": 166.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::DriverFeedback::driverFeedbackFlow::showSpeed": {
+      "x": 48.0,
+      "y": 346.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::DriverFeedback::driverFeedbackFlow::showBeamSymbol": {
+      "x": 48.0,
+      "y": 526.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::DriverFeedback::driverFeedbackFlow::showWarnings": {
+      "x": 48.0,
+      "y": 706.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::DriverFeedback::driverFeedbackFlow::start": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::DriverFeedback::driverFeedbackFlow::done": {
+      "x": 48.0,
+      "y": 886.0,
+      "width": 28.0,
+      "height": 28.0
+    }
+  },
+  "edges": {}
+}

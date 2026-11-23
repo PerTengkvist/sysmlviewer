@@ -1,6 +1,6 @@
 # wipeSweep
 
-Sweep the glass and park the blades. Allocated to the wipers.
+Spray washer fluid, sweep the glass and park the blades. Allocated to the wipers.
 
 Part of `WindshieldCleaning`.
 
