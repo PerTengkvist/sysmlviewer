@@ -21,9 +21,47 @@ def elements():
     return load_electric_car_elements()
 
 
+START = "Dynamics::StartVehicleSequence"
+
+
+def _f12(facts: dict) -> dict:
+    """F12 of plan 2: StartVehicleSequence closed the contactor before it released the
+    immobilizer, against startFlow, UC001 and its own doc. releaseImmobilizer now comes
+    first; names, ends, reply flags and ids are unchanged. The default lifeline order
+    (first appearance) therefore has driveController before battery. No saved
+    sequenceLayout exists for StartVehicleSequenceView."""
+    messages = list(facts["messages"])
+    release = next(m for m in messages if m["name"] == "releaseImmobilizer")
+    messages.remove(release)
+    messages.insert(next(i for i, m in enumerate(messages) if m["name"] == "closeContactor"), release)
+    order = list(facts["defaultOrder"])
+    b, d = order.index(f"{START}::battery"), order.index(f"{START}::driveController")
+    order[b], order[d] = order[d], order[b]
+    return {**facts, "messages": messages, "defaultOrder": order}
+
+
+# Accepted, named deviations from the frozen legacy facts: sequence -> change.
+DEVIATIONS = {START: _f12}
+
+
 @pytest.fixture(scope="module")
 def fixture():
-    return load_fixture()
+    frozen = load_fixture()
+    return {seq: DEVIATIONS.get(seq, lambda f: f)(facts) for seq, facts in frozen.items()}
+
+
+def test_deviations_are_exactly_the_named_ones(fixture):
+    """Only StartVehicleSequence differs from the frozen facts, and only in the order of
+    the same messages and lifelines."""
+    frozen = load_fixture()
+    assert [seq for seq in frozen if frozen[seq] != fixture[seq]] == [START]
+    old, new = frozen[START], fixture[START]
+    assert old["lifelines"] == new["lifelines"]
+    assert sorted(old["defaultOrder"]) == sorted(new["defaultOrder"])
+    key = lambda m: m["name"]
+    assert sorted(old["messages"], key=key) == sorted(new["messages"], key=key)
+    names = [m["name"] for m in new["messages"]]
+    assert names.index("releaseImmobilizer") < names.index("closeContactor")
 
 
 def test_every_lifeline_is_used_by_a_message(fixture):

@@ -573,3 +573,21 @@ def test_actor_blocks_do_not_change_the_use_case_views(tmp_path: Path):
     assert _without_actor_blocks(text) != text
     without = _use_case_views(tmp_path / "a", _without_actor_blocks(text))
     assert _use_case_views(tmp_path / "b", None) == without
+
+
+def test_start_sequence_follows_the_start_flow(elements):
+    """F12: the sequence of StartVehicle runs in the order of startFlow and of its own doc:
+    the immobilizer is released before the high-voltage contactor closes, and the drive
+    controller reports Ready once high voltage is on."""
+    seq = "Dynamics::StartVehicleSequence"
+    names = [elements[c].name for c in elements[seq].children if elements[c].kind == ArtifactKind.MESSAGE]
+    order = ["releaseImmobilizer", "closeContactor", "highVoltageOn", "driveReady", "showReady"]
+    assert [n for n in names if n in order] == order
+    flow = [
+        elements[c].name
+        for c in elements["Functions::Security::startFlow"].children
+        if elements[c].kind == ArtifactKind.ACTION
+    ]
+    assert flow.index("releaseImmobilizer") < flow.index("switchOnHighVoltage") < flow.index("enableDrive")
+    doc = elements[seq].documentation or ""
+    assert doc.index("releases the immobilizer") < doc.index("closes the high-voltage contactor")

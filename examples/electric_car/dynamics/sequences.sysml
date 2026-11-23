@@ -245,9 +245,9 @@ package Dynamics {
     message brakeHeld from brakePedal to vehicleController;
     message challenge from vehicleController to keyFob;
     #Reply message credential from keyFob to vehicleController;
+    message releaseImmobilizer from vehicleController to driveController;
     message closeContactor from vehicleController to battery;
     #Reply message highVoltageOn from battery to vehicleController;
-    message releaseImmobilizer from vehicleController to driveController;
     #Reply message driveReady from driveController to vehicleController;
     message showReady from vehicleController to instrumentCluster;
     #Reply message indicateReady from instrumentCluster to Driver;
