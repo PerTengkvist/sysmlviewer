@@ -364,8 +364,17 @@ def test_electric_car_copy_with_a_use_case_flow_is_reasonable(tmp_path: Path):
     assert real["useCaseId"] == "UseCases::Driving::StartVehicle"
     uc = "UseCases::Driving::StartVehicle"
     # The system steps; the white box leaves out what realizes the actor step pressStart.
-    assert set(real["stepRealizers"]) == {
-        f"{uc}::{s}" for s in ("checkKey", "showReady", "rejectKey", "askForBrake")
+    sec, fb = "Functions::Security::startFlow", "Functions::DriverFeedback::powerModeFlow"
+    assert real["stepRealizers"] == {
+        f"{uc}::checkKey": [f"{sec}::checkKeyInCabin"],
+        f"{uc}::showReady": [
+            f"{sec}::releaseImmobilizer",
+            f"{sec}::switchOnHighVoltage",
+            f"{sec}::enableDrive",
+            f"{fb}::showPowerMode",
+        ],
+        f"{uc}::rejectKey": [f"{sec}::refuseStart", f"{fb}::showPrompt"],
+        f"{uc}::askForBrake": [f"{sec}::refuseStart", f"{fb}::showPrompt"],
     }
     assert real["unrealizedSteps"] == []
     assert real["inScope"] is True
