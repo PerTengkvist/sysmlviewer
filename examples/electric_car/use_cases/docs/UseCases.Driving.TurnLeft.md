@@ -1,6 +1,6 @@
 # TurnLeft
 
-The driver turns the steering wheel left and the car follows.
+The driver turns the steering wheel left and the car follows, with the left indicators flashing so other road users see the turn.
 
 ## Relations
 

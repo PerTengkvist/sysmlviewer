@@ -1,6 +1,6 @@
 # lampDrive
 
-Light the lamp units. Allocated to the lamps.
+Power the lamp units on and off. Allocated to the lamps.
 
 Part of `Lighting`.
 
@@ -11,6 +11,7 @@ Part of `Lighting`.
 - Refines `TurnLeft`.
 - Refines `TurnRight`.
 - Refines `Brake`.
+- Refines `EmergencyStop`.
 
 ## Diagrams
 

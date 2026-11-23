@@ -237,3 +237,38 @@ def test_vehicle_ecu_loss_keeps_driver_feedback(graph):
     assert lost == ALL_FUNCTIONS - _f("Charging", "Climate", "DriverFeedback")
     lost_ucs = _with_status(graph, impacts, Layer.USE_CASE, Status.LOST)
     assert not lost_ucs & _uc("Managing::AdjustClimate", "Managing::Charge")
+
+
+def test_lamp_units_loss_takes_emergency_stop_too(graph):
+    """Plan 2, F9: Lighting realizes EmergencyStop's hazard lights, so lamp trouble loses it
+    as it loses Brake. BrakingDistance was already at risk through Brake."""
+    impacts = evaluate(graph, [loss("lampUnits")])
+    _check(
+        graph, impacts, Status.LOST,
+        _f("Lighting"),
+        _uc(
+            "Driving::TurnLeft", "Driving::TurnRight", "Driving::Brake", "Driving::EmergencyStop",
+            "Driving::ToggleHeadlights", "Driving::Drive",
+        ),
+        _r("Range", "BrakingDistance", "DirectionalControl", "NightVisibility"),
+    )
+    assert impacts["UseCases::Driving::EmergencyStop"].limited_by == (
+        "Functions::Lighting::lampDrive", "refine"
+    )
+
+
+@pytest.mark.parametrize(
+    "part, cause",
+    [
+        ("driveEcu", "Functions::SpeedControl::torqueArbitration"),
+        ("bodyEcu", "Functions::Lighting::indicatorControl"),
+        ("electricMotor", "Functions::SpeedControl"),
+    ],
+)
+def test_emergency_stop_is_limited_by_the_entity_its_steps_use(graph, part, cause):
+    """Plan 2, step 4: torqueArbitration, regenBlending and the Lighting entities refine
+    EmergencyStop as they refine Brake, so a controller loss names the entity on the
+    controller rather than its function. The lost use cases do not change."""
+    impacts = evaluate(graph, [loss(part)])
+    assert impacts["UseCases::Driving::EmergencyStop"].status is Status.LOST
+    assert impacts["UseCases::Driving::EmergencyStop"].limited_by == (cause, "refine")

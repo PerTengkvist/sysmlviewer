@@ -229,12 +229,15 @@ FLOWS = [
 # What the model realizes so far (phase A lands step by step); the rest is xfail.
 DONE_USE_CASES: set[str] = {
     "StartVehicle", "StopVehicle", "Unlock", "Lock", "OpenDoor", "CloseDoor", "OpenWindow",
-    "CloseWindow", "AdjustClimate",
+    "CloseWindow", "AdjustClimate", "ChangeGear", "TurnLeft", "TurnRight", "Brake",
+    "Accelerate", "EmergencyStop", "ToggleHeadlights",
 }
 DONE_FLOWS: set[str] = {
     f"{SEC}::securityFlow", f"{SEC}::startFlow", f"{SEC}::stopFlow", f"{SEC}::lockFlow",
     f"{SEC}::cabinAccessFlow", f"{CLI}::climateFlow", f"{DI}::powerModeFlow",
-    f"{DI}::cabinStatusFlow",
+    f"{DI}::cabinStatusFlow", f"{SPD}::speedControlFlow", f"{MNV}::maneuvrabilityFlow",
+    f"{MNV}::gearSelectionFlow", f"{LIG}::lightingFlow", f"{LIG}::indicatorFlow",
+    f"{LIG}::brakeLampFlow", f"{DI}::driverFeedbackFlow",
 }
 
 
@@ -393,7 +396,6 @@ def test_immobilizer_is_released_only_at_start(elements):
     assert not any(m.target_id == f"{unlock}::driveController" for m in messages)
 
 
-@pytest.mark.xfail(strict=True, reason="F3, F7: step 4")
 def test_flows_have_one_trigger(elements):
     """F3, F7: one flow per trigger in Lighting and Maneuvrability."""
     def names(flow):

@@ -1063,6 +1063,31 @@ def test_branching_flows_have_the_intended_successions():
         ("confirmLock", "done", False),
         ("keepUnlocked", "done", False),
     }
+    # One flow per trigger in Maneuvrability and Lighting (F3, F7 of plan 2).
+    assert _succession_pairs(elements, "Functions::Maneuvrability::gearSelectionFlow") == {
+        ("start", "selectGear", False),
+        ("selectGear", "changeSafe", False),
+        ("changeSafe", "engageGear", True),
+        ("changeSafe", "refuseGear", True),
+        ("engageGear", "done", False),
+        ("refuseGear", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::Lighting::lightingFlow") == {
+        ("start", "selectLamps", False),
+        ("selectLamps", "lampsOn", False),
+        ("lampsOn", "lightLamps", True),
+        ("lampsOn", "switchOffLamps", True),
+        ("lightLamps", "done", False),
+        ("switchOffLamps", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::Lighting::indicatorFlow") == {
+        ("start", "readIndicatorRequest", False),
+        ("readIndicatorRequest", "hazard", False),
+        ("hazard", "flashHazards", True),
+        ("hazard", "flashIndicator", True),
+        ("flashHazards", "done", False),
+        ("flashIndicator", "done", False),
+    }
     assert _succession_pairs(elements, "Functions::DriverFeedback::powerModeFlow") == {
         ("start", "refused", False),
         ("refused", "showPrompt", True),
@@ -1135,7 +1160,7 @@ FUNCTION_REFINES = {
     "Charging": {"Charge"},
     "SpeedControl": {"Accelerate", "Brake", "EmergencyStop"},
     "Maneuvrability": {"ChangeGear", "TurnLeft", "TurnRight"},
-    "Lighting": {"ToggleHeadlights", "TurnLeft", "TurnRight", "Brake"},
+    "Lighting": {"ToggleHeadlights", "TurnLeft", "TurnRight", "Brake", "EmergencyStop"},
     "WindshieldCleaning": {"CleanWindshield"},
     "Climate": {"AdjustClimate"},
     "Entertainment": {"PlayMedia"},

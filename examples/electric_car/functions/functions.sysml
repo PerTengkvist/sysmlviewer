@@ -264,7 +264,7 @@ package Functions {
     action speedControlFlow {
       doc /* From pedal travel to torque at the wheels. When the driver brakes, the deceleration is blended between regeneration and friction; otherwise the traction drive turns the wheels. */
       action arbitrateTorque {
-        doc /* Input: accelerator and brake pedal positions and the battery's power limit. Output: a torque request, negative while the driver brakes; that sign is the braking decision. */
+        doc /* Input: accelerator and brake pedal positions and the battery's power limit. Output: a torque request within that limit, so a cold or nearly empty battery gives less torque and a warning; the request is negative while the driver brakes, and that sign is the braking decision. */
       }
       action blendRegen {
         doc /* While braking: as much of the requested deceleration as the battery can absorb is taken as regenerative torque; the remainder goes on to friction braking. */
@@ -285,24 +285,23 @@ package Functions {
   }
 
   part def Maneuvrability :> Function {
-    doc /* Steer the car left and right, select the direction of travel, and keep it directionally stable. Depends on Security, and on SpeedControl because steering response changes with speed. */
+    doc /* Steer the car left and right, select the direction of travel, and keep it directionally stable. Two flows, one per trigger: maneuvrabilityFlow from the steering wheel to the road wheels, and gearSelectionFlow from the gear selector to a gear that is engaged or refused. Depends on Security, and on SpeedControl because steering response and gear changes depend on speed. */
     part steeringControl : FunctionNode {
       doc /* Turn the steering wheel angle into a wheel angle. Allocated to the drive controller. */
       perform maneuvrabilityFlow.steerWheels;
     }
     part gearSelection : FunctionNode {
       doc /* Accept park, reverse, neutral or drive only when it is safe. Allocated to the drive controller. */
-      perform maneuvrabilityFlow.selectGear;
+      perform gearSelectionFlow.selectGear;
+      perform gearSelectionFlow.engageGear;
+      perform gearSelectionFlow.refuseGear;
     }
     part roadHolding : FunctionNode {
       doc /* Keep the tyres on the road over bumps and in corners. Allocated to the suspension. */
       perform maneuvrabilityFlow.holdRoad;
     }
     action maneuvrabilityFlow {
-      doc /* Choose the direction of travel, steer, and keep the car on the road. */
-      action selectGear {
-        doc /* Input: the gear selector position and the vehicle speed. Output: the engaged direction of travel; a change that is unsafe at the current speed is refused. */
-      }
+      doc /* Steer and keep the car on the road: the road wheels follow the steering wheel while the suspension keeps the tyres in contact. */
       action steerWheels {
         doc /* With a direction engaged: the road wheels follow the steering wheel angle, with less assistance as speed rises. */
       }
@@ -310,10 +309,26 @@ package Functions {
         doc /* While the car moves: body motion over bumps and in corners is damped so that all four tyres keep contact with the road. */
       }
       first start;
-      then selectGear;
       then steerWheels;
       then holdRoad;
       then done;
+    }
+    action gearSelectionFlow {
+      doc /* From the gear selector to the direction of travel: a safe change is engaged, an unsafe one is refused and the gear stays as it was. */
+      action selectGear {
+        doc /* Input: the gear selector position, the vehicle speed and the brake pedal. Output: the requested gear and the changeSafe decision. */
+      }
+      action engageGear {
+        doc /* The change is safe: the motor is set to the new direction of travel, or park is locked, and the engaged gear is reported. */
+      }
+      action refuseGear {
+        doc /* The change is unsafe at this speed or without the brake: the current gear is kept and the refusal is reported as a warning. */
+      }
+      first start;
+      then selectGear;
+      then if changeSafe then engageGear else refuseGear;
+      first engageGear then done;
+      first refuseGear then done;
     }
   }
 
@@ -392,34 +407,69 @@ package Functions {
   }
 
   part def Lighting :> Function {
-    doc /* Headlamps, tail lamps, brake lamps and direction indicators. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn. */
+    doc /* Headlamps, tail lamps, brake lamps, direction indicators and hazard lights. Three flows, one per trigger: lightingFlow for the light switch, indicatorFlow for a turn or a hazard, and brakeLampFlow for the brake pedal. Depends on Security and Charging. Indicators also depend on Maneuvrability because they follow the intended turn. */
     part headlampControl : FunctionNode {
       doc /* Switch low and high beam on and off. Allocated to the body controller. */
       perform lightingFlow.selectLamps;
     }
     part indicatorControl : FunctionNode {
-      doc /* Flash direction indicators, brake lamps and hazard lights. Allocated to the body controller. */
-      perform lightingFlow.flashIndicators;
+      doc /* Decide which direction indicators, hazard lights and brake lamps are lit, from the indicator stalk and the steering intention, the hazard switch, an emergency stop and the brake pedal. Allocated to the body controller. */
+      perform indicatorFlow.readIndicatorRequest;
+      perform brakeLampFlow.readBrakeRequest;
     }
     part lampDrive : FunctionNode {
-      doc /* Light the lamp units. Allocated to the lamps. */
+      doc /* Power the lamp units on and off. Allocated to the lamps. */
       perform lightingFlow.lightLamps;
+      perform lightingFlow.switchOffLamps;
+      perform indicatorFlow.flashIndicator;
+      perform indicatorFlow.flashHazards;
+      perform brakeLampFlow.lightBrakeLamps;
     }
     action lightingFlow {
-      doc /* From the light switch and indicator stalk to lit lamp units. */
+      doc /* From the light switch to headlamps that are lit or dark. */
       action selectLamps {
-        doc /* Input: the light switch and the high-beam stalk. Output: which headlamps should be lit. */
-      }
-      action flashIndicators {
-        doc /* Input: the indicator stalk, the hazard switch and the brake pedal. Output: which direction indicators flash and whether the brake lamps are lit. */
+        doc /* Input: the light switch and the high-beam stalk. Output: which headlamps should be lit, and the lampsOn decision. */
       }
       action lightLamps {
-        doc /* The lamp units chosen in the two previous steps are powered; all others are switched off. */
+        doc /* Headlamps are selected: the chosen low or high beams and the tail lamps are powered. */
+      }
+      action switchOffLamps {
+        doc /* The switch is off: headlamps and tail lamps go dark. */
       }
       first start;
       then selectLamps;
-      then flashIndicators;
-      then lightLamps;
+      then if lampsOn then lightLamps else switchOffLamps;
+      first lightLamps then done;
+      first switchOffLamps then done;
+    }
+    action indicatorFlow {
+      doc /* From a turn or a hazard to flashing lamps: the indicators on the side the driver steers to, or all of them as hazard lights. */
+      action readIndicatorRequest {
+        doc /* Input: the indicator stalk, the steering intention, the hazard switch and an emergency stop. Output: the side to flash, or the hazard decision. */
+      }
+      action flashIndicator {
+        doc /* For a turn: the indicators on one side flash until the turn is complete. */
+      }
+      action flashHazards {
+        doc /* For a hazard: every indicator flashes together until the hazard is cleared. */
+      }
+      first start;
+      then readIndicatorRequest;
+      then if hazard then flashHazards else flashIndicator;
+      first flashHazards then done;
+      first flashIndicator then done;
+    }
+    action brakeLampFlow {
+      doc /* From the brake pedal to lit brake lamps, so traffic behind sees the car slow down. */
+      action readBrakeRequest {
+        doc /* Input: the brake pedal switch and the deceleration request. Output: whether the brake lamps must be lit. */
+      }
+      action lightBrakeLamps {
+        doc /* While the car brakes: the brake lamps are lit, and they go dark when the pedal is released. */
+      }
+      first start;
+      then readBrakeRequest;
+      then lightBrakeLamps;
       then done;
     }
   }
@@ -589,8 +639,13 @@ package Functions {
   }
 
   view ManeuvrabilityFlowView : ActionFlowView {
-    doc /* Maneuvrability flow: gear selection, steering and road holding. Each step shows the functional entity that performs it. */
+    doc /* Maneuvrability flow: steering and road holding. Each step shows the functional entity that performs it. */
     expose Maneuvrability::maneuvrabilityFlow;
+  }
+
+  view ManeuvrabilityGearSelectionFlowView : ActionFlowView {
+    doc /* Maneuvrability gear selection flow: gear request, then the gear is engaged or refused. Each step shows the functional entity that performs it. */
+    expose Maneuvrability::gearSelectionFlow;
   }
 
   view EntertainmentFlowView : ActionFlowView {
@@ -609,8 +664,18 @@ package Functions {
   }
 
   view LightingFlowView : ActionFlowView {
-    doc /* Lighting flow: lamp selection, indicators and lamp drive. Each step shows the functional entity that performs it. */
+    doc /* Lighting flow: lamp selection, then the headlamps are lit or switched off. Each step shows the functional entity that performs it. */
     expose Lighting::lightingFlow;
+  }
+
+  view LightingIndicatorFlowView : ActionFlowView {
+    doc /* Lighting indicator flow: indicator request, then the indicators on one side or the hazard lights flash. Each step shows the functional entity that performs it. */
+    expose Lighting::indicatorFlow;
+  }
+
+  view LightingBrakeLampFlowView : ActionFlowView {
+    doc /* Lighting brake lamp flow: brake request and brake lamps. Each step shows the functional entity that performs it. */
+    expose Lighting::brakeLampFlow;
   }
 
   view DriverFeedbackFlowView : ActionFlowView {
@@ -728,6 +793,12 @@ package FunctionTraceability {
   #refine dependency from Functions::Security::powerControl to UseCases::Driving::StartVehicle;
   #refine dependency from Functions::Security::powerControl to UseCases::Driving::StopVehicle;
   #refine dependency from Functions::Security::doorControl to UseCases::Managing::Lock;
+  // EmergencyStop: the torque request, regeneration and the hazard lights.
+  #refine dependency from Functions::Lighting to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::SpeedControl::torqueArbitration to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::SpeedControl::regenBlending to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::Lighting::indicatorControl to UseCases::Driving::EmergencyStop;
+  #refine dependency from Functions::Lighting::lampDrive to UseCases::Driving::EmergencyStop;
 
   // Step level: each function step refines the use case steps it realizes. Function by
   // function in the order above, and within a function use case by use case.
@@ -768,6 +839,36 @@ package FunctionTraceability {
   #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::raiseWindow;
   #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::stopWindow;
   #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::reverseWindow;
+  // SpeedControl.
+  #refine dependency from Functions::SpeedControl::speedControlFlow::arbitrateTorque to UseCases::Driving::Accelerate::pressAccelerator;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::driveWheels to UseCases::Driving::Accelerate::driveWheels;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::arbitrateTorque to UseCases::Driving::Accelerate::limitTorque;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::arbitrateTorque to UseCases::Driving::Brake::pressBrake;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::blendRegen to UseCases::Driving::Brake::applyBrake;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::applyFriction to UseCases::Driving::Brake::applyBrake;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::arbitrateTorque to UseCases::Driving::EmergencyStop::pressBrakeHard;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::blendRegen to UseCases::Driving::EmergencyStop::brakeAtMaximum;
+  #refine dependency from Functions::SpeedControl::speedControlFlow::applyFriction to UseCases::Driving::EmergencyStop::brakeAtMaximum;
+  // Maneuvrability.
+  #refine dependency from Functions::Maneuvrability::gearSelectionFlow::selectGear to UseCases::Driving::ChangeGear::selectGear;
+  #refine dependency from Functions::Maneuvrability::gearSelectionFlow::engageGear to UseCases::Driving::ChangeGear::engageGear;
+  #refine dependency from Functions::Maneuvrability::gearSelectionFlow::refuseGear to UseCases::Driving::ChangeGear::refuseGear;
+  #refine dependency from Functions::Maneuvrability::maneuvrabilityFlow::steerWheels to UseCases::Driving::TurnLeft::steerWheels;
+  #refine dependency from Functions::Maneuvrability::maneuvrabilityFlow::holdRoad to UseCases::Driving::TurnLeft::steerWheels;
+  #refine dependency from Functions::Maneuvrability::maneuvrabilityFlow::steerWheels to UseCases::Driving::TurnRight::steerWheels;
+  #refine dependency from Functions::Maneuvrability::maneuvrabilityFlow::holdRoad to UseCases::Driving::TurnRight::steerWheels;
+  // Lighting.
+  #refine dependency from Functions::Lighting::lightingFlow::selectLamps to UseCases::Driving::ToggleHeadlights::turnLightSwitch;
+  #refine dependency from Functions::Lighting::lightingFlow::lightLamps to UseCases::Driving::ToggleHeadlights::lightLamps;
+  #refine dependency from Functions::Lighting::lightingFlow::switchOffLamps to UseCases::Driving::ToggleHeadlights::switchOffLamps;
+  #refine dependency from Functions::Lighting::indicatorFlow::readIndicatorRequest to UseCases::Driving::TurnLeft::flashLeftIndicator;
+  #refine dependency from Functions::Lighting::indicatorFlow::flashIndicator to UseCases::Driving::TurnLeft::flashLeftIndicator;
+  #refine dependency from Functions::Lighting::indicatorFlow::readIndicatorRequest to UseCases::Driving::TurnRight::flashRightIndicator;
+  #refine dependency from Functions::Lighting::indicatorFlow::flashIndicator to UseCases::Driving::TurnRight::flashRightIndicator;
+  #refine dependency from Functions::Lighting::brakeLampFlow::readBrakeRequest to UseCases::Driving::Brake::applyBrakeLights;
+  #refine dependency from Functions::Lighting::brakeLampFlow::lightBrakeLamps to UseCases::Driving::Brake::applyBrakeLights;
+  #refine dependency from Functions::Lighting::indicatorFlow::readIndicatorRequest to UseCases::Driving::EmergencyStop::flashHazards;
+  #refine dependency from Functions::Lighting::indicatorFlow::flashHazards to UseCases::Driving::EmergencyStop::flashHazards;
   // Climate.
   #refine dependency from Functions::Climate::climateFlow::readSetpoint to UseCases::Managing::AdjustClimate::setTemperature;
   #refine dependency from Functions::Climate::climateFlow::conditionCabin to UseCases::Managing::AdjustClimate::conditionCabin;
@@ -777,6 +878,11 @@ package FunctionTraceability {
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StartVehicle::askForBrake;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StopVehicle::shutDown;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StopVehicle::askForPark;
+  #refine dependency from Functions::DriverFeedback::driverFeedbackFlow::showGear to UseCases::Driving::ChangeGear::engageGear;
+  #refine dependency from Functions::DriverFeedback::driverFeedbackFlow::showWarnings to UseCases::Driving::ChangeGear::refuseGear;
+  #refine dependency from Functions::DriverFeedback::driverFeedbackFlow::showWarnings to UseCases::Driving::Accelerate::limitTorque;
+  #refine dependency from Functions::DriverFeedback::driverFeedbackFlow::showSpeed to UseCases::Driving::Accelerate::showSpeed;
+  #refine dependency from Functions::DriverFeedback::driverFeedbackFlow::showBeamSymbol to UseCases::Driving::ToggleHeadlights::showBeamSymbol;
   #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::OpenDoor::releaseDoor;
   #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::CloseDoor::clearDoorWarning;
   #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::CloseDoor::keepDoorWarning;

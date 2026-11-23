@@ -1,3 +1,3 @@
 # LightingFlowView
 
-Lighting flow: lamp selection, indicators and lamp drive. Each step shows the functional entity that performs it.
+Lighting flow: lamp selection, then the headlamps are lit or switched off. Each step shows the functional entity that performs it.

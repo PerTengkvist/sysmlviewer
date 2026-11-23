@@ -9,6 +9,7 @@ Part of `SpeedControl`.
 - Allocated to `driveController`.
 - Refines `Accelerate`.
 - Refines `Brake`.
+- Refines `EmergencyStop`.
 
 ## Diagrams
 

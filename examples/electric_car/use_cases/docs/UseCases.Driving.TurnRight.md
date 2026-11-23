@@ -1,6 +1,6 @@
 # TurnRight
 
-The driver turns the steering wheel right and the car follows.
+The driver turns the steering wheel right and the car follows, with the right indicators flashing so other road users see the turn.
 
 ## Relations
 

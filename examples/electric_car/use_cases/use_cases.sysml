@@ -63,7 +63,7 @@ package UseCases {
     }
 
     use case def <'UC003'> ChangeGear {
-      actor Driver;
+      actor Driver { perform selectGear; }
       objective Requirements::PropulsionModes;
       doc /* The driver selects park, reverse, neutral or drive. The drive controller only accepts the change when it is safe and shows the gear. An unsafe change is refused and the gear stays as it was. */
 
@@ -84,9 +84,9 @@ package UseCases {
     }
 
     use case def <'UC004'> TurnLeft {
-      actor Driver;
+      actor Driver { perform turnWheelLeft; }
       objective Requirements::DirectionalControl;
-      doc /* The driver turns the steering wheel left and the car follows. */
+      doc /* The driver turns the steering wheel left and the car follows, with the left indicators flashing so other road users see the turn. */
 
       action turnWheelLeft {
         doc /* The driver turns the steering wheel to the left. */
@@ -94,16 +94,20 @@ package UseCases {
       action steerWheels {
         doc /* The front wheels follow the steering wheel and the car turns left, with lighter steering at low speed. */
       }
+      action flashLeftIndicator {
+        doc /* The left indicators flash while the car turns. */
+      }
       first start;
       then turnWheelLeft;
       then steerWheels;
+      then flashLeftIndicator;
       then done;
     }
 
     use case def <'UC005'> TurnRight {
-      actor Driver;
+      actor Driver { perform turnWheelRight; }
       objective Requirements::DirectionalControl;
-      doc /* The driver turns the steering wheel right and the car follows. */
+      doc /* The driver turns the steering wheel right and the car follows, with the right indicators flashing so other road users see the turn. */
 
       action turnWheelRight {
         doc /* The driver turns the steering wheel to the right. */
@@ -111,14 +115,18 @@ package UseCases {
       action steerWheels {
         doc /* The front wheels follow the steering wheel and the car turns right, with lighter steering at low speed. */
       }
+      action flashRightIndicator {
+        doc /* The right indicators flash while the car turns. */
+      }
       first start;
       then turnWheelRight;
       then steerWheels;
+      then flashRightIndicator;
       then done;
     }
 
     use case def <'UC006'> Brake {
-      actor Driver;
+      actor Driver { perform pressBrake; }
       objective Requirements::BrakingDistance;
       doc /* The driver presses the brake pedal and the car slows, blending regeneration and friction, with the brake lamps lit. */
 
@@ -139,7 +147,7 @@ package UseCases {
     }
 
     use case def <'UC007'> Accelerate {
-      actor Driver;
+      actor Driver { perform pressAccelerator; }
       objective Requirements::Acceleration;
       objective Requirements::TopSpeed;
       doc /* The driver presses the accelerator and the motor delivers torque within the battery's limit. The same use case carries the car up to its top speed, so it pursues both the acceleration and the top-speed requirement. With a cold or nearly empty battery the car delivers less torque and says so. */
@@ -164,7 +172,7 @@ package UseCases {
     }
 
     use case def <'UC008'> EmergencyStop {
-      actor Driver;
+      actor Driver { perform pressBrakeHard; }
       objective Requirements::BrakingDistance;
       doc /* The driver brakes hard from speed. Extends Brake with maximum deceleration, anti-lock modulation and hazard lights. */
 
@@ -210,7 +218,7 @@ package UseCases {
     }
 
     use case def <'UC010'> ToggleHeadlights {
-      actor Driver;
+      actor Driver { perform turnLightSwitch; }
       objective Requirements::NightVisibility;
       doc /* The driver switches the headlamps on or off, or between low and high beam. */
 
