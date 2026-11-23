@@ -1,6 +1,6 @@
 # Security
 
-Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved and, for a door, is latched again.
+Authenticate the key, unlock and lock the car, hold the immobilizer until the car is started, switch the car on and off, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Five flows: securityFlow unlocks the car with the key fob and lockFlow locks it; startFlow makes the car Ready and stopFlow switches it off again; cabinAccessFlow moves a door or a window. Only startFlow releases the immobilizer, so an unlocked car cannot drive until an approved key starts it.
 
 Part of `Functions`.
 

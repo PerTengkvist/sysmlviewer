@@ -7,58 +7,65 @@ package Functions {
     doc /* A functional entity: a part of a function that performs steps of the function's flows. Every FunctionNode is allocated to exactly one logical part. */
   }
   part def Security :> Function {
-    doc /* Authenticate the driver, unlock and lock the car, release the immobilizer, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Two flows: securityFlow from key fob to a car that is ready to start, and cabinAccessFlow from a door handle or window switch to a door or window that has moved and, for a door, is latched again. */
+    doc /* Authenticate the key, unlock and lock the car, hold the immobilizer until the car is started, switch the car on and off, and let occupants open the doors and move the windows of an unlocked car. Every driving function depends on Security before the car will move. Five flows: securityFlow unlocks the car with the key fob and lockFlow locks it; startFlow makes the car Ready and stopFlow switches it off again; cabinAccessFlow moves a door or a window. Only startFlow releases the immobilizer, so an unlocked car cannot drive until an approved key starts it. */
     part authenticate : FunctionNode {
-      doc /* Check the key fob credential before any unlock, lock or start. Allocated to the vehicle controller. */
+      doc /* Check the key fob credential before any unlock or lock, and look for an approved key in the cabin before a start. Allocated to the vehicle controller. */
       perform securityFlow.checkCredential;
       perform securityFlow.rejectKey;
+      perform lockFlow.checkCredential;
+      perform startFlow.checkKeyInCabin;
     }
     part immobilizer : FunctionNode {
-      doc /* Keep propulsion inhibited until the driver is authenticated and the start button is pressed. Allocated to the vehicle controller. */
-      perform securityFlow.releaseImmobilizer;
+      doc /* Keep propulsion inhibited from the moment the car is switched off until an approved key starts it again; unlocking the doors does not release it. Allocated to the vehicle controller. */
+      perform startFlow.releaseImmobilizer;
+      perform stopFlow.armImmobilizer;
+    }
+    part powerControl : FunctionNode {
+      doc /* Own the power mode: read the start button, switch high voltage on and off, enable and disable the drive, and refuse a start or a stop that is not allowed. Allocated to the vehicle controller. */
+      perform startFlow.readStartRequest;
+      perform startFlow.switchOnHighVoltage;
+      perform startFlow.enableDrive;
+      perform startFlow.refuseStart;
+      perform stopFlow.readStopRequest;
+      perform stopFlow.disableDrive;
+      perform stopFlow.switchOffHighVoltage;
+      perform stopFlow.keepReady;
     }
     part wakeUp : FunctionNode {
       doc /* Bring the cabin systems out of sleep when the car unlocks. Allocated to the vehicle controller. */
       perform securityFlow.wakeCabin;
     }
     part lockControl : FunctionNode {
-      doc /* Own the door latches: engage and release them on request and confirm every change with the indicators. Allocated to the body controller. */
+      doc /* Own the door latches: engage and release them on request, confirm every change with the indicators, and leave the car unlocked when locking is not possible. Allocated to the body controller. */
       perform securityFlow.unlockDoors;
+      perform lockFlow.engageLatches;
+      perform lockFlow.confirmLock;
+      perform lockFlow.keepUnlocked;
       perform cabinAccessFlow.checkUnlocked;
       perform cabinAccessFlow.stayLatched;
       perform cabinAccessFlow.relatch;
     }
     part doorControl : FunctionNode {
-      doc /* Own the doors: read the inside and outside handles, open a door once its latch is free, and report each door open or closed. Allocated to the body controller. */
+      doc /* Own the doors: read the inside and outside handles, open a door once its latch is free, report each door open or closed, and tell the lock whether every door is shut. Allocated to the body controller. */
       perform cabinAccessFlow.readDoorHandle;
       perform cabinAccessFlow.releaseDoor;
       perform cabinAccessFlow.closeDoor;
+      perform lockFlow.checkDoorsClosed;
     }
     part windowControl : FunctionNode {
       doc /* Own the side windows: run each window lift on its switch and reverse a window that pinches. Allocated to the body controller. */
       perform cabinAccessFlow.runWindowLift;
     }
-    part driverInformation : FunctionNode {
-      doc /* Tell the driver what state the car is in: ready, gear, speed, charge and warnings. Allocated to the instrument cluster. */
-      perform securityFlow.showReady;
-      perform cabinAccessFlow.showDoorState;
-    }
     action securityFlow {
-      doc /* From a key fob credential to a car that is ready to start. A valid key unlocks the doors, wakes the cabin, releases the immobilizer and tells the driver; any other key is rejected and the car stays locked. */
+      doc /* From a press on unlock to an unlocked car. A valid key unlocks the doors and wakes the cabin; any other key is rejected and the car stays locked. The immobilizer stays engaged either way: only startFlow releases it. */
       action checkCredential {
-        doc /* Input: the challenge response the key fob sends to the car's antennas. Compared with the keys paired to the car; the outcome is the credentialValid decision. */
+        doc /* Input: the challenge response the key fob sends to the car's antennas when unlock is pressed. Compared with the keys paired to the car; the outcome is the credentialValid decision. */
       }
       action unlockDoors {
         doc /* When the credential is valid: every door latch is released and the indicators flash once, so the driver sees the car has accepted the key. */
       }
       action wakeCabin {
-        doc /* After the doors unlock: the cabin bus comes out of sleep, so the display and controls respond by the time the driver is seated. */
-      }
-      action releaseImmobilizer {
-        doc /* Once the cabin is awake: the propulsion inhibit is lifted, so the next press on the start button can make the car Ready. */
-      }
-      action showReady {
-        doc /* Last step of a valid unlock: the instrument cluster shows that the car is unlocked and can be started. */
+        doc /* After the doors unlock: the cabin bus comes out of sleep, so the display and controls respond by the time the driver is seated. Propulsion stays inhibited. */
       }
       action rejectKey {
         doc /* When the credential is unknown or expired: it is discarded, the doors stay locked and the immobilizer stays engaged. */
@@ -67,13 +74,91 @@ package Functions {
       then checkCredential;
       then if credentialValid then unlockDoors else rejectKey;
       first unlockDoors then wakeCabin;
-      first wakeCabin then releaseImmobilizer;
-      first releaseImmobilizer then showReady;
-      first showReady then done;
+      first wakeCabin then done;
       first rejectKey then done;
     }
+    action lockFlow {
+      doc /* From a press on lock to a locked car. The key is checked first, then every door must be shut: the latches engage and the indicators confirm it, or the car stays unlocked without a confirmation. */
+      action checkCredential {
+        doc /* Input: the challenge response the key fob sends when lock is pressed. Compared with the keys paired to the car before any latch moves. */
+      }
+      action checkDoorsClosed {
+        doc /* With the key accepted: the position of every door is read; the outcome is the doorsClosed decision. */
+      }
+      action engageLatches {
+        doc /* Every door is shut: all door latches engage at once. */
+      }
+      action confirmLock {
+        doc /* Once the latches hold: the indicators flash, so the driver sees from outside that the car is locked. */
+      }
+      action keepUnlocked {
+        doc /* A door is still open: no latch moves and the indicators stay dark, so the driver sees the car is not locked. */
+      }
+      first start;
+      then checkCredential;
+      then checkDoorsClosed;
+      then if doorsClosed then engageLatches else keepUnlocked;
+      first engageLatches then confirmLock;
+      first confirmLock then done;
+      first keepUnlocked then done;
+    }
+    action startFlow {
+      doc /* From a press on the start button to a car that is Ready. With the brake held and an approved key in the cabin, the immobilizer is released, high voltage comes on and the drive is enabled; otherwise the start is refused and the car stays Off. */
+      action readStartRequest {
+        doc /* Input: the start button press and the brake pedal switch. Output: a start request and the brakeHeld decision. */
+      }
+      action checkKeyInCabin {
+        doc /* With the brake held: the cabin antennas look for a paired key inside the car; the outcome is the keyApproved decision. */
+      }
+      action releaseImmobilizer {
+        doc /* The key is approved: the propulsion inhibit is lifted, so the drive may accept torque once it is live. */
+      }
+      action switchOnHighVoltage {
+        doc /* With the inhibit lifted: the battery's high-voltage contactor closes and the traction circuit is live. */
+      }
+      action enableDrive {
+        doc /* With high voltage on: the drive is told the car is Ready and starts answering the pedals. */
+      }
+      action refuseStart {
+        doc /* The brake is not held or no approved key is found: nothing is switched on, the car stays Off and the reason is passed on to the cluster. */
+      }
+      first start;
+      then readStartRequest;
+      then if brakeHeld then checkKeyInCabin else refuseStart;
+      first checkKeyInCabin;
+      then if keyApproved then releaseImmobilizer else refuseStart;
+      first releaseImmobilizer then switchOnHighVoltage;
+      first switchOnHighVoltage then enableDrive;
+      first enableDrive then done;
+      first refuseStart then done;
+    }
+    action stopFlow {
+      doc /* From a press on the start button in a Ready car to a car that is Off. With park selected the drive is disabled, high voltage goes off and the immobilizer is armed again; in any other gear the car stays Ready. */
+      action readStopRequest {
+        doc /* Input: the start button press while the car is Ready, and the gear the drive reports. Output: a stop request and the parkSelected decision. */
+      }
+      action disableDrive {
+        doc /* Park is selected: the drive stops answering the pedals. */
+      }
+      action switchOffHighVoltage {
+        doc /* With the drive disabled: the high-voltage contactor opens and the traction circuit is dead. */
+      }
+      action armImmobilizer {
+        doc /* Last step of a shutdown: the propulsion inhibit is set again, so the car cannot move until the next approved start. */
+      }
+      action keepReady {
+        doc /* Another gear is selected: nothing is switched off, the car stays Ready and the cluster is asked to prompt for park. */
+      }
+      first start;
+      then readStopRequest;
+      then if parkSelected then disableDrive else keepReady;
+      first disableDrive then switchOffHighVoltage;
+      first switchOffHighVoltage then armImmobilizer;
+      first armImmobilizer then done;
+      first keepReady then done;
+    }
     action cabinAccessFlow {
-      doc /* From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A closed door is latched again, a window follows its switch, and the driver sees which doors are open. */
+      doc /* From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A closed door is latched again and a window follows its switch. */
       action readDoorHandle {
         doc /* When the request comes from a door: the pull on a handle is read. Output: the door to open and whether the handle was outside or inside, the outsideHandle decision. */
       }
@@ -92,9 +177,6 @@ package Functions {
       action relatch {
         doc /* Once the door is shut: its latch catches and holds it, so the car can be locked again. */
       }
-      action showDoorState {
-        doc /* After the door has opened and closed: the door-ajar warning is shown while it stands open and cleared once it is latched again. */
-      }
       action runWindowLift {
         doc /* When the request comes from a window switch: the window lowers or rises while the switch is held, and backs off if it meets an obstacle on the way up. */
       }
@@ -106,8 +188,7 @@ package Functions {
       then if carUnlocked then releaseDoor else stayLatched;
       first releaseDoor then closeDoor;
       first closeDoor then relatch;
-      first relatch then showDoorState;
-      first showDoorState then done;
+      first relatch then done;
       first stayLatched then done;
       first runWindowLift then done;
     }
@@ -337,6 +418,83 @@ package Functions {
     }
   }
 
+  part def DriverFeedback :> Function {
+    doc /* Tell the driver on the instrument cluster what the car is doing: power mode, gear, speed, beam, doors, set temperature, state of charge and warnings. Many use cases end with such an indication, so their steps are realized by a step of another function together with a step of DriverFeedback. It is a function of its own, and depends on no other function, because the cluster runs on 12 V and shows the locked car too: a broken cluster takes away the indications, not the car. Named after the DriverFeedback interface the cluster consumes. Four flows, one per kind of indication: driverFeedbackFlow for driving, powerModeFlow, cabinStatusFlow and chargeStatusFlow. */
+    part driverInformation : FunctionNode {
+      doc /* Drive the instrument cluster: turn what the other functions report into the symbols, values and warnings the driver sees. Allocated to the instrument cluster. */
+      perform powerModeFlow.showPrompt;
+      perform powerModeFlow.showPowerMode;
+      perform driverFeedbackFlow.showGear;
+      perform driverFeedbackFlow.showSpeed;
+      perform driverFeedbackFlow.showBeamSymbol;
+      perform driverFeedbackFlow.showWarnings;
+      perform cabinStatusFlow.showDoorState;
+      perform cabinStatusFlow.showSetpoint;
+      perform chargeStatusFlow.showStateOfCharge;
+      perform chargeStatusFlow.showFinalCharge;
+    }
+    action powerModeFlow {
+      doc /* From a start or stop request to what the cluster shows: the new power mode, or why the request was refused. */
+      action showPrompt {
+        doc /* The request was refused: the cluster says what is missing, the brake, an approved key or park. */
+      }
+      action showPowerMode {
+        doc /* The request went through: the cluster shows Ready after a start and goes dark after a stop. */
+      }
+      first start;
+      then if refused then showPrompt else showPowerMode;
+      first showPrompt then done;
+      first showPowerMode then done;
+    }
+    action driverFeedbackFlow {
+      doc /* The main flow, one refresh of the driving display: gear, speed, beam symbol and warnings, each as the controllers report it. */
+      action showGear {
+        doc /* Input: the gear that is engaged. The cluster shows P, R, N or D. */
+      }
+      action showSpeed {
+        doc /* Input: the vehicle speed. The cluster shows it as it changes. */
+      }
+      action showBeamSymbol {
+        doc /* Input: the headlamps that are lit. The cluster shows the low or high beam symbol, or none. */
+      }
+      action showWarnings {
+        doc /* Input: the warnings other functions raise, such as a refused gear change or limited power. Each is shown until it clears. */
+      }
+      first start;
+      then showGear;
+      then showSpeed;
+      then showBeamSymbol;
+      then showWarnings;
+      then done;
+    }
+    action cabinStatusFlow {
+      doc /* One refresh of the cabin indications: which doors stand open and the set temperature. */
+      action showDoorState {
+        doc /* Input: each door reported open or closed. The door-ajar warning is shown while a door stands open and cleared once it is latched again. */
+      }
+      action showSetpoint {
+        doc /* Input: the set temperature, passed on from the climate controls. The cluster shows it while it is being changed. */
+      }
+      first start;
+      then showDoorState;
+      then showSetpoint;
+      then done;
+    }
+    action chargeStatusFlow {
+      doc /* From a charging session to what the driver sees: the state of charge while energy flows, and the result when the session ends. */
+      action showStateOfCharge {
+        doc /* While energy flows: the cluster shows the state of charge and the time left. */
+      }
+      action showFinalCharge {
+        doc /* When the session stops: the cluster shows the state of charge reached and that the plug is released. */
+      }
+      first start;
+      then showStateOfCharge;
+      then showFinalCharge;
+      then done;
+    }
+  }
+
   #Authorize dependency from SpeedControl to Security;
   #Energy dependency from SpeedControl to Charging;
   #Authorize dependency from Maneuvrability to Security;
@@ -357,7 +515,7 @@ package Functions {
   allocate Security::lockControl to LogicalArchitecture::Car::bodyController;
   allocate Security::doorControl to LogicalArchitecture::Car::bodyController;
   allocate Security::windowControl to LogicalArchitecture::Car::bodyController;
-  allocate Security::driverInformation to LogicalArchitecture::Car::instrumentCluster;
+  allocate DriverFeedback::driverInformation to LogicalArchitecture::Car::instrumentCluster;
   allocate Charging::chargeConnection to LogicalArchitecture::Car::chargeInlet;
   allocate Charging::chargeSession to LogicalArchitecture::Car::battery;
   allocate Charging::energyStorage to LogicalArchitecture::Car::battery;
@@ -375,6 +533,7 @@ package Functions {
   allocate Lighting::headlampControl to LogicalArchitecture::Car::bodyController;
   allocate Lighting::indicatorControl to LogicalArchitecture::Car::bodyController;
   allocate Lighting::lampDrive to LogicalArchitecture::Car::lamps;
+  allocate Security::powerControl to LogicalArchitecture::Car::vehicleController;
 
   view FunctionsView : GeneralView {
     doc /* Functional dependency view. Arrows are «Authorize», «Energy», «Stability», «Speed» and «Indicate» dependencies between functions. Allocations are filtered out; see FunctionAllocationView. */
@@ -389,8 +548,23 @@ package Functions {
   }
 
   view SecurityFlowView : ActionFlowView {
-    doc /* Security flow: credential check, then unlock, wake-up, immobilizer release and ready indication, or rejection of the key. Each step shows the functional entity that performs it. */
+    doc /* Security flow: credential check, then unlock and wake-up, or rejection of the key. The immobilizer is not released here. Each step shows the functional entity that performs it. */
     expose Security::securityFlow;
+  }
+
+  view SecurityLockFlowView : ActionFlowView {
+    doc /* Security lock flow: credential check and door check, then latches and confirmation, or the car stays unlocked. Each step shows the functional entity that performs it. */
+    expose Security::lockFlow;
+  }
+
+  view SecurityStartFlowView : ActionFlowView {
+    doc /* Security start flow: start request, brake and key check, then immobilizer release, high voltage and drive enable, or a refused start. Each step shows the functional entity that performs it. */
+    expose Security::startFlow;
+  }
+
+  view SecurityStopFlowView : ActionFlowView {
+    doc /* Security stop flow: stop request and gear check, then drive disable, high voltage off and immobilizer armed, or the car stays Ready. Each step shows the functional entity that performs it. */
+    expose Security::stopFlow;
   }
 
   view SecurityCabinAccessFlowView : ActionFlowView {
@@ -432,10 +606,30 @@ package Functions {
     doc /* Lighting flow: lamp selection, indicators and lamp drive. Each step shows the functional entity that performs it. */
     expose Lighting::lightingFlow;
   }
+
+  view DriverFeedbackFlowView : ActionFlowView {
+    doc /* Driver feedback flow: gear, speed, beam symbol and warnings on the cluster. Each step shows the functional entity that performs it. */
+    expose DriverFeedback::driverFeedbackFlow;
+  }
+
+  view DriverFeedbackPowerModeFlowView : ActionFlowView {
+    doc /* Driver feedback power mode flow: the new power mode, or the reason a start or stop was refused. Each step shows the functional entity that performs it. */
+    expose DriverFeedback::powerModeFlow;
+  }
+
+  view DriverFeedbackCabinStatusFlowView : ActionFlowView {
+    doc /* Driver feedback cabin status flow: door-ajar warning and set temperature. Each step shows the functional entity that performs it. */
+    expose DriverFeedback::cabinStatusFlow;
+  }
+
+  view DriverFeedbackChargeStatusFlowView : ActionFlowView {
+    doc /* Driver feedback charge status flow: state of charge while charging and the result when the session ends. Each step shows the functional entity that performs it. */
+    expose DriverFeedback::chargeStatusFlow;
+  }
 }
 
 package FunctionTraceability {
-  doc /* Traceability from the functions and their functional entities to the use cases they carry out. Each function «refine»s the use cases it realizes, so a use case's objective requirement is reached from the function, from its functional entities and from the logical parts those entities are allocated to. Drive and Park are composites and are reached through the use cases they include. TurnLeft and TurnRight are refined by both Maneuvrability (steering) and Lighting (direction indicators), and Brake by both SpeedControl (deceleration) and Lighting (brake lamps). Each functional entity also «refine»s the use cases it serves; together they cover exactly the use cases of their function, and a logical part climbs through the entity allocated to it to the use cases that entity serves. */
+  doc /* Traceability from the functions to the use cases they carry out. The main form is a «refine» from a function step to the use case step it realizes: every system step of a use case is realized by one or more function steps, and a function step that reads an actor's input refines that actor's step. The function, its functional entities and the logical parts they are allocated to follow from those links, through ownership, perform and allocate. The explicit «refine»s from each function and each functional entity to its use cases, the form used before step links, are kept alongside; check_sysml reports any difference between them and the steps (explicit-mismatch). Drive and Park are composites and are reached through the use cases they include. Several use cases are realized by more than one function: TurnLeft and TurnRight by Maneuvrability (steering) and Lighting (indicators), Brake and EmergencyStop by SpeedControl (deceleration) and Lighting (brake lamps, hazard lights), and every use case that ends with an indication on the cluster also by DriverFeedback. A logical part climbs through the entity allocated to it to the use cases that entity serves. */
   // Kept outside Functions: FunctionsView exposes Functions with a filter that
   // pulls in dependency endpoints, and it should show only the dependencies
   // between functions.
@@ -478,10 +672,10 @@ package FunctionTraceability {
   #refine dependency from Functions::Security::doorControl to UseCases::Managing::CloseDoor;
   #refine dependency from Functions::Security::windowControl to UseCases::Managing::OpenWindow;
   #refine dependency from Functions::Security::windowControl to UseCases::Managing::CloseWindow;
-  #refine dependency from Functions::Security::driverInformation to UseCases::Driving::StartVehicle;
-  #refine dependency from Functions::Security::driverInformation to UseCases::Driving::StopVehicle;
-  #refine dependency from Functions::Security::driverInformation to UseCases::Managing::OpenDoor;
-  #refine dependency from Functions::Security::driverInformation to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Managing::CloseDoor;
   #refine dependency from Functions::Charging::chargeConnection to UseCases::Managing::Charge;
   #refine dependency from Functions::Charging::chargeSession to UseCases::Managing::Charge;
   #refine dependency from Functions::Charging::energyStorage to UseCases::Managing::Charge;
@@ -508,4 +702,56 @@ package FunctionTraceability {
   #refine dependency from Functions::WindshieldCleaning::wipeSweep to UseCases::Driving::CleanWindshield;
   #refine dependency from Functions::Climate::cabinTemperature to UseCases::Managing::AdjustClimate;
   #refine dependency from Functions::Entertainment::mediaPlayback to UseCases::Managing::PlayMedia;
+
+  // DriverFeedback: the indications that use cases of other functions end with.
+  #refine dependency from Functions::DriverFeedback to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::DriverFeedback to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::DriverFeedback to UseCases::Driving::ChangeGear;
+  #refine dependency from Functions::DriverFeedback to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::DriverFeedback to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::DriverFeedback to UseCases::Managing::OpenDoor;
+  #refine dependency from Functions::DriverFeedback to UseCases::Managing::CloseDoor;
+  #refine dependency from Functions::DriverFeedback to UseCases::Managing::AdjustClimate;
+  #refine dependency from Functions::DriverFeedback to UseCases::Managing::Charge;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Driving::ChangeGear;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Driving::Accelerate;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Driving::ToggleHeadlights;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Managing::AdjustClimate;
+  #refine dependency from Functions::DriverFeedback::driverInformation to UseCases::Managing::Charge;
+  // Entities that switch the car on and off, and check the doors before it locks.
+  #refine dependency from Functions::Security::powerControl to UseCases::Driving::StartVehicle;
+  #refine dependency from Functions::Security::powerControl to UseCases::Driving::StopVehicle;
+  #refine dependency from Functions::Security::doorControl to UseCases::Managing::Lock;
+
+  // Step level: each function step refines the use case steps it realizes. Function by
+  // function in the order above, and within a function use case by use case.
+  // Security.
+  #refine dependency from Functions::Security::startFlow::readStartRequest to UseCases::Driving::StartVehicle::pressStart;
+  #refine dependency from Functions::Security::startFlow::checkKeyInCabin to UseCases::Driving::StartVehicle::checkKey;
+  #refine dependency from Functions::Security::startFlow::releaseImmobilizer to UseCases::Driving::StartVehicle::showReady;
+  #refine dependency from Functions::Security::startFlow::switchOnHighVoltage to UseCases::Driving::StartVehicle::showReady;
+  #refine dependency from Functions::Security::startFlow::enableDrive to UseCases::Driving::StartVehicle::showReady;
+  #refine dependency from Functions::Security::startFlow::refuseStart to UseCases::Driving::StartVehicle::rejectKey;
+  #refine dependency from Functions::Security::startFlow::refuseStart to UseCases::Driving::StartVehicle::askForBrake;
+  #refine dependency from Functions::Security::stopFlow::readStopRequest to UseCases::Driving::StopVehicle::pressStart;
+  #refine dependency from Functions::Security::stopFlow::disableDrive to UseCases::Driving::StopVehicle::shutDown;
+  #refine dependency from Functions::Security::stopFlow::switchOffHighVoltage to UseCases::Driving::StopVehicle::shutDown;
+  #refine dependency from Functions::Security::stopFlow::armImmobilizer to UseCases::Driving::StopVehicle::shutDown;
+  #refine dependency from Functions::Security::stopFlow::keepReady to UseCases::Driving::StopVehicle::askForPark;
+  #refine dependency from Functions::Security::securityFlow::checkCredential to UseCases::Managing::Unlock::pressUnlock;
+  #refine dependency from Functions::Security::securityFlow::unlockDoors to UseCases::Managing::Unlock::unlockDoors;
+  #refine dependency from Functions::Security::securityFlow::wakeCabin to UseCases::Managing::Unlock::wakeCabin;
+  #refine dependency from Functions::Security::securityFlow::rejectKey to UseCases::Managing::Unlock::rejectKey;
+  #refine dependency from Functions::Security::lockFlow::checkCredential to UseCases::Managing::Lock::pressLock;
+  #refine dependency from Functions::Security::lockFlow::checkDoorsClosed to UseCases::Managing::Lock::lockDoors;
+  #refine dependency from Functions::Security::lockFlow::engageLatches to UseCases::Managing::Lock::lockDoors;
+  #refine dependency from Functions::Security::lockFlow::confirmLock to UseCases::Managing::Lock::lockDoors;
+  #refine dependency from Functions::Security::lockFlow::checkDoorsClosed to UseCases::Managing::Lock::stayUnlocked;
+  #refine dependency from Functions::Security::lockFlow::keepUnlocked to UseCases::Managing::Lock::stayUnlocked;
+  // DriverFeedback.
+  #refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StartVehicle::showReady;
+  #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StartVehicle::rejectKey;
+  #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StartVehicle::askForBrake;
+  #refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StopVehicle::shutDown;
+  #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StopVehicle::askForPark;
 }

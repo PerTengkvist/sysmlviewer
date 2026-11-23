@@ -8,5 +8,6 @@ An occupant pulls a door handle and the door releases. The inside handle always 
 - Refined by `lockControl`.
 - Refined by `doorControl`.
 - Refined by `driverInformation`.
+- Refined by `DriverFeedback`.
 - Pursues requirement `CabinAccess`.
 - Refines `EnterAndExit`.

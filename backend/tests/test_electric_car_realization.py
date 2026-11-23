@@ -22,7 +22,7 @@ ROOT = resolve_repo_root() / "examples" / "electric_car"
 DRV = "UseCases::Driving"
 MAN = "UseCases::Managing"
 SEC = "Functions::Security"
-DI = "Functions::DriverInformation"
+DI = "Functions::DriverFeedback"
 SPD = "Functions::SpeedControl"
 MNV = "Functions::Maneuvrability"
 LIG = "Functions::Lighting"
@@ -74,11 +74,11 @@ REALIZATION: dict[str, dict[str, list[str]]] = {
         "selectGear": [f"{MNV}::gearSelectionFlow::selectGear"],
         "engageGear": [
             f"{MNV}::gearSelectionFlow::engageGear",
-            f"{DI}::drivingInformationFlow::showGear",
+            f"{DI}::driverFeedbackFlow::showGear",
         ],
         "refuseGear": [
             f"{MNV}::gearSelectionFlow::refuseGear",
-            f"{DI}::drivingInformationFlow::showWarnings",
+            f"{DI}::driverFeedbackFlow::showWarnings",
         ],
     },
     "TurnLeft": {
@@ -108,9 +108,9 @@ REALIZATION: dict[str, dict[str, list[str]]] = {
         "driveWheels": [f"{SPD}::speedControlFlow::driveWheels"],
         "limitTorque": [
             f"{SPD}::speedControlFlow::arbitrateTorque",
-            f"{DI}::drivingInformationFlow::showWarnings",
+            f"{DI}::driverFeedbackFlow::showWarnings",
         ],
-        "showSpeed": [f"{DI}::drivingInformationFlow::showSpeed"],
+        "showSpeed": [f"{DI}::driverFeedbackFlow::showSpeed"],
     },
     "EmergencyStop": {
         "pressBrakeHard": [f"{SPD}::speedControlFlow::arbitrateTorque"],
@@ -127,7 +127,7 @@ REALIZATION: dict[str, dict[str, list[str]]] = {
         "turnLightSwitch": [f"{LIG}::lightingFlow::selectLamps"],
         "lightLamps": [f"{LIG}::lightingFlow::lightLamps"],
         "switchOffLamps": [f"{LIG}::lightingFlow::switchOffLamps"],
-        "showBeamSymbol": [f"{DI}::drivingInformationFlow::showBeamSymbol"],
+        "showBeamSymbol": [f"{DI}::driverFeedbackFlow::showBeamSymbol"],
     },
     "Unlock": {
         "pressUnlock": [f"{SEC}::securityFlow::checkCredential"],
@@ -149,16 +149,16 @@ REALIZATION: dict[str, dict[str, list[str]]] = {
         "releaseDoor": [
             f"{SEC}::cabinAccessFlow::checkUnlocked",
             f"{SEC}::cabinAccessFlow::releaseDoor",
-            f"{DI}::cabinInformationFlow::showDoorState",
+            f"{DI}::cabinStatusFlow::showDoorState",
         ],
         "stayLatched": [f"{SEC}::cabinAccessFlow::checkUnlocked", f"{SEC}::cabinAccessFlow::stayLatched"],
     },
     "CloseDoor": {
         "pushDoorShut": [f"{SEC}::cabinAccessFlow::closeDoor"],
-        "clearDoorWarning": [f"{SEC}::cabinAccessFlow::relatch", f"{DI}::cabinInformationFlow::showDoorState"],
+        "clearDoorWarning": [f"{SEC}::cabinAccessFlow::relatch", f"{DI}::cabinStatusFlow::showDoorState"],
         "keepDoorWarning": [
             f"{SEC}::cabinAccessFlow::keepDoorAjar",
-            f"{DI}::cabinInformationFlow::showDoorState",
+            f"{DI}::cabinStatusFlow::showDoorState",
         ],
     },
     "OpenWindow": {
@@ -173,7 +173,7 @@ REALIZATION: dict[str, dict[str, list[str]]] = {
     },
     "AdjustClimate": {
         "setTemperature": [f"{CLI}::climateFlow::readSetpoint"],
-        "showSetpoint": [f"{DI}::cabinInformationFlow::showSetpoint"],
+        "showSetpoint": [f"{DI}::cabinStatusFlow::showSetpoint"],
         "conditionCabin": [f"{CLI}::climateFlow::conditionCabin"],
     },
     "PlayMedia": {
@@ -185,8 +185,8 @@ REALIZATION: dict[str, dict[str, list[str]]] = {
         "connectCharger": [f"{CHA}::chargingFlow::detectPlug"],
         "negotiateSession": [f"{CHA}::chargingFlow::negotiateCurrent"],
         "transferEnergy": [f"{CHA}::chargingFlow::transferEnergy", f"{CHA}::chargingFlow::storeEnergy"],
-        "reportCharge": [f"{DI}::chargeInformationFlow::showStateOfCharge"],
-        "endSession": [f"{CHA}::chargingFlow::stopAtTarget", f"{DI}::chargeInformationFlow::showFinalCharge"],
+        "reportCharge": [f"{DI}::chargeStatusFlow::showStateOfCharge"],
+        "endSession": [f"{CHA}::chargingFlow::stopAtTarget", f"{DI}::chargeStatusFlow::showFinalCharge"],
     },
 }
 
@@ -223,12 +223,15 @@ FLOWS = [
     f"{MNV}::maneuvrabilityFlow", f"{MNV}::gearSelectionFlow", f"{ENT}::entertainmentFlow",
     f"{CLI}::climateFlow", f"{WIN}::windshieldCleaningFlow", f"{LIG}::lightingFlow",
     f"{LIG}::indicatorFlow", f"{LIG}::brakeLampFlow", f"{DI}::powerModeFlow",
-    f"{DI}::drivingInformationFlow", f"{DI}::cabinInformationFlow", f"{DI}::chargeInformationFlow",
+    f"{DI}::driverFeedbackFlow", f"{DI}::cabinStatusFlow", f"{DI}::chargeStatusFlow",
 ]
 
 # What the model realizes so far (phase A lands step by step); the rest is xfail.
-DONE_USE_CASES: set[str] = set()
-DONE_FLOWS: set[str] = set()
+DONE_USE_CASES: set[str] = {"StartVehicle", "StopVehicle", "Unlock", "Lock"}
+DONE_FLOWS: set[str] = {
+    f"{SEC}::securityFlow", f"{SEC}::startFlow", f"{SEC}::stopFlow", f"{SEC}::lockFlow",
+    f"{DI}::powerModeFlow",
+}
 
 
 def _todo(name: str, done: set[str]):
@@ -375,7 +378,6 @@ def _performed_by(elements, node_id: str) -> set[str]:
     }
 
 
-@pytest.mark.xfail(strict=True, reason="F1: step 2")
 def test_immobilizer_is_released_only_at_start(elements):
     """F1: unlocking leaves the immobilizer engaged; only startFlow releases it."""
     performed = _performed_by(elements, f"{SEC}::immobilizer")
@@ -401,7 +403,6 @@ def test_flows_have_one_trigger(elements):
     assert f"{MNV}::gearSelectionFlow" in elements
 
 
-@pytest.mark.xfail(strict=True, reason="F6: step 3")
 def test_instrument_cluster_loss_keeps_security(elements):
     """F6: a broken instrument cluster takes away the indications, not the car."""
     from domain.failure.extract import build_impact_graph

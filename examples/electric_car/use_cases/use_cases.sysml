@@ -11,7 +11,7 @@ package UseCases {
     doc /* Use cases performed from the driver's seat with the car Ready or Driving: start and stop, gear, speed, steering, visibility and parking. */
 
     use case def <'UC001'> StartVehicle {
-      actor Driver;
+      actor Driver { perform pressStart; }
       objective Requirements::PowerModes;
       objective Requirements::Immobilizer;
       doc /* The driver presses the start button with the brake held. The car authenticates the key, releases the immobilizer, closes the high-voltage contactor and shows Ready. Starting is where the immobilizer requirement is met: the car becomes Ready only once the key has been approved. Without the brake held, or without an approved key in the cabin, the car stays Off and tells the driver why. */
@@ -42,7 +42,7 @@ package UseCases {
     }
 
     use case def <'UC002'> StopVehicle {
-      actor Driver;
+      actor Driver { perform pressStart; }
       objective Requirements::PowerModes;
       doc /* With the car in Park the driver presses the start button again. The car opens the high-voltage contactor, re-arms the immobilizer and shows Off. In any other gear the car stays Ready and asks for park. */
 
@@ -301,8 +301,8 @@ package UseCases {
     doc /* Use cases performed with the car standing still: access, doors and windows, cabin comfort, media and charging. Driver and passenger share most of them. */
 
     use case def <'UC013'> Unlock {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pressUnlock; }
+      actor Passenger { perform pressUnlock; }
       objective Requirements::AccessControl;
       doc /* The driver presses unlock on the key fob. The car authenticates the credential, releases the latches, flashes the indicators and wakes the cabin. A key the car does not recognise is rejected and the car stays locked. */
 
@@ -327,8 +327,8 @@ package UseCases {
     }
 
     use case def <'UC014'> Lock {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pressLock; }
+      actor Passenger { perform pressLock; }
       objective Requirements::LockIndication;
       doc /* The driver presses lock on the key fob. The car checks that all doors are closed, engages the latches and flashes the indicators as confirmation. With a door open the car stays unlocked and gives no confirmation. */
 

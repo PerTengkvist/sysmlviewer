@@ -8,6 +8,7 @@ once the model is updated.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -40,11 +41,9 @@ def _parse(overrides=None, extra=None):
     return SubsetSysmlParser().parse_project(_files(overrides, extra))
 
 
-def _with_actor_block(text: str, uc: str, actor: str, step: str) -> str:
-    """`actor X;` of one use case def becomes `actor X { perform step; }`."""
-    head = text.index(f"> {uc} {{")
-    at = text.index(f"actor {actor};", head)
-    return text[:at] + f"actor {actor} {{ perform {step}; }}" + text[at + len(f"actor {actor};"):]
+def _without_actor_blocks(text: str) -> str:
+    """Every `actor X { perform …; }` of the use cases written back as `actor X;`."""
+    return re.sub(r"actor (\w+) \{[^}]*\}", r"actor \1;", text)
 
 
 def test_nested_use_case_step_is_a_refine_end():
@@ -64,38 +63,32 @@ def test_nested_use_case_step_is_a_refine_end():
 
 
 def test_actor_block_makes_an_actor_step():
-    """Plan 1 reads `actor X { perform step; }` (A7 no longer holds): no warning, the
-    same elements plus the perform, and the step is the actor's, not a system step."""
+    """Plan 1 reads `actor X { perform step; }` (A7 no longer holds): no warning, the same
+    elements as without the blocks plus one perform each, and the step is the actor's."""
     text = (ROOT / UC_FILE).read_text(encoding="utf-8")
-    before = _parse()
-    after = _parse({UC_FILE: _with_actor_block(text, "StartVehicle", "Driver", "pressStart")})
-    assert after.warnings == []
-    assert all(not ws for ws in after.file_warnings.values())
+    without = _parse({UC_FILE: _without_actor_blocks(text)})
+    model = _parse()
+    assert model.warnings == []
+    added = set(model.elements) - set(without.elements)
+    assert added and all("::perform_" in eid for eid in added)
+    assert set(without.elements) - set(model.elements) == set()
     uc = "UseCases::Driving::StartVehicle"
-    assert set(after.elements) - set(before.elements) == {f"{uc}::Driver::perform_pressStart"}
-    assert set(before.elements) - set(after.elements) == set()
-    assert resolve_performers(after.elements)[f"{uc}::pressStart"] == [f"{uc}::Driver"]
+    assert f"{uc}::Driver::perform_pressStart" in added
+    assert resolve_performers(model.elements)[f"{uc}::pressStart"] == [f"{uc}::Driver"]
 
 
 def test_actor_step_may_be_the_target_of_a_step_link():
-    """A3/B2: a function step that reads the actor's input refines the actor step. That is
-    a realization link (it puts the use case in scope), not a bad end, and the actor step
-    is never reported as unrealized."""
-    text = (ROOT / UC_FILE).read_text(encoding="utf-8")
-    result = _parse(
-        {UC_FILE: _with_actor_block(text, "Unlock", "Driver", "pressUnlock")},
-        extra="package Probe {\n  #refine dependency from Functions::Security::securityFlow::checkCredential\n"
-        "                       to UseCases::Managing::Unlock::pressUnlock;\n}\n",
-    )
-    real = derive_realization(result.elements)
-    uc = "UseCases::Managing::Unlock"
-    step = f"{uc}::pressUnlock"
+    """A3/B2: a function step that reads the actor's input refines the actor step. That is a
+    realization link (it counts for the function step), not a bad end, and the actor step is
+    never reported as unrealized."""
+    real = derive_realization(_parse().elements)
+    uc = "UseCases::Driving::StartVehicle"
+    step = f"{uc}::pressStart"
     assert real.actor_steps[uc] == {step: f"{uc}::Driver"}
     assert step not in real.system_steps[uc]
-    assert real.step_realizers[step] == ["Functions::Security::securityFlow::checkCredential"]
-    assert real.in_scope == {uc}
-    assert not [f for f in real.findings if f.code == "bad-realization-end"]
-    assert not [f for f in real.findings if f.element_id in (step, "Probe::dep1")]
+    assert real.step_realizers[step] == ["Functions::Security::startFlow::readStartRequest"]
+    assert uc in real.in_scope
+    assert real.findings == []
 
 
 def test_stale_layout_keys_are_harmless(tmp_path: Path):
@@ -143,8 +136,6 @@ def test_actor_blocks_do_not_change_the_use_case_views(tmp_path: Path):
     """B11: VehicleUseCaseView.json is not touched, so an actor block must add nothing to
     the use case diagrams (the perform is not drawn)."""
     text = (ROOT / UC_FILE).read_text(encoding="utf-8")
-    before = _use_case_views(tmp_path / "a", None)
-    after = _use_case_views(
-        tmp_path / "b", _with_actor_block(text, "StartVehicle", "Driver", "pressStart")
-    )
-    assert after == before
+    assert _without_actor_blocks(text) != text
+    without = _use_case_views(tmp_path / "a", _without_actor_blocks(text))
+    assert _use_case_views(tmp_path / "b", None) == without

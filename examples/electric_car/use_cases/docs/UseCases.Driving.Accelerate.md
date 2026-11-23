@@ -7,6 +7,8 @@ The driver presses the accelerator and the motor delivers torque within the batt
 - Refined by `SpeedControl`.
 - Refined by `torqueArbitration`.
 - Refined by `tractionDrive`.
+- Refined by `DriverFeedback`.
+- Refined by `driverInformation`.
 - Pursues requirement `Acceleration`.
 - Pursues requirement `TopSpeed`.
 - Included by `Drive`.

@@ -96,7 +96,7 @@ def test_electric_car_has_no_findings():
     ]
     r = derive_realization(SubsetSysmlParser().parse_project(files).elements)
     assert r.findings == []
-    assert r.in_scope == set()
+    assert r.in_scope  # the car realizes its use cases step by step (plan 2)
 
 
 DECISION_MODEL = """

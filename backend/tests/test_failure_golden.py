@@ -30,8 +30,10 @@ def _r(*names: str) -> set[str]:
 
 ALL_FUNCTIONS = _f(
     "Security", "Charging", "SpeedControl", "Maneuvrability",
-    "Entertainment", "Climate", "WindshieldCleaning", "Lighting",
+    "Entertainment", "Climate", "WindshieldCleaning", "Lighting", "DriverFeedback",
 )
+# Functions that draw on traction energy; Security and DriverFeedback (12 V) do not.
+ENERGY_FUNCTIONS = ALL_FUNCTIONS - _f("Security", "DriverFeedback")
 DRIVE_FUNCTIONS = _f("SpeedControl", "Maneuvrability", "WindshieldCleaning", "Lighting")
 DRIVE_USE_CASES = _uc(
     "Driving::Accelerate", "Driving::Brake", "Driving::EmergencyStop", "Driving::ChangeGear",
@@ -42,8 +44,8 @@ DRIVE_REQUIREMENTS = _r(
     "Acceleration", "TopSpeed", "BrakingDistance", "PropulsionModes",
     "DirectionalControl", "ForwardVisibility", "NightVisibility", "Range",
 )
-# Use cases that only Security refines, and Park: untouched by energy trouble.
-SECURITY_ONLY = _uc(
+# Use cases refined only by Security and DriverFeedback, and Park: untouched by energy trouble.
+NO_ENERGY_USE_CASES = _uc(
     "Driving::StartVehicle", "Driving::StopVehicle", "Managing::Unlock", "Managing::Lock",
     "Managing::OpenDoor", "Managing::CloseDoor", "Managing::OpenWindow",
     "Managing::CloseWindow", "Driving::Park",
@@ -127,12 +129,11 @@ def _pool_checks(graph, impacts, capability):
     modules = impacts[f"{PA}::batteryPack::modules"]
     assert modules.capability == pytest.approx(capability)
     assert impacts[f"{LA}::battery"].capability == pytest.approx(capability)
-    degraded = ALL_FUNCTIONS - _f("Security")
-    _check(graph, impacts, Status.DEGRADED, degraded, ENERGY_USE_CASES, ENERGY_REQUIREMENTS)
-    for fn in degraded:
+    _check(graph, impacts, Status.DEGRADED, ENERGY_FUNCTIONS, ENERGY_USE_CASES, ENERGY_REQUIREMENTS)
+    for fn in ENERGY_FUNCTIONS:
         assert impacts[fn].capability == pytest.approx(capability)
     assert impacts["Requirements::Range"].status is Status.DEGRADED
-    for uc in SECURITY_ONLY:
+    for uc in NO_ENERGY_USE_CASES:
         assert impacts[uc].status is Status.OK
     return modules
 
@@ -152,7 +153,7 @@ def test_pool_below_required(graph):
     assert impacts[f"{LA}::battery"].status is Status.LOST
     _check(
         graph, impacts, Status.LOST,
-        ALL_FUNCTIONS - _f("Security"), ENERGY_USE_CASES, ENERGY_REQUIREMENTS,
+        ENERGY_FUNCTIONS, ENERGY_USE_CASES, ENERGY_REQUIREMENTS,
     )
     assert impacts["Requirements::ChargeTime"].status is Status.LOST
     assert impacts["Requirements::Range"].status is Status.LOST
@@ -197,3 +198,42 @@ def test_electric_motor_erroneous(graph):
     _check(graph, impacts, Status.LOST, DRIVE_FUNCTIONS, DRIVE_USE_CASES, DRIVE_REQUIREMENTS)
     for fn in DRIVE_FUNCTIONS:
         assert "erroneous_as_loss" in impacts[fn].flags
+
+
+# Use cases that end with an indication on the cluster (DriverFeedback refines them).
+CLUSTER_USE_CASES = _uc(
+    "Driving::StartVehicle", "Driving::StopVehicle", "Driving::ChangeGear", "Driving::Accelerate",
+    "Driving::ToggleHeadlights", "Managing::OpenDoor", "Managing::CloseDoor",
+    "Managing::AdjustClimate", "Managing::Charge",
+)
+
+
+def test_instrument_cluster_loss_takes_only_the_indications(graph):
+    """Plan 2, F6: the cluster is DriverFeedback's own, so its loss no longer takes Security
+    and, through #Authorize, every driving function. Drive and Park follow through include."""
+    impacts = evaluate(graph, [loss("instrumentClusterUnit")])
+    _check(
+        graph, impacts, Status.LOST,
+        _f("DriverFeedback"),
+        CLUSTER_USE_CASES | _uc("Driving::Drive", "Driving::Park"),
+        _r(
+            "PowerModes", "Immobilizer", "PropulsionModes", "Acceleration", "TopSpeed",
+            "NightVisibility", "CabinAccess", "CabinClimate", "ChargeTime", "Range",
+            "LockIndication",
+        ),
+    )
+    assert impacts["Functions::DriverFeedback"].limited_by == (
+        "Functions::DriverFeedback::driverInformation", "node"
+    )
+
+
+def test_vehicle_ecu_loss_keeps_driver_feedback(graph):
+    """The cluster consumes DriverFeedback from the vehicle controller, but the failure graph
+    follows allocate and implements, not connections: DriverFeedback stays OK, and the use
+    cases only it adds to (AdjustClimate, Charge) are not lost."""
+    impacts = evaluate(graph, [loss("vehicleEcu")])
+    assert impacts["Functions::DriverFeedback"].status is Status.OK
+    lost = _with_status(graph, impacts, Layer.FUNCTION, Status.LOST)
+    assert lost == ALL_FUNCTIONS - _f("Charging", "Climate", "DriverFeedback")
+    lost_ucs = _with_status(graph, impacts, Layer.USE_CASE, Status.LOST)
+    assert not lost_ucs & _uc("Managing::AdjustClimate", "Managing::Charge")

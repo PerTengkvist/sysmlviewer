@@ -770,7 +770,7 @@ def _functions_and_entities(elements):
 
 def test_every_function_decomposes_into_entities():
     functions, entities = _functions_and_entities(_load().elements)
-    assert len(functions) == 8
+    assert len(functions) == 9
     without = sorted(
         f.name for f in functions.values() if not any(e.parent_id == f.id for e in entities)
     )
@@ -881,7 +881,7 @@ def test_function_and_function_node_are_abstract_defs():
 
 def test_functional_entities_are_function_nodes():
     _, entities = _functions_and_entities(_load().elements)
-    assert len(entities) == 24
+    assert len(entities) == 25
     assert sorted(e.name for e in entities if e.type_ref != "FunctionNode") == []
 
 
@@ -937,6 +937,21 @@ def test_every_flow_step_is_performed_by_one_entity_of_its_function():
     assert sorted(e.name for e in entities if e.id not in performing) == []
 
 
+# Flow views whose layout is saved in views/<name>.json. Flow views added since use the
+# default layout and have no file (plan 2, B11).
+SAVED_FLOW_LAYOUTS = {
+    "SecurityFlowView",
+    "SecurityCabinAccessFlowView",
+    "ChargingFlowView",
+    "SpeedControlFlowView",
+    "ManeuvrabilityFlowView",
+    "EntertainmentFlowView",
+    "ClimateFlowView",
+    "WindshieldCleaningFlowView",
+    "LightingFlowView",
+}
+
+
 def test_every_flow_has_a_flow_view():
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
@@ -951,7 +966,8 @@ def test_every_flow_has_a_flow_view():
             assert view_el is not None, view_id
             assert view_el.type_ref == "ActionFlowView"
             assert view_el.expose_refs == [flow_id]
-            assert (ROOT / "views" / f"{name}.json").is_file(), view_id
+            saved = name in SAVED_FLOW_LAYOUTS
+            assert (ROOT / "views" / f"{name}.json").is_file() is saved, view_id
 
             view = service.get_view(project.id, view_id)
             assert view["diagramMode"] == "actionFlow", view_id
@@ -960,7 +976,7 @@ def test_every_flow_has_a_flow_view():
             assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
             steps = {a.id for a in actions if not _is_pseudo(a)}
             assert set(view["performers"]) == steps, view_id
-            assert view["hasViewLayout"] is True, view_id
+            assert view["hasViewLayout"] is saved, view_id
 
 
 def test_security_owns_doors_and_windows_on_the_body_controller():
@@ -969,6 +985,9 @@ def test_security_owns_doors_and_windows_on_the_body_controller():
     assert _flow_ids(elements, security) == [
         f"{security}::securityFlow",
         f"{security}::cabinAccessFlow",
+        f"{security}::lockFlow",
+        f"{security}::startFlow",
+        f"{security}::stopFlow",
     ]
     allocated = {
         a.source_id: a.target_id
@@ -1007,10 +1026,49 @@ def test_branching_flows_have_the_intended_successions():
         ("credentialValid", "unlockDoors", True),
         ("credentialValid", "rejectKey", True),
         ("unlockDoors", "wakeCabin", False),
-        ("wakeCabin", "releaseImmobilizer", False),
-        ("releaseImmobilizer", "showReady", False),
-        ("showReady", "done", False),
+        ("wakeCabin", "done", False),
         ("rejectKey", "done", False),
+    }
+    # The immobilizer is released only here, never on unlock (F1 of plan 2).
+    assert _succession_pairs(elements, "Functions::Security::startFlow") == {
+        ("start", "readStartRequest", False),
+        ("readStartRequest", "brakeHeld", False),
+        ("brakeHeld", "checkKeyInCabin", True),
+        ("brakeHeld", "refuseStart", True),
+        ("checkKeyInCabin", "keyApproved", False),
+        ("keyApproved", "releaseImmobilizer", True),
+        ("keyApproved", "refuseStart", True),
+        ("releaseImmobilizer", "switchOnHighVoltage", False),
+        ("switchOnHighVoltage", "enableDrive", False),
+        ("enableDrive", "done", False),
+        ("refuseStart", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::Security::stopFlow") == {
+        ("start", "readStopRequest", False),
+        ("readStopRequest", "parkSelected", False),
+        ("parkSelected", "disableDrive", True),
+        ("parkSelected", "keepReady", True),
+        ("disableDrive", "switchOffHighVoltage", False),
+        ("switchOffHighVoltage", "armImmobilizer", False),
+        ("armImmobilizer", "done", False),
+        ("keepReady", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::Security::lockFlow") == {
+        ("start", "checkCredential", False),
+        ("checkCredential", "checkDoorsClosed", False),
+        ("checkDoorsClosed", "doorsClosed", False),
+        ("doorsClosed", "engageLatches", True),
+        ("doorsClosed", "keepUnlocked", True),
+        ("engageLatches", "confirmLock", False),
+        ("confirmLock", "done", False),
+        ("keepUnlocked", "done", False),
+    }
+    assert _succession_pairs(elements, "Functions::DriverFeedback::powerModeFlow") == {
+        ("start", "refused", False),
+        ("refused", "showPrompt", True),
+        ("refused", "showPowerMode", True),
+        ("showPrompt", "done", False),
+        ("showPowerMode", "done", False),
     }
     assert _succession_pairs(elements, "Functions::SpeedControl::speedControlFlow") == {
         ("start", "arbitrateTorque", False),
@@ -1033,8 +1091,7 @@ def test_branching_flows_have_the_intended_successions():
         ("carUnlocked", "stayLatched", True),
         ("releaseDoor", "closeDoor", False),
         ("closeDoor", "relatch", False),
-        ("relatch", "showDoorState", False),
-        ("showDoorState", "done", False),
+        ("relatch", "done", False),
         ("stayLatched", "done", False),
         ("runWindowLift", "done", False),
     }
@@ -1079,6 +1136,17 @@ FUNCTION_REFINES = {
     "WindshieldCleaning": {"CleanWindshield"},
     "Climate": {"AdjustClimate"},
     "Entertainment": {"PlayMedia"},
+    "DriverFeedback": {
+        "StartVehicle",
+        "StopVehicle",
+        "ChangeGear",
+        "Accelerate",
+        "ToggleHeadlights",
+        "OpenDoor",
+        "CloseDoor",
+        "AdjustClimate",
+        "Charge",
+    },
 }
 
 

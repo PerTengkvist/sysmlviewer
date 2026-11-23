@@ -8,6 +8,8 @@ The driver connects a home or fast charger. The car and the charger negotiate a 
 - Refined by `chargeConnection`.
 - Refined by `chargeSession`.
 - Refined by `energyStorage`.
+- Refined by `DriverFeedback`.
+- Refined by `driverInformation`.
 - Pursues requirement `ChargeTime`.
 - Refines `ChargeAtHome`.
 - Refines `ChargeAway`.

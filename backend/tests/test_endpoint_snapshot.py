@@ -11,6 +11,7 @@ import re
 
 import pytest
 
+from endpoint_snapshot_ec_realization import accepted_lines as ec_realization_lines
 from sequence_migration_fixture import load_fixture as load_migration_fixture
 from endpoint_snapshot import (
     collect_snapshot,
@@ -381,6 +382,11 @@ for _perform, _target in _REALIZATION_PERFORMS:
         f"project:examples/diagrams: {_perform} performTargetId None -> {_target!r}"
     )
 ACCEPTED_DIFFS.add(f"{_REALIZATION_FILE}: key added")
+
+# Plan 2, phase A: the electric car realizes its use cases step by step (new flows, the
+# DriverFeedback function, actor blocks and step-level `#refine`s). The ids are listed per
+# step in endpoint_snapshot_ec_realization.py.
+ACCEPTED_DIFFS |= ec_realization_lines()
 
 _LINE_PREFIX = re.compile(r"^line \d+: ")
 

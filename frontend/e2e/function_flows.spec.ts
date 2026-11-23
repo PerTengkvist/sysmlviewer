@@ -22,15 +22,15 @@ test('SecurityFlowView shows every step with its performer', async ({ page }) =>
     checkCredential: 'authenticate',
     unlockDoors: 'lockControl',
     wakeCabin: 'wakeUp',
-    releaseImmobilizer: 'immobilizer',
-    showReady: 'driverInformation',
     rejectKey: 'authenticate',
   }
   for (const id of ['start', 'credentialValid', 'done', ...Object.keys(steps)]) {
     await expect(page.locator(nodeSel(`${FLOW}::${id}`))).toBeVisible()
   }
-  // Only the flow is drawn; the performing parts are not nodes.
-  await expect(page.locator('.react-flow__node')).toHaveCount(9)
+  // Only the flow is drawn; the performing parts are not nodes. The immobilizer is
+  // released in startFlow, not on unlock.
+  await expect(page.locator('.react-flow__node')).toHaveCount(7)
+  await expect(page.locator(nodeSel(`${FLOW}::releaseImmobilizer`))).toHaveCount(0)
 
   for (const [step, performer] of Object.entries(steps)) {
     const row = page.locator(`${nodeSel(`${FLOW}::${step}`)} .action-performer`)
@@ -63,14 +63,13 @@ test('SecurityCabinAccessFlowView shows the door and window steps with their per
     stayLatched: 'lockControl',
     closeDoor: 'doorControl',
     relatch: 'lockControl',
-    showDoorState: 'driverInformation',
     runWindowLift: 'windowControl',
   }
   const pseudo = ['start', 'doorRequested', 'outsideHandle', 'carUnlocked', 'done']
   for (const id of [...pseudo, ...Object.keys(steps)]) {
     await expect(page.locator(nodeSel(`${flow}::${id}`))).toBeVisible()
   }
-  await expect(page.locator('.react-flow__node')).toHaveCount(13)
+  await expect(page.locator('.react-flow__node')).toHaveCount(12)
   for (const [step, performer] of Object.entries(steps)) {
     await expect(page.locator(`${nodeSel(`${flow}::${step}`)} .action-performer`)).toHaveText(
       `⟨${performer}⟩`,
@@ -88,7 +87,6 @@ test('SecurityCabinAccessFlowView shows the door and window steps with their per
     'releaseDoor',
     'closeDoor',
     'relatch',
-    'showDoorState',
     'done',
   ]
   for (const id of doorPath) {

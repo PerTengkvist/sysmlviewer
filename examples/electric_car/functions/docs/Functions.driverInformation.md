@@ -1,8 +1,8 @@
 # driverInformation
 
-Tell the driver what state the car is in: ready, gear, speed, charge and warnings. Allocated to the instrument cluster.
+Drive the instrument cluster: turn what the other functions report into the symbols, values and warnings the driver sees. Allocated to the instrument cluster.
 
-Part of `Security`.
+Part of `DriverFeedback`.
 
 ## Relations
 
@@ -11,6 +11,11 @@ Part of `Security`.
 - Refines `StopVehicle`.
 - Refines `OpenDoor`.
 - Refines `CloseDoor`.
+- Refines `ChangeGear`.
+- Refines `Accelerate`.
+- Refines `ToggleHeadlights`.
+- Refines `AdjustClimate`.
+- Refines `Charge`.
 
 ## Diagrams
 

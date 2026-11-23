@@ -244,10 +244,24 @@ def test_chain_edges_follow_the_explicit_links_of_electric_car(tmp_path: Path):
         if not root_is_uc:
             expected = {(s, t) for s, t in expected if s == root or s.startswith(root + "::")}
         assert refine == expected, view_id
-        # Every explicit #refine to one of the use cases is drawn.
-        assert {(s, t) for s, t in explicit if t in ucs and s in body["chainRoles"]} <= refine
-        # Electric car has no step links, so nothing is derived through flows.
-        assert not any(e["kind"] == "owns" and not e["projected"] for e in body["chainEdges"])
+        # Every explicit #refine to one of the use cases is drawn: as a refine edge, or, for
+        # a node the steps reach through its function, as that function's refine and owns.
+        owns = {
+            (e["source"], e["target"])
+            for e in body["chainEdges"]
+            if e["kind"] == "owns" and not e["projected"]
+        }
+        for s, t in explicit:
+            if t not in ucs or s not in body["chainRoles"]:
+                continue
+            through = realization["useCases"][t]["nodeFunctions"].get(s, [])
+            assert (s, t) in refine or any((f, s) in owns and (f, t) in refine for f in through), (s, t)
+        # The car realizes its use cases step by step: an owns edge is a node reached
+        # through its function.
+        if any(uc in realization["inScope"] for uc in ucs):
+            assert owns
+        for f, n in owns:
+            assert any(f in realization["useCases"][uc]["nodeFunctions"].get(n, []) for uc in ucs), (f, n)
 
 
 PROJECTION = """\

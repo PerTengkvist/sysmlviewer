@@ -52,8 +52,8 @@ def test_speed_control_inputs(graph):
 
 def test_layer_counts(graph):
     counts = Counter(n.layer for n in graph.nodes.values())
-    assert counts[Layer.FUNCTION] == 8
-    assert counts[Layer.FUNCTION_NODE] == 24
+    assert counts[Layer.FUNCTION] == 9
+    assert counts[Layer.FUNCTION_NODE] == 25
     assert counts[Layer.PHYSICAL] == 39
     assert counts[Layer.USE_CASE] == 21
     assert counts[Layer.LOGICAL] >= 28

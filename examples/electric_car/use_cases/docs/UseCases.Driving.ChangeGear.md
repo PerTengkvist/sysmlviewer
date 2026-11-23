@@ -6,6 +6,8 @@ The driver selects park, reverse, neutral or drive. The drive controller only ac
 
 - Refined by `Maneuvrability`.
 - Refined by `gearSelection`.
+- Refined by `DriverFeedback`.
+- Refined by `driverInformation`.
 - Pursues requirement `PropulsionModes`.
 - Included by `Drive`.
 - Refines `DriveToDestination`.
