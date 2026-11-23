@@ -349,8 +349,8 @@ package UseCases {
     }
 
     use case def <'UC015'> OpenDoor {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pullHandle; }
+      actor Passenger { perform pullHandle; }
       objective Requirements::CabinAccess;
       doc /* An occupant pulls a door handle and the door releases. The inside handle always opens the door, so nobody can be shut in; the outside handle opens it only on an unlocked car. */
 
@@ -371,8 +371,8 @@ package UseCases {
     }
 
     use case def <'UC016'> CloseDoor {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform pushDoorShut; }
+      actor Passenger { perform pushDoorShut; }
       objective Requirements::CabinAccess;
       doc /* An occupant closes a door; the latch engages and the door-ajar warning clears. A door that is not pushed fully shut keeps the warning on. */
 
@@ -393,8 +393,8 @@ package UseCases {
     }
 
     use case def <'UC017'> OpenWindow {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform holdSwitchDown; }
+      actor Passenger { perform holdSwitchDown; }
       objective Requirements::CabinAccess;
       doc /* An occupant presses the window switch down and the window lowers. */
 
@@ -411,8 +411,8 @@ package UseCases {
     }
 
     use case def <'UC018'> CloseWindow {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform holdSwitchUp; }
+      actor Passenger { perform holdSwitchUp; }
       objective Requirements::CabinAccess;
       doc /* An occupant presses the window switch up and the window rises, backing off if something is caught in the gap. */
 
@@ -436,8 +436,8 @@ package UseCases {
     }
 
     use case def <'UC019'> AdjustClimate {
-      actor Driver;
-      actor Passenger;
+      actor Driver { perform setTemperature; }
+      actor Passenger { perform setTemperature; }
       objective Requirements::CabinClimate;
       doc /* The driver or a passenger sets cabin temperature and airflow. */
 

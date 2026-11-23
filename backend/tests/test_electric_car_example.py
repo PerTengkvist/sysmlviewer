@@ -1090,8 +1090,11 @@ def test_branching_flows_have_the_intended_successions():
         ("carUnlocked", "releaseDoor", True),
         ("carUnlocked", "stayLatched", True),
         ("releaseDoor", "closeDoor", False),
-        ("closeDoor", "relatch", False),
+        ("closeDoor", "doorLatched", False),
+        ("doorLatched", "relatch", True),
+        ("doorLatched", "keepDoorAjar", True),
         ("relatch", "done", False),
+        ("keepDoorAjar", "done", False),
         ("stayLatched", "done", False),
         ("runWindowLift", "done", False),
     }

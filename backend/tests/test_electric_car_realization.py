@@ -227,10 +227,14 @@ FLOWS = [
 ]
 
 # What the model realizes so far (phase A lands step by step); the rest is xfail.
-DONE_USE_CASES: set[str] = {"StartVehicle", "StopVehicle", "Unlock", "Lock"}
+DONE_USE_CASES: set[str] = {
+    "StartVehicle", "StopVehicle", "Unlock", "Lock", "OpenDoor", "CloseDoor", "OpenWindow",
+    "CloseWindow", "AdjustClimate",
+}
 DONE_FLOWS: set[str] = {
     f"{SEC}::securityFlow", f"{SEC}::startFlow", f"{SEC}::stopFlow", f"{SEC}::lockFlow",
-    f"{DI}::powerModeFlow",
+    f"{SEC}::cabinAccessFlow", f"{CLI}::climateFlow", f"{DI}::powerModeFlow",
+    f"{DI}::cabinStatusFlow",
 }
 
 

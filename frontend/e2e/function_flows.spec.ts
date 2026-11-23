@@ -63,13 +63,14 @@ test('SecurityCabinAccessFlowView shows the door and window steps with their per
     stayLatched: 'lockControl',
     closeDoor: 'doorControl',
     relatch: 'lockControl',
+    keepDoorAjar: 'doorControl',
     runWindowLift: 'windowControl',
   }
-  const pseudo = ['start', 'doorRequested', 'outsideHandle', 'carUnlocked', 'done']
+  const pseudo = ['start', 'doorRequested', 'outsideHandle', 'carUnlocked', 'doorLatched', 'done']
   for (const id of [...pseudo, ...Object.keys(steps)]) {
     await expect(page.locator(nodeSel(`${flow}::${id}`))).toBeVisible()
   }
-  await expect(page.locator('.react-flow__node')).toHaveCount(12)
+  await expect(page.locator('.react-flow__node')).toHaveCount(14)
   for (const [step, performer] of Object.entries(steps)) {
     await expect(page.locator(`${nodeSel(`${flow}::${step}`)} .action-performer`)).toHaveText(
       `⟨${performer}⟩`,
@@ -86,6 +87,7 @@ test('SecurityCabinAccessFlowView shows the door and window steps with their per
     'carUnlocked',
     'releaseDoor',
     'closeDoor',
+    'doorLatched',
     'relatch',
     'done',
   ]

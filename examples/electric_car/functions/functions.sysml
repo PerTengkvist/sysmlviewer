@@ -50,6 +50,7 @@ package Functions {
       perform cabinAccessFlow.readDoorHandle;
       perform cabinAccessFlow.releaseDoor;
       perform cabinAccessFlow.closeDoor;
+      perform cabinAccessFlow.keepDoorAjar;
       perform lockFlow.checkDoorsClosed;
     }
     part windowControl : FunctionNode {
@@ -158,7 +159,7 @@ package Functions {
       first keepReady then done;
     }
     action cabinAccessFlow {
-      doc /* From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A closed door is latched again and a window follows its switch. */
+      doc /* From a door handle or a window switch to a door or window that has moved. An inside handle always opens its door, so nobody can be shut in; an outside handle opens it only on an unlocked car. A door pushed shut is latched again, or reported still open if it did not catch; a window follows its switch. */
       action readDoorHandle {
         doc /* When the request comes from a door: the pull on a handle is read. Output: the door to open and whether the handle was outside or inside, the outsideHandle decision. */
       }
@@ -175,7 +176,10 @@ package Functions {
         doc /* The occupant swings the open door shut; its position sensor reports it closed. */
       }
       action relatch {
-        doc /* Once the door is shut: its latch catches and holds it, so the car can be locked again. */
+        doc /* The door is shut: its latch catches and holds it, so the car can be locked again. */
+      }
+      action keepDoorAjar {
+        doc /* The door did not shut fully: its latch has not caught, so the door is still reported open and the car cannot be locked. */
       }
       action runWindowLift {
         doc /* When the request comes from a window switch: the window lowers or rises while the switch is held, and backs off if it meets an obstacle on the way up. */
@@ -187,8 +191,10 @@ package Functions {
       first checkUnlocked;
       then if carUnlocked then releaseDoor else stayLatched;
       first releaseDoor then closeDoor;
-      first closeDoor then relatch;
+      first closeDoor;
+      then if doorLatched then relatch else keepDoorAjar;
       first relatch then done;
+      first keepDoorAjar then done;
       first stayLatched then done;
       first runWindowLift then done;
     }
@@ -748,10 +754,31 @@ package FunctionTraceability {
   #refine dependency from Functions::Security::lockFlow::confirmLock to UseCases::Managing::Lock::lockDoors;
   #refine dependency from Functions::Security::lockFlow::checkDoorsClosed to UseCases::Managing::Lock::stayUnlocked;
   #refine dependency from Functions::Security::lockFlow::keepUnlocked to UseCases::Managing::Lock::stayUnlocked;
+  #refine dependency from Functions::Security::cabinAccessFlow::readDoorHandle to UseCases::Managing::OpenDoor::pullHandle;
+  #refine dependency from Functions::Security::cabinAccessFlow::checkUnlocked to UseCases::Managing::OpenDoor::releaseDoor;
+  #refine dependency from Functions::Security::cabinAccessFlow::releaseDoor to UseCases::Managing::OpenDoor::releaseDoor;
+  #refine dependency from Functions::Security::cabinAccessFlow::checkUnlocked to UseCases::Managing::OpenDoor::stayLatched;
+  #refine dependency from Functions::Security::cabinAccessFlow::stayLatched to UseCases::Managing::OpenDoor::stayLatched;
+  #refine dependency from Functions::Security::cabinAccessFlow::closeDoor to UseCases::Managing::CloseDoor::pushDoorShut;
+  #refine dependency from Functions::Security::cabinAccessFlow::relatch to UseCases::Managing::CloseDoor::clearDoorWarning;
+  #refine dependency from Functions::Security::cabinAccessFlow::keepDoorAjar to UseCases::Managing::CloseDoor::keepDoorWarning;
+  #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::OpenWindow::holdSwitchDown;
+  #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::OpenWindow::lowerWindow;
+  #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::holdSwitchUp;
+  #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::raiseWindow;
+  #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::stopWindow;
+  #refine dependency from Functions::Security::cabinAccessFlow::runWindowLift to UseCases::Managing::CloseWindow::reverseWindow;
+  // Climate.
+  #refine dependency from Functions::Climate::climateFlow::readSetpoint to UseCases::Managing::AdjustClimate::setTemperature;
+  #refine dependency from Functions::Climate::climateFlow::conditionCabin to UseCases::Managing::AdjustClimate::conditionCabin;
   // DriverFeedback.
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StartVehicle::showReady;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StartVehicle::rejectKey;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StartVehicle::askForBrake;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPowerMode to UseCases::Driving::StopVehicle::shutDown;
   #refine dependency from Functions::DriverFeedback::powerModeFlow::showPrompt to UseCases::Driving::StopVehicle::askForPark;
+  #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::OpenDoor::releaseDoor;
+  #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::CloseDoor::clearDoorWarning;
+  #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showDoorState to UseCases::Managing::CloseDoor::keepDoorWarning;
+  #refine dependency from Functions::DriverFeedback::cabinStatusFlow::showSetpoint to UseCases::Managing::AdjustClimate::showSetpoint;
 }
