@@ -126,6 +126,29 @@ test('a function step stands in the lane of its node, between the steps around i
   await expect(page.locator(nodeSel(`${START}::checkKey`))).toHaveCount(0)
 })
 
+test('a function step that refines an actor step follows it in its own lane', async ({ page, request }) => {
+  await openLanes(page)
+  const press = `${START}::pressStart`
+  const read = `${SEC}::requestFlow::readStartRequest`
+  const check = `${FLOW}::checkKeyInCabin`
+  await expect(page.locator(nodeSel(read))).toBeVisible()
+  const inLane = async (id: string, lane: string) => {
+    const s = await box(page, nodeSel(id))
+    const l = await box(page, laneSel(lane))
+    return s.x >= l.x && s.x + s.width <= l.x + l.width
+  }
+  expect(await inLane(press, DRIVER)).toBe(true)
+  expect(await inLane(read, AUTH)).toBe(true)
+  const y = async (id: string) => (await box(page, nodeSel(id))).y
+  expect(await y(press)).toBeLessThan(await y(read))
+  expect(await y(read)).toBeLessThan(await y(check))
+  // Its node is a step lane, not a lane without steps.
+  await expect(page.locator(`${laneSel(AUTH)} .rlane`)).not.toHaveClass(/explicit-link|projected/)
+  await page.locator(modeButton('blackbox')).click()
+  await expect(page.locator(nodeSel(read))).toHaveCount(0)
+  await expect.poll(async () => (await savedLayout(request))?.lanes).toBe('blackbox')
+})
+
 test('an unrealized system step stays in the system lane, marked', async ({ page }) => {
   await openLanes(page)
   const step = nodeSel(`${START}::askForBrake`)

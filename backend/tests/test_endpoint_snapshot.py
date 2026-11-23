@@ -296,6 +296,12 @@ _REALIZATION_ADDED = [
     "UseCaseRealization::F::Security::startFlow::succ2",
     "UseCaseRealization::F::Security::startFlow::succ3",
     "UseCaseRealization::F::Security::startFlow::succ4",
+    # A function step that refines an actor step (pressStart): its flow, the step, the node's
+    # `perform` and the fifth `#refine`.
+    "UseCaseRealization::F::Security::auth::perform_requestFlow_readStartRequest",
+    "UseCaseRealization::F::Security::requestFlow",
+    "UseCaseRealization::F::Security::requestFlow::readStartRequest",
+    "UseCaseRealization::dep5",
     "UseCaseRealization::F::Security::unlockFlow",
     "UseCaseRealization::F::Security::unlockFlow::release",
     "UseCaseRealization::L",
@@ -360,10 +366,12 @@ _REALIZATION_RELATIONS = [
     "UseCaseRealization::dep2",
     "UseCaseRealization::dep3",
     "UseCaseRealization::dep4",
+    "UseCaseRealization::dep5",
 ]
 
 _REALIZATION_PERFORMS = [
     ("UseCaseRealization::F::Security::auth::perform_startFlow_checkKeyInCabin", "UseCaseRealization::F::Security::startFlow::checkKeyInCabin"),
+    ("UseCaseRealization::F::Security::auth::perform_requestFlow_readStartRequest", "UseCaseRealization::F::Security::requestFlow::readStartRequest"),
     ("UseCaseRealization::F::Security::immo::perform_startFlow_logStart", "UseCaseRealization::F::Security::startFlow::logStart"),
     ("UseCaseRealization::F::Security::immo::perform_startFlow_releaseImmobilizer", "UseCaseRealization::F::Security::startFlow::releaseImmobilizer"),
     ("UseCaseRealization::F::Security::locks::perform_unlockFlow_release", "UseCaseRealization::F::Security::unlockFlow::release"),

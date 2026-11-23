@@ -414,3 +414,71 @@ describe('what a node of the use case refines itself (the electric car form)', (
     ])
   })
 })
+
+describe('a function step that refines an actor step', () => {
+  // logStart (IMMO, vc) and checkKeyInCabin (AUTH, vc) both refine pressStart, given in reverse order.
+  const refined = () =>
+    fixture({
+      realization: {
+        stepRealizers: {
+          [step('pressStart')]: [fstep('logStart'), fstep('checkKeyInCabin')],
+          [step('showReady')]: [fstep('releaseImmobilizer')],
+        },
+        realizerNodes: {
+          [fstep('checkKeyInCabin')]: [AUTH],
+          [fstep('releaseImmobilizer')]: [IMMO],
+          [fstep('logStart')]: [BC_NODE],
+        },
+        realizerFunctions: {
+          [fstep('checkKeyInCabin')]: SEC,
+          [fstep('releaseImmobilizer')]: SEC,
+          [fstep('logStart')]: SEC,
+        },
+        nodeFunctions: { [AUTH]: [SEC], [IMMO]: [SEC], [BC_NODE]: [SEC] },
+      },
+      laneTargets: { [AUTH]: [VC], [IMMO]: [VC], [BC_NODE]: [BC] },
+      extra: [el(BC_NODE, 'part')],
+    })
+  const BC_NODE = `${SEC}::locks`
+
+  it('keeps the actor step in the actor lane and follows it with the chain, then the flow goes on', () => {
+    const f = expandRealizationFlow(refined(), 'whitebox')
+    expect(f.nodes.find((n) => n.id === step('pressStart'))).toMatchObject({ lane: DRIVER })
+    // rank in the function flow: checkKeyInCabin before logStart, whatever the link order
+    expect(pairs(f)).toEqual(
+      [
+        [step('start'), step('pressStart')],
+        [step('pressStart'), fstep('checkKeyInCabin')],
+        [fstep('checkKeyInCabin'), fstep('logStart')],
+        [fstep('logStart'), step('checkKey')],
+        [step('checkKey'), fstep('releaseImmobilizer')],
+        [fstep('releaseImmobilizer'), step('done')],
+      ]
+        .map((p) => p.join('>'))
+        .sort(),
+    )
+    expect(lane(f, fstep('checkKeyInCabin'))).toBe(AUTH)
+    expect(lane(f, fstep('logStart'))).toBe(BC_NODE)
+    expect(f.edges.some((e) => e.source === step('pressStart') && e.target === step('checkKey'))).toBe(false)
+  })
+
+  it('puts the chain in the lanes of the parts in logical', () => {
+    const f = expandRealizationFlow(refined(), 'logical')
+    expect(lane(f, step('pressStart'))).toBe(DRIVER)
+    expect(lane(f, fstep('checkKeyInCabin'))).toBe(VC)
+    expect(lane(f, fstep('logStart'))).toBe(BC)
+  })
+
+  it('leaves black box as written', () => {
+    const f = expandRealizationFlow(refined(), 'blackbox')
+    expect(f.nodes.map((n) => n.id)).not.toContain(fstep('checkKeyInCabin'))
+    expect(pairs(f)).toContain([step('pressStart'), step('checkKey')].join('>'))
+  })
+
+  it('never marks the actor step unrealized or coarse', () => {
+    const f = expandRealizationFlow(refined(), 'whitebox')
+    const n = f.nodes.find((x) => x.id === step('pressStart'))!
+    expect(n.unrealized).toBeFalsy()
+    expect(n.coarse).toBeFalsy()
+  })
+})

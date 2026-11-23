@@ -217,6 +217,26 @@ export function expandRealizationFlow(
   const chainEdges: RealizationFlowEdge[] = []
   const unrealized = new Set(real.unrealizedSteps)
 
+  /** Draws the realizers of a UC step in rank order, linked in a chain; returns the node ids. */
+  const chainOf = (stepId: string, realizers: string[]): string[] => {
+    const flows = unique(realizers.map((f) => semantic[f]?.parentId ?? ''))
+    const chain = realizers
+      .map((f, i) => ({ f, i }))
+      .sort(
+        (a, b) =>
+          flows.indexOf(semantic[a.f]?.parentId ?? '') - flows.indexOf(semantic[b.f]?.parentId ?? '') ||
+          rankOf(a.f) - rankOf(b.f) ||
+          a.i - b.i,
+      )
+      .map((c) => c.f)
+    const ids = chain.map((f) => ((uses.get(f) ?? 0) > 1 ? `${stepId}/${f}` : f))
+    chain.forEach((f, i) => {
+      nodes.push({ id: ids[i], artifactId: f, kind: 'step', label: stepName(nameOf(f)), ...inLanes(lanesOf(f)) })
+      if (i > 0) chainEdges.push({ id: `${stepId}/chain/${i}`, source: ids[i - 1], target: ids[i] })
+    })
+    return ids
+  }
+
   for (const item of items) {
     const base = { id: item.id, artifactId: item.elementId }
     if (PSEUDO.has(item.kind)) {
@@ -238,28 +258,20 @@ export function expandRealizationFlow(
     }
     const label = prettyLabel(item.name, false)
     const actor = real.actorSteps[item.id]
+    const realizers = expand ? (real.stepRealizers[item.id] ?? []) : []
     if (actor) {
       nodes.push({ ...base, kind: 'step', label, lane: lane(actor, 'actor') })
+      // Realizers of an actor step follow it; they do not replace it.
+      const ids = chainOf(item.id, realizers)
+      if (ids.length) {
+        chainEdges.push({ id: `${item.id}/chain/0`, source: item.id, target: ids[0] })
+        exit.set(item.id, ids[ids.length - 1])
+      }
       continue
     }
-    const realizers = expand ? (real.stepRealizers[item.id] ?? []) : []
     const coarse = expand && !realizers.length ? (real.coarseSteps[item.id] ?? []) : []
     if (realizers.length) {
-      const flows = unique(realizers.map((f) => semantic[f]?.parentId ?? ''))
-      const chain = realizers
-        .map((f, i) => ({ f, i }))
-        .sort(
-          (a, b) =>
-            flows.indexOf(semantic[a.f]?.parentId ?? '') - flows.indexOf(semantic[b.f]?.parentId ?? '') ||
-            rankOf(a.f) - rankOf(b.f) ||
-            a.i - b.i,
-        )
-        .map((c) => c.f)
-      const ids = chain.map((f) => ((uses.get(f) ?? 0) > 1 ? `${item.id}/${f}` : f))
-      chain.forEach((f, i) => {
-        nodes.push({ id: ids[i], artifactId: f, kind: 'step', label: stepName(nameOf(f)), ...inLanes(lanesOf(f)) })
-        if (i > 0) chainEdges.push({ id: `${item.id}/chain/${i}`, source: ids[i - 1], target: ids[i] })
-      })
+      const ids = chainOf(item.id, realizers)
       entry.set(item.id, ids[0])
       exit.set(item.id, ids[ids.length - 1])
     } else if (coarse.length) {

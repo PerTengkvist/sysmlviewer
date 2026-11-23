@@ -1,7 +1,8 @@
 // Use case realization: how functions, function nodes and logical parts realize
 // use cases. The one link written by hand is a `#refine` from a function step to a
 // use case step; the rest (function, function node, logical part) is derived from it.
-// Start is realized step by step (askForBrake is deliberately left unrealized),
+// Start is realized step by step (askForBrake is deliberately left unrealized; the actor
+// step pressStart is refined too, by readStartRequest),
 // Unlock and Lock by coarser links, and Drive through its `include`s.
 // StartChain and SecurityChain draw the chain as columns: use case | function |
 // function node | logical part. StartRealization and DriveRealization draw the activity
@@ -29,7 +30,7 @@ package UseCaseRealization {
   }
   package F {
     part def Security {
-      part auth  { perform startFlow.checkKeyInCabin; }
+      part auth  { perform requestFlow.readStartRequest; perform startFlow.checkKeyInCabin; }
       part immo  { perform startFlow.releaseImmobilizer; perform startFlow.logStart; }
       part locks { perform unlockFlow.release; }
       action startFlow {
@@ -38,6 +39,7 @@ package UseCaseRealization {
         action logStart;
         first start; then checkKeyInCabin; then releaseImmobilizer; then logStart; then done;
       }
+      action requestFlow { action readStartRequest; }
       action unlockFlow { action release; }
     }
   }
@@ -47,6 +49,8 @@ package UseCaseRealization {
   allocate F::Security::locks to L::bc;
   #refine dependency from F::Security::startFlow::checkKeyInCabin to UC::Start::checkKey;
   #refine dependency from F::Security::startFlow::releaseImmobilizer to UC::Start::showReady;
+  // A function step can refine an actor step too: it then follows that step in its own lane.
+  #refine dependency from F::Security::requestFlow::readStartRequest to UC::Start::pressStart;
   #refine dependency from F::Security::unlockFlow to UC::Unlock;
   #refine dependency from F::Security to UC::Lock;
 
