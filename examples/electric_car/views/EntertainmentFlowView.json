@@ -5,7 +5,7 @@
   "structureNotation": "sysmlv2",
   "nodes": {
     "Functions::Entertainment::entertainmentFlow::start": {
-      "x": 104.0,
+      "x": 48.0,
       "y": 48.0,
       "width": 28.0,
       "height": 28.0
@@ -23,10 +23,16 @@
       "height": 90.0
     },
     "Functions::Entertainment::entertainmentFlow::done": {
-      "x": 104.0,
-      "y": 526.0,
+      "x": 48.0,
+      "y": 706.0,
       "width": 28.0,
       "height": 28.0
+    },
+    "Functions::Entertainment::entertainmentFlow::stopPlayback": {
+      "x": 48.0,
+      "y": 526.0,
+      "width": 140.0,
+      "height": 90.0
     }
   },
   "edges": {}

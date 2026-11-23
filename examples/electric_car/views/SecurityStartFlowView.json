@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::SecurityStartFlowView",
+  "name": "SecurityStartFlowView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::Security::startFlow::readStartRequest": {
+      "x": 48.0,
+      "y": 166.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::startFlow::checkKeyInCabin": {
+      "x": 48.0,
+      "y": 516.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::startFlow::releaseImmobilizer": {
+      "x": 328.0,
+      "y": 866.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::startFlow::switchOnHighVoltage": {
+      "x": 48.0,
+      "y": 1046.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::startFlow::enableDrive": {
+      "x": 48.0,
+      "y": 1226.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::startFlow::refuseStart": {
+      "x": 48.0,
+      "y": 866.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::startFlow::start": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::Security::startFlow::brakeHeld": {
+      "x": 48.0,
+      "y": 346.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::startFlow::keyApproved": {
+      "x": 48.0,
+      "y": 696.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::startFlow::done": {
+      "x": 48.0,
+      "y": 1406.0,
+      "width": 28.0,
+      "height": 28.0
+    }
+  },
+  "edges": {}
+}

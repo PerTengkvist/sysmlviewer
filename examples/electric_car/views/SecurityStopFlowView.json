@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "viewId": "Functions::SecurityStopFlowView",
+  "name": "SecurityStopFlowView",
+  "structureNotation": "sysmlv2",
+  "nodes": {
+    "Functions::Security::stopFlow::readStopRequest": {
+      "x": 48.0,
+      "y": 166.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::stopFlow::disableDrive": {
+      "x": 48.0,
+      "y": 516.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::stopFlow::switchOffHighVoltage": {
+      "x": 48.0,
+      "y": 696.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::stopFlow::armImmobilizer": {
+      "x": 48.0,
+      "y": 876.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::stopFlow::keepReady": {
+      "x": 328.0,
+      "y": 516.0,
+      "width": 140.0,
+      "height": 90.0
+    },
+    "Functions::Security::stopFlow::start": {
+      "x": 48.0,
+      "y": 48.0,
+      "width": 28.0,
+      "height": 28.0
+    },
+    "Functions::Security::stopFlow::parkSelected": {
+      "x": 48.0,
+      "y": 346.0,
+      "width": 120.0,
+      "height": 80.0
+    },
+    "Functions::Security::stopFlow::done": {
+      "x": 48.0,
+      "y": 1056.0,
+      "width": 28.0,
+      "height": 28.0
+    }
+  },
+  "edges": {}
+}

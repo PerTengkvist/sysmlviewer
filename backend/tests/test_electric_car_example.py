@@ -937,24 +937,11 @@ def test_every_flow_step_is_performed_by_one_entity_of_its_function():
     assert sorted(e.name for e in entities if e.id not in performing) == []
 
 
-# Flow views whose layout is saved in views/<name>.json. Flow views added since use the
-# default layout and have no file (plan 2, B11).
-SAVED_FLOW_LAYOUTS = {
-    "SecurityFlowView",
-    "SecurityCabinAccessFlowView",
-    "ChargingFlowView",
-    "SpeedControlFlowView",
-    "ManeuvrabilityFlowView",
-    "EntertainmentFlowView",
-    "ClimateFlowView",
-    "WindshieldCleaningFlowView",
-    "LightingFlowView",
-}
-
-
 def test_every_flow_has_a_flow_view():
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
+    # One FlowView per flow: 19 flows in 9 functions, each with its saved top-down layout.
+    assert sum(len(_flow_ids(elements, fid)) for fid in functions) == 19
     repo = WorkspaceProjectRepository(ROOT)
     project = repo.get_open()
     service = ProjectService(repo=repo, parser=SubsetSysmlParser())
@@ -966,8 +953,7 @@ def test_every_flow_has_a_flow_view():
             assert view_el is not None, view_id
             assert view_el.type_ref == "ActionFlowView"
             assert view_el.expose_refs == [flow_id]
-            saved = name in SAVED_FLOW_LAYOUTS
-            assert (ROOT / "views" / f"{name}.json").is_file() is saved, view_id
+            assert (ROOT / "views" / f"{name}.json").is_file(), view_id
 
             view = service.get_view(project.id, view_id)
             assert view["diagramMode"] == "actionFlow", view_id
@@ -976,7 +962,7 @@ def test_every_flow_has_a_flow_view():
             assert {a.id for a in actions} <= set(view["visualization"]["nodes"]), view_id
             steps = {a.id for a in actions if not _is_pseudo(a)}
             assert set(view["performers"]) == steps, view_id
-            assert view["hasViewLayout"] is saved, view_id
+            assert view["hasViewLayout"] is True, view_id
 
 
 def test_security_owns_doors_and_windows_on_the_body_controller():

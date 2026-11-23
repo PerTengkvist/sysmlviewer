@@ -5,102 +5,221 @@
   "structureNotation": "sysmlv2",
   "nodes": {
     "Functions::Charging": {
-      "x": 359.33059012757866,
-      "y": 2570.213596146949,
+      "x": 0.0,
+      "y": 0.0,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::Climate": {
-      "x": 712.5928441024564,
-      "y": 2471.2770343008697,
+      "x": 240.0,
+      "y": 307.20000000000005,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::WindshieldCleaning": {
-      "x": 715.1225277036702,
-      "y": 2324.5355189499137,
+      "x": 0.0,
+      "y": 307.20000000000005,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::SpeedControl": {
-      "x": 405.772447752895,
-      "y": 2284.290425177199,
+      "x": 480.0,
+      "y": 0.0,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::Entertainment": {
-      "x": 52.47490363554661,
-      "y": 1862.199950974359,
+      "x": 480.0,
+      "y": 153.6,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::Lighting": {
-      "x": 9.180991892076065,
-      "y": 2220.7909560758358,
+      "x": 0.0,
+      "y": 153.6,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::Maneuvrability": {
-      "x": 492.70614026448334,
-      "y": 1859.7587600125605,
+      "x": 240.0,
+      "y": 153.6,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::Security": {
-      "x": 723.6338218114272,
-      "y": 2172.3817739388714,
+      "x": 240.0,
+      "y": 0.0,
       "width": 200.0,
       "height": 120.0
     },
     "Functions::Function": {
-      "x": 52.47490363554661,
-      "y": 1700.0,
-      "width": 120.0,
-      "height": 72.0
+      "x": 30.0,
+      "y": 460.80000000000007,
+      "width": 140.0,
+      "height": 76.0
     },
     "Functions::FunctionNode": {
-      "x": 212.4749036355466,
-      "y": 1700.0,
-      "width": 120.0,
-      "height": 72.0
+      "x": 270.0,
+      "y": 460.80000000000007,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "Functions::DriverFeedback": {
+      "x": 480.0,
+      "y": 307.20000000000005,
+      "width": 200.0,
+      "height": 120.0
     }
   },
   "edges": {
     "Functions::dep3": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.9413196050102499,
       "targetSide": "top",
       "targetOffset": 0.4347801810871391
     },
     "Functions::dep4": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "bottom",
       "sourceOffset": 0.1684254202988245,
       "targetSide": "top",
       "targetOffset": 0.4266508297283349
     },
     "Functions::dep12": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.5,
       "targetSide": "left",
       "targetOffset": 0.2690316849981211
     },
     "Functions::dep10": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.5,
       "targetSide": "left",
       "targetOffset": 0.2931361612351187
     },
     "Functions::dep1": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.5,
       "targetSide": "left",
       "targetOffset": 0.8047361970480059
     },
     "Functions::dep5": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.5,
       "targetSide": "left",
       "targetOffset": 0.1822311480700667
+    },
+    "Functions::dep2": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5
+    },
+    "Functions::dep6": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "bottom",
+      "sourceOffset": 0.5,
+      "targetSide": "top",
+      "targetOffset": 0.5
+    },
+    "Functions::dep7": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::dep8": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::dep9": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::dep11": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
     }
+  },
+  "autoLayoutEdgeKinds": {
+    "connections": true,
+    "bindings": true,
+    "relations": true
   }
 }

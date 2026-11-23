@@ -5,44 +5,44 @@
   "structureNotation": "sysmlv2",
   "nodes": {
     "Functions::Security": {
-      "x": 40.0,
-      "y": 40.0,
-      "width": 240.0,
-      "height": 532.0
+      "x": 0.0,
+      "y": 1380.0,
+      "width": 1544.0,
+      "height": 193.5999999999999
     },
     "Functions::Security::authenticate": {
-      "x": 20.0,
-      "y": 44.0,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::immobilizer": {
-      "x": 20.0,
-      "y": 112.0,
+      "x": 257.6,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::wakeUp": {
-      "x": 20.0,
-      "y": 180.0,
+      "x": 724.8000000000001,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::lockControl": {
-      "x": 20.0,
-      "y": 248.0,
+      "x": 958.4000000000001,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::doorControl": {
-      "x": 20.0,
-      "y": 316.0,
+      "x": 1192.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Security::windowControl": {
-      "x": 20.0,
-      "y": 384.0,
+      "x": 1320.0,
+      "y": 113.59999999999991,
       "width": 200.0,
       "height": 56.0
     },
@@ -53,253 +53,564 @@
       "height": 56.0
     },
     "Functions::Charging": {
-      "x": 1106.56982421875,
-      "y": 580.0,
-      "width": 240.0,
-      "height": 260.0
+      "x": 0.0,
+      "y": 780.0,
+      "width": 715.2,
+      "height": 104.0
     },
     "Functions::Charging::chargeConnection": {
-      "x": 20.0,
-      "y": 44.0,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Charging::chargeSession": {
-      "x": 20.0,
-      "y": 112.0,
+      "x": 257.6,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Charging::energyStorage": {
-      "x": 20.0,
-      "y": 180.0,
+      "x": 491.20000000000005,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::SpeedControl": {
-      "x": 40.0,
-      "y": 912.0,
-      "width": 240.0,
-      "height": 328.0
+      "x": 0.0,
+      "y": 1180.0,
+      "width": 948.8000000000001,
+      "height": 104.0
     },
     "Functions::SpeedControl::torqueArbitration": {
-      "x": 14.469154630665003,
-      "y": 114.5182784590213,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::SpeedControl::regenBlending": {
-      "x": 14.469154630665003,
-      "y": 52.54341227964858,
+      "x": 257.6,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::SpeedControl::tractionDrive": {
-      "x": 20.0,
-      "y": 180.0,
+      "x": 491.20000000000005,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::SpeedControl::frictionBraking": {
-      "x": 20.0,
-      "y": 248.0,
+      "x": 724.8000000000001,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Maneuvrability": {
-      "x": 40.0,
-      "y": 598.0,
-      "width": 240.0,
-      "height": 260.0
+      "x": 776.0,
+      "y": 780.0,
+      "width": 715.1999999999998,
+      "height": 104.0
     },
     "Functions::Maneuvrability::steeringControl": {
-      "x": 18.0,
-      "y": 46.0,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Maneuvrability::gearSelection": {
-      "x": 18.0,
-      "y": 112.0,
+      "x": 257.5999999999999,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Maneuvrability::roadHolding": {
-      "x": 18.0,
-      "y": 180.0,
+      "x": 491.1999999999998,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Entertainment": {
-      "x": 40.0,
-      "y": 1256.686374478446,
-      "width": 240.0,
-      "height": 124.0
+      "x": 0.0,
+      "y": 516.0,
+      "width": 248.0,
+      "height": 104.0
     },
     "Functions::Entertainment::mediaPlayback": {
-      "x": 12.31646737595338,
-      "y": 44.0,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Climate": {
-      "x": 1104.56982421875,
-      "y": 865.7978418970927,
-      "width": 240.0,
-      "height": 124.0
+      "x": 344.0,
+      "y": 516.0,
+      "width": 248.0,
+      "height": 104.0
     },
     "Functions::Climate::cabinTemperature": {
-      "x": 26.70301540565538,
-      "y": 44.0,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::WindshieldCleaning": {
-      "x": 1104.56982421875,
-      "y": 338.6694744994495,
-      "width": 242.0,
-      "height": 230.0
+      "x": 1032.0,
+      "y": 516.0,
+      "width": 481.5999999999999,
+      "height": 104.0
     },
     "Functions::WindshieldCleaning::wipeControl": {
-      "x": 19.151083068079743,
-      "y": 44.0,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::WindshieldCleaning::wipeSweep": {
-      "x": 19.151083068079743,
-      "y": 112.0,
+      "x": 257.5999999999999,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Lighting": {
-      "x": 1104.56982421875,
-      "y": 11.518687956974844,
-      "width": 240.0,
-      "height": 260.0
+      "x": 0.0,
+      "y": 980.0,
+      "width": 715.2,
+      "height": 104.0
     },
     "Functions::Lighting::headlampControl": {
-      "x": 19.39111309791633,
-      "y": 51.31864331108659,
+      "x": 24.0,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Lighting::indicatorControl": {
-      "x": 19.39111309791633,
-      "y": 112.0,
+      "x": 257.6,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "Functions::Lighting::lampDrive": {
-      "x": 19.39111309791633,
-      "y": 180.0,
+      "x": 491.20000000000005,
+      "y": 24.0,
       "width": 200.0,
       "height": 56.0
     },
     "LogicalArchitecture::Car::vehicleController": {
-      "x": 714.0,
-      "y": 40.0,
+      "x": 472.0,
+      "y": 0.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::driveController": {
-      "x": 714.0,
-      "y": 130.0,
+      "x": 768.0,
+      "y": 0.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::bodyController": {
-      "x": 714.0,
-      "y": 220.0,
+      "x": 1064.0,
+      "y": 0.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::instrumentCluster": {
-      "x": 714.0,
-      "y": 506.461006355213,
+      "x": 0.0,
+      "y": 172.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::engine": {
-      "x": 714.0,
-      "y": 684.4610063552129,
+      "x": 888.0,
+      "y": 172.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::frictionBrakes": {
-      "x": 714.0,
-      "y": 774.4610063552129,
+      "x": 296.0,
+      "y": 344.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::suspension": {
-      "x": 714.0,
-      "y": 590.4610063552129,
+      "x": 592.0,
+      "y": 344.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::battery": {
-      "x": 714.0,
-      "y": 866.4610063552129,
+      "x": 1184.0,
+      "y": 172.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::chargeInlet": {
-      "x": 714.0,
-      "y": 956.4610063552129,
+      "x": 0.0,
+      "y": 344.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::climateSystem": {
-      "x": 714.0,
-      "y": 1046.461006355213,
+      "x": 296.0,
+      "y": 172.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::entertainmentSystem": {
-      "x": 716.4253831093922,
-      "y": 1144.1747123751024,
+      "x": 592.0,
+      "y": 172.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::wipers": {
-      "x": 714.0,
-      "y": 412.46100635521293,
+      "x": 888.0,
+      "y": 344.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "LogicalArchitecture::Car::lamps": {
-      "x": 714.0,
-      "y": 314.9492357804696,
+      "x": 1184.0,
+      "y": 344.0,
       "width": 200.0,
-      "height": 70.0
+      "height": 76.0
     },
     "Functions::Function": {
-      "x": 38.92366825674634,
-      "y": -60.59911019664108,
-      "width": 120.0,
-      "height": 72.0
+      "x": 0.0,
+      "y": 0.0,
+      "width": 140.0,
+      "height": 76.0
     },
     "Functions::FunctionNode": {
-      "x": 178.92366825674634,
-      "y": -60.59911019664108,
-      "width": 120.0,
-      "height": 72.0
+      "x": 236.0,
+      "y": 0.0,
+      "width": 140.0,
+      "height": 76.0
+    },
+    "Functions::DriverFeedback": {
+      "x": 688.0,
+      "y": 516.0,
+      "width": 248.0,
+      "height": 168.0
+    },
+    "Functions::Security::powerControl": {
+      "x": 491.20000000000005,
+      "y": 24.0,
+      "width": 200.0,
+      "height": 120.0
+    },
+    "Functions::DriverFeedback::driverInformation": {
+      "x": 24.0,
+      "y": 24.0,
+      "width": 200.0,
+      "height": 120.0
     }
   },
   "edges": {
     "Functions::alloc12": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.45190041581781976,
       "targetSide": "left",
       "targetOffset": 0.8552946861414378
     },
     "Functions::alloc11": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
       "sourceSide": "right",
       "sourceOffset": 0.5749716735376508,
       "targetSide": "left",
       "targetOffset": 0.8766101999985636
+    },
+    "Functions::alloc1": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc2": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc3": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc4": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc5": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc6": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc7": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc8": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc9": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc10": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc13": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc14": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc15": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc16": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc17": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc18": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc19": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc20": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc21": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc22": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc23": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc24": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "left",
+      "sourceOffset": 0.5,
+      "targetSide": "right",
+      "targetOffset": 0.5
+    },
+    "Functions::alloc25": {
+      "routing": "direct",
+      "waypoints": [],
+      "labelOffset": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "sourceSide": "right",
+      "sourceOffset": 0.5,
+      "targetSide": "left",
+      "targetOffset": 0.5
     }
   },
-  "hierarchicalLevelsOverride": 3
+  "hierarchicalLevelsOverride": 3,
+  "autoLayoutEdgeKinds": {
+    "connections": true,
+    "bindings": true,
+    "relations": true
+  }
 }
