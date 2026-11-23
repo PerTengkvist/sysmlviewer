@@ -4,10 +4,9 @@ from pathlib import Path
 
 from adapters.api.static_paths import resolve_repo_root
 from adapters.parser.subset_parser import SubsetSysmlParser
-from adapters.persistence.workspace_repo import WorkspaceProjectRepository
-from application.project_service import ProjectService
 from domain.models import ArtifactKind, SysmlFile
 from domain.occurrence import in_occurrence
+from helpers import open_example_copy
 
 ROOT = resolve_repo_root() / "examples" / "electric_car"
 
@@ -285,12 +284,10 @@ def test_documentation_files_match_artifacts():
     assert missing == []
 
 
-def test_shipped_views_render_requested_diagrams():
-    repo = WorkspaceProjectRepository(ROOT)
-    project = repo.get_open()
+def test_shipped_views_render_requested_diagrams(tmp_path):
+    repo, project, service = open_example_copy(ROOT, tmp_path)
     assert project is not None
     assert project.name == "Electric Car"
-    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
 
     functions = service.get_view(project.id, "Functions::FunctionsView")
     assert functions["diagramMode"] == "structure"
@@ -562,10 +559,8 @@ def test_every_use_case_refines_a_user_story():
     assert sorted(stories - refined_stories) == []
 
 
-def test_use_case_view_exposes_both_packages():
-    repo = WorkspaceProjectRepository(ROOT)
-    project = repo.get_open()
-    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+def test_use_case_view_exposes_both_packages(tmp_path):
+    repo, project, service = open_example_copy(ROOT, tmp_path)
     view = service.get_view(project.id, "UseCases::VehicleUseCaseView")
     assert view["diagramMode"] == "useCase"
     shown = {e["name"] for e in view["semantic"].values() if e["kind"] == "useCase"}
@@ -801,10 +796,8 @@ def test_each_controller_comprises_entities():
         assert targets.get(controller, 0) >= 2, (controller, targets)
 
 
-def test_function_views_render():
-    repo = WorkspaceProjectRepository(ROOT)
-    project = repo.get_open()
-    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+def test_function_views_render(tmp_path):
+    repo, project, service = open_example_copy(ROOT, tmp_path)
     functions = service.get_view(project.id, "Functions::FunctionsView")
     assert functions["diagramMode"] == "structure"
     assert sum(1 for e in functions["semantic"].values() if e["kind"] == "dependency") == 12
@@ -937,14 +930,12 @@ def test_every_flow_step_is_performed_by_one_entity_of_its_function():
     assert sorted(e.name for e in entities if e.id not in performing) == []
 
 
-def test_every_flow_has_a_flow_view():
+def test_every_flow_has_a_flow_view(tmp_path):
     elements = _load().elements
     functions, _ = _functions_and_entities(elements)
     # One FlowView per flow: 19 flows in 9 functions, each with its saved top-down layout.
     assert sum(len(_flow_ids(elements, fid)) for fid in functions) == 19
-    repo = WorkspaceProjectRepository(ROOT)
-    project = repo.get_open()
-    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+    repo, project, service = open_example_copy(ROOT, tmp_path)
     for fid in functions:
         for flow_id in _flow_ids(elements, fid):
             name = _flow_view_name(fid, flow_id)
@@ -1454,3 +1445,46 @@ def test_use_cases_have_running_unique_short_ids():
     tags = [e.short_id for e in use_cases]
     assert tags == [f"UC{n:03d}" for n in range(1, 22)]
     assert next(e for e in use_cases if e.name == "Brake").short_id == "UC006"
+
+
+# --- The view tests leave examples/ alone -------------------------------------
+
+
+def _tree_bytes(root: Path) -> dict[str, bytes]:
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def test_view_tests_do_not_write_into_the_example(tmp_path, monkeypatch):
+    """Opening a project rewrites project.json and state.json when the state is stale. The
+    tests that render views run against a copy, so a stale state.json in examples/ is never
+    rewritten by a test run (it would overwrite a user's uncommitted project.json)."""
+    import inspect
+    import shutil
+    import sys
+
+    import test_electric_car_dynamics as dynamics
+
+    src = tmp_path / "examples" / "electric_car"
+    shutil.copytree(ROOT, src)
+    sysml = src / "functions" / "functions.sysml"
+    text = sysml.read_text(encoding="utf-8")
+    sysml.write_text(text.replace("Base of the functions", "Base of all functions", 1), encoding="utf-8")
+    before = _tree_bytes(src)  # state.json is now stale against the model
+    here = sys.modules[__name__]
+    for module in (here, dynamics):
+        monkeypatch.setattr(module, "ROOT", src)
+    tests = [
+        here.test_shipped_views_render_requested_diagrams,
+        here.test_use_case_view_exposes_both_packages,
+        here.test_function_views_render,
+        here.test_every_flow_has_a_flow_view,
+        dynamics.test_state_view_renders,
+    ]
+    for i, test in enumerate(tests):
+        if inspect.signature(test).parameters:
+            run = tmp_path / f"run{i}"
+            run.mkdir()
+            test(run)
+        else:
+            test()
+    assert _tree_bytes(src) == before

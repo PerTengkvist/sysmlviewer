@@ -7,10 +7,9 @@ from pathlib import Path
 
 from adapters.api.static_paths import resolve_repo_root
 from adapters.parser.subset_parser import SubsetSysmlParser
-from adapters.persistence.workspace_repo import WorkspaceProjectRepository
-from application.project_service import ProjectService
 from domain.models import ArtifactKind, SysmlFile
 from domain.occurrence import sequence_lifelines
+from helpers import open_example_copy
 
 ROOT = resolve_repo_root() / "examples" / "electric_car"
 CAR = "LogicalArchitecture::Car"
@@ -146,10 +145,8 @@ def test_vehicle_modes_transitions_map_to_sequences():
         assert f"Precondition {pre}. Postcondition {post}." in doc, (t.name, doc)
 
 
-def test_state_view_renders():
-    repo = WorkspaceProjectRepository(ROOT)
-    project = repo.get_open()
-    service = ProjectService(repo=repo, parser=SubsetSysmlParser())
+def test_state_view_renders(tmp_path):
+    repo, project, service = open_example_copy(ROOT, tmp_path)
     view = service.get_view(project.id, "Dynamics::VehicleModesView")
     assert view["diagramMode"] == "state"
     # The state def itself is also kind "state"; count only the modes inside it.

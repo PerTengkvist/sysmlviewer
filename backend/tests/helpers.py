@@ -80,3 +80,21 @@ def car_ignore(*names: str):
         return skipped
 
     return ignore
+
+
+def open_example_copy(source: Path, tmp_path: Path):
+    """Copy an example folder into tmp_path and open it: (repo, project, service).
+
+    Opening rewrites project.json and state.json when the state is stale, so tests that
+    render views work on a copy and never write into examples/.
+    """
+    from adapters.parser.subset_parser import SubsetSysmlParser
+    from adapters.persistence.workspace_repo import WorkspaceProjectRepository
+    from application.project_service import ProjectService
+
+    copy = tmp_path / source.name
+    shutil.copytree(source, copy)
+    repo = WorkspaceProjectRepository(copy)
+    project = repo.get_open()
+    assert project is not None
+    return repo, project, ProjectService(repo=repo, parser=SubsetSysmlParser())
